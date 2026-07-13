@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Env files (never commit secrets — DATABASE_URL, JWT_SECRET live here)
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+out/
+.next/
+.turbo/
+
+# Next.js
+next-env.d.ts
+
+# NestJS / TypeScript
+*.tsbuildinfo
+
+# Testing / coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# Vercel
+.vercel
