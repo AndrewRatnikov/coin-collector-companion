@@ -4,7 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Pre-code. The repository currently contains only [docs/prd.md](docs/prd.md) — no application code, no `package.json`, no scaffolding exists yet. There are no build/lint/test commands to document because nothing has been set up. Once the Next.js and NestJS projects are scaffolded (see Architecture below), update this file with the actual commands (`npm run dev`, `npm test`, single-test invocation, migration commands, etc.) and remove this note.
+Workspace skeleton only (backlog [0.1–0.4](specs/backlog_phase_1.md)): pnpm workspace (`apps/web`, `apps/api`, `packages/shared`, `seed/templates`), root TypeScript/ESLint/Prettier config, git + GitHub repo. `apps/web`, `apps/api`, and `packages/shared` are still empty directories — NestJS and Next.js have not been scaffolded yet, so there is no `dev`, `test`, `migrate`, or `seed` command yet. Available today, run from the repo root:
+
+- `pnpm lint` / `pnpm lint:fix` — ESLint across the workspace
+- `pnpm format` / `pnpm format:check` — Prettier across the workspace
+
+Update this section again as each of those real commands appears (NestJS scaffold → `dev`/`test`; Prisma → `migrate`; seed script → `seed`), per backlog item 0.5.
 
 ## What this project is
 

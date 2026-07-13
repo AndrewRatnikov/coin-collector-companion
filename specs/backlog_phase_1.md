@@ -12,7 +12,7 @@ Conventions used throughout: denomination is the shared enum (never free text), 
 - [x] 0.2 Create GitHub repo (public — free GitHub Actions + portfolio visibility), push
 - [x] 0.3 pnpm workspace skeleton: root `package.json`, `pnpm-workspace.yaml`, empty `apps/web`, `apps/api`, `packages/shared`, `seed/templates/` dirs (PRD §8.1 layout)
 - [x] 0.4 Root tooling: TypeScript base config, Prettier + ESLint shared config, `engines`/`packageManager` pinned
-- [ ] 0.5 Update `CLAUDE.md` project-status section with the real commands as they appear (dev, test, migrate, seed)
+- [x] 0.5 Update `CLAUDE.md` project-status section with the real commands as they appear (dev, test, migrate, seed)
 
 ## 1. Backend skeleton + DB — Days 1–2
 
