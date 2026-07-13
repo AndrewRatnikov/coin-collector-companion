@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+.next
+.turbo
+coverage
+pnpm-lock.yaml
+
+# Hand-authored prose docs — not code, not this tool's concern
+*.md
