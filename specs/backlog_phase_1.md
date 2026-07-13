@@ -17,7 +17,7 @@ Conventions used throughout: denomination is the shared enum (never free text), 
 ## 1. Backend skeleton + DB — Days 1–2
 
 - [x] 1.1 Scaffold NestJS in `apps/api` (`@nestjs/cli`), wire global `ValidationPipe` (`whitelist: true`, `transform: true`), `/api/v1` prefix, `GET /health`, CORS restricted to exactly two origins: `CORS_ORIGIN` (Vercel prod URL) + `http://localhost:3000` (PRD §9, SD §2). Module layout per SD D2: `Prisma`, `Auth`, `Sets`, `UserSets`, `Coins` (which imports `Linking`) — five flat entity modules, no extra layering
-- [ ] 1.2 `packages/shared`: `Denomination` and `Grade` enums + the SD §4 contract types (`UserSetSummary`, `GapViewResponse`/`GapSlot`, `CoinMutationResponse`/`SlotSuggestion`, link response `{ coin, replacedCoinId }`) — the package is the single source of truth; if code and SD §4 drift, the package wins
+- [ ] 1.2 `packages/shared`: `Denomination` and `Grade` enums + the SD §4 contract types (`UserSetSummary`, `GapViewResponse`/`GapSlot`, `CoinMutationResponse`/`SlotSuggestion`, link response `{ coin, replacedCoinId }`) — the package is the single source of truth; if code and SD §4 drift, the package wins. ~5 files: package.json, tsconfig, index, enums, contracts
 - [ ] 1.3 Prisma init in `apps/api`; schema from PRD §6.2 — `User`, `CollectionSet` (with `denomination`), `SetSlot` (with `@@unique([setId, year, mintMark, label])`), `UserSet` (`@@unique([userId, setId])`), `CoinItem` (`@@unique([userId, slotId])`, `onDelete: SetNull` on slot FK)
 - [ ] 1.4 Create Neon project, `DATABASE_URL` (pooled connection string) in `.env` (+ `.env.example` committed at both app roots — SD §7), first migration applied
 - [ ] 1.5 Swagger wired (`@nestjs/swagger` at `/api/docs`) — decorators added per-endpoint from here on, not as a later pass
@@ -25,9 +25,9 @@ Conventions used throughout: denomination is the shared enum (never free text), 
 
 ## 2. Auth — Day 2
 
-- [ ] 2.1 Auth module: `POST /auth/register`, `POST /auth/login` (bcrypt cost 10, JWT `{ sub, email }` HS256 in response body, 7-day expiry, no refresh flow — PRD §9, SD §5). Register normalizes email to lowercase, 409 on duplicate; login returns uniform 401 "invalid credentials" for both unknown email and wrong password — no timing-equalization theater beyond bcrypt
-- [ ] 2.2 Passport JWT strategy + global auth guard with `@Public()` opt-out on the two auth routes; `@CurrentUser()` decorator. Guard order (SD D2): `ThrottlerGuard` → `JwtAuthGuard` → `ValidationPipe`; ownership checks stay in services (`ForbiddenException`), not guards
-- [ ] 2.3 DTO validation: email format, password min length; 400s with field-level messages; errors use Nest's default `{ statusCode, message, error }` shape everywhere (SD §4)
+- [ ] 2.1 Auth DTOs + register: `RegisterDto`/`LoginDto` with class-validator rules (email format, password min length; 400s with field-level messages; errors use Nest's default `{ statusCode, message, error }` shape everywhere — SD §4); `POST /auth/register` with bcrypt cost 10, email normalized to lowercase, 409 on duplicate (PRD §9, SD §5). ~5 files: two DTOs, controller, service, module wiring
+- [ ] 2.2 `POST /auth/login`: `JwtModule` config (HS256, `JWT_SECRET`, 7-day expiry, no refresh flow), JWT `{ sub, email }` returned in response body; uniform 401 "invalid credentials" for both unknown email and wrong password — no timing-equalization theater beyond bcrypt. ~3 files
+- [ ] 2.3 Passport JWT strategy + global auth guard with `@Public()` opt-out on the two auth routes; `@CurrentUser()` decorator. Guard order (SD D2): `ThrottlerGuard` → `JwtAuthGuard` → `ValidationPipe`; ownership checks stay in services (`ForbiddenException`), not guards. ~5 files: strategy, guard, two decorators, `AppModule` wiring
 - [ ] 2.4 `@nestjs/throttler` on `/auth/*` (~5/min per IP), generous default elsewhere
 - [ ] 2.5 e2e test: register → login → hit a guarded route; wrong password → 401
 
@@ -35,25 +35,31 @@ Conventions used throughout: denomination is the shared enum (never free text), 
 
 - [ ] 3.1 Seed script (`prisma/seed.ts` + `prisma.seed` hook): walks `seed/templates/*.json`, upserts `CollectionSet` by name, then diffs slots on `(year, mintMark, label)` **in script code** — Postgres NULL-distinctness makes the DB unique constraint advisory for null-mint keys, so a naive `upsert` won't match Philadelphia slots (SD §6). Update matched slots in place (IDs stable ⇒ links survive), insert new, delete absent — **never wholesale delete-and-recreate** (PRD §6.4). One transaction per template; fail the whole run loudly on a malformed file
 - [ ] 3.2 Author 3 templates as JSON (start with the ones covering your real coins — e.g. Lincoln Wheat Cents, State Quarters, Morgan Dollars). Philadelphia/no-mark issues = `mintMark: null`. Cross-check each list against a second source (PRD §13)
-- [ ] 3.3 Sets endpoints: `GET /sets` (`isTemplate` filter; non-templates scoped to owner), `POST /sets/:id/activate` (idempotent), `GET /user-sets` → `UserSetSummary[]` with `ownedSlots`/`totalSlots`/`isComplete` — counts via two `groupBy` queries merged in memory, no per-set loop (SD D4); the % itself is derived client-side (one rounding rule, one place), `DELETE /user-sets/:id` (links survive)
-- [ ] 3.4 e2e test: seed → activate → activate again (no dup) → list user-sets shows 0%
+- [ ] 3.3 Sets endpoints (`SetsModule`): `GET /sets` (`isTemplate` filter; non-templates scoped to owner), `POST /sets/:id/activate` (idempotent). ~4 files
+- [ ] 3.4 UserSets endpoints (`UserSetsModule`): `GET /user-sets` → `UserSetSummary[]` with `ownedSlots`/`totalSlots`/`isComplete` — counts via two `groupBy` queries merged in memory, no per-set loop (SD D4); the % itself is derived client-side (one rounding rule, one place); `DELETE /user-sets/:id` (links survive). ~3 files
+- [ ] 3.5 e2e test: seed → activate → activate again (no dup) → list user-sets shows 0%
 
 ## 4. Coins + auto-suggest — Days 4–5
 
-- [ ] 4.1 Coins CRUD: `GET/POST /coins`, `PATCH /coins/:id`, `DELETE /coins/:id` (delete unlinks). Fields per PRD §6.3; denomination/grade from shared enums; mint-mark normalization (`"P"` → `null` where applicable) at the API boundary
-- [ ] 4.2 `LinkingService` (own `LinkingModule`, imported by `CoinsModule`) — **sole writer of `CoinItem.slotId` and sole implementor of the match rule** (SD D3); nothing else touches `slotId`. `suggest`: match `set.denomination + year + mintMark` against slots in active sets only (join through `UserSet`), null-safe mint equality (`mintMark: coin.mintMark ?? null` — Prisma treats `null` as `IS NULL`); returns `SlotSuggestion[]` incl. `currentlyLinkedCoinId` inside `CoinMutationResponse` from `POST /coins` and from `PATCH` when denomination/year/mint changed (PRD §4.2)
-- [ ] 4.3 Link endpoints via `LinkingService`: `POST /coins/:id/link` — one `$transaction`: assert ownership + pursued set, `updateMany` displace occupant (0 or 1 rows), then link; the `(userId, slotId)` unique constraint is the backstop, never the mechanism. Returns `{ coin, replacedCoinId }` (UI toasts "replaced — old coin kept"). `POST /coins/:id/unlink`; ownership checks at service layer (403 on foreign coin/slot)
-- [ ] 4.4 e2e tests: no-mark Philadelphia coin matches its `null`-mint slot (the §13 convention-drift test); 1909-S coin returns both S and S-VDB candidates; relink replaces atomically
-- [ ] 4.5 Gap endpoint: `GET /user-sets/:id/gap` → `GapViewResponse` — one `findMany` on `SetSlot` with a filtered `include` of the current user's linked coin, ordered by `sortOrder` (SD D4); owned/missing is `linkedCoin` nullability, nothing more. Don't over-engineer (PRD §6.1); no new indexes — the unique constraints already cover the hot paths
+- [ ] 4.1 Coin DTOs + normalization: `CreateCoinDto`/`UpdateCoinDto` with fields per PRD §6.3; denomination/grade from shared enums; mint-mark normalization (`"P"` → `null` where applicable) at the API boundary. ~3 files
+- [ ] 4.2 Coins CRUD: `GET/POST /coins`, `PATCH /coins/:id`, `DELETE /coins/:id` (delete unlinks). ~3 files: controller, service, module wiring
+- [ ] 4.3 `LinkingService` (own `LinkingModule`, imported by `CoinsModule`) — **sole writer of `CoinItem.slotId` and sole implementor of the match rule** (SD D3); nothing else touches `slotId`. `suggest`: match `set.denomination + year + mintMark` against slots in active sets only (join through `UserSet`), null-safe mint equality (`mintMark: coin.mintMark ?? null` — Prisma treats `null` as `IS NULL`); returns `SlotSuggestion[]` incl. `currentlyLinkedCoinId` inside `CoinMutationResponse` from `POST /coins` and from `PATCH` when denomination/year/mint changed (PRD §4.2)
+- [ ] 4.4 Link endpoints via `LinkingService`: `POST /coins/:id/link` — one `$transaction`: assert ownership + pursued set, `updateMany` displace occupant (0 or 1 rows), then link; the `(userId, slotId)` unique constraint is the backstop, never the mechanism. Returns `{ coin, replacedCoinId }` (UI toasts "replaced — old coin kept"). `POST /coins/:id/unlink`; ownership checks at service layer (403 on foreign coin/slot)
+- [ ] 4.5 e2e tests: no-mark Philadelphia coin matches its `null`-mint slot (the §13 convention-drift test); 1909-S coin returns both S and S-VDB candidates; relink replaces atomically
+- [ ] 4.6 Gap endpoint: `GET /user-sets/:id/gap` → `GapViewResponse` — one `findMany` on `SetSlot` with a filtered `include` of the current user's linked coin, ordered by `sortOrder` (SD D4); owned/missing is `linkedCoin` nullability, nothing more. Don't over-engineer (PRD §6.1); no new indexes — the unique constraints already cover the hot paths
 
 ## 5. Frontend — Days 4–6 (overlaps with 4)
 
-- [ ] 5.1 Scaffold Next.js (App Router) in `apps/web`. Data fetching per SD D1: all authenticated data fetched client-side (TanStack Query) directly against the Render API — server components render only the static shell, no RSC data fetching, no proxy layer. JWT in `localStorage`, attached as `Authorization: Bearer`; redirect-to-login on 401. Route groups per SD §3: `(auth)/login|register` (redirect away if token present), `(app)/*` layout guard (no token → `/login`)
-- [ ] 5.2 Register/Login pages with inline field errors
-- [ ] 5.3 Set catalog page (templates + Activate button) and My Sets page (completion % per set — derived client-side from `ownedSlots/totalSlots`, link to gap view)
-- [ ] 5.4 Coin list + coin add/edit form (enum dropdowns for denomination/grade, "None" default for mint mark); delete with confirm
-- [ ] 5.5 Auto-suggest panel post-save, driven by `CoinMutationResponse.suggestions`: `[]` = no panel, 1 = one-tap confirm, >1 = candidate picker (routine path, not a fallback — PRD §4.3); `currentlyLinkedCoinId != null` ⇒ "Replace current link" label. Confirmed link invalidates `['gap', userSetId]`, `['user-sets']`, `['coins']` queries (SD §3)
-- [ ] 5.6 Skeleton loader on first load (Render cold start, ~30–60s — PRD §10); generous fetch timeout (~75 s) with one retry (SD §6) — no keep-warm
+- [ ] 5.1 Bare Next.js scaffold (App Router) in `apps/web` via `create-next-app`; prune demo boilerplate, wire into workspace lint/format. Generated files only — no app code yet
+- [ ] 5.2 API client + TanStack Query: fetch wrapper against `NEXT_PUBLIC_API_URL` attaching JWT from `localStorage` as `Authorization: Bearer`; redirect-to-login on 401; generous timeout (~75 s) with one retry for Render cold starts (SD §6 — no keep-warm); `QueryClientProvider` in root layout. Data fetching per SD D1: all authenticated data fetched client-side directly against the Render API — server components render only the static shell, no RSC data fetching, no proxy layer. ~4 files
+- [ ] 5.3 Route groups per SD §3: `(auth)/login|register` (redirect away if token present), `(app)/*` layout guard (no token → `/login`). ~4 files
+- [ ] 5.4 Register/Login pages with inline field errors. ~4 files
+- [ ] 5.5 Set catalog page (templates + Activate button). ~3 files
+- [ ] 5.6 My Sets page (completion % per set — derived client-side from `ownedSlots/totalSlots`, link to gap view). ~3 files
+- [ ] 5.7 Coin list page; delete with confirm. ~3 files
+- [ ] 5.8 Coin add/edit form (enum dropdowns for denomination/grade, "None" default for mint mark). ~3 files
+- [ ] 5.9 Auto-suggest panel post-save, driven by `CoinMutationResponse.suggestions`: `[]` = no panel, 1 = one-tap confirm, >1 = candidate picker (routine path, not a fallback — PRD §4.3); `currentlyLinkedCoinId != null` ⇒ "Replace current link" label. Confirmed link invalidates `['gap', userSetId]`, `['user-sets']`, `['coins']` queries (SD §3). ~3 files
+- [ ] 5.10 Skeleton loader on first load (Render cold start, ~30–60s — PRD §10)
 
 ## 6. Gap view — Day 7 (the product; most polish goes here)
 
