@@ -4,13 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-Backlog [0.1–1.1](specs/backlog_phase_1.md) done. Workspace skeleton (0.1–0.4) plus a NestJS scaffold in `apps/api` (1.1): global `ValidationPipe` (`whitelist`/`transform`), `/api/v1` prefix, `GET /health`, CORS locked to `CORS_ORIGIN` + `http://localhost:3000`, and the five flat D2 modules (`Prisma`, `Auth`, `Sets`, `UserSets`, `Coins` importing `Linking`) wired into `AppModule` as empty stubs awaiting their real logic in later tasks. `apps/web` and `packages/shared` are still empty — no `migrate` or `seed` command yet, and no frontend `dev` yet. Note: `apps/api` pins `typescript@^5.7.3` (not the root's `^6.0.3`) — `@nestjs/cli@11`'s compiler silently produces no build output under TypeScript 6 (version mismatch between its own bundled `typescript` and the loaded project one); root tooling (ESLint/Prettier) is unaffected and stays on 6.0.3. Available today, run from the repo root:
+Backlog [0.1–1.2](specs/backlog_phase_1.md) done. Workspace skeleton (0.1–0.4), a NestJS scaffold in `apps/api` (1.1): global `ValidationPipe` (`whitelist`/`transform`), `/api/v1` prefix, `GET /health`, CORS locked to `CORS_ORIGIN` + `http://localhost:3000`, and the five flat D2 modules (`Prisma`, `Auth`, `Sets`, `UserSets`, `Coins` importing `Linking`) wired into `AppModule` as empty stubs awaiting their real logic in later tasks — plus `packages/shared` (1.2): `Denomination`/`Grade` enums and the SD §4 contract types (`UserSetSummary`, `GapViewResponse`/`GapSlot`, `CoinDto`, `CoinMutationResponse`/`SlotSuggestion`, `CoinLinkResponse`), built to `dist` via its own `tsc`; not yet consumed by `apps/api` or `apps/web` (Prisma schema/DTOs land in 1.3+). `apps/web` is still empty — no `migrate` or `seed` command yet, and no frontend `dev` yet. Note: `apps/api` pins `typescript@^5.7.3` (not the root's `^6.0.3`) — `@nestjs/cli@11`'s compiler silently produces no build output under TypeScript 6 (version mismatch between its own bundled `typescript` and the loaded project one); root tooling (ESLint/Prettier) and `packages/shared` are unaffected and stay on 6.0.3. Available today, run from the repo root:
 
 - `pnpm lint` / `pnpm lint:fix` — ESLint across the workspace
 - `pnpm format` / `pnpm format:check` — Prettier across the workspace
 - `pnpm --filter api start:dev` — NestJS dev server (watch mode), `GET http://localhost:3000/api/v1/health` once up
 - `pnpm --filter api build` — production build
 - `pnpm --filter api test` / `pnpm --filter api test:e2e` — unit / e2e tests
+- `pnpm --filter @coin-collector/shared build` — compile the shared enums/contracts package to `dist`
 
 Update this section again as each further real command appears (Prisma → `migrate`; seed script → `seed`; Next.js scaffold → frontend `dev`), per backlog item 0.5.
 
