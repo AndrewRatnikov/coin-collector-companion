@@ -1,7 +1,9 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
 const BCRYPT_COST = 10;
@@ -12,9 +14,16 @@ export interface RegisteredUser {
   createdAt: Date;
 }
 
+export interface LoginResponse {
+  accessToken: string;
+}
+
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async register(dto: RegisterDto): Promise<RegisteredUser> {
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_COST);
@@ -30,5 +39,15 @@ export class AuthService {
       }
       throw err;
     }
+  }
+
+  async login(dto: LoginDto): Promise<LoginResponse> {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (!user || !(await bcrypt.compare(dto.password, user.passwordHash))) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const accessToken = await this.jwtService.signAsync({ sub: user.id, email: user.email });
+    return { accessToken };
   }
 }
