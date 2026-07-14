@@ -20,7 +20,7 @@ Conventions used throughout: denomination is the shared enum (never free text), 
 - [x] 1.2 `packages/shared`: `Denomination` and `Grade` enums + the SD §4 contract types (`UserSetSummary`, `GapViewResponse`/`GapSlot`, `CoinMutationResponse`/`SlotSuggestion`, link response `{ coin, replacedCoinId }`) — the package is the single source of truth; if code and SD §4 drift, the package wins. ~5 files: package.json, tsconfig, index, enums, contracts
 - [x] 1.3 Prisma init in `apps/api`; schema from PRD §6.2 — `User`, `CollectionSet` (with `denomination`), `SetSlot` (with `@@unique([setId, year, mintMark, label])`), `UserSet` (`@@unique([userId, setId])`), `CoinItem` (`@@unique([userId, slotId])`, `onDelete: SetNull` on slot FK)
 - [x] 1.4 Create Neon project, `DATABASE_URL` (pooled connection string) in `.env` (+ `.env.example` committed at both app roots — SD §7), first migration applied
-- [ ] 1.5 Swagger wired (`@nestjs/swagger` at `/api/docs`) — decorators added per-endpoint from here on, not as a later pass
+- [x] 1.5 Swagger wired (`@nestjs/swagger` at `/api/docs`) — decorators added per-endpoint from here on, not as a later pass
 - [ ] 1.6 Deploy the (near-empty) API to Render now: root dir `apps/api`, build via workspace filter, `GET /health` as Render's health check, env vars `DATABASE_URL` + `JWT_SECRET` + `CORS_ORIGIN`, listen on `process.env.PORT` (SD §7). Surfacing deploy problems while the app is tiny is the point (PRD §11)
 
 ## 2. Auth — Day 2

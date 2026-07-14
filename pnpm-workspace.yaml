@@ -5,6 +5,7 @@ packages:
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true
+  '@scarf/scarf': false
   prisma: true
 
 minimumReleaseAge: 10080
