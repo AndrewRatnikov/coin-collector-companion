@@ -5,7 +5,7 @@ services:
     region: oregon
     plan: free
     rootDir: apps/api
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter api build
+    buildCommand: npm install -g pnpm@11.5.0 && pnpm install --frozen-lockfile && pnpm --filter api build
     startCommand: node dist/main
     healthCheckPath: /api/v1/health
     envVars:
