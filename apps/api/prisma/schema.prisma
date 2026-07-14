@@ -1,0 +1,97 @@
+// PRD §6.2 schema sketch — apps/api's Prisma source of truth for the DB shape.
+// `Denomination` mirrors packages/shared's enum (never free text — PRD §6.3); if the
+// two ever drift, packages/shared wins (CLAUDE.md).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Denomination {
+  Cent
+  Nickel
+  Dime
+  Quarter
+  HalfDollar
+  Dollar
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  coinItems CoinItem[]
+  userSets  UserSet[]
+  ownedSets CollectionSet[] @relation("SetOwner")
+}
+
+model CollectionSet {
+  id           String       @id @default(uuid())
+  name         String
+  category     String // display grouping, e.g. "cents", "quarters", "dollars"
+  denomination Denomination // set-side half of the auto-suggest match key (PRD §4.2)
+  isTemplate   Boolean      @default(false)
+  ownerId      String? // null for templates, set for user-created sets
+  owner        User?        @relation("SetOwner", fields: [ownerId], references: [id])
+  createdAt    DateTime     @default(now())
+
+  slots    SetSlot[]
+  userSets UserSet[]
+}
+
+model SetSlot {
+  id        String        @id @default(uuid())
+  setId     String
+  set       CollectionSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  year      Int
+  mintMark  String? // null = struck with no mint mark (see PRD §6.3 — never "P")
+  label     String? // override display label for irregular slots (varieties)
+  sortOrder Int
+  isKeyDate Boolean       @default(false)
+
+  coinItems CoinItem[]
+
+  @@unique([setId, year, mintMark, label])
+  // Natural identity of a slot — doubles as the seed script's upsert key (PRD §6.4).
+  // Postgres treats NULLs as distinct in unique constraints, so the seed script's own
+  // dedupe on this key is the real guard; the constraint documents intent.
+  @@index([setId])
+}
+
+model UserSet {
+  id          String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  setId       String
+  set         CollectionSet @relation(fields: [setId], references: [id])
+  activatedAt DateTime      @default(now())
+
+  @@unique([userId, setId])
+}
+
+model CoinItem {
+  id            String       @id @default(uuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
+  denomination  Denomination
+  year          Int
+  mintMark      String? // null = no mint mark on the coin (see PRD §6.3)
+  country       String       @default("US")
+  grade         String? // small enum, see packages/shared Grade (PRD §6.3)
+  purchasePrice Decimal? // USD only in v1 (PRD §6.3)
+  notes         String?
+  acquiredDate  DateTime?
+  imageUrls     String[]     @default([]) // empty, not nullable — unused until Phase 3
+  slotId        String?
+  slot          SetSlot?     @relation(fields: [slotId], references: [id], onDelete: SetNull)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@unique([userId, slotId])
+}
