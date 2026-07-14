@@ -28,7 +28,7 @@ Conventions used throughout: denomination is the shared enum (never free text), 
 - [x] 2.1 Auth DTOs + register: `RegisterDto`/`LoginDto` with class-validator rules (email format, password min length; 400s with field-level messages; errors use Nest's default `{ statusCode, message, error }` shape everywhere — SD §4); `POST /auth/register` with bcrypt cost 10, email normalized to lowercase, 409 on duplicate (PRD §9, SD §5). ~5 files: two DTOs, controller, service, module wiring
 - [x] 2.2 `POST /auth/login`: `JwtModule` config (HS256, `JWT_SECRET`, 7-day expiry, no refresh flow), JWT `{ sub, email }` returned in response body; uniform 401 "invalid credentials" for both unknown email and wrong password — no timing-equalization theater beyond bcrypt. ~3 files
 - [x] 2.3 Passport JWT strategy + global auth guard with `@Public()` opt-out on the two auth routes; `@CurrentUser()` decorator. Guard order (SD D2): `ThrottlerGuard` → `JwtAuthGuard` → `ValidationPipe`; ownership checks stay in services (`ForbiddenException`), not guards. ~5 files: strategy, guard, two decorators, `AppModule` wiring
-- [ ] 2.4 `@nestjs/throttler` on `/auth/*` (~5/min per IP), generous default elsewhere
+- [x] 2.4 `@nestjs/throttler` on `/auth/*` (~5/min per IP), generous default elsewhere
 - [ ] 2.5 e2e test: register → login → hit a guarded route; wrong password → 401
 
 ## 3. Sets, templates, seed — Day 3

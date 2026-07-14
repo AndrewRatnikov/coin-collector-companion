@@ -1,4 +1,5 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import {
   ApiConflictResponse,
   ApiCreatedResponse,
@@ -12,6 +13,8 @@ import { Public } from './decorators/public.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
+// SD D2 / backlog 2.4: tighter throttle on auth routes than the app-wide default
+@Throttle({ default: { limit: 5, ttl: 60_000 } })
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
