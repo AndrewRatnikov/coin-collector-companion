@@ -41,7 +41,7 @@ Conventions used throughout: denomination is the shared enum (never free text), 
 
 ## 4. Coins + auto-suggest — Days 4–5
 
-- [ ] 4.1 Coin DTOs + normalization: `CreateCoinDto`/`UpdateCoinDto` with fields per PRD §6.3; denomination/grade from shared enums; mint-mark normalization (`"P"` → `null` where applicable) at the API boundary. ~3 files
+- [x] 4.1 Coin DTOs + normalization: `CreateCoinDto`/`UpdateCoinDto` with fields per PRD §6.3; denomination/grade from shared enums; mint-mark normalization (`"P"` → `null` where applicable) at the API boundary. ~3 files
 - [ ] 4.2 Coins CRUD: `GET/POST /coins`, `PATCH /coins/:id`, `DELETE /coins/:id` (delete unlinks). ~3 files: controller, service, module wiring
 - [ ] 4.3 `LinkingService` (own `LinkingModule`, imported by `CoinsModule`) — **sole writer of `CoinItem.slotId` and sole implementor of the match rule** (SD D3); nothing else touches `slotId`. `suggest`: match `set.denomination + year + mintMark` against slots in active sets only (join through `UserSet`), null-safe mint equality (`mintMark: coin.mintMark ?? null` — Prisma treats `null` as `IS NULL`); returns `SlotSuggestion[]` incl. `currentlyLinkedCoinId` inside `CoinMutationResponse` from `POST /coins` and from `PATCH` when denomination/year/mint changed (PRD §4.2)
 - [ ] 4.4 Link endpoints via `LinkingService`: `POST /coins/:id/link` — one `$transaction`: assert ownership + pursued set, `updateMany` displace occupant (0 or 1 rows), then link; the `(userId, slotId)` unique constraint is the backstop, never the mechanism. Returns `{ coin, replacedCoinId }` (UI toasts "replaced — old coin kept"). `POST /coins/:id/unlink`; ownership checks at service layer (403 on foreign coin/slot)
