@@ -17,5 +17,17 @@ export default tseslint.config(
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    // Jest transformer, loaded via CommonJS `require()` by Jest itself — not part of the
+    // TS project, so the usual no-require-imports/no-undef rules don't apply here.
+    files: ['**/test/support/**/*.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: { require: 'readonly', module: 'writable' },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
   eslintConfigPrettier,
 );

@@ -4,6 +4,12 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
+    "packages/shared/src/.*\\.ts$": "<rootDir>/support/shared-esm-transformer.js",
     "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@coin-collector/shared$": "<rootDir>/../../../packages/shared/src/index.ts",
+    "^\\./enums\\.js$": "<rootDir>/../../../packages/shared/src/enums.ts",
+    "^\\./contracts\\.js$": "<rootDir>/../../../packages/shared/src/contracts.ts"
   }
 }
