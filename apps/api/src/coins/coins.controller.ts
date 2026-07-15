@@ -21,7 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
-import { CoinsService, CoinItemView } from './coins.service';
+import { CoinsService, CoinItemView, CoinMutationResponse } from './coins.service';
 import { CreateCoinDto } from './dto/create-coin.dto';
 import { UpdateCoinDto } from './dto/update-coin.dto';
 
@@ -39,17 +39,20 @@ export class CoinsController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Add a coin to the collection' })
-  @ApiCreatedResponse({ description: 'Coin created' })
+  @ApiOperation({ summary: 'Add a coin to the collection, with slot-link suggestions' })
+  @ApiCreatedResponse({ description: 'Coin created, plus any matching open-slot suggestions' })
   create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateCoinDto,
-  ): Promise<CoinItemView> {
+  ): Promise<CoinMutationResponse> {
     return this.coinsService.create(user.userId, dto);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a coin' })
+  @ApiOperation({
+    summary:
+      'Update a coin; includes slot-link suggestions when denomination/year/mint mark changed',
+  })
   @ApiOkResponse({ description: 'Coin updated' })
   @ApiNotFoundResponse({ description: 'Coin not found' })
   @ApiForbiddenResponse({ description: 'Coin belongs to another user' })
@@ -57,7 +60,7 @@ export class CoinsController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: string,
     @Body() dto: UpdateCoinDto,
-  ): Promise<CoinItemView> {
+  ): Promise<CoinItemView | CoinMutationResponse> {
     return this.coinsService.update(user.userId, id, dto);
   }
 
