@@ -10,7 +10,7 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
-import { UserSetsService, UserSetSummary } from './user-sets.service';
+import { GapViewResponse, UserSetsService, UserSetSummary } from './user-sets.service';
 
 @ApiBearerAuth()
 @ApiTags('user-sets')
@@ -23,6 +23,18 @@ export class UserSetsController {
   @ApiOkResponse({ description: 'Summaries for every set the caller is pursuing' })
   findAll(@CurrentUser() user: AuthenticatedUser): Promise<UserSetSummary[]> {
     return this.userSetsService.findAllForUser(user.userId);
+  }
+
+  @Get(':id/gap')
+  @ApiOperation({ summary: 'Get the gap view (owned vs. missing slots) for a pursued set' })
+  @ApiOkResponse({ description: 'Slots ordered by sortOrder, each with its linked coin or null' })
+  @ApiNotFoundResponse({ description: 'User set not found' })
+  @ApiForbiddenResponse({ description: 'User set belongs to another user' })
+  getGapView(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ): Promise<GapViewResponse> {
+    return this.userSetsService.getGapView(user.userId, id);
   }
 
   @Delete(':id')
