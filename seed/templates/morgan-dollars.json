@@ -1,0 +1,679 @@
+{
+  "name": "Morgan Dollars (1878-1921)",
+  "category": "Morgan Dollars",
+  "denomination": "Dollar",
+  "slots": [
+    {
+      "year": 1878,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 1,
+      "isKeyDate": false
+    },
+    {
+      "year": 1878,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 2,
+      "isKeyDate": false
+    },
+    {
+      "year": 1878,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 3,
+      "isKeyDate": false
+    },
+    {
+      "year": 1879,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 4,
+      "isKeyDate": false
+    },
+    {
+      "year": 1879,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 5,
+      "isKeyDate": false
+    },
+    {
+      "year": 1879,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 6,
+      "isKeyDate": false
+    },
+    {
+      "year": 1879,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 7,
+      "isKeyDate": false
+    },
+    {
+      "year": 1880,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 8,
+      "isKeyDate": false
+    },
+    {
+      "year": 1880,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 9,
+      "isKeyDate": false
+    },
+    {
+      "year": 1880,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 10,
+      "isKeyDate": false
+    },
+    {
+      "year": 1880,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 11,
+      "isKeyDate": false
+    },
+    {
+      "year": 1881,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 12,
+      "isKeyDate": false
+    },
+    {
+      "year": 1881,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 13,
+      "isKeyDate": false
+    },
+    {
+      "year": 1881,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 14,
+      "isKeyDate": false
+    },
+    {
+      "year": 1881,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 15,
+      "isKeyDate": false
+    },
+    {
+      "year": 1882,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 16,
+      "isKeyDate": false
+    },
+    {
+      "year": 1882,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 17,
+      "isKeyDate": false
+    },
+    {
+      "year": 1882,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 18,
+      "isKeyDate": false
+    },
+    {
+      "year": 1882,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 19,
+      "isKeyDate": false
+    },
+    {
+      "year": 1883,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 20,
+      "isKeyDate": false
+    },
+    {
+      "year": 1883,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 21,
+      "isKeyDate": false
+    },
+    {
+      "year": 1883,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 22,
+      "isKeyDate": false
+    },
+    {
+      "year": 1883,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 23,
+      "isKeyDate": false
+    },
+    {
+      "year": 1884,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 24,
+      "isKeyDate": false
+    },
+    {
+      "year": 1884,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 25,
+      "isKeyDate": false
+    },
+    {
+      "year": 1884,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 26,
+      "isKeyDate": false
+    },
+    {
+      "year": 1884,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 27,
+      "isKeyDate": false
+    },
+    {
+      "year": 1885,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 28,
+      "isKeyDate": false
+    },
+    {
+      "year": 1885,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 29,
+      "isKeyDate": false
+    },
+    {
+      "year": 1885,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 30,
+      "isKeyDate": false
+    },
+    {
+      "year": 1885,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 31,
+      "isKeyDate": false
+    },
+    {
+      "year": 1886,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 32,
+      "isKeyDate": false
+    },
+    {
+      "year": 1886,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 33,
+      "isKeyDate": false
+    },
+    {
+      "year": 1886,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 34,
+      "isKeyDate": false
+    },
+    {
+      "year": 1887,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 35,
+      "isKeyDate": false
+    },
+    {
+      "year": 1887,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 36,
+      "isKeyDate": false
+    },
+    {
+      "year": 1887,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 37,
+      "isKeyDate": false
+    },
+    {
+      "year": 1888,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 38,
+      "isKeyDate": false
+    },
+    {
+      "year": 1888,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 39,
+      "isKeyDate": false
+    },
+    {
+      "year": 1888,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 40,
+      "isKeyDate": false
+    },
+    {
+      "year": 1889,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 41,
+      "isKeyDate": false
+    },
+    {
+      "year": 1889,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 42,
+      "isKeyDate": true
+    },
+    {
+      "year": 1889,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 43,
+      "isKeyDate": false
+    },
+    {
+      "year": 1889,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 44,
+      "isKeyDate": false
+    },
+    {
+      "year": 1890,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 45,
+      "isKeyDate": false
+    },
+    {
+      "year": 1890,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 46,
+      "isKeyDate": false
+    },
+    {
+      "year": 1890,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 47,
+      "isKeyDate": false
+    },
+    {
+      "year": 1890,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 48,
+      "isKeyDate": false
+    },
+    {
+      "year": 1891,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 49,
+      "isKeyDate": false
+    },
+    {
+      "year": 1891,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 50,
+      "isKeyDate": false
+    },
+    {
+      "year": 1891,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 51,
+      "isKeyDate": false
+    },
+    {
+      "year": 1891,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 52,
+      "isKeyDate": false
+    },
+    {
+      "year": 1892,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 53,
+      "isKeyDate": false
+    },
+    {
+      "year": 1892,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 54,
+      "isKeyDate": false
+    },
+    {
+      "year": 1892,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 55,
+      "isKeyDate": false
+    },
+    {
+      "year": 1892,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 56,
+      "isKeyDate": false
+    },
+    {
+      "year": 1893,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 57,
+      "isKeyDate": true
+    },
+    {
+      "year": 1893,
+      "mintMark": "CC",
+      "label": null,
+      "sortOrder": 58,
+      "isKeyDate": true
+    },
+    {
+      "year": 1893,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 59,
+      "isKeyDate": false
+    },
+    {
+      "year": 1893,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 60,
+      "isKeyDate": true
+    },
+    {
+      "year": 1894,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 61,
+      "isKeyDate": true
+    },
+    {
+      "year": 1894,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 62,
+      "isKeyDate": false
+    },
+    {
+      "year": 1894,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 63,
+      "isKeyDate": false
+    },
+    {
+      "year": 1895,
+      "mintMark": null,
+      "label": "Proof",
+      "sortOrder": 64,
+      "isKeyDate": true
+    },
+    {
+      "year": 1895,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 65,
+      "isKeyDate": false
+    },
+    {
+      "year": 1895,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 66,
+      "isKeyDate": false
+    },
+    {
+      "year": 1896,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 67,
+      "isKeyDate": false
+    },
+    {
+      "year": 1896,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 68,
+      "isKeyDate": false
+    },
+    {
+      "year": 1896,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 69,
+      "isKeyDate": false
+    },
+    {
+      "year": 1897,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 70,
+      "isKeyDate": false
+    },
+    {
+      "year": 1897,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 71,
+      "isKeyDate": false
+    },
+    {
+      "year": 1897,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 72,
+      "isKeyDate": false
+    },
+    {
+      "year": 1898,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 73,
+      "isKeyDate": false
+    },
+    {
+      "year": 1898,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 74,
+      "isKeyDate": false
+    },
+    {
+      "year": 1898,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 75,
+      "isKeyDate": false
+    },
+    {
+      "year": 1899,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 76,
+      "isKeyDate": false
+    },
+    {
+      "year": 1899,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 77,
+      "isKeyDate": false
+    },
+    {
+      "year": 1899,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 78,
+      "isKeyDate": false
+    },
+    {
+      "year": 1900,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 79,
+      "isKeyDate": false
+    },
+    {
+      "year": 1900,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 80,
+      "isKeyDate": false
+    },
+    {
+      "year": 1900,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 81,
+      "isKeyDate": false
+    },
+    {
+      "year": 1901,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 82,
+      "isKeyDate": true
+    },
+    {
+      "year": 1901,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 83,
+      "isKeyDate": false
+    },
+    {
+      "year": 1901,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 84,
+      "isKeyDate": false
+    },
+    {
+      "year": 1902,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 85,
+      "isKeyDate": false
+    },
+    {
+      "year": 1902,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 86,
+      "isKeyDate": false
+    },
+    {
+      "year": 1902,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 87,
+      "isKeyDate": false
+    },
+    {
+      "year": 1903,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 88,
+      "isKeyDate": false
+    },
+    {
+      "year": 1903,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 89,
+      "isKeyDate": false
+    },
+    {
+      "year": 1903,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 90,
+      "isKeyDate": false
+    },
+    {
+      "year": 1904,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 91,
+      "isKeyDate": false
+    },
+    {
+      "year": 1904,
+      "mintMark": "O",
+      "label": null,
+      "sortOrder": 92,
+      "isKeyDate": false
+    },
+    {
+      "year": 1904,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 93,
+      "isKeyDate": false
+    },
+    {
+      "year": 1921,
+      "mintMark": null,
+      "label": null,
+      "sortOrder": 94,
+      "isKeyDate": false
+    },
+    {
+      "year": 1921,
+      "mintMark": "D",
+      "label": null,
+      "sortOrder": 95,
+      "isKeyDate": false
+    },
+    {
+      "year": 1921,
+      "mintMark": "S",
+      "label": null,
+      "sortOrder": 96,
+      "isKeyDate": false
+    }
+  ]
+}

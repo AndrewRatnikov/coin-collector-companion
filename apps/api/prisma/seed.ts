@@ -173,71 +173,74 @@ async function seedTemplate(
   fileName: string,
   template: Template,
 ): Promise<void> {
-  await prisma.$transaction(async (tx) => {
-    let set = await tx.collectionSet.findFirst({
-      where: { name: template.name, isTemplate: true },
-    });
-
-    if (set) {
-      set = await tx.collectionSet.update({
-        where: { id: set.id },
-        data: { category: template.category, denomination: template.denomination },
+  await prisma.$transaction(
+    async (tx) => {
+      let set = await tx.collectionSet.findFirst({
+        where: { name: template.name, isTemplate: true },
       });
-    } else {
-      set = await tx.collectionSet.create({
-        data: {
-          name: template.name,
-          category: template.category,
-          denomination: template.denomination,
-          isTemplate: true,
-          ownerId: null,
-        },
-      });
-    }
 
-    const existingSlots = await tx.setSlot.findMany({ where: { setId: set.id } });
-    const existingByKey = new Map(existingSlots.map((slot) => [slotKey(slot), slot]));
-    const incomingKeys = new Set(template.slots.map(slotKey));
-
-    let created = 0;
-    let updated = 0;
-    let deleted = 0;
-
-    for (const incoming of template.slots) {
-      const key = slotKey(incoming);
-      const existing = existingByKey.get(key);
-
-      if (existing) {
-        await tx.setSlot.update({
-          where: { id: existing.id },
-          data: { sortOrder: incoming.sortOrder, isKeyDate: incoming.isKeyDate },
+      if (set) {
+        set = await tx.collectionSet.update({
+          where: { id: set.id },
+          data: { category: template.category, denomination: template.denomination },
         });
-        updated += 1;
       } else {
-        await tx.setSlot.create({
+        set = await tx.collectionSet.create({
           data: {
-            setId: set.id,
-            year: incoming.year,
-            mintMark: incoming.mintMark,
-            label: incoming.label,
-            sortOrder: incoming.sortOrder,
-            isKeyDate: incoming.isKeyDate,
+            name: template.name,
+            category: template.category,
+            denomination: template.denomination,
+            isTemplate: true,
+            ownerId: null,
           },
         });
-        created += 1;
       }
-    }
 
-    const toDelete = existingSlots.filter((slot) => !incomingKeys.has(slotKey(slot)));
-    if (toDelete.length > 0) {
-      await tx.setSlot.deleteMany({ where: { id: { in: toDelete.map((slot) => slot.id) } } });
-      deleted = toDelete.length;
-    }
+      const existingSlots = await tx.setSlot.findMany({ where: { setId: set.id } });
+      const existingByKey = new Map(existingSlots.map((slot) => [slotKey(slot), slot]));
+      const incomingKeys = new Set(template.slots.map(slotKey));
 
-    console.log(
-      `  ${fileName} -> "${template.name}": ${created} slot(s) created, ${updated} updated, ${deleted} deleted`,
-    );
-  });
+      let created = 0;
+      let updated = 0;
+      let deleted = 0;
+
+      for (const incoming of template.slots) {
+        const key = slotKey(incoming);
+        const existing = existingByKey.get(key);
+
+        if (existing) {
+          await tx.setSlot.update({
+            where: { id: existing.id },
+            data: { sortOrder: incoming.sortOrder, isKeyDate: incoming.isKeyDate },
+          });
+          updated += 1;
+        } else {
+          await tx.setSlot.create({
+            data: {
+              setId: set.id,
+              year: incoming.year,
+              mintMark: incoming.mintMark,
+              label: incoming.label,
+              sortOrder: incoming.sortOrder,
+              isKeyDate: incoming.isKeyDate,
+            },
+          });
+          created += 1;
+        }
+      }
+
+      const toDelete = existingSlots.filter((slot) => !incomingKeys.has(slotKey(slot)));
+      if (toDelete.length > 0) {
+        await tx.setSlot.deleteMany({ where: { id: { in: toDelete.map((slot) => slot.id) } } });
+        deleted = toDelete.length;
+      }
+
+      console.log(
+        `  ${fileName} -> "${template.name}": ${created} slot(s) created, ${updated} updated, ${deleted} deleted`,
+      );
+    },
+    { timeout: 30_000 },
+  );
 }
 
 async function main(): Promise<void> {
