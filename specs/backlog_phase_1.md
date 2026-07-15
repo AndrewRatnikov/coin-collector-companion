@@ -37,7 +37,7 @@ Conventions used throughout: denomination is the shared enum (never free text), 
 - [x] 3.2 Author 3 templates as JSON (start with the ones covering your real coins — e.g. Lincoln Wheat Cents, State Quarters, Morgan Dollars). Philadelphia/no-mark issues = `mintMark: null`. Cross-check each list against a second source (PRD §13)
 - [x] 3.3 Sets endpoints (`SetsModule`): `GET /sets` (`isTemplate` filter; non-templates scoped to owner), `POST /sets/:id/activate` (idempotent). ~4 files
 - [x] 3.4 UserSets endpoints (`UserSetsModule`): `GET /user-sets` → `UserSetSummary[]` with `ownedSlots`/`totalSlots`/`isComplete` — counts via two `groupBy` queries merged in memory, no per-set loop (SD D4); the % itself is derived client-side (one rounding rule, one place); `DELETE /user-sets/:id` (links survive). ~3 files
-- [ ] 3.5 e2e test: seed → activate → activate again (no dup) → list user-sets shows 0%
+- [x] 3.5 e2e test: seed → activate → activate again (no dup) → list user-sets shows 0%
 
 ## 4. Coins + auto-suggest — Days 4–5
 
