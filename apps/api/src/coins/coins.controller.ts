@@ -23,13 +23,18 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CoinsService, CoinItemView, CoinMutationResponse } from './coins.service';
 import { CreateCoinDto } from './dto/create-coin.dto';
+import { LinkCoinDto } from './dto/link-coin.dto';
 import { UpdateCoinDto } from './dto/update-coin.dto';
+import { CoinLinkResult, LinkingService } from './linking/linking.service';
 
 @ApiBearerAuth()
 @ApiTags('coins')
 @Controller('coins')
 export class CoinsController {
-  constructor(private readonly coinsService: CoinsService) {}
+  constructor(
+    private readonly coinsService: CoinsService,
+    private readonly linkingService: LinkingService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: "List the caller's coins" })
@@ -72,5 +77,34 @@ export class CoinsController {
   @ApiForbiddenResponse({ description: 'Coin belongs to another user' })
   async remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string): Promise<void> {
     await this.coinsService.remove(user.userId, id);
+  }
+
+  @Post(':id/link')
+  @ApiOperation({ summary: 'Link a coin to an open slot, displacing any coin already there' })
+  @ApiOkResponse({
+    description: 'Coin linked; replacedCoinId is set when another coin was displaced',
+  })
+  @ApiNotFoundResponse({ description: 'Coin or slot not found' })
+  @ApiForbiddenResponse({
+    description: 'Coin belongs to another user, or slot belongs to a set you have not activated',
+  })
+  link(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Body() dto: LinkCoinDto,
+  ): Promise<CoinLinkResult> {
+    return this.linkingService.link(user.userId, id, dto.slotId);
+  }
+
+  @Post(':id/unlink')
+  @ApiOperation({ summary: 'Unlink a coin from its slot, if any' })
+  @ApiOkResponse({ description: 'Coin unlinked' })
+  @ApiNotFoundResponse({ description: 'Coin not found' })
+  @ApiForbiddenResponse({ description: 'Coin belongs to another user' })
+  unlink(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ): Promise<CoinItemView> {
+    return this.linkingService.unlink(user.userId, id);
   }
 }
