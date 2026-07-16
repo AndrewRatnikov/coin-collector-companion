@@ -7,6 +7,10 @@ export class ApiError extends Error {
   constructor(
     public readonly status: number,
     message: string,
+    // Nest's ValidationPipe sends `message` as an array of per-field strings (e.g.
+    // "email must be an email"); `message` above is the joined display string, `details`
+    // keeps the raw entries so callers can map them back to individual form fields.
+    public readonly details: string[] = [message],
   ) {
     super(message);
     this.name = 'ApiError';
@@ -54,7 +58,11 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     response = await fetchWithTimeout(url, requestInit);
   }
 
-  if (response.status === 401) {
+  // A 401 only means "your session is invalid" when we actually sent a token — that's
+  // the case worth clearing it and bouncing to /login for. A 401 on an unauthenticated
+  // request (e.g. wrong password on /auth/login) is an ordinary business-logic error and
+  // must fall through to the generic handling below so the caller/form can show it inline.
+  if (response.status === 401 && token) {
     clearStoredToken();
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
@@ -68,7 +76,8 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
       body && typeof body === 'object' && 'message' in body
         ? (body as { message: unknown }).message
         : response.statusText;
-    throw new ApiError(response.status, Array.isArray(message) ? message.join(', ') : String(message));
+    const details = Array.isArray(message) ? message.map(String) : [String(message)];
+    throw new ApiError(response.status, details.join(', '), details);
   }
 
   if (response.status === 204) {
