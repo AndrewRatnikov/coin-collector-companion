@@ -54,7 +54,7 @@ Conventions used throughout: denomination is the shared enum (never free text), 
 - [x] 5.2 API client + TanStack Query: fetch wrapper against `NEXT_PUBLIC_API_URL` attaching JWT from `localStorage` as `Authorization: Bearer`; redirect-to-login on 401; generous timeout (~75 s) with one retry for Render cold starts (SD §6 — no keep-warm); `QueryClientProvider` in root layout. Data fetching per SD D1: all authenticated data fetched client-side directly against the Render API — server components render only the static shell, no RSC data fetching, no proxy layer. ~4 files
 - [x] 5.3 Route groups per SD §3: `(auth)/login|register` (redirect away if token present), `(app)/*` layout guard (no token → `/login`). ~4 files
 - [x] 5.4 Register/Login pages with inline field errors. ~4 files
-- [ ] 5.5 Set catalog page (templates + Activate button). ~3 files
+- [x] 5.5 Set catalog page (templates + Activate button). ~3 files
 - [ ] 5.6 My Sets page (completion % per set — derived client-side from `ownedSlots/totalSlots`, link to gap view). ~3 files
 - [ ] 5.7 Coin list page; delete with confirm. ~3 files
 - [ ] 5.8 Coin add/edit form (enum dropdowns for denomination/grade, "None" default for mint mark). ~3 files
