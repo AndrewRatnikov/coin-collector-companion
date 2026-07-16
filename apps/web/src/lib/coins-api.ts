@@ -1,4 +1,10 @@
-import type { CoinDto, CoinMutationResponse, Denomination, Grade } from '@coin-collector/shared';
+import type {
+  CoinDto,
+  CoinLinkResponse,
+  CoinMutationResponse,
+  Denomination,
+  Grade,
+} from '@coin-collector/shared';
 import { apiFetch } from './api-client';
 
 // Mirrors apps/api's CreateCoinDto/UpdateCoinDto (both forms send every field, so one
@@ -37,4 +43,11 @@ export function updateCoin(id: string, input: CoinInput): Promise<CoinDto | Coin
 
 export function deleteCoin(id: string): Promise<void> {
   return apiFetch<void>(`/coins/${id}`, { method: 'DELETE' });
+}
+
+export function linkCoin(id: string, slotId: string): Promise<CoinLinkResponse> {
+  return apiFetch<CoinLinkResponse>(`/coins/${id}/link`, {
+    method: 'POST',
+    body: JSON.stringify({ slotId }),
+  });
 }

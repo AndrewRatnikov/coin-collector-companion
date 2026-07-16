@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import type { CoinMutationResponse } from '@coin-collector/shared';
 import { CoinForm } from '@/components/coins/coin-form';
+import { SuggestionPanel } from '@/components/coins/suggestion-panel';
 import { ApiError } from '@/lib/api-client';
 import type { CoinInput } from '@/lib/coins-api';
 import { fieldErrorsFrom } from '@/lib/form-errors';
@@ -29,6 +31,7 @@ export default function EditCoinPage() {
   const updateMutation = useUpdateCoin();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [mutationResult, setMutationResult] = useState<CoinMutationResponse | null>(null);
 
   const coin = coins?.find((c) => c.id === id);
 
@@ -38,7 +41,15 @@ export default function EditCoinPage() {
     updateMutation.mutate(
       { id, input },
       {
-        onSuccess: () => router.replace('/coins'),
+        onSuccess: (result) => {
+          // PATCH returns the bare coin unless denomination/year/mintMark changed (SD §4);
+          // only the wrapped CoinMutationResponse carries suggestions.
+          if ('suggestions' in result && result.suggestions.length > 0) {
+            setMutationResult(result);
+          } else {
+            router.replace('/coins');
+          }
+        },
         onError: (error) => {
           if (error instanceof ApiError && error.status === 400) {
             setFieldErrors(fieldErrorsFrom(error.details, FORM_FIELDS));
@@ -70,7 +81,15 @@ export default function EditCoinPage() {
         </p>
       )}
 
-      {coin && (
+      {coin && mutationResult && (
+        <SuggestionPanel
+          coinId={mutationResult.coin.id}
+          suggestions={mutationResult.suggestions}
+          onDone={() => router.replace('/coins')}
+        />
+      )}
+
+      {coin && !mutationResult && (
         <CoinForm
           initialCoin={coin}
           onSubmit={handleSubmit}

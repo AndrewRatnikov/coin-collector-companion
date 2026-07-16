@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import type { CoinMutationResponse } from '@coin-collector/shared';
 import { CoinForm } from '@/components/coins/coin-form';
+import { SuggestionPanel } from '@/components/coins/suggestion-panel';
 import { ApiError } from '@/lib/api-client';
 import type { CoinInput } from '@/lib/coins-api';
 import { fieldErrorsFrom } from '@/lib/form-errors';
@@ -25,12 +27,19 @@ export default function NewCoinPage() {
   const createMutation = useCreateCoin();
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [mutationResult, setMutationResult] = useState<CoinMutationResponse | null>(null);
 
   function handleSubmit(input: CoinInput) {
     setFieldErrors({});
     setFormError(null);
     createMutation.mutate(input, {
-      onSuccess: () => router.replace('/coins'),
+      onSuccess: (result) => {
+        if (result.suggestions.length > 0) {
+          setMutationResult(result);
+        } else {
+          router.replace('/coins');
+        }
+      },
       onError: (error) => {
         if (error instanceof ApiError && error.status === 400) {
           setFieldErrors(fieldErrorsFrom(error.details, FORM_FIELDS));
@@ -50,13 +59,21 @@ export default function NewCoinPage() {
         <p className="text-sm text-gray-600">Add a coin to your collection.</p>
       </div>
 
-      <CoinForm
-        onSubmit={handleSubmit}
-        submitting={createMutation.isPending}
-        submitLabel="Add Coin"
-        formError={formError}
-        fieldErrors={fieldErrors}
-      />
+      {mutationResult ? (
+        <SuggestionPanel
+          coinId={mutationResult.coin.id}
+          suggestions={mutationResult.suggestions}
+          onDone={() => router.replace('/coins')}
+        />
+      ) : (
+        <CoinForm
+          onSubmit={handleSubmit}
+          submitting={createMutation.isPending}
+          submitLabel="Add Coin"
+          formError={formError}
+          fieldErrors={fieldErrors}
+        />
+      )}
 
       <Link href="/coins" className="text-sm text-blue-600 underline">
         Cancel
