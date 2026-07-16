@@ -31,7 +31,7 @@ Frontend and backend run as **separate services**, not a single Next.js app with
 ```
 coin-collector-companion/
 ├── apps/
-│   ├── web/          # Next.js (App Router) — not yet scaffolded
+│   ├── web/          # Next.js (App Router) — auth pages, sets, coins, gap view
 │   └── api/          # NestJS — auth, sets, user-sets, coins, linking
 ├── packages/
 │   └── shared/       # shared enums (Denomination, Grade) + contract types
@@ -55,16 +55,54 @@ nvm use 22
 pnpm install
 ```
 
+### Backend (`apps/api`)
+
 Copy `apps/api/.env.example` to `apps/api/.env` and fill in `DATABASE_URL` (Neon's **pooled** connection string — the host has a `-pooler` suffix) and `JWT_SECRET`.
 
 ```bash
-# Backend
+pnpm --filter @coin-collector/shared build   # apps/api's DTOs import this package
 pnpm --filter api exec prisma generate       # generate the Prisma client
 pnpm --filter api exec prisma migrate dev    # apply migrations
+pnpm --filter api exec prisma db seed        # load the set templates (Lincoln Cents, etc.)
 pnpm --filter api start:dev                  # dev server, watch mode
 
 # GET http://localhost:3000/api/v1/health once it's up
+# Swagger UI at http://localhost:3000/api/docs
 ```
+
+### Frontend (`apps/web`)
+
+Copy `apps/web/.env.example` to `apps/web/.env` — `NEXT_PUBLIC_API_URL` should point at the API's `/api/v1` prefix (`http://localhost:3000/api/v1` by default).
+
+```bash
+pnpm --filter web dev   # dev server at http://localhost:3000
+```
+
+**Running both at once:** `apps/api` and `apps/web` both default to port 3000. `next dev` will silently fall back to 3001 if 3000 is taken, but the API's CORS allowlist only ever includes `http://localhost:3000` (plus `CORS_ORIGIN` for prod) — so a frontend served from the 3001 fallback gets every request CORS-blocked. Give the API a different port instead of letting the frontend fall back:
+
+```bash
+PORT=4000 pnpm --filter api start:dev
+# then point apps/web/.env at NEXT_PUBLIC_API_URL=http://localhost:4000/api/v1
+pnpm --filter web dev   # now free to claim port 3000
+```
+
+## Testing
+
+```bash
+# Backend — unit and e2e tests (e2e boots the real AppModule against your DATABASE_URL)
+pnpm --filter api test
+pnpm --filter api test:e2e
+
+# Frontend — no automated test suite yet; typecheck + lint + build stand in for CI
+pnpm --filter web exec tsc --noEmit
+pnpm --filter web build
+
+# Whole workspace
+pnpm lint
+pnpm format:check
+```
+
+To exercise the two together manually, run both dev servers (see above) and walk through the Phase 1 acceptance path: register → activate a seeded template (e.g. Lincoln Wheat Cents) → add coins → confirm auto-suggest links them → open the gap view and check owned/missing counts.
 
 ## Available commands
 
@@ -79,14 +117,17 @@ pnpm --filter api build                # production build
 pnpm --filter api test                 # unit tests
 pnpm --filter api test:e2e             # e2e tests
 
+pnpm --filter web dev                  # Next.js dev server
+pnpm --filter web build                # production build
+pnpm --filter web start                # serve a production build
+
 pnpm --filter @coin-collector/shared build   # compile shared enums/contracts to dist
 
 pnpm --filter api exec prisma generate                    # regenerate Prisma client
 pnpm --filter api exec prisma migrate dev --name <name>   # create + apply a migration
 pnpm --filter api exec prisma migrate deploy               # apply pending migrations (CI/prod)
+pnpm --filter api exec prisma db seed                       # (re)load seed/templates/*.json
 ```
-
-Frontend commands will be added once `apps/web` is scaffolded.
 
 ## Data model (high level)
 
