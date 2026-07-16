@@ -57,7 +57,7 @@ Conventions used throughout: denomination is the shared enum (never free text), 
 - [x] 5.5 Set catalog page (templates + Activate button). ~3 files
 - [x] 5.6 My Sets page (completion % per set — derived client-side from `ownedSlots/totalSlots`, link to gap view). ~3 files
 - [x] 5.7 Coin list page; delete with confirm. ~3 files
-- [ ] 5.8 Coin add/edit form (enum dropdowns for denomination/grade, "None" default for mint mark). ~3 files
+- [x] 5.8 Coin add/edit form (enum dropdowns for denomination/grade, "None" default for mint mark). ~3 files
 - [ ] 5.9 Auto-suggest panel post-save, driven by `CoinMutationResponse.suggestions`: `[]` = no panel, 1 = one-tap confirm, >1 = candidate picker (routine path, not a fallback — PRD §4.3); `currentlyLinkedCoinId != null` ⇒ "Replace current link" label. Confirmed link invalidates `['gap', userSetId]`, `['user-sets']`, `['coins']` queries (SD §3). ~3 files
 - [ ] 5.10 Skeleton loader on first load (Render cold start, ~30–60s — PRD §10)
 

@@ -55,8 +55,14 @@ export class CreateCoinDto {
   @MaxLength(2000)
   notes?: string | null;
 
+  // A bare "YYYY-MM-DD" (what an <input type="date"> sends, and still valid per
+  // @IsDateString) isn't accepted by Prisma's DateTime field, which needs a full
+  // ISO-8601 datetime — normalized here rather than trusting every caller to pad it.
   @ApiPropertyOptional({ nullable: true })
   @IsOptional()
+  @Transform(({ value }) =>
+    typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00.000Z` : value,
+  )
   @IsDateString()
   acquiredDate?: string | null;
 }

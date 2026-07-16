@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import type { CoinDto } from '@coin-collector/shared';
 import { useCoins, useDeleteCoin } from '@/lib/hooks/use-coins';
@@ -19,9 +20,17 @@ export default function CoinsPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8">
-      <div>
-        <h1 className="text-xl font-semibold">My Coins</h1>
-        <p className="text-sm text-gray-600">Your full coin collection.</p>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold">My Coins</h1>
+          <p className="text-sm text-gray-600">Your full coin collection.</p>
+        </div>
+        <Link
+          href="/coins/new"
+          className="shrink-0 rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+        >
+          Add Coin
+        </Link>
       </div>
 
       {isLoading && <p className="text-sm text-gray-600">Loading coins…</p>}
@@ -76,13 +85,21 @@ export default function CoinsPage() {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => setConfirmingId(coin.id)}
-                    className="shrink-0 rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <Link
+                      href={`/coins/${coin.id}/edit`}
+                      className="rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700"
+                    >
+                      Edit
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmingId(coin.id)}
+                      className="rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 )}
               </li>
             );
