@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import type { CoinDto } from '@coin-collector/shared';
+import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { useCoins, useDeleteCoin } from '@/lib/hooks/use-coins';
 
 function formatDenomination(denomination: string): string {
@@ -33,7 +34,7 @@ export default function CoinsPage() {
         </Link>
       </div>
 
-      {isLoading && <p className="text-sm text-gray-600">Loading coins…</p>}
+      {isLoading && <ListSkeleton rows={5} />}
       {isError && (
         <p role="alert" className="text-sm text-red-600">
           {error instanceof Error ? error.message : 'Failed to load coins.'}

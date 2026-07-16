@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { useUserSets } from '@/lib/hooks/use-user-sets';
 
 function completionPercent(ownedSlots: number, totalSlots: number): number {
@@ -18,7 +19,7 @@ export default function MySetsPage() {
         <p className="text-sm text-gray-600">Sets you&apos;re pursuing, with progress toward completion.</p>
       </div>
 
-      {isLoading && <p className="text-sm text-gray-600">Loading your sets…</p>}
+      {isLoading && <ListSkeleton rows={4} />}
       {isError && (
         <p role="alert" className="text-sm text-red-600">
           {error instanceof Error ? error.message : 'Failed to load your sets.'}

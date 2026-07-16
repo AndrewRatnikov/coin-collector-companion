@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { useActivateSet, useTemplateSets } from '@/lib/hooks/use-sets';
 import type { SetListItem } from '@/lib/sets-api';
 
@@ -30,7 +31,7 @@ export default function SetCatalogPage() {
         <p className="text-sm text-gray-600">Activate a template to start tracking its gap view.</p>
       </div>
 
-      {isLoading && <p className="text-sm text-gray-600">Loading sets…</p>}
+      {isLoading && <ListSkeleton rows={6} />}
       {isError && (
         <p role="alert" className="text-sm text-red-600">
           {error instanceof Error ? error.message : 'Failed to load sets.'}
