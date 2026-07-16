@@ -28,6 +28,12 @@ function completionPercent(ownedSlots: number, totalSlots: number): number {
   return Math.round((ownedSlots / totalSlots) * 100);
 }
 
+// Same rule as `UserSetSummary.isComplete` (packages/shared/src/contracts.ts) — GapViewResponse
+// doesn't carry the field itself, so it's derived client-side from the same two counts.
+function isSetComplete(ownedSlots: number, totalSlots: number): boolean {
+  return totalSlots > 0 && ownedSlots === totalSlots;
+}
+
 // Groups pre-ordered slots (by sortOrder, per the API) into consecutive decade buckets —
 // pure client-side presentation (SD §4), no grouping data from the backend.
 function groupByDecade(slots: GapSlot[]): { decade: string; slots: GapSlot[] }[] {
@@ -127,7 +133,14 @@ export default function GapViewPage() {
       {gapView && (
         <>
           <div>
-            <h1 className="text-xl font-semibold">{gapView.set.name}</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold">{gapView.set.name}</h1>
+              {isSetComplete(gapView.ownedSlots, gapView.totalSlots) && (
+                <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
+                  Complete ✓
+                </span>
+              )}
+            </div>
             <p className="text-sm text-gray-600">{gapView.set.category}</p>
             <p className="mt-1 text-sm text-gray-700">
               <span className="font-medium">
