@@ -2,8 +2,11 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useState } from 'react';
 import type { GapSlot } from '@coin-collector/shared';
+import { SlotDetailPanel } from '@/components/gap/slot-detail-panel';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCoins } from '@/lib/hooks/use-coins';
 import { useGapView } from '@/lib/hooks/use-user-sets';
 
 function formatEnumLabel(value: string): string {
@@ -41,14 +44,25 @@ function groupByDecade(slots: GapSlot[]): { decade: string; slots: GapSlot[] }[]
   return groups;
 }
 
-function SlotCard({ slot }: { slot: GapSlot }) {
+function SlotCard({
+  slot,
+  selected,
+  onSelect,
+}: {
+  slot: GapSlot;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   const owned = slot.linkedCoin !== null;
 
   return (
-    <div
-      className={`rounded-lg border p-3 ${
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={`w-full rounded-lg border p-3 text-left ${
         owned ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-white'
-      }`}
+      } ${selected ? 'ring-2 ring-blue-400' : ''}`}
     >
       <p className="text-sm font-medium text-gray-900">{slotDisplayLabel(slot)}</p>
       <p
@@ -67,7 +81,7 @@ function SlotCard({ slot }: { slot: GapSlot }) {
       {owned && slot.linkedCoin?.grade && (
         <p className="mt-1 text-xs text-gray-500">{formatEnumLabel(slot.linkedCoin.grade)}</p>
       )}
-    </div>
+    </button>
   );
 }
 
@@ -87,8 +101,13 @@ function GapGridSkeleton() {
 export default function GapViewPage() {
   const { userSetId } = useParams<{ userSetId: string }>();
   const { data: gapView, isLoading, isError, error } = useGapView(userSetId);
+  const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  // Only fetch the coin list once a slot is actually opened — the gap view itself
+  // doesn't need it.
+  const { data: coins } = useCoins({ enabled: selectedSlotId !== null });
 
   const groups = gapView ? groupByDecade(gapView.slots) : [];
+  const selectedSlot = gapView?.slots.find((slot) => slot.slotId === selectedSlotId) ?? null;
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 py-8">
@@ -118,13 +137,30 @@ export default function GapViewPage() {
             </p>
           </div>
 
+          {selectedSlot && (
+            <SlotDetailPanel
+              slot={selectedSlot}
+              setDenomination={gapView.set.denomination}
+              userSetId={gapView.userSetId}
+              coins={coins}
+              onClose={() => setSelectedSlotId(null)}
+            />
+          )}
+
           <div className="flex flex-col gap-6">
             {groups.map((group) => (
               <div key={group.decade}>
                 <h2 className="mb-2 text-sm font-semibold text-gray-500">{group.decade}</h2>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                   {group.slots.map((slot) => (
-                    <SlotCard key={slot.slotId} slot={slot} />
+                    <SlotCard
+                      key={slot.slotId}
+                      slot={slot}
+                      selected={slot.slotId === selectedSlotId}
+                      onSelect={() =>
+                        setSelectedSlotId((current) => (current === slot.slotId ? null : slot.slotId))
+                      }
+                    />
                   ))}
                 </div>
               </div>

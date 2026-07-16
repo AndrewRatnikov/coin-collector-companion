@@ -1,10 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CoinInput, createCoin, deleteCoin, getCoins, linkCoin, updateCoin } from '@/lib/coins-api';
+import {
+  CoinInput,
+  createCoin,
+  deleteCoin,
+  getCoins,
+  linkCoin,
+  unlinkCoin,
+  updateCoin,
+} from '@/lib/coins-api';
 
-export function useCoins() {
+export function useCoins(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['coins'],
     queryFn: getCoins,
+    enabled: options?.enabled,
   });
 }
 
@@ -46,6 +55,20 @@ export function useLinkCoin() {
       // ['gap'] with no second key segment invalidates every ['gap', userSetId] query
       // (TanStack Query matches invalidateQueries keys by prefix) — the confirmed slot's
       // userSetId isn't known here, only its slotId (SD §3).
+      queryClient.invalidateQueries({ queryKey: ['coins'] });
+      queryClient.invalidateQueries({ queryKey: ['user-sets'] });
+      queryClient.invalidateQueries({ queryKey: ['gap'] });
+    },
+  });
+}
+
+export function useUnlinkCoin() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: unlinkCoin,
+    onSuccess: () => {
+      // Same invalidation set as useLinkCoin (SD §3) — unlinking moves a slot back to
+      // "missing" just as much as linking moves it to "owned".
       queryClient.invalidateQueries({ queryKey: ['coins'] });
       queryClient.invalidateQueries({ queryKey: ['user-sets'] });
       queryClient.invalidateQueries({ queryKey: ['gap'] });

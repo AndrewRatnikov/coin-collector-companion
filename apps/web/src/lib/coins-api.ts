@@ -51,3 +51,7 @@ export function linkCoin(id: string, slotId: string): Promise<CoinLinkResponse> 
     body: JSON.stringify({ slotId }),
   });
 }
+
+export function unlinkCoin(id: string): Promise<CoinDto> {
+  return apiFetch<CoinDto>(`/coins/${id}/unlink`, { method: 'POST' });
+}

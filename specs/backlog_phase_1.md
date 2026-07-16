@@ -64,7 +64,7 @@ Conventions used throughout: denomination is the shared enum (never free text), 
 ## 6. Gap view — Day 7 (the product; most polish goes here)
 
 - [x] 6.1 Grid/list per PRD §4.1: owned/missing via color + icon, key-date badge on missing (muted on owned), header with name, completion %, raw count ("38 / 96"). Slots come pre-ordered by `sortOrder`; grid grouping is client-side presentation (SD §4). Slot display rule: `label ?? year-mintMark`
-- [ ] 6.2 Slot interactions: missing → link-a-coin flow (search own coins, or "add new" pre-filled with year/mint); owned → linked coin detail + unlink
+- [x] 6.2 Slot interactions: missing → link-a-coin flow (search own coins, or "add new" pre-filled with year/mint); owned → linked coin detail + unlink
 - [ ] 6.3 "Complete ✓" treatment for a finished set
 - [ ] 6.4 `null` mint mark renders as year only ("1909", not "1909-P")
 

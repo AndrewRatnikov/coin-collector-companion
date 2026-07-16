@@ -18,7 +18,9 @@ const inputClass = (hasError: boolean) =>
   }`;
 
 interface CoinFormProps {
-  initialCoin?: CoinDto;
+  // Partial, not just CoinDto: a gap-view "add new coin" deep link seeds only
+  // denomination/year/mintMark, not a full coin.
+  initialCoin?: Partial<CoinDto>;
   onSubmit: (input: CoinInput) => void;
   submitting: boolean;
   submitLabel: string;
