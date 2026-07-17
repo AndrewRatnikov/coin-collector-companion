@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { CurrentUser } from '../src/auth/decorators/current-user.decorator';
-import { AuthenticatedUser } from '../src/auth/strategies/jwt.strategy';
+import type { AuthenticatedUser } from '../src/auth/strategies/jwt.strategy';
 import { PrismaService } from '../src/prisma/prisma.service';
 
 // Not built yet as of backlog 2.5 (Sets/UserSets/Coins are still empty stubs) — stand-in

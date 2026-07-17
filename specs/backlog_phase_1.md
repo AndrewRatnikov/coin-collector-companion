@@ -70,10 +70,10 @@ Conventions used throughout: denomination is the shared enum (never free text), 
 
 ## 7. Deploy + acceptance — Day 7
 
-- [ ] 7.1 Frontend to Vercel (root dir `apps/web`), `NEXT_PUBLIC_API_URL` (Render base URL incl. `/api/v1`); set `CORS_ORIGIN` on Render to the real Vercel origin and confirm
-- [ ] 7.2 Seed templates into the Neon prod DB via the seed script run from the dev machine against prod `DATABASE_URL` (the only sanctioned path — PRD §6.4; no runtime/auth surface, SD §2)
-- [ ] 7.3 GitHub Actions CI: one workflow — install → lint → typecheck → `apps/api` tests against a **Postgres service container** (the invariants live in Postgres; mocking Prisma would test nothing — SD §7). CI is a status check, not a deploy gate: Vercel/Render auto-deploy on push to `main`
-- [ ] 7.4 **Exit test on the deployed app:** register → activate Lincoln Cents template → add 5 real coins → auto-suggest links them → gap view shows 5 owned / N missing with correct completion %. Phase 1 is done when this passes; anything else waits for Phase 2
+- [x] 7.1 Frontend to Vercel (root dir `apps/web`), `NEXT_PUBLIC_API_URL` (Render base URL incl. `/api/v1`); set `CORS_ORIGIN` on Render to the real Vercel origin and confirm
+- [x] 7.2 Seed templates into the Neon prod DB via the seed script run from the dev machine against prod `DATABASE_URL` (the only sanctioned path — PRD §6.4; no runtime/auth surface, SD §2)
+- [x] 7.3 GitHub Actions CI: one workflow — install → lint → typecheck → `apps/api` tests against a **Postgres service container** (the invariants live in Postgres; mocking Prisma would test nothing — SD §7). CI is a status check, not a deploy gate: Vercel/Render auto-deploy on push to `main`
+- [x] 7.4 **Exit test on the deployed app:** register → activate Lincoln Cents template → add 5 real coins → auto-suggest links them → gap view shows 5 owned / N missing with correct completion %. Phase 1 is done when this passes; anything else waits for Phase 2
 
 ---
 
