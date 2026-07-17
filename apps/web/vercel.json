@@ -1,0 +1,3 @@
+{
+  "buildCommand": "cd ../.. && pnpm --filter @coin-collector/shared build && pnpm --filter web build"
+}
