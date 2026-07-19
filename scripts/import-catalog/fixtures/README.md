@@ -1,7 +1,7 @@
 # Import-catalog fixtures
 
-Real-data fixtures for the v2 catalog import script (`docs/backlog_week1.md` task 4.1, not yet
-built). These are intentionally in a raw, pre-sanitization shape — `mintMark`/`variety` use
+Real-data fixtures for the v2 catalog import script (`../import-coins.ts`, `docs/backlog_week1.md`
+task 4.1). These are intentionally in a raw, pre-sanitization shape — `mintMark`/`variety` use
 `null` where the source has no value, not the `''` the DB requires (`system-design_v2.md` §4.1) —
 so the import script has real messy input to normalize against, per task 1.1's intent.
 

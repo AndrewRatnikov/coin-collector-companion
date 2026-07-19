@@ -1,0 +1,18 @@
+{
+  "name": "@coin-collector/import-catalog",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Offline, resumable/idempotent catalog import from open sources (docs/system-design_v2.md §4.3) — not part of the API's request path.",
+  "scripts": {
+    "import": "ts-node --transpile-only import-coins.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "prisma": "^6.19.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}

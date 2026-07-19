@@ -32,8 +32,8 @@ Neon Auth turned out to still be in Beta, so the originally-planned time-boxed J
 
 ## Day 4 PM — Catalog import script
 
-- [ ] 4.1 Build `scripts/import-catalog`: parse the confirmed source(s) for the US-cents scope, normalize into the `coins` shape, sanitize `mintMark`/`variety` (any of `null`/`undefined`/`"None"`/`"N/A"`/whitespace → the literal `''` before it reaches Prisma), skip (or omit `imageUrl` for) any image whose license isn't public-domain-tagged, upsert deduped on the natural key, resumable + idempotent (SD §4.3).
-- [ ] 4.2 Run the script against the Neon dev DB using Day 1's fixtures. Spot-check a handful of no-mint-mark rows directly in the DB (not through the API) to confirm they're all stored as `''`, not a mix of placeholders.
+- [x] 4.1 Build `scripts/import-catalog`: parse the confirmed source(s) for the US-cents scope, normalize into the `coins` shape, sanitize `mintMark`/`variety` (any of `null`/`undefined`/`"None"`/`"N/A"`/whitespace → the literal `''` before it reaches Prisma), skip (or omit `imageUrl` for) any image whose license isn't public-domain-tagged, upsert deduped on the natural key, resumable + idempotent (SD §4.3). Done: [scripts/import-catalog/import-coins.ts](../scripts/import-catalog/import-coins.ts) + `lib/sanitize.ts`/`lib/image.ts`/`lib/types.ts`; see `CLAUDE.md`'s changelog entry for the full record, including why it's its own small workspace package rather than reaching into `apps/api`'s node_modules.
+- [x] 4.2 Run the script against the Neon dev DB using Day 1's fixtures. Spot-check a handful of no-mint-mark rows directly in the DB (not through the API) to confirm they're all stored as `''`, not a mix of placeholders. Done: ran against the real Neon dev DB — 142 created on first run, 0 created/142 updated on re-run (idempotent). `psql` spot-check: 142 total rows, 0 rows with `mintMark`/`variety` `NULL`, 52 rows with `mintMark = ''` (the no-mint-mark Philadelphia coins), all four 1909 natural-key combinations present and distinct.
 
 ## Day 5 — Catalog endpoints + wrap-up
 

@@ -179,6 +179,25 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  scripts/import-catalog:
+    dependencies:
+      '@prisma/client':
+        specifier: ^6.19.3
+        version: 6.19.3(prisma@6.19.3(typescript@5.9.3))(typescript@5.9.3)
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.2
+      prisma:
+        specifier: ^6.19.3
+        version: 6.19.3(typescript@5.9.3)
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@24.13.2)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
 packages:
 
   '@alloc/quick-lru@5.2.0':
