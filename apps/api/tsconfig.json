@@ -6,6 +6,7 @@
     "removeComments": true,
     "rootDir": ".",
     "outDir": "./dist",
-    "incremental": true
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
   }
 }
