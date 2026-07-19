@@ -23,7 +23,10 @@ async function validateBody(body: unknown) {
 }
 
 describe('CreateSetDto (criterion #2)', () => {
-  const validUuid = '11111111-1111-1111-1111-111111111111';
+  // Must be a real RFC 4122 UUID (correct version/variant nibbles), not just UUID-shaped —
+  // class-validator's @IsUUID() checks the variant nibble (must be 8/9/a/b), and a fixture
+  // like '11111111-1111-1111-1111-111111111111' fails that even though it looks like a UUID.
+  const validUuid = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
 
   it('passes with just a name (blank-set shape)', async () => {
     const errors = await validateBody({ name: 'My Set' });
