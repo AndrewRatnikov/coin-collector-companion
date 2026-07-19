@@ -1,16 +1,7 @@
-// v2 data model pending — see docs/system-design_v2.md §4.1 for the target shape
-// (coins, canonical_sets, canonical_set_coins, user_sets, user_set_coins, ownership).
-// The v1 models (CollectionSet, SetSlot, UserSet, CoinItem) were removed from this file
-// as part of the v2 prep pass, but prisma/migrations/ still holds the migration that
-// created them against the real Neon DB — don't hand-edit or delete that history. The next
-// `prisma migrate dev` (docs/backlog_week1.md Day 2) will diff this file against that
-// history and generate one migration that drops the remaining v1 tables and creates the
-// v2 catalog/set/ownership ones.
-//
-// User is back early (ahead of the rest of Day 2) because auth was decided as hand-rolled
-// JWT rather than Neon Auth (CLAUDE.md Architecture section) — Neon Auth would have owned
-// its own user table, hand-rolled JWT needs this one. No relations yet: user_sets/ownership
-// don't exist yet, so there's nothing to point a FK at until Day 2 builds them.
+// v2 data model — see docs/system-design_v2.md §4.1 for the full rationale behind each
+// constraint below (natural-key uniqueness on Coin, why mintMark/variety default to ''
+// instead of null, why the clone FKs are onDelete: SetNull, why Ownership has no FK to
+// UserSet/UserSetCoin at all).
 
 generator client {
   provider = "prisma-client-js"
@@ -26,4 +17,92 @@ model User {
   email        String   @unique
   passwordHash String
   createdAt    DateTime @default(now())
+
+  userSets   UserSet[]
+  ownerships Ownership[]
+}
+
+model Coin {
+  id            String   @id @default(uuid())
+  numistaTypeId String? // enrichment only, never part of identity — see §4.1
+  country       String
+  denomination  String
+  year          Int
+  mintMark      String   @default("") // never null — see §4.1 NULL-distinctness note
+  variety       String   @default("")
+  name          String
+  imageUrl      String?
+  imageSource   String?
+  imageLicense  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  canonicalSetCoins CanonicalSetCoin[]
+  userSetCoins      UserSetCoin[]
+  ownerships        Ownership[]
+
+  @@unique([country, denomination, year, mintMark, variety])
+}
+
+model CanonicalSet {
+  id              String  @id @default(uuid())
+  name            String
+  description     String?
+  source          String // "admin" | "seed-template"
+  templateVersion String
+
+  coins    CanonicalSetCoin[]
+  userSets UserSet[]          @relation("ClonedFromCanonical")
+}
+
+model CanonicalSetCoin {
+  id             String @id @default(uuid())
+  canonicalSetId String
+  coinId         String
+  position       Int
+
+  canonicalSet CanonicalSet @relation(fields: [canonicalSetId], references: [id], onDelete: Cascade)
+  coin         Coin         @relation(fields: [coinId], references: [id])
+
+  @@unique([canonicalSetId, coinId])
+}
+
+model UserSet {
+  id                    String   @id @default(uuid())
+  userId                String
+  name                  String
+  clonedFromCanonicalId String?
+  clonedFromUserSetId   String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user                User          @relation(fields: [userId], references: [id])
+  clonedFromCanonical CanonicalSet? @relation("ClonedFromCanonical", fields: [clonedFromCanonicalId], references: [id], onDelete: SetNull)
+  clonedFromUserSet   UserSet?      @relation("ClonedFromUserSet", fields: [clonedFromUserSetId], references: [id], onDelete: SetNull)
+  clones              UserSet[]     @relation("ClonedFromUserSet")
+
+  coins UserSetCoin[]
+}
+
+model UserSetCoin {
+  id        String @id @default(uuid())
+  userSetId String
+  coinId    String
+  position  Int
+
+  userSet UserSet @relation(fields: [userSetId], references: [id], onDelete: Cascade)
+  coin    Coin    @relation(fields: [coinId], references: [id])
+
+  @@unique([userSetId, coinId])
+}
+
+model Ownership {
+  userId  String
+  coinId  String
+  ownedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  coin Coin @relation(fields: [coinId], references: [id])
+
+  @@id([userId, coinId])
 }
