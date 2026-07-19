@@ -15,10 +15,13 @@ history (`git show 4c7795a~1:seed/templates/lincoln-wheat-cents.json`) rather th
 since those facts don't change between v1 and v2 — only the schema shape does.
 
 **Not yet included: images.** No `imageUrl`/`imageSource`/`imageLicense` data — Wikimedia Commons
-images need per-image license vetting (public-domain or attribution-free only, per
-`system-design_v2.md` §4.3), which is separate research from the identity data pulled here.
+images need per-image license vetting via the `extmetadata` gate described in
+[docs/catalog-data-licensing.md](../../../docs/catalog-data-licensing.md) §2, which is separate
+work from the identity data pulled here.
 
-**Still open:** backlog task 0.2 (license/ToS check for Wikipedia mintage data and Commons images)
-is a day-one gate per `docs/backlog_week1.md` — confirm that before this fixture is treated as
-cleared for the real import script, even though the identity facts here (which year/mint-mark
-combinations exist) are historical facts and not copyrightable expression on their own.
+**Resolved:** backlog task 0.2 (license/ToS check) is done — see
+[docs/catalog-data-licensing.md](../../../docs/catalog-data-licensing.md) for the full check
+against Wikipedia's, Commons', and the US Mint's actual policies. This fixture's identity data is
+cleared: Lincoln Wheat Cents (1909–1958) are pre-1989, so the coin designs are public domain by
+rule, and the year/mint-mark/variety facts pulled from Wikipedia aren't independently copyrightable
+regardless. Images still need the per-file `extmetadata` check before being added to this fixture.
