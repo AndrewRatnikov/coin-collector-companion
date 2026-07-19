@@ -15,7 +15,7 @@ Conventions: no runtime external calls anywhere in the API request path (SD §2.
 
 ## Day 1 PM — Real fixtures
 
-- [ ] 1.1 Pull real data from the confirmed source(s) for the initial catalog scope (US cents) and save it as fixtures under `scripts/import-catalog/fixtures/` in the repo — so the schema below gets checked against real data shapes, not assumptions.
+- [x] 1.1 Pull real data from the confirmed source(s) for the initial catalog scope (US cents) and save it as fixtures under `scripts/import-catalog/fixtures/` in the repo — so the schema below gets checked against real data shapes, not assumptions. Done: [scripts/import-catalog/fixtures/us-cents-lincoln-wheat.json](../scripts/import-catalog/fixtures/us-cents-lincoln-wheat.json) (142 coins, 1909–1958), recovered from the v1 seed template rather than re-derived since the underlying facts don't change — see `CLAUDE.md`'s changelog entry for the full record.
 
 ## Day 2 — Prisma schema v2 + migration
 
