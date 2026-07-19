@@ -6,6 +6,7 @@ import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { CatalogModule } from './catalog/catalog.module';
+import { SetsModule } from './sets/sets.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 
 // v2 domain modules (Catalog, Sets, Collection) land per docs/build-roadmap.md — Auth is
@@ -19,6 +20,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     PrismaModule,
     AuthModule,
     CatalogModule,
+    SetsModule,
   ],
   controllers: [HealthController],
   providers: [
