@@ -1,5 +1,3 @@
-import { clearStoredToken, getStoredToken } from './auth-token';
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const REQUEST_TIMEOUT_MS = 75_000; // Render cold start is ~30-60s (SD §6)
 
@@ -35,6 +33,10 @@ function isColdStartFailure(error: unknown): boolean {
   return (error instanceof DOMException && error.name === 'AbortError') || error instanceof TypeError;
 }
 
+// Auth header attachment (previously a localStorage JWT, per v1) was removed here pending
+// the v2 auth decision (Neon Auth vs. hand-rolled JWT fallback — docs/build-roadmap.md Week
+// 1 spike). Re-add token attachment (and a 401 -> clear-session -> redirect path) once that
+// lands, rather than guessing at the shape now.
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!API_BASE_URL) {
     throw new Error('NEXT_PUBLIC_API_URL is not set');
@@ -42,10 +44,6 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
 
   const headers = new Headers(init.headers);
   headers.set('Content-Type', 'application/json');
-  const token = getStoredToken();
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
-  }
 
   const url = `${API_BASE_URL}${path}`;
   const requestInit: RequestInit = { ...init, headers };
@@ -56,18 +54,6 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   } catch (error) {
     if (!isColdStartFailure(error)) throw error;
     response = await fetchWithTimeout(url, requestInit);
-  }
-
-  // A 401 only means "your session is invalid" when we actually sent a token — that's
-  // the case worth clearing it and bouncing to /login for. A 401 on an unauthenticated
-  // request (e.g. wrong password on /auth/login) is an ordinary business-logic error and
-  // must fall through to the generic handling below so the caller/form can show it inline.
-  if (response.status === 401 && token) {
-    clearStoredToken();
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
-    }
-    throw new ApiError(401, 'Unauthorized');
   }
 
   if (!response.ok) {

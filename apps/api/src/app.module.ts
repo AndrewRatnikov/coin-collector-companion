@@ -4,27 +4,17 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
-import { AuthModule } from './auth/auth.module';
-import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
-import { SetsModule } from './sets/sets.module';
-import { UserSetsModule } from './user-sets/user-sets.module';
-import { CoinsModule } from './coins/coins.module';
 
+// v2 domain modules (Auth, Catalog, Sets, Collection) land per docs/build-roadmap.md —
+// this is the clean-slate stub after the v1 modules (Auth, Sets, UserSets, Coins) were
+// removed; see CLAUDE.md's Project status pivot note.
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 100 }]),
     PrismaModule,
-    AuthModule,
-    SetsModule,
-    UserSetsModule,
-    CoinsModule,
   ],
   controllers: [HealthController],
-  providers: [
-    // SD D2 guard order: ThrottlerGuard -> JwtAuthGuard -> ValidationPipe
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
-    { provide: APP_GUARD, useClass: JwtAuthGuard },
-  ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

@@ -60,9 +60,6 @@ jobs:
       - name: Apply migrations
         run: pnpm --filter api exec prisma migrate deploy
 
-      - name: Seed templates
-        run: pnpm --filter api exec prisma db seed
-
       - name: Unit tests
         run: pnpm --filter api test
 
