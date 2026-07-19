@@ -1,10 +1,16 @@
 // v2 data model pending — see docs/system-design_v2.md §4.1 for the target shape
 // (coins, canonical_sets, canonical_set_coins, user_sets, user_set_coins, ownership).
-// The v1 models (User, CollectionSet, SetSlot, UserSet, CoinItem) were removed from this
-// file as part of the v2 prep pass, but prisma/migrations/ still holds the migration that
+// The v1 models (CollectionSet, SetSlot, UserSet, CoinItem) were removed from this file
+// as part of the v2 prep pass, but prisma/migrations/ still holds the migration that
 // created them against the real Neon DB — don't hand-edit or delete that history. The next
 // `prisma migrate dev` (docs/backlog_week1.md Day 2) will diff this file against that
-// history and generate one migration that drops the v1 tables and creates the v2 ones.
+// history and generate one migration that drops the remaining v1 tables and creates the
+// v2 catalog/set/ownership ones.
+//
+// User is back early (ahead of the rest of Day 2) because auth was decided as hand-rolled
+// JWT rather than Neon Auth (CLAUDE.md Architecture section) — Neon Auth would have owned
+// its own user table, hand-rolled JWT needs this one. No relations yet: user_sets/ownership
+// don't exist yet, so there's nothing to point a FK at until Day 2 builds them.
 
 generator client {
   provider = "prisma-client-js"
@@ -13,4 +19,11 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
 }

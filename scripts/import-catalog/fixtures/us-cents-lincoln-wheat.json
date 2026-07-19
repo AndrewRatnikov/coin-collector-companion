@@ -1,0 +1,872 @@
+{
+  "$schema-note": "Raw source-shaped fixture, pre-sanitization. mintMark/variety use null (no value) here on purpose \u2014 the import script (backlog Day 4, task 4.1) is responsible for normalizing null/undefined/placeholder strings to the DB-required empty string per system-design_v2.md #4.1/#4.3.",
+  "sources": [
+    {
+      "type": "coin identity / mint-mark-by-year data",
+      "origin": "Wikipedia \"Lincoln cent\" article (en.wikipedia.org/wiki/Lincoln_cent) plus standard Red Book (Whitman \"A Guide Book of United States Coins\") mint-mark-by-year cross-reference",
+      "license": "Wikipedia text is CC BY-SA 4.0; the identity facts reproduced here (which year/mint-mark/variety combinations exist) are historical facts, not copyrightable expression -- no attribution obligation for the facts themselves, though the app footer still credits Wikipedia generally per PRD/system-design (task 5.2)",
+      "note": "This list was originally authored and verified during the v1 build (see CLAUDE.md changelog, backlog item 3.2) and recovered from git history (commit 4c7795a~1:seed/templates/lincoln-wheat-cents.json) rather than re-derived from scratch, since the underlying year/mint-mark/variety facts do not change between v1 and v2 -- only the schema shape holding them does."
+    }
+  ],
+  "country": "USA",
+  "denomination": "Cent",
+  "name": "Lincoln Wheat Cent",
+  "yearRange": [
+    1909,
+    1958
+  ],
+  "coins": [
+    {
+      "year": 1909,
+      "mintMark": null,
+      "variety": "VDB",
+      "isKeyDate": false
+    },
+    {
+      "year": 1909,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1909,
+      "mintMark": "S",
+      "variety": "VDB",
+      "isKeyDate": true
+    },
+    {
+      "year": 1909,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": true
+    },
+    {
+      "year": 1910,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1910,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1911,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1911,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1911,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1912,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1912,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1912,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1913,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1913,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1913,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1914,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1914,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": true
+    },
+    {
+      "year": 1914,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1915,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1915,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1915,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1916,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1916,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1916,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1917,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1917,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1917,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1918,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1918,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1918,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1919,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1919,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1919,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1920,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1920,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1920,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1921,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1921,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1922,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1922,
+      "mintMark": null,
+      "variety": "No D",
+      "isKeyDate": true
+    },
+    {
+      "year": 1923,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1923,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1924,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1924,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": true
+    },
+    {
+      "year": 1924,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1925,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1925,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1925,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1926,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1926,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1926,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1927,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1927,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1927,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1928,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1928,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1928,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1929,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1929,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1929,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1930,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1930,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1930,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1931,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1931,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1931,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": true
+    },
+    {
+      "year": 1932,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1932,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1933,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1933,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1934,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1934,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1935,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1935,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1935,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1936,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1936,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1936,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1937,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1937,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1937,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1938,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1938,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1938,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1939,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1939,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1939,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1940,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1940,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1940,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1941,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1941,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1941,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1942,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1942,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1942,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1943,
+      "mintMark": null,
+      "variety": "Steel",
+      "isKeyDate": false
+    },
+    {
+      "year": 1943,
+      "mintMark": "D",
+      "variety": "Steel",
+      "isKeyDate": false
+    },
+    {
+      "year": 1943,
+      "mintMark": "S",
+      "variety": "Steel",
+      "isKeyDate": false
+    },
+    {
+      "year": 1944,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1944,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1944,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1945,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1945,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1945,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1946,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1946,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1946,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1947,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1947,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1947,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1948,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1948,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1948,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1949,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1949,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1949,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1950,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1950,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1950,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1951,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1951,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1951,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1952,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1952,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1952,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1953,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1953,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1953,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1954,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1954,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1954,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1955,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1955,
+      "mintMark": null,
+      "variety": "Doubled Die",
+      "isKeyDate": true
+    },
+    {
+      "year": 1955,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1955,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1956,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1956,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1957,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1957,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1958,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false
+    },
+    {
+      "year": 1958,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false
+    }
+  ]
+}

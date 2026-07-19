@@ -11,7 +11,7 @@
 **Decisions locked in this pass:**
 | Area | Decision |
 |---|---|
-| Auth | Neon Auth |
+| Auth | Hand-rolled JWT (bcrypt + Passport), restored from v1 — Neon Auth passed over for being still in Beta |
 | ORM | Prisma (driver adapter for Neon serverless) |
 | API style | REST |
 | Catalog data source | Open data for v1 — Wikipedia mintage lists / US Mint publications, Wikimedia Commons images. Numista demoted to an optional, permission-gated future enrichment layer (§4.3), not a v1 dependency |
@@ -35,7 +35,7 @@ coin-collector-companion/
 │       ├── prisma/
 │       │   └── schema.prisma
 │       └── src/
-│           ├── auth/        # JWT guard, JWKS verification against Neon Auth
+│           ├── auth/        # bcrypt + Passport JWT strategy, restored from v1 (§4.2)
 │           ├── catalog/     # coin catalog — served from Postgres only, no runtime external calls
 │           ├── sets/        # canonical + user sets, gap view
 │           └── collection/  # per-user ownership records
@@ -62,7 +62,7 @@ coin-collector-companion/
                                   ▼
                      ┌─────────────────────────┐
                      │  NestJS API (Render)     │
-                     │  - AuthGuard (JWKS)      │
+                     │  - AuthGuard (bcrypt/JWT)│
                      │  - CatalogController     │
                      │  - SetsController        │
                      │  - CollectionController  │
@@ -73,7 +73,7 @@ coin-collector-companion/
                      ┌──────────────┐
                      │ Neon Postgres │
                      │ (catalog,     │
-                     │ sets, users*, │
+                     │ sets, users,  │
                      │ ownership)    │
                      └──────▲───────┘
                             │  offline, manually-run
@@ -84,13 +84,9 @@ coin-collector-companion/
                      │ (open sources; Numista │
                      │ optional/future)       │
                      └────────────────────────┘
-                               ▲
-                     ┌─────────┴─────────┐
-                     │ Neon Auth (JWKS,   │
-                     │ session, users)    │
-                     └────────────────────┘
 ```
-`*` Neon Auth manages its own user table (`neon_auth` schema) alongside the app schema in the same Neon project — no separate identity store to run.
+
+Auth has no separate box: `users` is an app-owned table in the same Postgres database, and the API verifies its own JWTs against a local `JWT_SECRET` — no external auth service, no JWKS fetch, nothing in this diagram to run beyond what's already here.
 
 The import script is a standalone offline tool, not a component of the running API service — it's run manually ahead of deploy/seed, writes directly into Postgres via Prisma, and the API never calls out to it or to any external catalog source at request time.
 
@@ -165,6 +161,13 @@ Route protection sits in Next.js middleware: it checks the Neon Auth session and
 ### 4.1 Data model
 
 ```
+users
+  id (pk), email (unique), password_hash, created_at
+  -- restored ahead of the rest of this schema (§4.2) because auth is hand-rolled JWT, not
+  -- Neon Auth — Neon Auth would have owned this table itself, hand-rolled JWT needs it here.
+  -- No relations declared yet below; user_sets.user_id/ownership.user_id get wired as real
+  -- FKs to this table once those tables are actually built (Day 2, not done as of this note).
+
 coins
   id (pk), numista_type_id (nullable, NOT unique — enrichment attribute, not identity),
   country, denomination, year, mint_mark (NOT NULL, default ''), variety (NOT NULL, default ''),
@@ -182,7 +185,7 @@ canonical_set_coins  (join: canonical_sets ↔ coins; position (int) — explici
                      @@unique([canonicalSetId, coinId])
 
 user_sets
-  id (pk), user_id (Neon Auth user id), name,
+  id (pk), user_id (FK → users.id, not yet wired — table doesn't exist yet), name,
   cloned_from_canonical_id (nullable, onDelete: SetNull),
   cloned_from_user_set_id (nullable, onDelete: SetNull),
   created_at, updated_at
@@ -193,7 +196,7 @@ user_set_coins       (join: user_sets ↔ coins; position (int) — explicit sor
                      @@unique([userSetId, coinId])
 
 ownership
-  user_id, coin_id (composite pk), owned_at
+  user_id (FK → users.id, not yet wired — table doesn't exist yet), coin_id (composite pk), owned_at
 ```
 
 Notes:
@@ -213,14 +216,17 @@ Notes:
 - `image_source`/`image_license` are recorded per coin, not assumed globally — see §4.3 for why (Wikimedia Commons hosts images under more than one license, and only some are usable without per-image attribution UI). Both nullable since not every coin will have a usable image.
 - `grade` enum exists in `packages/shared` as a deliberate scaffold, but no `grade` column is added to `ownership` yet — nothing references it until v2, so there's no dead schema to migrate around later.
 
-### 4.2 Auth flow (Neon Auth)
+### 4.2 Auth flow (hand-rolled JWT)
 
-1. User signs in on `apps/web` via Neon Auth's SDK (Stack Auth under the hood).
-2. Web calls `authClient.token()` before each authenticated API request, attaches as Bearer token.
-3. NestJS `AuthGuard` fetches (and caches in-memory, short TTL) the JWKS from Neon Auth's endpoint, verifies signature (EdDSA) and issuer, extracts `user_id`.
-4. Anonymous routes skip the guard entirely — no token means no `user_id`, and the controller simply doesn't scope the query.
+Decided over Neon Auth because Neon Auth is still in Beta — restored directly from the v1 build (`CLAUDE.md` backlog 2.1–2.5) rather than designed fresh, since that module already existed and worked. `apps/api/src/auth`:
 
-This keeps the API stateless: no server-side sessions, nothing to share across Render instances if the deployment ever scales beyond one.
+1. `POST /auth/register` — `class-validator` DTO (email trimmed/lowercased, password min length 8), bcrypt cost 10, Prisma `P2002` unique-violation mapped to 409 rather than a separate existence check (avoids a TOCTOU gap).
+2. `POST /auth/login` — verifies the password against the stored bcrypt hash, returns `{ accessToken }` (an HS256 JWT, `{ sub, email }` payload, 7-day expiry, signed with `JWT_SECRET`).
+3. Web attaches the token as `Authorization: Bearer <jwt>` on every authenticated request.
+4. NestJS `JwtAuthGuard` (wraps Passport's `AuthGuard('jwt')`) verifies the token's signature against `JWT_SECRET` — no external call, no JWKS fetch. Routes opt out via a `@Public()` decorator (checked through Nest's `Reflector`); everything else requires a valid token by default, registered as a global `APP_GUARD` after `ThrottlerGuard`.
+5. Anonymous/`@Public()` routes skip the guard entirely — no token means no `user_id`, and the controller simply doesn't scope the query.
+
+This keeps the API stateless (no server-side sessions) and, unlike the Neon Auth flow it replaces, has no runtime external dependency at all — arguably a cleaner fit for the "no runtime external calls" principle applied everywhere else in this doc (§2.3, §4.3) than JWKS verification against an external endpoint would have been.
 
 ### 4.3 Catalog import (offline, scoped, from open sources)
 
@@ -307,7 +313,7 @@ Every `user_set` is public in v1 — there's no `is_public` column and no permis
 
 | Decision | Chosen | Alternative | Why |
 |---|---|---|---|
-| Auth | Neon Auth | Email/password via Auth.js | Already inside the Neon project, JWKS-based verification is a clean fit for a separate NestJS backend, no extra service to run or secrets to manage |
+| Auth | Hand-rolled JWT (bcrypt + Passport) | Neon Auth | Already built and verified working under v1, fully self-contained (no runtime dependency on an external service's uptime, consistent with the "no runtime external calls" principle used everywhere else in this doc), and avoids tying a solo one-week timeline to validating an unfamiliar integration against a service still in Beta. Neon Auth's original appeal (no extra service to run, JWKS fits a separate backend cleanly) remains true — worth revisiting once it's out of Beta |
 | ORM | Prisma | Drizzle | Better-known by hiring managers reviewing a portfolio project, mature NestJS integration patterns, migrations are simpler to reason about solo. Drizzle's lighter runtime isn't a meaningful win at this scale — worth revisiting only if cold-start latency from Prisma's engine becomes noticeable |
 | API style | REST | GraphQL | Domain is resource-shaped (catalog, sets, collection) with no deep nested-query needs; GraphQL's flexibility isn't earning its complexity here |
 | Catalog data source | Open data (Wikipedia/US Mint/Wikimedia Commons) | Numista API | Free, no ToS extraction restriction, no per-request quota to manage for v1; Numista remains available later as a permission-gated enrichment layer once genuinely needed, not blocked on, just deferred |
