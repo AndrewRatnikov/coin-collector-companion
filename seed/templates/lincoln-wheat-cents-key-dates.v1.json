@@ -1,0 +1,55 @@
+{
+  "name": "Lincoln Wheat Cent Key Dates",
+  "description": "The recognized key dates of the Lincoln Wheat Cent series (1909-1958) -- the low-mintage/error coins collectors specifically hunt for.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1909,
+      "mintMark": "S",
+      "variety": "VDB"
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1909,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1914,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1922,
+      "mintMark": "",
+      "variety": "No D"
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1924,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1931,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1955,
+      "mintMark": "",
+      "variety": "Doubled Die"
+    }
+  ]
+}
