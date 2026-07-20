@@ -3,6 +3,7 @@ import type { UserSet } from '@prisma/client';
 import type {
   CanonicalSetDetail,
   CanonicalSetSummary,
+  GapViewResponse,
   PaginatedResponse,
   UserSetCoinSummary,
   UserSetDetail,
@@ -161,6 +162,33 @@ export class SetsService {
       throw new NotFoundException('Set not found');
     }
     return set;
+  }
+
+  async getGaps(callerId: string, setId: string): Promise<GapViewResponse> {
+    const set = await this.prisma.userSet.findUnique({
+      where: { id: setId },
+      include: {
+        coins: {
+          orderBy: { position: 'asc' },
+          include: { coin: { include: { ownerships: { where: { userId: callerId } } } } },
+        },
+      },
+    });
+    if (!set) {
+      throw new NotFoundException('Set not found');
+    }
+
+    const totalCount = set.coins.length;
+    const slots = set.coins.map((usc) => ({
+      id: usc.id,
+      position: usc.position,
+      coin: usc.coin,
+      owned: usc.coin.ownerships.length > 0,
+    }));
+    const ownedCount = slots.filter((s) => s.owned).length;
+    const completionPercent = totalCount === 0 ? 0 : Math.round((ownedCount / totalCount) * 100);
+
+    return { setId, ownedCount, totalCount, completionPercent, slots };
   }
 
   private async getOwnedSetOrThrow(userId: string, id: string): Promise<UserSet> {
