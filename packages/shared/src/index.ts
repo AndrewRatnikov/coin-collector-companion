@@ -23,3 +23,23 @@ export interface PaginatedResponse<T> {
   limit: number;
   total: number;
 }
+
+export interface UserSetSummary {
+  id: string;
+  userId: string;
+  name: string;
+  clonedFromCanonicalId: string | null;
+  clonedFromUserSetId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CloneFromRequest {
+  type: 'canonical' | 'user';
+  id: string;
+}
+
+export interface CreateSetRequestBody {
+  name: string;
+  cloneFrom?: CloneFromRequest;
+}
