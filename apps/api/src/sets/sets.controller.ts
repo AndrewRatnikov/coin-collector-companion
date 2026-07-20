@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swa
 import type {
   CanonicalSetDetail,
   CanonicalSetSummary,
+  GapViewResponse,
   PaginatedResponse,
   UserSetCoinSummary,
   UserSetDetail,
@@ -104,5 +105,18 @@ export class SetsController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<void> {
     return this.setsService.remove(user.userId, id);
+  }
+
+  @Get(':id/gaps')
+  @ApiOperation({
+    summary:
+      'Coin list with owned/not-owned status and completion %, computed against the caller — not owner-restricted',
+  })
+  @ApiOkResponse({ description: 'Gap view for the requested set' })
+  getGaps(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<GapViewResponse> {
+    return this.setsService.getGaps(user.userId, id);
   }
 }
