@@ -1,0 +1,1000 @@
+{
+  "name": "Lincoln Wheat Cents",
+  "description": "Every Lincoln Wheat Cent year/mint-mark/variety combination minted 1909-1958.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1909,
+      "mintMark": "",
+      "variety": "VDB"
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1909,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1909,
+      "mintMark": "S",
+      "variety": "VDB"
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1909,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1910,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1910,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1911,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1911,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1911,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1912,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1912,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1912,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1913,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1913,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1913,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1914,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1914,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1914,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1915,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1915,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1915,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1916,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1916,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1916,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1917,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1917,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1917,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1918,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1918,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1918,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1919,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1919,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1919,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1920,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1920,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1920,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1921,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1921,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1922,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1922,
+      "mintMark": "",
+      "variety": "No D"
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1923,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1923,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1924,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1924,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1924,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1925,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1925,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1925,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1926,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1926,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1926,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1927,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1927,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1927,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1928,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1928,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1928,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1929,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1929,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1929,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1930,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1930,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1930,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1931,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1931,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1931,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1932,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1932,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1933,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1933,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1934,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1934,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1935,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1935,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1935,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1936,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1936,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1936,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1937,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1937,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1937,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1938,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1938,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1938,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1939,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1939,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1939,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1940,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1940,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1940,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1941,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1941,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1941,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1942,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1942,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1942,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1943,
+      "mintMark": "",
+      "variety": "Steel"
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1943,
+      "mintMark": "D",
+      "variety": "Steel"
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1943,
+      "mintMark": "S",
+      "variety": "Steel"
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1944,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1944,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1944,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1945,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1945,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1945,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1946,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1946,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1946,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1947,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1947,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1947,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1948,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1948,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1948,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1949,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1949,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1949,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1950,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1950,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1950,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1951,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1951,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1951,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1952,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1952,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1952,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1953,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1953,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1953,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1954,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1954,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1954,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1955,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1955,
+      "mintMark": "",
+      "variety": "Doubled Die"
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1955,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1955,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1956,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1956,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1957,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1957,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1958,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Cent",
+      "year": 1958,
+      "mintMark": "D",
+      "variety": ""
+    }
+  ]
+}
