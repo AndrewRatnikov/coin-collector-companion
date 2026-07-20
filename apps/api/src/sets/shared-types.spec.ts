@@ -1,11 +1,14 @@
 /**
  * Tests for: shared package types (UserSetSummary, CloneFromRequest, CreateSetRequestBody,
  * CanonicalSetSummary, CanonicalSetCoinItem, CanonicalSetDetail, UserSetCoinItem, UserSetDetail,
- * UserSetCoinSummary, PatchSetCoinsRequest)
+ * UserSetCoinSummary, PatchSetCoinsRequest, OwnershipItem, SetOwnershipRequest,
+ * SetOwnershipResponse, GapSlot, GapViewResponse)
  * Contract source: runs/run_20260719_200109/plan.md § Interface Contract (Shared types)
  *                   runs/run_20260720_070901/plan.md § Interface Contract (Shared types)
+ *                   runs/run_20260720_142942/plan.md § Interface Contract (Shared types)
  * Covers criteria: #11 (from runs/run_20260719_200109/prd.md)
  *                   #17 (from runs/run_20260720_070901/prd.md)
+ *                   #12 (from runs/run_20260720_142942/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -13,10 +16,10 @@
  * config (apps/api/package.json's "jest" block) has no `isolatedModules` override, so
  * ts-jest type-checks every file it compiles — a type-only usage that doesn't compile
  * against the real packages/shared exports fails this test file the same way a missing or
- * renamed export would fail `pnpm --filter api build`. This is what gives criterion #17 a
- * real, falsifiable signal from `pnpm --filter api test` rather than deferring it entirely
- * to the separate typecheck/build steps (pattern established Week 2 Day 1 per test-reviewer
- * feedback, retry 1/2).
+ * renamed export would fail `pnpm --filter api build`. This is what gives criterion #12
+ * (run_20260720_142942) a real, falsifiable signal from `pnpm --filter api test` rather than
+ * deferring it entirely to the separate typecheck/build steps (pattern established Week 2
+ * Day 1 per test-reviewer feedback, retry 1/2, and reused for every shared-type addition since).
  */
 
 import type {
@@ -31,6 +34,11 @@ import type {
   UserSetCoinSummary,
   PatchSetCoinsRequest,
   CatalogCoin,
+  OwnershipItem,
+  SetOwnershipRequest,
+  SetOwnershipResponse,
+  GapSlot,
+  GapViewResponse,
 } from '@coin-collector/shared';
 
 const sampleCatalogCoin: CatalogCoin = {
@@ -168,5 +176,70 @@ describe('shared package: new Day 2 types (criterion #17 from run_20260720_07090
     expect(addOnly.remove).toBeUndefined();
     expect(both.add).toHaveLength(1);
     expect(both.remove).toHaveLength(1);
+  });
+});
+
+describe('shared package: new Day 4 types — collection/ownership + gap view (criterion #12 from run_20260720_142942/prd.md)', () => {
+  it('OwnershipItem pairs a coinId/coin with an ownedAt timestamp', () => {
+    const item: OwnershipItem = {
+      coinId: sampleCatalogCoin.id,
+      coin: sampleCatalogCoin,
+      ownedAt: new Date('2026-01-01T00:00:00.000Z'),
+    };
+
+    expect(item.coin.name).toBe('Lincoln Wheat Cent');
+    expect(item.ownedAt).toBeInstanceOf(Date);
+  });
+
+  it('SetOwnershipRequest is a bare { owned: boolean } body', () => {
+    const trueBody: SetOwnershipRequest = { owned: true };
+    const falseBody: SetOwnershipRequest = { owned: false };
+
+    expect(trueBody.owned).toBe(true);
+    expect(falseBody.owned).toBe(false);
+  });
+
+  it('SetOwnershipResponse allows ownedAt to be null (the owned: false case)', () => {
+    const owned: SetOwnershipResponse = {
+      coinId: sampleCatalogCoin.id,
+      owned: true,
+      ownedAt: new Date('2026-01-01T00:00:00.000Z'),
+    };
+    const notOwned: SetOwnershipResponse = {
+      coinId: sampleCatalogCoin.id,
+      owned: false,
+      ownedAt: null,
+    };
+
+    expect(owned.ownedAt).not.toBeNull();
+    expect(notOwned.ownedAt).toBeNull();
+  });
+
+  it('GapSlot carries the UserSetCoin row id, position, coin, and a computed owned flag', () => {
+    const slot: GapSlot = {
+      id: 'ffffffff-ffff-ffff-ffff-ffffffffffff',
+      position: 1,
+      coin: sampleCatalogCoin,
+      owned: true,
+    };
+
+    expect(slot.owned).toBe(true);
+    expect(slot.coin).toBe(sampleCatalogCoin);
+  });
+
+  it('GapViewResponse aggregates slots with ownedCount/totalCount/completionPercent', () => {
+    const response: GapViewResponse = {
+      setId: '11111111-1111-1111-1111-111111111111',
+      ownedCount: 1,
+      totalCount: 2,
+      completionPercent: 50,
+      slots: [
+        { id: 'usc-1', position: 1, coin: sampleCatalogCoin, owned: true },
+        { id: 'usc-2', position: 2, coin: sampleCatalogCoin, owned: false },
+      ],
+    };
+
+    expect(response.slots).toHaveLength(2);
+    expect(response.completionPercent).toBe(50);
   });
 });

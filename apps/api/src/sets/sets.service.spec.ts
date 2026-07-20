@@ -2,9 +2,11 @@
  * Tests for: SetsService
  * Contract source: runs/run_20260719_200109/plan.md § Interface Contract (Service: SetsService)
  *                   runs/run_20260720_070901/plan.md § Interface Contract (Service: SetsService)
+ *                   runs/run_20260720_142942/plan.md § Interface Contract (Service: SetsService — new method)
  * Covers criteria: #1, #3, #4, #5, #6, #7, #8, #9, #10 (from runs/run_20260719_200109/prd.md)
  *                   #1, #2 [validated in dto spec, not here], #3, #4, #5, #6, #7, #8, #9, #10,
  *                   #11, #12, #17 (from runs/run_20260720_070901/prd.md)
+ *                   #9, #10, #11 (from runs/run_20260720_142942/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -16,6 +18,11 @@
  * the outer `this.prisma` or the transaction callback's `tx` argument — both resolve to the
  * identical mock in this harness (a known limitation of unit-level Prisma transaction testing,
  * documented in plan.md's Risks section; it does not change what is asserted here).
+ *
+ * For getGaps (run_20260720_142942), userSet.findUnique's fixture stands in for the real
+ * Prisma nested include (`coins.coin.ownerships` filtered to `where: { userId: callerId }`
+ * at the DB layer) — the mock's `coins[].coin.ownerships` array is pre-shaped as if that
+ * filter already ran, since a mocked Prisma client cannot itself apply a WHERE clause.
  */
 
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
@@ -596,6 +603,111 @@ describe('SetsService', () => {
         include: { coins: { orderBy: { position: 'asc' }, include: { coin: true } } },
       });
       expect(result).toBe(detail);
+    });
+  });
+
+  describe('getGaps — unknown set (criterion #9 from run_20260720_142942/prd.md)', () => {
+    it('throws NotFoundException when no UserSet with that id exists', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue(null);
+
+      await expect(service.getGaps('user-1', uuidC)).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getGaps — not owner-restricted (criterion #9 from run_20260720_142942/prd.md)', () => {
+    it('never calls getOwnedSetOrThrow-style ownership checks — no ForbiddenException even for a set owned by someone else', async () => {
+      const detail = {
+        id: uuidC,
+        userId: 'someone-else',
+        coins: [{ id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [] } }],
+      };
+      mockPrismaService.userSet.findUnique.mockResolvedValue(detail);
+
+      await expect(service.getGaps('user-1', uuidC)).resolves.toBeDefined();
+    });
+
+    it('fetches with the coins relation joined, ordered by position, and ownerships filtered to the caller', async () => {
+      const detail = { id: uuidC, userId: 'someone-else', coins: [] };
+      mockPrismaService.userSet.findUnique.mockResolvedValue(detail);
+
+      await service.getGaps('user-1', uuidC);
+
+      expect(mockPrismaService.userSet.findUnique).toHaveBeenCalledWith({
+        where: { id: uuidC },
+        include: {
+          coins: {
+            orderBy: { position: 'asc' },
+            include: { coin: { include: { ownerships: { where: { userId: 'user-1' } } } } },
+          },
+        },
+      });
+    });
+  });
+
+  describe('getGaps — computation (criteria #10, #11 from run_20260720_142942/prd.md)', () => {
+    it('marks a slot owned when the caller has a matching ownership row, not owned when the array is empty', async () => {
+      const detail = {
+        id: uuidC,
+        coins: [
+          { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [{ userId: 'user-1', coinId: 'coin-a' }] } },
+          { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] } },
+        ],
+      };
+      mockPrismaService.userSet.findUnique.mockResolvedValue(detail);
+
+      const result = await service.getGaps('user-1', uuidC);
+
+      expect(result.slots).toEqual([
+        { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [{ userId: 'user-1', coinId: 'coin-a' }] }, owned: true },
+        { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] }, owned: false },
+      ]);
+    });
+
+    it('computes ownedCount, totalCount, and completionPercent rounded to the nearest integer', async () => {
+      const detail = {
+        id: uuidC,
+        coins: [
+          { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [{ userId: 'user-1' }] } },
+          { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] } },
+          { id: 'usc-3', position: 3, coin: { id: 'coin-c', ownerships: [] } },
+        ],
+      };
+      mockPrismaService.userSet.findUnique.mockResolvedValue(detail);
+
+      const result = await service.getGaps('user-1', uuidC);
+
+      expect(result.ownedCount).toBe(1);
+      expect(result.totalCount).toBe(3);
+      // 1/3 = 33.33...% -> rounds to 33.
+      expect(result.completionPercent).toBe(33);
+      expect(result.setId).toBe(uuidC);
+    });
+
+    it('returns completionPercent: 0 for a set with zero coins, without dividing by zero', async () => {
+      const detail = { id: uuidC, coins: [] };
+      mockPrismaService.userSet.findUnique.mockResolvedValue(detail);
+
+      const result = await service.getGaps('user-1', uuidC);
+
+      expect(result.totalCount).toBe(0);
+      expect(result.ownedCount).toBe(0);
+      expect(result.completionPercent).toBe(0);
+      expect(result.slots).toEqual([]);
+    });
+
+    it('returns completionPercent: 100 when every coin is owned by the caller', async () => {
+      const detail = {
+        id: uuidC,
+        coins: [
+          { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [{ userId: 'user-1' }] } },
+          { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [{ userId: 'user-1' }] } },
+        ],
+      };
+      mockPrismaService.userSet.findUnique.mockResolvedValue(detail);
+
+      const result = await service.getGaps('user-1', uuidC);
+
+      expect(result.completionPercent).toBe(100);
     });
   });
 });
