@@ -3,10 +3,13 @@
  * Contract source: runs/run_20260719_200109/plan.md § Interface Contract (Service: SetsService)
  *                   runs/run_20260720_070901/plan.md § Interface Contract (Service: SetsService)
  *                   runs/run_20260720_142942/plan.md § Interface Contract (Service: SetsService — new method)
+ *                   runs/run_20260720_171320/plan.md § Interface Contract (Test addition: getGaps — no-coins-owned case)
  * Covers criteria: #1, #3, #4, #5, #6, #7, #8, #9, #10 (from runs/run_20260719_200109/prd.md)
  *                   #1, #2 [validated in dto spec, not here], #3, #4, #5, #6, #7, #8, #9, #10,
  *                   #11, #12, #17 (from runs/run_20260720_070901/prd.md)
  *                   #9, #10, #11 (from runs/run_20260720_142942/prd.md)
+ *                   #10 (from runs/run_20260720_171320/prd.md — pins the nonzero-total/zero-owned
+ *                   gap-computation case, distinct from the pre-existing zero-*coin*-set case)
  *
  * CONTRACT_GAP: none.
  *
@@ -732,6 +735,23 @@ describe('SetsService', () => {
       const result = await service.getGaps('user-1', uuidC);
 
       expect(result.completionPercent).toBe(100);
+    });
+
+    it("returns completionPercent: 0 when the caller owns none of the set's coins", async () => {
+      const detail = {
+        id: uuidC,
+        coins: [
+          { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [] } },
+          { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] } },
+        ],
+      };
+      mockPrismaService.userSet.findUnique.mockResolvedValue(detail);
+
+      const result = await service.getGaps('user-1', uuidC);
+
+      expect(result.ownedCount).toBe(0);
+      expect(result.totalCount).toBe(2);
+      expect(result.completionPercent).toBe(0);
     });
   });
 });
