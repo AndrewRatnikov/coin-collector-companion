@@ -1,7 +1,11 @@
 /**
- * Tests for: shared package types (UserSetSummary, CloneFromRequest, CreateSetRequestBody)
- * Contract source: runs/run_20260719_200109/plan.md § Interface Contract (Shared types: packages/shared/src/index.ts)
- * Covers criteria: #11 (from prd.md)
+ * Tests for: shared package types (UserSetSummary, CloneFromRequest, CreateSetRequestBody,
+ * CanonicalSetSummary, CanonicalSetCoinItem, CanonicalSetDetail, UserSetCoinItem, UserSetDetail,
+ * UserSetCoinSummary, PatchSetCoinsRequest)
+ * Contract source: runs/run_20260719_200109/plan.md § Interface Contract (Shared types)
+ *                   runs/run_20260720_070901/plan.md § Interface Contract (Shared types)
+ * Covers criteria: #11 (from runs/run_20260719_200109/prd.md)
+ *                   #17 (from runs/run_20260720_070901/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -9,18 +13,43 @@
  * config (apps/api/package.json's "jest" block) has no `isolatedModules` override, so
  * ts-jest type-checks every file it compiles — a type-only usage that doesn't compile
  * against the real packages/shared exports fails this test file the same way a missing or
- * renamed export would fail `pnpm --filter api build`. This is what gives criterion #11 a
+ * renamed export would fail `pnpm --filter api build`. This is what gives criterion #17 a
  * real, falsifiable signal from `pnpm --filter api test` rather than deferring it entirely
- * to the separate typecheck/build steps (added per test-reviewer feedback, retry 1/2).
+ * to the separate typecheck/build steps (pattern established Week 2 Day 1 per test-reviewer
+ * feedback, retry 1/2).
  */
 
 import type {
   CloneFromRequest,
   CreateSetRequestBody,
   UserSetSummary,
+  CanonicalSetSummary,
+  CanonicalSetCoinItem,
+  CanonicalSetDetail,
+  UserSetCoinItem,
+  UserSetDetail,
+  UserSetCoinSummary,
+  PatchSetCoinsRequest,
+  CatalogCoin,
 } from '@coin-collector/shared';
 
-describe('shared package: Sets types (criterion #11)', () => {
+const sampleCatalogCoin: CatalogCoin = {
+  id: '99999999-9999-9999-9999-999999999999',
+  numistaTypeId: null,
+  country: 'USA',
+  denomination: 'Cent',
+  year: 1943,
+  mintMark: '',
+  variety: '',
+  name: 'Lincoln Wheat Cent',
+  imageUrl: null,
+  imageSource: null,
+  imageLicense: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+describe('shared package: Sets types (criterion #11 from run_20260719_200109/prd.md)', () => {
   it('UserSetSummary has the expected flat UserSet shape', () => {
     const summary: UserSetSummary = {
       id: '11111111-1111-1111-1111-111111111111',
@@ -59,5 +88,85 @@ describe('shared package: Sets types (criterion #11)', () => {
 
     expect(blank.cloneFrom).toBeUndefined();
     expect(cloned.cloneFrom?.type).toBe('canonical');
+  });
+});
+
+describe('shared package: new Day 2 types (criterion #17 from run_20260720_070901/prd.md)', () => {
+  it('CanonicalSetSummary has the expected flat CanonicalSet shape', () => {
+    const summary: CanonicalSetSummary = {
+      id: '66666666-6666-6666-6666-666666666666',
+      name: 'Lincoln Wheat Cents',
+      description: null,
+      source: 'admin',
+      templateVersion: '1',
+    };
+
+    expect(summary.name).toBe('Lincoln Wheat Cents');
+    expect(summary.description).toBeNull();
+  });
+
+  it('CanonicalSetDetail extends CanonicalSetSummary with an ordered coins array of CanonicalSetCoinItem', () => {
+    const coinItem: CanonicalSetCoinItem = {
+      id: '77777777-7777-7777-7777-777777777777',
+      position: 1,
+      coin: sampleCatalogCoin,
+    };
+    const detail: CanonicalSetDetail = {
+      id: '66666666-6666-6666-6666-666666666666',
+      name: 'Lincoln Wheat Cents',
+      description: null,
+      source: 'admin',
+      templateVersion: '1',
+      coins: [coinItem],
+    };
+
+    expect(detail.coins).toHaveLength(1);
+    expect(detail.coins[0].coin.name).toBe('Lincoln Wheat Cent');
+  });
+
+  it('UserSetDetail extends UserSetSummary with an ordered coins array of UserSetCoinItem', () => {
+    const coinItem: UserSetCoinItem = {
+      id: '88888888-8888-8888-8888-888888888888',
+      position: 1,
+      coin: sampleCatalogCoin,
+    };
+    const detail: UserSetDetail = {
+      id: '11111111-1111-1111-1111-111111111111',
+      userId: '22222222-2222-2222-2222-222222222222',
+      name: 'A Public Set',
+      clonedFromCanonicalId: null,
+      clonedFromUserSetId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      coins: [coinItem],
+    };
+
+    expect(detail.coins).toHaveLength(1);
+    expect(detail.userId).toBe('22222222-2222-2222-2222-222222222222');
+  });
+
+  it('UserSetCoinSummary is the flat join-row shape returned by PATCH /sets/:id/coins', () => {
+    const row: UserSetCoinSummary = {
+      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      userSetId: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      coinId: 'cccccccc-cccc-cccc-cccc-cccccccccccc',
+      position: 3,
+    };
+
+    expect(row.position).toBe(3);
+  });
+
+  it('PatchSetCoinsRequest makes both add and remove optional', () => {
+    const empty: PatchSetCoinsRequest = {};
+    const addOnly: PatchSetCoinsRequest = { add: ['dddddddd-dddd-dddd-dddd-dddddddddddd'] };
+    const both: PatchSetCoinsRequest = {
+      add: ['dddddddd-dddd-dddd-dddd-dddddddddddd'],
+      remove: ['eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'],
+    };
+
+    expect(empty.add).toBeUndefined();
+    expect(addOnly.remove).toBeUndefined();
+    expect(both.add).toHaveLength(1);
+    expect(both.remove).toHaveLength(1);
   });
 });
