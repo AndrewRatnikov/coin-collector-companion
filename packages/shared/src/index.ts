@@ -43,3 +43,43 @@ export interface CreateSetRequestBody {
   name: string;
   cloneFrom?: CloneFromRequest;
 }
+
+export interface CanonicalSetSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  source: string;
+  templateVersion: string;
+}
+
+export interface CanonicalSetCoinItem {
+  id: string;
+  position: number;
+  coin: CatalogCoin;
+}
+
+export interface CanonicalSetDetail extends CanonicalSetSummary {
+  coins: CanonicalSetCoinItem[];
+}
+
+export interface UserSetCoinItem {
+  id: string;
+  position: number;
+  coin: CatalogCoin;
+}
+
+export interface UserSetDetail extends UserSetSummary {
+  coins: UserSetCoinItem[];
+}
+
+export interface UserSetCoinSummary {
+  id: string;
+  userSetId: string;
+  coinId: string;
+  position: number;
+}
+
+export interface PatchSetCoinsRequest {
+  add?: string[];
+  remove?: string[];
+}
