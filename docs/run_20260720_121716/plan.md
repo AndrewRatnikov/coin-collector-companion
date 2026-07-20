@@ -1,219 +1,170 @@
-# Technical Plan: Sets — Coin Membership, Canonical-Set Reads, Public-Set Reads (Week 2, Day 2)
+# Technical Plan: Canonical-set seed templates + admin seed script (Week 2, Day 3)
 
-**Run:** run_20260720_070901
+**Run:** run_20260720_121716
 **Date:** 2026-07-20
 
 ## Summary
 
-Extend the existing `SetsModule` (`apps/api/src/sets/`) with one owner-only write endpoint (`PATCH /sets/:id/coins`) and four unauthenticated read endpoints (`GET /sets/canonical`, `GET /sets/canonical/:id`, `GET /sets/public`, `GET /sets/public/:id`). No new module, controller, or service class is created — `SetsController`/`SetsService` gain new handlers/methods alongside the existing ones, reusing `SetsService.getOwnedSetOrThrow` for ownership and copying `CatalogService.findAll`'s pagination pattern for `GET /sets/public`. Two new DTOs and several new shared response/request types round out the change; `packages/shared/src/index.ts`'s existing exports are untouched, only extended.
+Two new static JSON seed templates under `seed/templates/` (root-level, sibling to `apps/`/`packages/`/`scripts/`/`docs/`) describe canonical-set content built entirely from the 142 Lincoln Wheat Cent coins Week 1's `scripts/import-catalog` already put in Postgres. A new one-off CLI script, `apps/api/scripts/seed-canonical-sets.ts`, reads every template file, resolves each coin entry against the catalog by natural key, and upserts `CanonicalSet`/`CanonicalSetCoin` rows — idempotently, failing loudly on any unresolvable entry. The script mirrors the existing `scripts/import-catalog/import-coins.ts` in structure and fail-stop philosophy, but lives inside `apps/api` (using `apps/api`'s own generated `@prisma/client` directly) per SD §4.4's "apps/api CLI command" framing, and is excluded from the Nest build the same way `prisma/` already is.
 
 ## Approach
 
-1. **`packages/shared/src/index.ts` (MODIFY, additive only)** — add `CanonicalSetSummary`, `CanonicalSetCoinItem`, `CanonicalSetDetail`, `UserSetCoinItem`, `UserSetDetail`, `UserSetCoinSummary`, `PatchSetCoinsRequest`. None of the five existing exports (`CatalogCoin`, `PaginatedResponse<T>`, `UserSetSummary`, `CloneFromRequest`, `CreateSetRequestBody`) are modified.
+1. **Author the two template JSON files** (data only, no code) by deriving them from `scripts/import-catalog/fixtures/us-cents-lincoln-wheat.json` — the exact fixture Week 1's import ran against, so every entry is guaranteed to resolve against the real 142-row catalog:
+   - `lincoln-wheat-cents.v1.json`: all 142 entries from the fixture, `country: "USA"`, `denomination: "Cent"`, with the fixture's `null` mintMark/variety normalized to `""` (mirroring `sanitizeIdentityField`'s behavior — the fixture is pre-sanitization, the DB rows and this template are post-sanitization).
+   - `lincoln-wheat-cents-key-dates.v1.json`: exactly the fixture's 7 entries flagged `isKeyDate: true` — confirmed by inspection: `1909/S/VDB`, `1909/S/""`, `1914/D/""`, `1922/""/"No D"`, `1924/D/""`, `1931/S/""`, `1955/""/"Doubled Die"`.
+   - Array order in each file is the position order the seed script will assign (1-indexed: `position = index + 1`).
 
-2. **`apps/api/src/sets/dto/patch-set-coins.dto.ts` (CREATE)** — `PatchSetCoinsDto` with optional `add`/`remove` arrays, each validated as `IsArray()` + `IsUUID('4', { each: true })` — an invalid entry in either array 400s before the handler runs, satisfying PRD criterion #2.
+2. **Write `apps/api/scripts/seed-canonical-sets.ts`**, structured like `import-coins.ts`: a `resolveTemplatePaths(args)` helper (specific `process.argv` paths, or every `*.json` under `seed/templates/` by default), a per-file `seedTemplateFile(prisma, filePath)` function, and a sequential `main()` loop — never `Promise.all` — over the resolved paths, matching the existing fail-stop-not-partial reasoning. Functions take a narrowly-typed Prisma parameter (`Pick<PrismaClient, 'coin' | 'canonicalSet' | 'canonicalSetCoin'>`) rather than a full `PrismaClient`, so tests can pass a plain mock object with only those three properties — no `as any` casts needed. Unlike `import-coins.ts`, the module's top-level `main()` call is guarded behind `require.main === module`, so `seed-canonical-sets.spec.ts` can import the module's exported functions without triggering a real run or instantiating a real `PrismaClient`.
 
-3. **`apps/api/src/sets/dto/find-public-sets-query.dto.ts` (CREATE)** — `FindPublicSetsQueryDto` with just `page`/`limit` (default 1/20, `@Type(() => Number)` + `@IsInt()` + `@Min(1)`), mirroring the tail of `FindCatalogQueryDto` without the catalog-only filter fields (country/denomination/name/yearMin/yearMax don't apply to sets).
+3. **Per-file logic (`seedTemplateFile`):**
+   - Parse the template-version suffix from the filename (`lincoln-wheat-cents.v1.json` → `"v1"`); throw if the filename doesn't end in a `.v{N}.json` suffix.
+   - Upsert the `CanonicalSet` by `name` (`findFirst` then `create`/`update` — no DB-level unique on `name`, same emulated-upsert pattern already used elsewhere in this codebase's history), setting `source: "seed-template"` and the parsed `templateVersion`.
+   - For every coin entry, resolve `prisma.coin.findUnique({ where: { country_denomination_year_mintMark_variety: {...} } })`. If any entry doesn't resolve, throw immediately (stopping the whole run) with an error naming the template, file, and the unresolved natural key — no partial write of `CanonicalSetCoin` rows happens for that file, since all entries are resolved before any `CanonicalSetCoin` write is issued. (The parent `CanonicalSet` row may already have been upserted before a later entry fails — that's fine and expected: the script is idempotent/resumable, so fixing the bad entry and re-running fills in the rest, matching SD §4.3/§4.5's "fail loudly, no partial-import fallback needed" framing already applied to `import-coins.ts`.)
+   - Diff resolved coins against the set's existing `CanonicalSetCoin` rows (by `coinId`): `createMany({ data: <new rows>, skipDuplicates: true })` for coins not yet in the set, and an explicit `update` per row whose `position` differs from the template's current order (covers a template author reordering coins between runs) — a coin already present with the same position gets no write, which is what makes the whole script idempotent (0 created, 0 updated on an unchanged re-run).
+   - Log one line per file in `import-coins.ts`'s style: `"{name} ({filePath}): {created} coin(s) created, {updated} position(s) updated, {total} total"`.
 
-4. **`apps/api/src/sets/sets.service.ts` (MODIFY)** — add five methods:
-   - `patchCoins(userId, id, dto)`: calls `getOwnedSetOrThrow` first (404/403 reused unchanged); de-dupes `dto.add` via `[...new Set(...)]` before building `createMany` rows (guards against the same coin ID appearing twice in one `add` array, on top of `skipDuplicates` guarding against a coin already in the DB); computes `max(position)` and inserts adds inside one `$transaction`; runs `deleteMany` for removes outside the transaction (no ownership-table access, ever, in this method); returns the current `UserSetCoin` rows for the set, ordered by position.
-   - `findAllCanonical()`: `prisma.canonicalSet.findMany({ orderBy: { name: 'asc' } })`.
-   - `findCanonicalById(id)`: `prisma.canonicalSet.findUnique` with `include: { coins: { orderBy: { position: 'asc' }, include: { coin: true } } }`; throws `NotFoundException` if null.
-   - `findAllPublic(query)`: same `Promise.all([findMany, count])` + `{ items, page, limit, total }` shape as `CatalogService.findAll`, `MAX_LIMIT = 100` clamp, no `where` filter (every `UserSet` row, no `userId` scoping).
-   - `findPublicById(id)`: `prisma.userSet.findUnique` with the same `coins` include/orderBy shape as `findCanonicalById`; throws `NotFoundException` if null.
+4. **Wire it up:** add `"scripts"` to `apps/api/tsconfig.build.json`'s `exclude` array (same reason `prisma` is already there — `nest build`'s `rootDir: ./src` program otherwise fails TS6059 on a file outside `src`). Add `"seed:canonical": "ts-node -r tsconfig-paths/register scripts/seed-canonical-sets.ts"` to `apps/api/package.json`. Add a `"roots": ["<rootDir>", "<rootDir>/../scripts"]` entry to the existing `jest` config block in `apps/api/package.json` — jest's `rootDir` there is `src`, so without this, a spec file colocated at `apps/api/scripts/seed-canonical-sets.spec.ts` would never be discovered by `pnpm --filter api test` and would silently never run (a false-pass risk this plan explicitly avoids, given the pipeline's sandbox stage is the only automated gate on this script's logic).
 
-5. **`apps/api/src/sets/sets.controller.ts` (MODIFY)** — add five handlers. `@Get('canonical')`, `@Get('canonical/:id')`, `@Get('public')`, `@Get('public/:id')` are all `@Public()` and declared **above** the existing `@Patch(':id')`/`@Delete(':id')` and the new `@Patch(':id/coins')` in the file — this is the fix for the route-shadowing gotcha both the PRD and system-design_v2.md §3 call out explicitly. `@Patch(':id/coins')` requires auth (no `@Public()`), uses `@CurrentUser()` + `ParseUUIDPipe` on `:id` exactly like the existing `update`/`remove` handlers.
+5. **Docs:** check off backlog 3.1–3.4 in `docs/backlog_week2.md`, matching the existing checked-off style (short parenthetical notes, no new headings).
 
-6. **`apps/api/src/sets/sets.module.ts`** — no change. `SetsController`/`SetsService` are already the sole controller/provider; no new providers are introduced.
-
-Edge cases handled: empty set on first add (`max(position)` query returns `null` → treated as `0`, first coin lands at position 1); duplicate coin ID within one `add` array (de-duped in the service before `createMany`, so `skipDuplicates` never has to arbitrate a same-array collision); duplicate coin ID across two separate `PATCH` calls (`skipDuplicates: true` against `@@unique([userSetId, coinId])` handles this); remove-then-re-add of the same coin (removal is a real `deleteMany`, so the row is gone from the unique index and a later `createMany` re-adds it cleanly at the new `max(position) + 1`, not the old position); unknown canonical/public set id (`NotFoundException` → 404, same two-tier pattern as `getOwnedSetOrThrow` for consistency, though there is no ownership tier for a read of someone else's public/canonical set).
+Live-DB verification (running the script against the real Neon dev DB, psql spot-checks, the clone-from-canonical HTTP check, and the deliberate-break check) is **not** part of this plan's automated Coder/sandbox scope — see PRD's process note. That happens as a manual, human-confirmed step after the code lands.
 
 ## Files changed
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `packages/shared/src/index.ts` | MODIFY | Add `CanonicalSetSummary`, `CanonicalSetCoinItem`, `CanonicalSetDetail`, `UserSetCoinItem`, `UserSetDetail`, `UserSetCoinSummary`, `PatchSetCoinsRequest` |
-| `apps/api/src/sets/dto/patch-set-coins.dto.ts` | CREATE | Request DTO for `PATCH /sets/:id/coins` |
-| `apps/api/src/sets/dto/find-public-sets-query.dto.ts` | CREATE | Pagination query DTO for `GET /sets/public` |
-| `apps/api/src/sets/sets.service.ts` | MODIFY | Add `patchCoins`, `findAllCanonical`, `findCanonicalById`, `findAllPublic`, `findPublicById` |
-| `apps/api/src/sets/sets.controller.ts` | MODIFY | Add `PATCH /sets/:id/coins`, `GET /sets/canonical`, `GET /sets/canonical/:id`, `GET /sets/public`, `GET /sets/public/:id` — literal routes declared above `:id`-shaped ones |
-| `apps/api/src/sets/sets.controller.spec.ts` | MODIFY | Delegation tests for the 5 new handlers, `@Public()` metadata assertions, route-declaration-order assertion |
-| `apps/api/src/sets/sets.service.spec.ts` | MODIFY | Unit tests for the 5 new service methods against a mocked `PrismaService` |
-| `apps/api/src/sets/dto/patch-set-coins.dto.spec.ts` | CREATE | class-validator tests for `PatchSetCoinsDto` (mirrors `create-set.dto.spec.ts`'s style) |
-| `apps/api/src/sets/shared-types.spec.ts` | MODIFY | Extend the existing type-compile-check pattern (established Week 2 Day 1 per test-reviewer feedback) to cover the 7 new shared types, giving criterion #17 a real signal from `pnpm --filter api test` rather than deferring entirely to `typecheck`/`build` |
+| seed/templates/lincoln-wheat-cents.v1.json | CREATE | Full 142-coin canonical-set template |
+| seed/templates/lincoln-wheat-cents-key-dates.v1.json | CREATE | 7-coin key-dates canonical-set template |
+| apps/api/scripts/seed-canonical-sets.ts | CREATE | Admin CLI script: loads templates, upserts CanonicalSet/CanonicalSetCoin |
+| apps/api/scripts/seed-canonical-sets.spec.ts | CREATE | Unit tests for the script's exported functions (Tester-authored, mocked Prisma) |
+| apps/api/tsconfig.build.json | MODIFY | Add `"scripts"` to `exclude` so `nest build` doesn't choke on a file outside `src` (TS6059) |
+| apps/api/package.json | MODIFY | Add `seed:canonical` npm script; add jest `roots` entry so `scripts/*.spec.ts` is discovered |
+| docs/backlog_week2.md | MODIFY | Check off tasks 3.1–3.4 |
 
 ## Interface Contract
 
 This section is the single source of truth for all names. The Tester and Coder read this; neither invents anything independently.
 
-### Shared types (`packages/shared/src/index.ts`) — additive, append after existing exports
+### Data files: seed templates
 
-```typescript
-export interface CanonicalSetSummary {
-  id: string;
-  name: string;
-  description: string | null;
-  source: string;
-  templateVersion: string;
-}
-
-export interface CanonicalSetCoinItem {
-  id: string;
-  position: number;
-  coin: CatalogCoin;
-}
-
-export interface CanonicalSetDetail extends CanonicalSetSummary {
-  coins: CanonicalSetCoinItem[];
-}
-
-export interface UserSetCoinItem {
-  id: string;
-  position: number;
-  coin: CatalogCoin;
-}
-
-export interface UserSetDetail extends UserSetSummary {
-  coins: UserSetCoinItem[];
-}
-
-export interface UserSetCoinSummary {
-  id: string;
-  userSetId: string;
-  coinId: string;
-  position: number;
-}
-
-export interface PatchSetCoinsRequest {
-  add?: string[];
-  remove?: string[];
-}
-```
-
-### DTO: PatchSetCoinsDto
-- **File:** `apps/api/src/sets/dto/patch-set-coins.dto.ts`
-- **Export:** `export class PatchSetCoinsDto`
-- **Fields:**
+- **Files:** `seed/templates/lincoln-wheat-cents.v1.json`, `seed/templates/lincoln-wheat-cents-key-dates.v1.json`
+- **Shape:**
   ```typescript
-  class PatchSetCoinsDto {
-    add?: string[];    // @IsOptional() @IsArray() @IsUUID('4', { each: true })
-    remove?: string[]; // @IsOptional() @IsArray() @IsUUID('4', { each: true })
+  interface SeedTemplateFile {
+    name: string;
+    description?: string;
+    coins: Array<{
+      country: string;      // "USA"
+      denomination: string; // "Cent"
+      year: number;
+      mintMark: string;     // "" for none — never null
+      variety: string;      // "" for none — never null
+    }>;
   }
   ```
-- **Validation behavior:** both fields optional (an empty body `{}` is valid — no-op). A non-array value for either field fails `@IsArray()`. Any entry that is not a valid RFC 4122 UUID fails `@IsUUID('4', { each: true })` for that field, and `errors[].property` is `'add'` or `'remove'` respectively.
-- **Dependencies:** `class-validator` (`IsArray`, `IsOptional`, `IsUUID`), `@nestjs/swagger` (`ApiPropertyOptional`) — both already in `apps/api/package.json`.
+- `lincoln-wheat-cents.v1.json`: `name: "Lincoln Wheat Cents"`, 142 entries (all fixture entries, `country: "USA"`, `denomination: "Cent"`), array order = intended position order (chronological, ascending year, as in the source fixture).
+- `lincoln-wheat-cents-key-dates.v1.json`: `name: "Lincoln Wheat Cent Key Dates"`, exactly these 7 entries in this order:
+  1. `{ country: "USA", denomination: "Cent", year: 1909, mintMark: "S", variety: "VDB" }`
+  2. `{ country: "USA", denomination: "Cent", year: 1909, mintMark: "S", variety: "" }`
+  3. `{ country: "USA", denomination: "Cent", year: 1914, mintMark: "D", variety: "" }`
+  4. `{ country: "USA", denomination: "Cent", year: 1922, mintMark: "", variety: "No D" }`
+  5. `{ country: "USA", denomination: "Cent", year: 1924, mintMark: "D", variety: "" }`
+  6. `{ country: "USA", denomination: "Cent", year: 1931, mintMark: "S", variety: "" }`
+  7. `{ country: "USA", denomination: "Cent", year: 1955, mintMark: "", variety: "Doubled Die" }`
 
-### DTO: FindPublicSetsQueryDto
-- **File:** `apps/api/src/sets/dto/find-public-sets-query.dto.ts`
-- **Export:** `export class FindPublicSetsQueryDto`
-- **Fields:**
+### Script: apps/api/scripts/seed-canonical-sets.ts
+
+- **File:** `apps/api/scripts/seed-canonical-sets.ts`
+- **Exports** (named, so the spec file can import and unit-test each independently):
   ```typescript
-  class FindPublicSetsQueryDto {
-    page: number = 1;   // @IsOptional() @Type(() => Number) @IsInt() @Min(1)
-    limit: number = 20; // @IsOptional() @Type(() => Number) @IsInt() @Min(1)
+  export interface SeedTemplateCoin {
+    country: string;
+    denomination: string;
+    year: number;
+    mintMark: string;
+    variety: string;
+  }
+  export interface SeedTemplate {
+    name: string;
+    description?: string;
+    coins: SeedTemplateCoin[];
+  }
+  // A structural subset of PrismaClient — lets tests pass a plain mock object.
+  export type SeedPrismaClient = Pick<
+    import('@prisma/client').PrismaClient,
+    'coin' | 'canonicalSet' | 'canonicalSetCoin'
+  >;
+
+  export function resolveTemplatePaths(args: string[]): string[];
+  // args.length > 0 → args.map(resolve); else every *.json under seed/templates/
+  // (join(__dirname, '..', '..', '..', 'seed', 'templates') from apps/api/scripts/).
+
+  export function parseTemplateVersion(filePath: string): string;
+  // "lincoln-wheat-cents.v1.json" -> "v1"; throws if no trailing ".v{N}" before ".json".
+
+  export function loadTemplate(filePath: string): SeedTemplate;
+  // JSON.parse(readFileSync(filePath, 'utf-8')).
+
+  export async function seedTemplateFile(
+    prisma: SeedPrismaClient,
+    filePath: string,
+  ): Promise<{ name: string; created: number; updated: number; total: number }>;
+  // Full per-file logic described in Approach step 3. Throws Error on any
+  // unresolved coin.findUnique() before issuing any canonicalSetCoin write.
+
+  export async function main(): Promise<void>;
+  // Sequential for-loop over resolveTemplatePaths(process.argv.slice(2)),
+  // calling seedTemplateFile for each with a real `new PrismaClient()`,
+  // disconnecting in a finally block. Throws if zero template paths resolve.
+  ```
+- **CLI entrypoint guard:** at the bottom of the file,
+  ```typescript
+  if (require.main === module) {
+    main().catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
   }
   ```
-- **Dependencies:** `class-transformer` (`Type`), `class-validator` (`IsInt`, `IsOptional`, `Min`), `@nestjs/swagger` (`ApiPropertyOptional`) — same pattern as `apps/api/src/catalog/dto/find-catalog-query.dto.ts`.
+  (Not wrapped in the guard in `import-coins.ts` — added here specifically so importing this module in a spec file never triggers a real run.)
+- **Dependencies:** `node:fs` (`readdirSync`, `readFileSync`), `node:path` (`join`, `resolve`, `basename`), `@prisma/client`'s `PrismaClient` type only (no runtime `new PrismaClient()` outside `main()`).
 
-### Service: SetsService — new methods (existing methods/constructor unchanged)
-- **File:** `apps/api/src/sets/sets.service.ts` (already exists; `getOwnedSetOrThrow(userId, id): Promise<UserSet>` is the existing private helper — reused, not reimplemented)
-- **New constant:** `const MAX_LIMIT = 100;` at module scope (same as `apps/api/src/catalog/catalog.service.ts`)
-- **New methods:**
-  ```typescript
-  async patchCoins(userId: string, id: string, dto: PatchSetCoinsDto): Promise<UserSetCoinSummary[]>
-  async findAllCanonical(): Promise<CanonicalSetSummary[]>
-  async findCanonicalById(id: string): Promise<CanonicalSetDetail>
-  async findAllPublic(query: FindPublicSetsQueryDto): Promise<PaginatedResponse<UserSetSummary>>
-  async findPublicById(id: string): Promise<UserSetDetail>
-  ```
-- **`patchCoins` — exact Prisma calls the Tester's mock must cover:**
-  1. `await this.getOwnedSetOrThrow(userId, id);` — first line, before anything else (404/403 short-circuit).
-  2. `const toAdd = dto.add ? [...new Set(dto.add)] : [];` and `const toRemove = dto.remove ?? [];`
-  3. If `toAdd.length > 0`: one `this.prisma.$transaction(async (tx) => { ... })` call containing:
-     - `const maxPositionResult = await tx.userSetCoin.aggregate({ where: { userSetId: id }, _max: { position: true } });`
-     - `const nextPosition = (maxPositionResult._max.position ?? 0) + 1;`
-     - `await tx.userSetCoin.createMany({ data: toAdd.map((coinId, index) => ({ userSetId: id, coinId, position: nextPosition + index })), skipDuplicates: true });`
-  4. If `toRemove.length > 0`: `await this.prisma.userSetCoin.deleteMany({ where: { userSetId: id, coinId: { in: toRemove } } });` — called directly on `this.prisma`, NOT inside the `$transaction`, and NEVER calls anything on `this.prisma.ownership`.
-  5. If `toAdd.length === 0`, `$transaction`/`aggregate`/`createMany` are never called. If `toRemove.length === 0`, `deleteMany` is never called. (Both arrays absent/empty → only the ownership check and the final read run.)
-  6. Return: `await this.prisma.userSetCoin.findMany({ where: { userSetId: id }, orderBy: { position: 'asc' } });`
-- **`findAllCanonical`:** `return this.prisma.canonicalSet.findMany({ orderBy: { name: 'asc' } });`
-- **`findCanonicalById`:**
-  ```typescript
-  const set = await this.prisma.canonicalSet.findUnique({
-    where: { id },
-    include: { coins: { orderBy: { position: 'asc' }, include: { coin: true } } },
-  });
-  if (!set) throw new NotFoundException('Canonical set not found');
-  return set;
-  ```
-- **`findAllPublic`:**
-  ```typescript
-  const page = query.page;
-  const limit = Math.min(query.limit, MAX_LIMIT);
-  const [items, total] = await Promise.all([
-    this.prisma.userSet.findMany({ skip: (page - 1) * limit, take: limit, orderBy: { createdAt: 'asc' } }),
-    this.prisma.userSet.count(),
-  ]);
-  return { items, page, limit, total };
-  ```
-  (No `where` clause on either call — every `UserSet` row across every user, per system-design_v2.md §4.6.)
-- **`findPublicById`:**
-  ```typescript
-  const set = await this.prisma.userSet.findUnique({
-    where: { id },
-    include: { coins: { orderBy: { position: 'asc' }, include: { coin: true } } },
-  });
-  if (!set) throw new NotFoundException('Set not found');
-  return set;
-  ```
-- **Dependencies:** `PrismaService` (existing constructor injection, unchanged), `NotFoundException`/`ForbiddenException` from `@nestjs/common` (already imported), the new shared types above, `PatchSetCoinsDto`/`FindPublicSetsQueryDto`.
+### Test file: apps/api/scripts/seed-canonical-sets.spec.ts
 
-### Controller: SetsController — new handlers (existing handlers/constructor unchanged)
-- **File:** `apps/api/src/sets/sets.controller.ts` (already exists)
-- **Required new imports:** `Public` from `../auth/decorators/public.decorator`; the new DTOs; the new shared types; `Query` from `@nestjs/common` (not yet imported in this file).
-- **Declaration order inside the class** (this exact order — literal-segment GETs before any `:id`-shaped route):
-  1. `@Get()` `findAll` — existing, unchanged
-  2. `@Post()` `create` — existing, unchanged
-  3. `@Public() @Get('canonical')` `findAllCanonical(): Promise<CanonicalSetSummary[]>`
-  4. `@Public() @Get('canonical/:id')` `findCanonicalById(@Param('id', ParseUUIDPipe) id: string): Promise<CanonicalSetDetail>`
-  5. `@Public() @Get('public')` `findAllPublic(@Query() query: FindPublicSetsQueryDto): Promise<PaginatedResponse<UserSetSummary>>`
-  6. `@Public() @Get('public/:id')` `findPublicById(@Param('id', ParseUUIDPipe) id: string): Promise<UserSetDetail>`
-  7. `@Patch(':id')` `update` — existing, unchanged
-  8. `@Patch(':id/coins')` `patchCoins(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: PatchSetCoinsDto): Promise<UserSetCoinSummary[]>` — NO `@Public()`, requires auth
-  9. `@Delete(':id')` `remove` — existing, unchanged
-- Every handler delegates to the identically-named `SetsService` method, passing `user.userId` first (for `patchCoins`) exactly like `update`/`remove` already do, and returns the service's result unchanged (no controller-level transformation).
-- **Dependencies:** `SetsService` (existing constructor injection, unchanged).
+Written by the Tester against the contract above — no NestJS `TestingModule` (this isn't a DI-managed class); construct a plain mock object typed `SeedPrismaClient` with `jest.fn()` for `coin.findUnique`, `canonicalSet.findFirst`, `canonicalSet.create`, `canonicalSet.update`, `canonicalSetCoin.findMany`, `canonicalSetCoin.createMany`, `canonicalSetCoin.update`. Required scenarios (map to Acceptance criteria below):
 
-### Test file: `apps/api/src/sets/dto/patch-set-coins.dto.spec.ts`
-- Mirrors `create-set.dto.spec.ts`'s pattern exactly: `plainToInstance(PatchSetCoinsDto, body)` + `validate(instance)`, using the real UUID `3fa85f64-5717-4562-b3fc-2c963f66afa6` (and a second real UUID, e.g. `7c9e6679-7425-40de-944b-e07fc1f90ae7`) for positive-case fixtures — never a repeated-digit placeholder like `11111111-...`, which fails `@IsUUID()`'s RFC 4122 variant-nibble check.
-- Cases: empty body `{}` passes (0 errors); `{ add: [uuid1, uuid2] }` passes; `{ remove: [uuid1] }` passes; `{ add: [uuid1], remove: [uuid2] }` passes; `{ add: ['not-a-uuid'] }` fails with an error on `add`; `{ add: 'not-an-array' }` fails with an error on `add`; same two cases mirrored for `remove`.
+- `parseTemplateVersion`: returns `"v1"` for `"lincoln-wheat-cents.v1.json"` (and a path with directories); throws for a filename with no version suffix.
+- `seedTemplateFile` — new `CanonicalSet` (no existing row by name): calls `canonicalSet.findFirst({ where: { name } })`, gets `null`, calls `canonicalSet.create` with `source: "seed-template"` and the parsed `templateVersion`; every coin resolves via `coin.findUnique`; `canonicalSetCoin.findMany` returns `[]` (nothing existing yet); `canonicalSetCoin.createMany` is called once with all resolved coins (`skipDuplicates: true`) and correct 1-indexed `position`s; no `canonicalSetCoin.update` calls; returned `{ created, updated, total }` matches.
+- `seedTemplateFile` — existing `CanonicalSet` found by name: `canonicalSet.findFirst` returns a row, `canonicalSet.update` is called (not `create`).
+- `seedTemplateFile` — idempotent re-run: `canonicalSetCoin.findMany` returns rows for every resolved coin at the same positions already in the template → `createMany` is not called with any new rows (or called with an empty array) and no `canonicalSetCoin.update` call happens → `{ created: 0, updated: 0 }`.
+- `seedTemplateFile` — position changed: `canonicalSetCoin.findMany` returns an existing row for a coin whose stored `position` differs from the template's current index → exactly one `canonicalSetCoin.update` call with the new `position`, and that coin is not passed to `createMany`.
+- `seedTemplateFile` — unresolvable coin: `coin.findUnique` resolves `null` for one entry → the function rejects/throws, and neither `canonicalSetCoin.createMany` nor `canonicalSetCoin.update` is ever called (no partial write).
+- `resolveTemplatePaths`: given `process.argv`-style args, returns those resolved paths; given no args, returns every `.json` file under the templates directory (mock `readdirSync` and assert it filtered non-`.json` entries).
+
+### Config changes
+
+- `apps/api/tsconfig.build.json`: `"exclude": ["node_modules", "test", "dist", "prisma", "scripts", "**/*spec.ts"]`
+- `apps/api/package.json` `"scripts"`: add `"seed:canonical": "ts-node -r tsconfig-paths/register scripts/seed-canonical-sets.ts"`
+- `apps/api/package.json` `"jest"`: add `"roots": ["<rootDir>", "<rootDir>/../scripts"]` alongside the existing `moduleFileExtensions`/`rootDir`/`testRegex`/etc. keys.
 
 ## Acceptance criteria coverage
 
 | Criterion | Satisfied by |
 |-----------|-------------|
-| 1. 404/403 ownership check on `PATCH /sets/:id/coins` | `SetsService.patchCoins` calling `getOwnedSetOrThrow` first |
-| 2. UUID-array validation on `add`/`remove` | `PatchSetCoinsDto` (`@IsArray()` + `@IsUUID('4', { each: true })`) |
-| 3. `max(position)`-based append in one `$transaction`, `skipDuplicates` against `@@unique([userSetId, coinId])` | `SetsService.patchCoins` step 3 (transaction/aggregate/createMany) |
-| 4. Same coin ID twice in one call / across two calls → exactly one row | in-request de-dupe (`[...new Set(dto.add)]`) + `skipDuplicates: true` against the DB constraint |
-| 5. Remove never touches `Ownership` | `SetsService.patchCoins` step 4 — `deleteMany` on `userSetCoin` only |
-| 6. Add→remove→re-add produces no stale collision | `deleteMany` genuinely removes the row from the unique index; subsequent add reads a fresh `max(position)` |
-| 7. `PATCH /sets/:id/coins` returns the set's current coin list | `SetsService.patchCoins` step 6 (`userSetCoin.findMany`, ordered by position) |
-| 8. `GET /sets/canonical` public, lists all `CanonicalSet` rows | `SetsController.findAllCanonical` + `@Public()` + `SetsService.findAllCanonical` |
-| 9. `GET /sets/canonical/:id` public, `ParseUUIDPipe`, ordered coin list, 404 on unknown | `SetsController.findCanonicalById` + `SetsService.findCanonicalById` |
-| 10. `GET /sets/public` public, all `UserSet` rows, paginated, same shape as `GET /catalog` | `SetsController.findAllPublic` + `SetsService.findAllPublic` |
-| 11. `GET /sets/public/:id` public, `ParseUUIDPipe`, ordered coin list, 404 on unknown | `SetsController.findPublicById` + `SetsService.findPublicById` |
-| 12. No user-identifying field beyond existing `UserSetSummary` fields | `UserSetDetail`/`PaginatedResponse<UserSetSummary>` response shapes carry no email/display-name field |
-| 13. Literal routes declared above `:id`-shaped routes | Controller declaration order (Interface Contract §Controller) |
-| 14. `GET /sets/canonical` hits the list handler, not a `:id` handler | manual pass (task 2.4) — not a unit-test-only concern, verified against a running server |
-| 15. All four new read endpoints return 200 with no `Authorization` header | `@Public()` on all four handlers; manual pass confirms at the HTTP level |
-| 16. `GET /sets/public` paginates with no overlap/gap | `SetsService.findAllPublic`'s `skip`/`take` math (same as `CatalogService.findAll`, already proven correct in Week 1); manual pass with real rows |
-| 17. New shared types added additively, no existing export modified | Interface Contract §Shared types — pure additions, no edits to `CatalogCoin`/`PaginatedResponse`/`UserSetSummary`/`CloneFromRequest`/`CreateSetRequestBody` |
-| 18. `typecheck`/`build`/`test`/`lint` all clean | Coder runs all four before completion; sandbox re-verifies `test` |
-| 19. `docs/backlog_week2.md` 2.1–2.5 checked off | Coder's final step, after manual pass |
+| 1. lincoln-wheat-cents.v1.json, full 142-coin scope | seed/templates/lincoln-wheat-cents.v1.json (Files changed, Interface Contract §Data files) |
+| 2. key-dates template, verified-real subset | seed/templates/lincoln-wheat-cents-key-dates.v1.json, 7 entries confirmed against the fixture's `isKeyDate: true` rows |
+| 3. Script exists, excluded from build, runnable via npm script | apps/api/scripts/seed-canonical-sets.ts + tsconfig.build.json exclude + package.json `seed:canonical` |
+| 4. Per-file upsert of CanonicalSet + resolve + position-ordered CanonicalSetCoin | seedTemplateFile (Approach step 3, Interface Contract) |
+| 5. Fail loudly, stop whole run on unresolved entry | seedTemplateFile's resolve-before-write ordering + spec scenario "unresolvable coin" |
+| 6. Idempotent re-run (0 created second time) | seedTemplateFile's existing-row diff logic + spec scenario "idempotent re-run" |
+| 7. GET /sets/canonical(/:id) return real seeded data | No code change needed (Day 2 endpoints already read these tables) — verified manually post-seed, per PRD process note |
+| 8. Clone-from-canonical matches template exactly | No code change needed (Day 1 clone logic already built) — verified manually post-seed, per PRD process note |
+| 9. typecheck/build/test/lint all clean | tsconfig.build.json exclude (build), jest `roots` (test discovers the new spec), no new lint-violating patterns introduced |
+| 10. backlog_week2.md 3.1–3.4 checked off | docs/backlog_week2.md (Files changed) |
 
 ## Risks and open questions
 
-- **Manual-pass items (PRD criteria #4, #6, #14, #15, #16) are not fully covered by the automated unit-test suite** — they require a running server and real HTTP requests (curl/Postman) against the dev DB, per the task's own "Verify (manual pass — tasks 2.5)" section. The unit tests in this plan cover the underlying logic (dedup, position math, route delegation, `@Public()` metadata) at the mock level; the Coder is responsible for actually running the manual pass against a live `nest start` instance and cleaning up any throwaway data afterward, exactly as the task describes — this is expected to happen outside the Jest suite the sandbox runs, and its results are not gated by the automated pipeline's PASS/FAIL verdict.
-- **`findCanonicalById`/`findPublicById`'s Prisma `include` shape is asserted at the mock level, not against a real Prisma Client type** — the unit tests assert `prisma.canonicalSet.findUnique`/`prisma.userSet.findUnique` were called with the expected `where`/`include` argument shape and that the mocked resolved value passes through unchanged; they cannot catch a genuine Prisma schema/relation-name typo (e.g. `coins` vs. `userSetCoins`) since the mock doesn't validate against the real schema. `pnpm --filter api build`/`typecheck` is the actual backstop for that class of error, since Prisma's generated client types would fail to compile against a wrong relation name.
-- **Position de-duplication choice:** the task description says `createMany({ skipDuplicates: true })` alone is sufficient, relying on Postgres's `ON CONFLICT DO NOTHING` to handle same-array duplicates. This plan adds an explicit `[...new Set(dto.add)]` de-dupe before building the `data` array as a belt-and-suspenders correctness measure (it also avoids leaving unused position-number gaps from skipped in-array duplicates, though gaps are harmless per system-design_v2.md §4.1). This is a Coder implementation detail, not a contract deviation — the Tester's mock-level assertions should verify the *outcome* (final `createMany` call's `data` array has one entry per unique coin ID) rather than assuming Postgres conflict semantics, since the whole point of unit-testing this logic is to not depend on a real Postgres instance.
+- **The `CanonicalSet` row can be upserted before all coins in that file resolve.** Documented and accepted in Approach step 3 — consistent with this codebase's existing "fail loudly, resumable, no partial-import fallback" precedent (`import-coins.ts`, SD §4.3/§4.5). Not a defect; re-running after fixing a bad template entry fills in the rest.
+- **Jest `roots` config change is new footprint**, not explicitly requested by the task text. Justified because jest's `rootDir: "src"` would otherwise silently never discover `apps/api/scripts/seed-canonical-sets.spec.ts`, defeating this pipeline's TDD/sandbox gate on the very script this task is about. Coder should verify `pnpm --filter api test` output explicitly lists `seed-canonical-sets.spec.ts` as run, not just "0 new failures."
+- **`SeedPrismaClient` structural typing** (`Pick<PrismaClient, 'coin' | 'canonicalSet' | 'canonicalSetCoin'>`) is a deliberate deviation from `import-coins.ts`'s `prisma: PrismaClient` parameter — chosen specifically so the Tester's mock object doesn't need a full `PrismaClient` shape or an `as any` cast. `main()` still constructs a real `new PrismaClient()` and passes it in, so this is type-compatible at the real call site (a `PrismaClient` structurally satisfies the `Pick<...>` type).
+- Live-DB verification (3.3–3.4's actual Neon dev DB run, psql checks, HTTP clone check, deliberate-break check, cleanup) is explicitly deferred to a human-confirmed manual step after the pipeline completes — see PRD process note. The Coder should not attempt to run `pnpm --filter api run seed:canonical` against a real database as part of this pipeline run.
