@@ -642,6 +642,30 @@ describe('SetsService', () => {
         },
       });
     });
+
+    it('is a single query — no per-slot/N+1 lookups against userSetCoin or ownership', async () => {
+      const detail = {
+        id: uuidC,
+        coins: [
+          { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [{ userId: 'user-1' }] } },
+          { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] } },
+          { id: 'usc-3', position: 3, coin: { id: 'coin-c', ownerships: [] } },
+        ],
+      };
+      mockPrismaService.userSet.findUnique.mockResolvedValue(detail);
+
+      await service.getGaps('user-1', uuidC);
+
+      // Exactly one round trip for the whole set, regardless of how many slots it has —
+      // a per-slot implementation would call one of these once per coin (3 times here)
+      // instead of the nested `include` doing it in the single findUnique call above.
+      expect(mockPrismaService.userSet.findUnique).toHaveBeenCalledTimes(1);
+      expect(mockPrismaService.userSetCoin.findMany).not.toHaveBeenCalled();
+      expect(mockPrismaService.ownership.findMany).not.toHaveBeenCalled();
+      expect(mockPrismaService.ownership.upsert).not.toHaveBeenCalled();
+      expect(mockPrismaService.ownership.delete).not.toHaveBeenCalled();
+      expect(mockPrismaService.ownership.deleteMany).not.toHaveBeenCalled();
+    });
   });
 
   describe('getGaps — computation (criteria #10, #11 from run_20260720_142942/prd.md)', () => {
