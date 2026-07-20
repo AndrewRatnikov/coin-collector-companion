@@ -2,20 +2,22 @@
  * Tests for: SetsController
  * Contract source: runs/run_20260719_200109/plan.md § Interface Contract (Controller: SetsController)
  *                   runs/run_20260720_070901/plan.md § Interface Contract (Controller: SetsController)
+ *                   runs/run_20260720_142942/plan.md § Interface Contract (Controller: SetsController — new handler)
  * Covers criteria: #1, #2, #8, #9 (from runs/run_20260719_200109/prd.md)
  *                   #1, #2, #7, #8, #9, #10, #11, #12 (from runs/run_20260720_070901/prd.md)
+ *                   #9 (from runs/run_20260720_142942/prd.md)
  *
  * CONTRACT_GAP: none.
  *
  * SetsService is mocked entirely — this file only proves the controller delegates to the
  * service unchanged, passes `user.userId` (never a raw user object) as the first service
  * arg on owner-scoped handlers, and that @Public() metadata is present/absent exactly where
- * the Interface Contract says it should be. It does not re-test ownership/clone/dedup/pagination
- * logic, which belongs to sets.service.spec.ts. Route *declaration order* (PRD criterion #13/#14)
- * is explicitly a manual-pass concern per plan.md's Interface Contract and Risks section — it
- * requires a live HTTP server to observe NestJS's actual route matching, which a direct
- * controller-instance unit test (no HTTP layer) cannot exercise. No real network/DB call
- * anywhere in this file.
+ * the Interface Contract says it should be. It does not re-test ownership/clone/dedup/pagination/gap
+ * logic, which belongs to sets.service.spec.ts. Route *declaration order* (PRD criterion #13/#14
+ * from run_20260720_070901/prd.md) is explicitly a manual-pass concern per plan.md's Interface
+ * Contract and Risks section — it requires a live HTTP server to observe NestJS's actual route
+ * matching, which a direct controller-instance unit test (no HTTP layer) cannot exercise. No real
+ * network/DB call anywhere in this file.
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -41,6 +43,7 @@ describe('SetsController', () => {
     findCanonicalById: jest.Mock;
     findAllPublic: jest.Mock;
     findPublicById: jest.Mock;
+    getGaps: jest.Mock;
   };
 
   const user: AuthenticatedUser = { userId: 'user-1', email: 'a@example.com' };
@@ -56,6 +59,7 @@ describe('SetsController', () => {
       findCanonicalById: jest.fn(),
       findAllPublic: jest.fn(),
       findPublicById: jest.fn(),
+      getGaps: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -107,6 +111,14 @@ describe('SetsController', () => {
 
     it('does NOT mark patchCoins as public (owner-only write, criterion #1)', () => {
       expect(reflector.get<boolean>(IS_PUBLIC_KEY, controller.patchCoins)).toBeFalsy();
+    });
+  });
+
+  describe('@Public() metadata — getGaps (criterion #9 from run_20260720_142942/prd.md)', () => {
+    const reflector = new Reflector();
+
+    it('does NOT mark getGaps as public — requires auth even though it is not owner-restricted', () => {
+      expect(reflector.get<boolean>(IS_PUBLIC_KEY, controller.getGaps)).toBeFalsy();
     });
   });
 
@@ -242,6 +254,40 @@ describe('SetsController', () => {
       const result = await controller.findPublicById(id);
 
       expect(mockSetsService.findPublicById).toHaveBeenCalledWith(id);
+      expect(result).toBe(serviceResult);
+    });
+  });
+
+  describe('getGaps (criteria #9, #10, #11 from run_20260720_142942/prd.md)', () => {
+    it('delegates the caller userId and id param to setsService.getGaps and returns its result unchanged', async () => {
+      const id = '66666666-6666-6666-6666-666666666666';
+      const serviceResult = {
+        setId: id,
+        ownedCount: 1,
+        totalCount: 2,
+        completionPercent: 50,
+        slots: [
+          { id: 'usc-1', position: 1, coin: { id: 'coin-a' }, owned: true },
+          { id: 'usc-2', position: 2, coin: { id: 'coin-b' }, owned: false },
+        ],
+      };
+      mockSetsService.getGaps.mockResolvedValue(serviceResult);
+
+      const result = await controller.getGaps(user, id);
+
+      expect(mockSetsService.getGaps).toHaveBeenCalledWith('user-1', id);
+      expect(result).toBe(serviceResult);
+    });
+
+    it('passes the caller userId even for a set owned by a different user (not owner-restricted)', async () => {
+      const id = '77777777-7777-7777-7777-777777777777';
+      const otherCallerUser: AuthenticatedUser = { userId: 'user-2', email: 'b@example.com' };
+      const serviceResult = { setId: id, ownedCount: 0, totalCount: 3, completionPercent: 0, slots: [] };
+      mockSetsService.getGaps.mockResolvedValue(serviceResult);
+
+      const result = await controller.getGaps(otherCallerUser, id);
+
+      expect(mockSetsService.getGaps).toHaveBeenCalledWith('user-2', id);
       expect(result).toBe(serviceResult);
     });
   });

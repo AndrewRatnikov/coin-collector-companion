@@ -83,3 +83,34 @@ export interface PatchSetCoinsRequest {
   add?: string[];
   remove?: string[];
 }
+
+export interface OwnershipItem {
+  coinId: string;
+  coin: CatalogCoin;
+  ownedAt: Date;
+}
+
+export interface SetOwnershipRequest {
+  owned: boolean;
+}
+
+export interface SetOwnershipResponse {
+  coinId: string;
+  owned: boolean;
+  ownedAt: Date | null;
+}
+
+export interface GapSlot {
+  id: string;
+  position: number;
+  coin: CatalogCoin;
+  owned: boolean;
+}
+
+export interface GapViewResponse {
+  setId: string;
+  ownedCount: number;
+  totalCount: number;
+  completionPercent: number;
+  slots: GapSlot[];
+}
