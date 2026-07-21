@@ -1,15 +1,30 @@
 'use client';
 
-import { use } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { formatCoinLabel } from '@coin-collector/shared';
 import { getStoredToken } from '@/lib/auth-token';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
 
 export default function CanonicalSetDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const { data: set, isLoading, isError } = useCanonicalSet(id);
+  const [id, setId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    params.then((resolved) => {
+      if (!cancelled) setId(resolved.id);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [params]);
+
+  const { data: set, isLoading, isError } = useCanonicalSet(id ?? '');
   const isLoggedIn = Boolean(getStoredToken());
+
+  if (id === null) {
+    return <main data-testid="canonical-set-detail-page" />;
+  }
 
   return (
     <main data-testid="canonical-set-detail-page" className="flex flex-1 flex-col gap-4 p-8">
