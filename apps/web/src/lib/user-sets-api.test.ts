@@ -1,12 +1,16 @@
 /**
  * Tests for: user-sets-api
- * Contract source: runs/run_20260721_161448/plan.md § Interface Contract → Module: user-sets-api
+ * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Module: user-sets-api.ts (MODIFY)
  * Covers criteria: #1 (from prd.md)
+ *
+ * This file supersedes the prior run's version of the same file, adding
+ * patchSetCoins coverage alongside the existing getUserSets/createSet/renameSet/
+ * deleteSet/getSetGaps tests (all unchanged from before).
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // fetch is mocked via vi.stubGlobal, not vi.mock(), see vitest.setup.ts
-import { createSet, deleteSet, getSetGaps, getUserSets, renameSet } from '@/lib/user-sets-api';
+import { createSet, deleteSet, getSetGaps, getUserSets, patchSetCoins, renameSet } from '@/lib/user-sets-api';
 
 function stubFetchResolving(status: number, body: unknown) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -117,6 +121,31 @@ describe('user-sets-api', () => {
     it('propagates a rejection when the request fails', async () => {
       stubFetchResolving(500, { message: 'Internal error' });
       await expect(getSetGaps('u1')).rejects.toThrow();
+    });
+  });
+
+  describe('criterion 1: patchSetCoins calls PATCH /sets/:id/coins with { add, remove }', () => {
+    it('sends an add-only body and returns the resulting UserSetCoinSummary[]', async () => {
+      const resultBody = [{ id: 'usc-1', userSetId: 'u1', coinId: 'coin-1', position: 0 }];
+      const fetchMock = stubFetchResolving(200, resultBody);
+      const result = await patchSetCoins('u1', { add: ['coin-1'] });
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url.endsWith('/sets/u1/coins')).toBe(true);
+      expect(init.method).toBe('PATCH');
+      expect(JSON.parse(init.body as string)).toEqual({ add: ['coin-1'] });
+      expect(result).toEqual(resultBody);
+    });
+
+    it('sends a remove-only body', async () => {
+      const fetchMock = stubFetchResolving(200, []);
+      await patchSetCoins('u1', { remove: ['coin-2'] });
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(JSON.parse(init.body as string)).toEqual({ remove: ['coin-2'] });
+    });
+
+    it('propagates a rejection when the request fails', async () => {
+      stubFetchResolving(403, { message: 'Forbidden' });
+      await expect(patchSetCoins('u1', { add: ['coin-1'] })).rejects.toThrow();
     });
   });
 });
