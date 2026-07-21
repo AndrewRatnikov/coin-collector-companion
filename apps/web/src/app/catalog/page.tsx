@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import type { FormEvent } from 'react';
 import Link from 'next/link';
 import { formatCoinLabel } from '@coin-collector/shared';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
+import CatalogFilterForm, { type CatalogFilterFormValues } from '@/components/catalog/catalog-filter-form';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import type { CatalogFilters } from '@/lib/catalog-api';
 
@@ -12,25 +12,11 @@ const DEFAULT_LIMIT = 20;
 
 export default function CatalogPage() {
   const [filters, setFilters] = useState<CatalogFilters>({ page: 1, limit: DEFAULT_LIMIT });
-  const [country, setCountry] = useState('');
-  const [denomination, setDenomination] = useState('');
-  const [name, setName] = useState('');
-  const [yearMin, setYearMin] = useState('');
-  const [yearMax, setYearMax] = useState('');
 
   const { data, isLoading, isError } = useCatalog(filters);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setFilters({
-      country: country || undefined,
-      denomination: denomination || undefined,
-      name: name || undefined,
-      yearMin: yearMin ? Number(yearMin) : undefined,
-      yearMax: yearMax ? Number(yearMax) : undefined,
-      page: 1,
-      limit: DEFAULT_LIMIT,
-    });
+  function handleFilterSubmit(values: CatalogFilterFormValues) {
+    setFilters({ ...values, page: 1, limit: DEFAULT_LIMIT });
   }
 
   function goToPage(page: number) {
@@ -41,80 +27,7 @@ export default function CatalogPage() {
     <main data-testid="catalog-page" className="flex flex-1 flex-col gap-6 p-8">
       <h1 className="text-lg font-semibold">Catalog</h1>
 
-      <form data-testid="catalog-filter-form" onSubmit={handleSubmit} className="flex flex-wrap items-end gap-4">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="catalog-country" className="text-sm font-medium">
-            Country
-          </label>
-          <input
-            id="catalog-country"
-            data-testid="catalog-filter-country"
-            type="text"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="catalog-denomination" className="text-sm font-medium">
-            Denomination
-          </label>
-          <input
-            id="catalog-denomination"
-            data-testid="catalog-filter-denomination"
-            type="text"
-            value={denomination}
-            onChange={(e) => setDenomination(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="catalog-name" className="text-sm font-medium">
-            Name
-          </label>
-          <input
-            id="catalog-name"
-            data-testid="catalog-filter-name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="catalog-year-min" className="text-sm font-medium">
-            Year min
-          </label>
-          <input
-            id="catalog-year-min"
-            data-testid="catalog-filter-year-min"
-            type="number"
-            value={yearMin}
-            onChange={(e) => setYearMin(e.target.value)}
-            className="w-24 rounded border border-gray-300 px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="catalog-year-max" className="text-sm font-medium">
-            Year max
-          </label>
-          <input
-            id="catalog-year-max"
-            data-testid="catalog-filter-year-max"
-            type="number"
-            value={yearMax}
-            onChange={(e) => setYearMax(e.target.value)}
-            className="w-24 rounded border border-gray-300 px-3 py-2 text-sm"
-          />
-        </div>
-        <button
-          type="submit"
-          data-testid="catalog-filter-submit"
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
-        >
-          Search
-        </button>
-      </form>
+      <CatalogFilterForm testIdPrefix="catalog" onSubmit={handleFilterSubmit} />
 
       {isLoading && (
         <div data-testid="catalog-loading">
