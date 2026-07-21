@@ -1,3 +1,5 @@
+import { clearStoredToken, getStoredToken } from './auth-token';
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const REQUEST_TIMEOUT_MS = 75_000; // Render cold start is ~30-60s (SD §6)
 
@@ -33,10 +35,6 @@ function isColdStartFailure(error: unknown): boolean {
   return (error instanceof DOMException && error.name === 'AbortError') || error instanceof TypeError;
 }
 
-// Auth header attachment (previously a localStorage JWT, per v1) was removed here pending
-// the v2 auth decision (Neon Auth vs. hand-rolled JWT fallback — docs/build-roadmap.md Week
-// 1 spike). Re-add token attachment (and a 401 -> clear-session -> redirect path) once that
-// lands, rather than guessing at the shape now.
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!API_BASE_URL) {
     throw new Error('NEXT_PUBLIC_API_URL is not set');
@@ -44,6 +42,11 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
 
   const headers = new Headers(init.headers);
   headers.set('Content-Type', 'application/json');
+
+  const token = getStoredToken();
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
 
   const url = `${API_BASE_URL}${path}`;
   const requestInit: RequestInit = { ...init, headers };
@@ -57,6 +60,18 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   }
 
   if (!response.ok) {
+    // A 401 on a request that actually carried a token means the session itself was
+    // rejected (expired/invalid JWT) — clear it and bounce to /login. A 401 with no
+    // token attached (e.g. /auth/login's own wrong-password response) is a normal
+    // anonymous-request failure, not a session invalidation, so it's left for the
+    // caller (the login/signup form) to handle inline.
+    if (token && response.status === 401) {
+      clearStoredToken();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    }
+
     const body: unknown = await response.json().catch(() => null);
     const message =
       body && typeof body === 'object' && 'message' in body
