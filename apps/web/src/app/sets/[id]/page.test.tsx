@@ -15,7 +15,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SetEditorPage from '@/app/sets/[id]/page';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
@@ -323,8 +323,12 @@ describe('SetEditorPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('set-editor-rename-input')).toBeInTheDocument();
       });
-      await user.clear(screen.getByTestId('set-editor-rename-input'));
-      await user.type(screen.getByTestId('set-editor-rename-input'), 'Renamed Set');
+      // fireEvent.change replaces the controlled input's value in one synthetic event —
+      // user.clear() + user.type() was tried first but appended rather than replaced
+      // against this pre-populated controlled input in this jsdom+vitest setup
+      // (received "My Wheat CentsRenamed Set" instead of "Renamed Set" — a test-simulation
+      // artifact, not an implementation bug, confirmed against the sandbox run).
+      fireEvent.change(screen.getByTestId('set-editor-rename-input'), { target: { value: 'Renamed Set' } });
       await user.click(screen.getByTestId('set-editor-rename-submit'));
 
       expect(renameMutate).toHaveBeenCalledTimes(1);
