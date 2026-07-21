@@ -26,12 +26,12 @@ describe('RequireAuth', () => {
       setStoredToken('tok-abc');
       render(
         <RequireAuth>
-          <div data-testid="protected-content">secret</div>
+          <p>secret content</p>
         </RequireAuth>,
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId('protected-content')).toBeInTheDocument();
+        expect(screen.getByText('secret content')).toBeInTheDocument();
       });
       expect(replaceMock).not.toHaveBeenCalled();
     });
@@ -40,12 +40,12 @@ describe('RequireAuth', () => {
       setStoredToken('tok-abc');
       render(
         <RequireAuth>
-          <div data-testid="protected-content">secret</div>
+          <p>secret content</p>
         </RequireAuth>,
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId('protected-content')).toBeInTheDocument();
+        expect(screen.getByText('secret content')).toBeInTheDocument();
       });
       expect(screen.queryByTestId('require-auth-pending')).not.toBeInTheDocument();
     });
@@ -55,20 +55,20 @@ describe('RequireAuth', () => {
     it('never renders children when there is no stored token', async () => {
       render(
         <RequireAuth>
-          <div data-testid="protected-content">secret</div>
+          <p>secret content</p>
         </RequireAuth>,
       );
 
       await waitFor(() => {
         expect(replaceMock).toHaveBeenCalledWith('/login');
       });
-      expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument();
+      expect(screen.queryByText('secret content')).not.toBeInTheDocument();
     });
 
     it('renders the require-auth-pending state when there is no stored token', async () => {
       render(
         <RequireAuth>
-          <div data-testid="protected-content">secret</div>
+          <p>secret content</p>
         </RequireAuth>,
       );
 
