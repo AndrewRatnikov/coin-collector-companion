@@ -65,10 +65,14 @@ describe('LoginPage', () => {
 
   describe('criterion 4: surfaces a rejected submission via lib/form-errors, not an unhandled exception', () => {
     it('shows a field-level error when the ApiError detail matches a known field', async () => {
-      loginMock.mockRejectedValue(new ApiError(401, 'email must be an email', ['email must be an email']));
+      // status 400 (ValidationPipe) is what actually carries a field-prefixed message in this
+      // API; the email value must also pass the input's native type="email" HTML5 validation
+      // (jsdom enforces this) so the click actually reaches the form's onSubmit at all — a
+      // syntactically-invalid value like "not-an-email" is blocked before submit ever fires.
+      loginMock.mockRejectedValue(new ApiError(400, 'email must be an email', ['email must be an email']));
       render(<LoginPage />);
 
-      await fillAndSubmit('not-an-email', 'password123');
+      await fillAndSubmit('user@localhost', 'password123');
 
       await waitFor(() => {
         expect(document.getElementById('email-error')?.textContent).toBe('email must be an email');
@@ -93,6 +97,18 @@ describe('LoginPage', () => {
       render(<LoginPage />);
 
       await expect(fillAndSubmit('user@example.com', 'wrongpassword')).resolves.not.toThrow();
+    });
+
+    it('never treats a non-400 status as field-level, even when the message text coincidentally starts with a field name', async () => {
+      loginMock.mockRejectedValue(new ApiError(409, 'Email address already in use', ['Email address already in use']));
+      render(<LoginPage />);
+
+      await fillAndSubmit('user@example.com', 'password123');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('login-form-error')).toHaveTextContent('Email address already in use');
+      });
+      expect(document.getElementById('email-error')).not.toBeInTheDocument();
     });
   });
 });
