@@ -3,7 +3,6 @@
 
 export interface CatalogCoin {
   id: string;
-  numistaTypeId: string | null;
   country: string;
   denomination: string;
   year: number;

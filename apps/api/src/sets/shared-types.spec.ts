@@ -43,7 +43,6 @@ import type {
 
 const sampleCatalogCoin: CatalogCoin = {
   id: '99999999-9999-9999-9999-999999999999',
-  numistaTypeId: null,
   country: 'USA',
   denomination: 'Cent',
   year: 1943,
