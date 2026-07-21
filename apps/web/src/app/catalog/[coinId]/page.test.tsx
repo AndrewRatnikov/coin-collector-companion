@@ -33,7 +33,7 @@ function queryResult(overrides: Partial<ReturnType<typeof useCoin>> = {}) {
 
 function renderPage(coinId = 'coin-1') {
   return render(
-    <Suspense fallback={<div data-testid="suspense-fallback" />}>
+    <Suspense fallback={<div />}>
       <CoinDetailPage params={Promise.resolve({ coinId })} />
     </Suspense>,
   );

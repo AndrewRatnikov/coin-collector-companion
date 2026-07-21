@@ -37,7 +37,7 @@ function queryResult(overrides: Partial<ReturnType<typeof useCanonicalSet>> = {}
 
 function renderPage(id = 'set-1') {
   return render(
-    <Suspense fallback={<div data-testid="suspense-fallback" />}>
+    <Suspense fallback={<div />}>
       <CanonicalSetDetailPage params={Promise.resolve({ id })} />
     </Suspense>,
   );
