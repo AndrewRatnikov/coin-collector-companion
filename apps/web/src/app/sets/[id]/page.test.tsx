@@ -362,6 +362,11 @@ describe('SetEditorPage', () => {
       });
       expect(screen.getByTestId('set-editor-add-coins-filter-form')).toBeInTheDocument();
 
+      const initialCallArgs = useCatalogMock.mock.calls[useCatalogMock.mock.calls.length - 1][0] as {
+        country?: string;
+      };
+      expect(initialCallArgs.country).toBeUndefined();
+
       await user.type(screen.getByTestId('set-editor-add-coins-filter-country'), 'USA');
       await user.click(screen.getByTestId('set-editor-add-coins-filter-submit'));
 

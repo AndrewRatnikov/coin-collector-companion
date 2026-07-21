@@ -110,6 +110,11 @@ describe('CollectionPage', () => {
   });
 
   describe('criterion 7: filtering by country and year', () => {
+    function lastCollectionFilters() {
+      const calls = useCollectionMock.mock.calls;
+      return calls[calls.length - 1][0] as { country?: string; year?: number };
+    }
+
     it('calls useCollection with the filter values entered when the filter form is submitted', async () => {
       setStoredToken('tok-abc');
       const user = userEvent.setup();
@@ -123,12 +128,25 @@ describe('CollectionPage', () => {
       await user.click(screen.getByTestId('collection-filter-submit'));
 
       await waitFor(() => {
-        const lastCallArgs = useCollectionMock.mock.calls[useCollectionMock.mock.calls.length - 1][0] as {
-          country?: string;
-          year?: number;
-        };
-        expect(lastCallArgs.country).toBe('USA');
-        expect(lastCallArgs.year).toBe(1909);
+        expect(lastCollectionFilters().country).toBe('USA');
+        expect(lastCollectionFilters().year).toBe(1909);
+      });
+    });
+
+    it('reflects a second, different filter combination (rules out a hardcoded/ignored-input filter wiring)', async () => {
+      setStoredToken('tok-abc');
+      const user = userEvent.setup();
+      render(<CollectionPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('collection-filter-form')).toBeInTheDocument();
+      });
+      await user.type(screen.getByTestId('collection-filter-year'), '1943');
+      await user.click(screen.getByTestId('collection-filter-submit'));
+
+      await waitFor(() => {
+        expect(lastCollectionFilters().year).toBe(1943);
+        expect(lastCollectionFilters().country).toBeUndefined();
       });
     });
   });
