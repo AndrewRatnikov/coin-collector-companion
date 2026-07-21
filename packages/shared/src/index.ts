@@ -113,3 +113,13 @@ export interface GapViewResponse {
   completionPercent: number;
   slots: GapSlot[];
 }
+
+// Compact coin label, SD §3.1: "{country} {denomination} ({year} {mintMark})" — drops the
+// mint mark from the parenthetical when it's empty. One formatter so both apps render a
+// coin's display label identically wherever it appears (catalog rows, coin detail header,
+// set editor picker, gap-view slot cards).
+export function formatCoinLabel(coin: CatalogCoin): string {
+  return coin.mintMark
+    ? `${coin.country} ${coin.denomination} (${coin.year} ${coin.mintMark})`
+    : `${coin.country} ${coin.denomination} (${coin.year})`;
+}
