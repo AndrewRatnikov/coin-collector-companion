@@ -1,12 +1,27 @@
 'use client';
 
-import { use } from 'react';
+import { useEffect, useState } from 'react';
 import { formatCoinLabel } from '@coin-collector/shared';
 import { useCoin } from '@/lib/hooks/use-catalog';
 
 export default function CoinDetailPage({ params }: { params: Promise<{ coinId: string }> }) {
-  const { coinId } = use(params);
-  const { data: coin, isLoading, isError } = useCoin(coinId);
+  const [coinId, setCoinId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    params.then((resolved) => {
+      if (!cancelled) setCoinId(resolved.coinId);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [params]);
+
+  const { data: coin, isLoading, isError } = useCoin(coinId ?? '');
+
+  if (coinId === null) {
+    return <main data-testid="coin-detail-page" />;
+  }
 
   return (
     <main data-testid="coin-detail-page" className="flex flex-1 flex-col gap-4 p-8">
