@@ -23,12 +23,14 @@ vi.mock('@/lib/auth-api', () => ({
 
 const registerMock = vi.mocked(register);
 
-async function fillAndSubmit(email: string, password: string) {
+async function fillAndSubmit(email: string, password: string, confirmPassword: string = password) {
   const user = userEvent.setup();
   const emailInput = document.getElementById('email') as HTMLInputElement;
   const passwordInput = document.getElementById('password') as HTMLInputElement;
+  const confirmPasswordInput = document.getElementById('confirmPassword') as HTMLInputElement;
   await user.type(emailInput, email);
   await user.type(passwordInput, password);
+  await user.type(confirmPasswordInput, confirmPassword);
   await user.click(screen.getByTestId('signup-submit'));
 }
 
@@ -46,6 +48,24 @@ describe('SignupPage', () => {
       expect(screen.getByTestId('signup-submit')).toBeInTheDocument();
       expect(document.getElementById('email')).toBeInTheDocument();
       expect(document.getElementById('password')).toBeInTheDocument();
+      expect(document.getElementById('confirmPassword')).toBeInTheDocument();
+    });
+  });
+
+  describe('criterion 4: confirm-password field must match before submitting', () => {
+    it('shows a field error and never calls register when the confirmation does not match', async () => {
+      render(<SignupPage />);
+
+      await fillAndSubmit('new-user@example.com', 'password123', 'password124');
+
+      await waitFor(() => {
+        expect(document.getElementById('confirmPassword-error')?.textContent).toBe('Passwords do not match');
+      });
+      expect(document.getElementById('password-error')?.textContent).toBe('Passwords do not match');
+      expect(document.getElementById('password')).toHaveAttribute('aria-invalid', 'true');
+      expect(document.getElementById('confirmPassword')).toHaveAttribute('aria-invalid', 'true');
+      expect(registerMock).not.toHaveBeenCalled();
+      expect(pushMock).not.toHaveBeenCalled();
     });
   });
 

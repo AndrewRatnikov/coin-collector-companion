@@ -14,6 +14,7 @@ export default function SignupPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
 
@@ -21,6 +22,11 @@ export default function SignupPage() {
     event.preventDefault();
     setFieldErrors({});
     setFormError('');
+
+    if (password !== confirmPassword) {
+      setFieldErrors({ password: 'Passwords do not match', confirmPassword: 'Passwords do not match' });
+      return;
+    }
 
     try {
       await register({ email, password });
@@ -70,6 +76,15 @@ export default function SignupPage() {
           value={password}
           onChange={setPassword}
           error={fieldErrors.password}
+        />
+        <FormField
+          id="confirmPassword"
+          label="Confirm password"
+          type="password"
+          autoComplete="new-password"
+          value={confirmPassword}
+          onChange={setConfirmPassword}
+          error={fieldErrors.confirmPassword}
         />
         {formError && (
           <p data-testid="signup-form-error" className="text-sm text-red-600">
