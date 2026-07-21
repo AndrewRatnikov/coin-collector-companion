@@ -99,6 +99,18 @@ describe('CoinDetailPage', () => {
     });
   });
 
+  describe('criterion 10: not gated by auth', () => {
+    it('resolves to real content with no stored token (RequireAuth would instead redirect and never render children)', async () => {
+      localStorage.clear();
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_WITH_IMAGE as never }));
+      renderPage('coin-1');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-label')).toBeInTheDocument();
+      });
+    });
+  });
+
   describe('criterion 5: per-image attribution', () => {
     it('renders the image and its imageSource/imageLicense credit when imageUrl is set', async () => {
       useCoinMock.mockReturnValue(queryResult({ data: COIN_WITH_IMAGE as never }));

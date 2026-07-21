@@ -35,6 +35,20 @@ describe('CatalogPage', () => {
     useCatalogMock.mockReset();
   });
 
+  describe('criterion 10: not gated by auth', () => {
+    it('renders result content synchronously with no stored token (no auth-guard delay/redirect before content appears)', () => {
+      localStorage.clear();
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: COINS, page: 1, limit: 20, total: 2 } }));
+      render(<CatalogPage />);
+
+      // A route wrapped in RequireAuth never renders its children synchronously when
+      // there is no stored token (the auth check itself is an async useEffect) — getting
+      // real result content back immediately proves this page isn't gated.
+      expect(screen.getByTestId('catalog-page')).toBeInTheDocument();
+      expect(screen.getAllByTestId('catalog-item')).toHaveLength(2);
+    });
+  });
+
   describe('rendering', () => {
     it('renders the page root and filter form fields', () => {
       useCatalogMock.mockReturnValue(queryResult());

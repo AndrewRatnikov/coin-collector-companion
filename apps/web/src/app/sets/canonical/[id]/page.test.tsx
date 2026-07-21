@@ -104,8 +104,8 @@ describe('CanonicalSetDetailPage', () => {
     });
   });
 
-  describe('criterion 9: clone CTA is gated by auth state', () => {
-    it('is entirely absent from the DOM when no token is stored', async () => {
+  describe('criterion 9 / criterion 10: page itself renders anonymously; only the clone CTA is auth-gated', () => {
+    it('is entirely absent from the DOM when no token is stored, while the rest of the page still renders (page is not auth-gated, only the CTA is)', async () => {
       getStoredTokenMock.mockReturnValue(null);
       useCanonicalSetMock.mockReturnValue(queryResult({ data: DETAIL as never }));
       renderPage('set-1');

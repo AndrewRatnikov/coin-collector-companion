@@ -42,6 +42,17 @@ describe('CanonicalSetsPage', () => {
     });
   });
 
+  describe('criterion 10: not gated by auth', () => {
+    it('renders result content synchronously with no stored token (no auth-guard delay/redirect before content appears)', () => {
+      localStorage.clear();
+      useCanonicalSetsMock.mockReturnValue(queryResult({ data: SETS as never }));
+      render(<CanonicalSetsPage />);
+
+      expect(screen.getByTestId('canonical-sets-page')).toBeInTheDocument();
+      expect(screen.getAllByTestId('canonical-set-item')).toHaveLength(2);
+    });
+  });
+
   describe('criterion 8: shows a loading state while the canonical-sets query is loading', () => {
     it('renders canonical-sets-loading and no list while isLoading is true', () => {
       useCanonicalSetsMock.mockReturnValue(queryResult({ isLoading: true }));
