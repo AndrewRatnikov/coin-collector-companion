@@ -26,8 +26,34 @@ function queryResult(overrides: Partial<ReturnType<typeof useCatalog>> = {}) {
 }
 
 const COINS = [
-  { id: 'c1', country: 'USA', denomination: '1 Cent', year: 1984, mintMark: 'D', variety: '', name: 'Lincoln Memorial Cent' },
-  { id: 'c2', country: 'USA', denomination: '1 Cent', year: 1958, mintMark: '', variety: '', name: 'Lincoln Wheat Cent' },
+  {
+    id: 'c1',
+    country: 'USA',
+    denomination: '1 Cent',
+    year: 1984,
+    mintMark: 'D',
+    variety: '',
+    name: 'Lincoln Memorial Cent',
+    imageUrl: null,
+    imageSource: null,
+    imageLicense: null,
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+  },
+  {
+    id: 'c2',
+    country: 'USA',
+    denomination: '1 Cent',
+    year: 1958,
+    mintMark: '',
+    variety: '',
+    name: 'Lincoln Wheat Cent',
+    imageUrl: null,
+    imageSource: null,
+    imageLicense: null,
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+  },
 ];
 
 describe('CatalogPage', () => {

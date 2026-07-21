@@ -53,7 +53,6 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
 
           {coin.imageUrl && (
             <figure className="flex flex-col gap-1">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 data-testid="coin-detail-image"
                 src={coin.imageUrl}
