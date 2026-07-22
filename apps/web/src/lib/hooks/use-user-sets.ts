@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { CreateSetRequestBody, GapViewResponse, UserSetSummary } from '@coin-collector/shared';
+import type {
+  CreateSetRequestBody,
+  GapViewResponse,
+  PatchSetCoinsRequest,
+  UserSetCoinSummary,
+  UserSetSummary,
+} from '@coin-collector/shared';
 import { ApiError } from '@/lib/api-client';
-import { createSet, deleteSet, getSetGaps, getUserSets, renameSet } from '@/lib/user-sets-api';
+import { createSet, deleteSet, getSetGaps, getUserSets, patchSetCoins, renameSet } from '@/lib/user-sets-api';
 
 export function useUserSets() {
   return useQuery({
@@ -44,6 +50,17 @@ export function useDeleteSet() {
     mutationFn: (id) => deleteSet(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-sets'] });
+    },
+  });
+}
+
+export function usePatchSetCoins(setId: string) {
+  const queryClient = useQueryClient();
+  return useMutation<UserSetCoinSummary[], ApiError, PatchSetCoinsRequest>({
+    mutationFn: (body) => patchSetCoins(setId, body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-sets', setId, 'gaps'] });
+      queryClient.invalidateQueries({ queryKey: ['public-sets', setId] });
     },
   });
 }
