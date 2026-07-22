@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { formatCoinLabel } from '@coin-collector/shared';
 import { useCoin } from '@/lib/hooks/use-catalog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CoinDetailPage({ params }: { params: Promise<{ coinId: string }> }) {
   const [coinId, setCoinId] = useState<string | null>(null);
@@ -25,7 +26,11 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
 
   return (
     <main data-testid="coin-detail-page" className="flex flex-1 flex-col gap-4 p-8">
-      {isLoading && <div data-testid="coin-detail-loading">Loading…</div>}
+      {isLoading && (
+        <div data-testid="coin-detail-loading">
+          <Skeleton className="h-6 w-48" />
+        </div>
+      )}
 
       {isError && (
         <p data-testid="coin-detail-error" className="text-sm text-red-600">
