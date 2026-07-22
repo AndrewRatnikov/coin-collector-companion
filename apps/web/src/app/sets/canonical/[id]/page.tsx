@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { formatCoinLabel } from '@coin-collector/shared';
 import { getStoredToken } from '@/lib/auth-token';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function CanonicalSetDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [id, setId] = useState<string | null>(null);
@@ -28,7 +29,11 @@ export default function CanonicalSetDetailPage({ params }: { params: Promise<{ i
 
   return (
     <main data-testid="canonical-set-detail-page" className="flex flex-1 flex-col gap-4 p-8">
-      {isLoading && <div data-testid="canonical-set-detail-loading">Loading…</div>}
+      {isLoading && (
+        <div data-testid="canonical-set-detail-loading">
+          <Skeleton className="h-6 w-48" />
+        </div>
+      )}
 
       {isError && (
         <p data-testid="canonical-set-detail-error" className="text-sm text-red-600">
