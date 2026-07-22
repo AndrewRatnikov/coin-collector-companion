@@ -1,7 +1,8 @@
 /**
  * Tests for: CoinDetailPage
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CoinDetailPage
- * Covers criteria: #5 (from prd.md)
+ *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
+ * Covers criteria: #5 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md)
  *
  * CoinDetailPage unwraps its `params` prop (a Promise, per the Next.js 16 App Router
  * contract) via React's `use()`, which suspends on first render. Rendering it directly
@@ -67,6 +68,19 @@ describe('CoinDetailPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('coin-detail-loading')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('criterion 1: loading state uses a Skeleton, not bare text', () => {
+    it('renders a skeleton element within coin-detail-loading and no literal "Loading…" text', async () => {
+      useCoinMock.mockReturnValue(queryResult({ isLoading: true }));
+      const { container } = renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-loading')).toBeInTheDocument();
+      });
+      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     });
   });
 

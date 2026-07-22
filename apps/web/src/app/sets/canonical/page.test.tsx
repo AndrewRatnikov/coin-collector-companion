@@ -1,7 +1,8 @@
 /**
  * Tests for: CanonicalSetsPage
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CanonicalSetsPage
- * Covers criteria: #8 (from prd.md)
+ *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
+ * Covers criteria: #8 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md)
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -60,6 +61,17 @@ describe('CanonicalSetsPage', () => {
 
       expect(screen.getByTestId('canonical-sets-loading')).toBeInTheDocument();
       expect(screen.queryByTestId('canonical-sets-list')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('criterion 1: loading state uses a skeleton, not bare text', () => {
+    it('renders a skeleton element within canonical-sets-loading and no literal "Loading…" text', () => {
+      useCanonicalSetsMock.mockReturnValue(queryResult({ isLoading: true }));
+      const { container } = render(<CanonicalSetsPage />);
+
+      expect(screen.getByTestId('canonical-sets-loading')).toBeInTheDocument();
+      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     });
   });
 

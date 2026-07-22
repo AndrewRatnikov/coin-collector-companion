@@ -1,7 +1,8 @@
 /**
  * Tests for: PublicSetDetailPage
  * Contract source: runs/run_20260721_161448/plan.md § Interface Contract → Component: PublicSetDetailPage
- * Covers criteria: #5, #6, #7 (from prd.md)
+ *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
+ * Covers criteria: #5, #6, #7 (from run_20260721_161448's prd.md), #1 (from run_20260722_121303's prd.md)
  *
  * Unwraps params via useEffect+useState (matching the fix already applied to
  * sets/canonical/[id]/page.tsx per memory.md's recorded use()+Suspense gotcha), not
@@ -99,6 +100,19 @@ describe('PublicSetDetailPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('public-set-detail-loading')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('criterion 1: loading state uses a skeleton, not bare text', () => {
+    it('renders a skeleton element within public-set-detail-loading and no literal "Loading…" text', async () => {
+      usePublicSetMock.mockReturnValue(publicSetResult({ isLoading: true }));
+      const { container } = renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('public-set-detail-loading')).toBeInTheDocument();
+      });
+      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     });
   });
 

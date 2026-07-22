@@ -11,8 +11,10 @@ import { useDeleteSet, usePatchSetCoins, useRenameSet, useSetGaps, useUserSets }
 import { useSetOwnership } from '@/lib/hooks/use-collection';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import type { CatalogFilters } from '@/lib/catalog-api';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ADD_COINS_LIMIT = 20;
+const PAGE_WRAPPER_CLASSNAME = 'flex flex-1 flex-col gap-6 p-8';
 
 function SetEditor({ id }: { id: string }) {
   const router = useRouter();
@@ -66,15 +68,17 @@ function SetEditor({ id }: { id: string }) {
 
   if (setLoading || gapsLoading) {
     return (
-      <main data-testid="set-editor-page">
-        <div data-testid="set-editor-loading">Loading…</div>
+      <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME}>
+        <div data-testid="set-editor-loading">
+          <Skeleton className="h-6 w-48" />
+        </div>
       </main>
     );
   }
 
   if (setIsError || gapsIsError) {
     return (
-      <main data-testid="set-editor-page">
+      <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME}>
         <p data-testid="set-editor-error" className="text-sm text-red-600">
           Something went wrong loading this set. Please try again.
         </p>
@@ -83,13 +87,13 @@ function SetEditor({ id }: { id: string }) {
   }
 
   if (!set || !gaps) {
-    return <main data-testid="set-editor-page" />;
+    return <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME} />;
   }
 
   const sortedSlots = [...gaps.slots].sort((a, b) => a.position - b.position);
 
   return (
-    <main data-testid="set-editor-page" className="flex flex-1 flex-col gap-6 p-8">
+    <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME}>
       <h1 data-testid="set-editor-name" className="text-lg font-semibold">
         {set.name}
       </h1>
@@ -204,5 +208,13 @@ export default function SetEditorPage({ params }: { params: Promise<{ id: string
     };
   }, [params]);
 
-  return <RequireAuth>{id === null ? <main data-testid="set-editor-page" /> : <SetEditor id={id} />}</RequireAuth>;
+  return (
+    <RequireAuth>
+      {id === null ? (
+        <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME} />
+      ) : (
+        <SetEditor id={id} />
+      )}
+    </RequireAuth>
+  );
 }

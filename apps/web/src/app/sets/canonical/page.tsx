@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
+import { ListSkeleton } from '@/components/ui/list-skeleton';
 
 export default function CanonicalSetsPage() {
   const { data, isLoading, isError } = useCanonicalSets();
@@ -10,7 +11,11 @@ export default function CanonicalSetsPage() {
     <main data-testid="canonical-sets-page" className="flex flex-1 flex-col gap-6 p-8">
       <h1 className="text-lg font-semibold">Canonical sets</h1>
 
-      {isLoading && <div data-testid="canonical-sets-loading">Loading…</div>}
+      {isLoading && (
+        <div data-testid="canonical-sets-loading">
+          <ListSkeleton />
+        </div>
+      )}
 
       {isError && (
         <p data-testid="canonical-sets-error" className="text-sm text-red-600">

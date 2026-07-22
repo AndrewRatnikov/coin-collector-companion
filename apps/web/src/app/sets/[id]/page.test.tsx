@@ -1,7 +1,8 @@
 /**
  * Tests for: SetEditorPage
  * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Page: SetEditorPage (CREATE)
- * Covers criteria: #1, #3, #4, #5, #9 (from prd.md)
+ *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
+ * Covers criteria: #1, #3, #4, #5, #9 (from run_20260721_171115's prd.md), #1 (from run_20260722_121303's prd.md)
  *
  * Unwraps `params` via the useEffect/useState pattern already used by
  * sets/canonical/[id]/page.tsx and sets/public/[id]/page.tsx (documented gotcha:
@@ -209,6 +210,26 @@ describe('SetEditorPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('set-editor-error')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('criterion 1: loading state uses a Skeleton and matches the page\'s own spacing', () => {
+    it('renders a skeleton element within set-editor-loading, no literal "Loading…" text, and the set-editor-page wrapper carries the standard flex/gap/padding classes', async () => {
+      setStoredToken('tok-abc');
+      usePublicSetMock.mockReturnValue(queryResult({ isLoading: true }));
+      const { container } = renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-loading')).toBeInTheDocument();
+      });
+      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
+
+      const page = screen.getByTestId('set-editor-page');
+      expect(page).toHaveClass('flex');
+      expect(page).toHaveClass('flex-col');
+      expect(page).toHaveClass('gap-6');
+      expect(page).toHaveClass('p-8');
     });
   });
 
