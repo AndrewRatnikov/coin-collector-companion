@@ -1,7 +1,8 @@
 /**
  * Tests for: CanonicalSetDetailPage
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CanonicalSetDetailPage
- * Covers criteria: #9 (from prd.md)
+ *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
+ * Covers criteria: #9 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md)
  *
  * Like CoinDetailPage, this page unwraps a Promise `params` prop via React's `use()`,
  * which suspends on first render — rendered here inside a <Suspense> boundary for the
@@ -70,6 +71,19 @@ describe('CanonicalSetDetailPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('canonical-set-detail-loading')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('criterion 1: loading state uses a skeleton, not bare text', () => {
+    it('renders a skeleton element within canonical-set-detail-loading and no literal "Loading…" text', async () => {
+      useCanonicalSetMock.mockReturnValue(queryResult({ isLoading: true }));
+      const { container } = renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('canonical-set-detail-loading')).toBeInTheDocument();
+      });
+      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     });
   });
 
