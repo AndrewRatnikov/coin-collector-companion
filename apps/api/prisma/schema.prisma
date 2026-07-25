@@ -12,33 +12,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum CoinStatus {
+  approved
+  pending
+  rejected
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
   passwordHash String
   createdAt    DateTime @default(now())
 
-  userSets   UserSet[]
-  ownerships Ownership[]
+  userSets       UserSet[]
+  ownerships     Ownership[]
+  submittedCoins Coin[]      @relation("CoinSubmitter")
 }
 
 model Coin {
-  id            String   @id @default(uuid())
-  country       String
-  denomination  String
-  year          Int
-  mintMark      String   @default("") // never null — see §4.1 NULL-distinctness note
-  variety       String   @default("")
-  name          String
-  imageUrl      String?
-  imageSource   String?
-  imageLicense  String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                String     @id @default(uuid())
+  country           String
+  denomination      String
+  year              Int
+  mintMark          String     @default("") // never null — see §4.1 NULL-distinctness note
+  variety           String     @default("")
+  name              String
+  status            CoinStatus @default(approved)
+  submittedByUserId String?
+  submittedAt       DateTime?
+  imageUrl          String?
+  imageSource       String?
+  imageLicense      String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
   canonicalSetCoins CanonicalSetCoin[]
   userSetCoins      UserSetCoin[]
   ownerships        Ownership[]
+  submitter         User?              @relation("CoinSubmitter", fields: [submittedByUserId], references: [id], onDelete: SetNull)
 
   @@unique([country, denomination, year, mintMark, variety])
 }
