@@ -1,12 +1,13 @@
 /**
  * Tests for: catalog-api
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Module: catalog-api
- * Covers criteria: #1 (from prd.md)
+ *                   runs/run_20260725_140648/plan.md § Interface Contract → Frontend — apps/web/src/lib/catalog-api.ts (MODIFY)
+ * Covers criteria: #1 (from run_20260721_131640's prd.md), #3 (from run_20260725_140648's prd.md)
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // fetch is mocked via vi.stubGlobal, not vi.mock(), see vitest.setup.ts
-import { getCatalog, getCoin } from '@/lib/catalog-api';
+import { getCatalog, getCoin, submitCoin } from '@/lib/catalog-api';
 
 function stubFetchResolving(status: number, body: unknown) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -85,6 +86,37 @@ describe('catalog-api', () => {
     it('propagates a rejection when the coin is not found', async () => {
       stubFetchResolving(404, { message: 'Not found' });
       await expect(getCoin('missing')).rejects.toThrow();
+    });
+  });
+
+  describe('run_20260725_140648 criterion 3: submitCoin calls POST /catalog', () => {
+    it('sends a POST request to /catalog with the payload as the JSON body', async () => {
+      const fetchMock = stubFetchResolving(201, { id: 'new-1', status: 'pending' });
+      const payload = { country: 'USA', denomination: '1 Cent', name: 'Indian Head Cent', year: 1900 };
+
+      await submitCoin(payload);
+
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url.endsWith('/catalog')).toBe(true);
+      expect(init.method).toBe('POST');
+      expect(JSON.parse(init.body as string)).toEqual(payload);
+    });
+
+    it('returns the created CatalogCoin body as-is', async () => {
+      const created = { id: 'new-1', status: 'pending', country: 'USA' };
+      stubFetchResolving(201, created);
+
+      await expect(
+        submitCoin({ country: 'USA', denomination: '1 Cent', name: 'Indian Head Cent', year: 1900 }),
+      ).resolves.toEqual(created);
+    });
+
+    it('propagates a rejection on a 409 conflict response', async () => {
+      stubFetchResolving(409, { message: 'A coin with this natural key already exists' });
+
+      await expect(
+        submitCoin({ country: 'USA', denomination: '1 Cent', name: 'Indian Head Cent', year: 1900 }),
+      ).rejects.toThrow();
     });
   });
 });

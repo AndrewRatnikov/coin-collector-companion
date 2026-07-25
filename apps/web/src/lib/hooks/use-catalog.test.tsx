@@ -1,22 +1,25 @@
 /**
  * Tests for: use-catalog hooks
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Module: use-catalog hooks
- * Covers criteria: #2 (from prd.md)
+ *                   runs/run_20260725_140648/plan.md § Interface Contract → Frontend — apps/web/src/lib/hooks/use-catalog.ts (MODIFY)
+ * Covers criteria: #2 (from run_20260721_131640's prd.md), #3 (from run_20260725_140648's prd.md)
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCatalog, useCoin } from '@/lib/hooks/use-catalog';
-import { getCatalog, getCoin } from '@/lib/catalog-api';
+import { useCatalog, useCoin, useSubmitCoin } from '@/lib/hooks/use-catalog';
+import { getCatalog, getCoin, submitCoin } from '@/lib/catalog-api';
 
 vi.mock('@/lib/catalog-api', () => ({
   getCatalog: vi.fn(),
   getCoin: vi.fn(),
+  submitCoin: vi.fn(),
 }));
 
 const getCatalogMock = vi.mocked(getCatalog);
 const getCoinMock = vi.mocked(getCoin);
+const submitCoinMock = vi.mocked(submitCoin);
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -27,6 +30,7 @@ describe('use-catalog hooks', () => {
   beforeEach(() => {
     getCatalogMock.mockReset();
     getCoinMock.mockReset();
+    submitCoinMock.mockReset();
   });
 
   describe('criterion 2: useCatalog wraps getCatalog with the given filters', () => {
@@ -87,6 +91,46 @@ describe('use-catalog hooks', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(getCoinMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('run_20260725_140648 criterion 3: useSubmitCoin wraps submitCoin', () => {
+    it('calls submitCoin with the payload and exposes the resolved coin', async () => {
+      const created = { id: 'new-1', status: 'pending' };
+      submitCoinMock.mockResolvedValue(created as never);
+      const payload = { country: 'USA', denomination: '1 Cent', name: 'Indian Head Cent', year: 1900 };
+
+      const { result } = renderHook(() => useSubmitCoin(), { wrapper });
+      result.current.mutate(payload);
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+      expect(submitCoinMock).toHaveBeenCalledWith(payload);
+      expect(result.current.data).toEqual(created);
+    });
+
+    it('surfaces an error state when submitCoin rejects (e.g. a 409 conflict)', async () => {
+      submitCoinMock.mockRejectedValue(new Error('A coin with this natural key already exists'));
+
+      const { result } = renderHook(() => useSubmitCoin(), { wrapper });
+      result.current.mutate({ country: 'USA', denomination: '1 Cent', name: 'Indian Head Cent', year: 1900 });
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+    });
+
+    it('does not call getCatalog on success — a pending coin must not trigger a catalog list refetch (criterion #8)', async () => {
+      submitCoinMock.mockResolvedValue({ id: 'new-1', status: 'pending' } as never);
+
+      const { result } = renderHook(() => useSubmitCoin(), { wrapper });
+      result.current.mutate({ country: 'USA', denomination: '1 Cent', name: 'Indian Head Cent', year: 1900 });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+      expect(getCatalogMock).not.toHaveBeenCalled();
     });
   });
 });

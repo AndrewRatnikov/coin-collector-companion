@@ -2,7 +2,9 @@
  * Tests for: CoinDetailPage
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CoinDetailPage
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
- * Covers criteria: #5 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md)
+ *                   runs/run_20260725_140648/plan.md § Interface Contract → Frontend — apps/web/src/app/catalog/[coinId]/page.tsx (MODIFY)
+ * Covers criteria: #5 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md),
+ *                  #7 (from run_20260725_140648's prd.md)
  *
  * CoinDetailPage unwraps its `params` prop (a Promise, per the Next.js 16 App Router
  * contract) via React's `use()`, which suspends on first render. Rendering it directly
@@ -51,6 +53,8 @@ const COIN_WITH_IMAGE = {
   imageUrl: 'https://upload.wikimedia.org/coin.jpg',
   imageSource: 'Wikimedia Commons',
   imageLicense: 'CC BY-SA 4.0',
+  status: 'approved',
+  submittedAt: null,
 };
 
 const COIN_NO_IMAGE = { ...COIN_WITH_IMAGE, imageUrl: null, imageSource: null, imageLicense: null };
@@ -147,6 +151,36 @@ describe('CoinDetailPage', () => {
       });
       expect(screen.queryByTestId('coin-detail-image')).not.toBeInTheDocument();
       expect(screen.queryByTestId('coin-detail-attribution')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('run_20260725_140648 criterion 7: pending badge', () => {
+    it('renders coin-detail-pending-badge when status is pending', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: { ...COIN_WITH_IMAGE, status: 'pending' } as never }));
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-pending-badge')).toBeInTheDocument();
+      });
+    });
+
+    it('renders coin-detail-pending-badge when status is rejected too (anything not approved)', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: { ...COIN_WITH_IMAGE, status: 'rejected' } as never }));
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-pending-badge')).toBeInTheDocument();
+      });
+    });
+
+    it('does not render coin-detail-pending-badge when status is approved', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: { ...COIN_WITH_IMAGE, status: 'approved' } as never }));
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-label')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('coin-detail-pending-badge')).not.toBeInTheDocument();
     });
   });
 });
