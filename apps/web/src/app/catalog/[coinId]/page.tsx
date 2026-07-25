@@ -43,6 +43,14 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
           <h1 data-testid="coin-detail-label" className="text-lg font-semibold">
             {formatCoinLabel(coin)}
           </h1>
+          {coin.status !== 'approved' && (
+            <span
+              data-testid="coin-detail-pending-badge"
+              className="w-fit rounded bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800"
+            >
+              Pending review
+            </span>
+          )}
           <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
             <dt className="font-medium">Country</dt>
             <dd data-testid="coin-detail-country">{coin.country}</dd>
