@@ -18,6 +18,7 @@
  * global JwtAuthGuard, an absent/falsy IS_PUBLIC_KEY on `create` proves the guard applies.
  */
 
+import { ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { CatalogController } from './catalog.controller';
@@ -118,7 +119,6 @@ describe('CatalogController', () => {
         name: 'Indian Head Cent',
         year: 1900,
       });
-      const { ConflictException } = await import('@nestjs/common');
       mockCatalogService.create.mockRejectedValue(new ConflictException('duplicate'));
 
       await expect(controller.create(AUTH_USER, dto)).rejects.toThrow('duplicate');
