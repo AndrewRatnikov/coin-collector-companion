@@ -1,10 +1,12 @@
 import type { MessageKey } from './en';
 
-// Explicitly typed as `Record<MessageKey, string>` (not inferred) so a missing
-// or extra key is a `tsc --noEmit` compile error — this is what enforces
-// en/es key parity, not a convention. Spanish copy here is stub/placeholder
-// quality; a native-speaker review pass is a follow-up task, not this one.
-const es: Record<MessageKey, string> = {
+// `esShape` is explicitly typed as `Record<MessageKey, string>` (not inferred)
+// so a missing or extra key is a `tsc --noEmit` compile error — this is what
+// enforces en/es key parity, not a convention. Spanish copy here is
+// stub/placeholder quality; a native-speaker review pass is a follow-up task,
+// not this one. The default export is then widened to `Record<string, string>`
+// for the same reason as `en.ts` — see that file's comment.
+const esShape: Record<MessageKey, string> = {
   // nav
   'nav.catalog': 'Catálogo',
   'nav.canonicalSets': 'Colecciones canónicas',
@@ -127,4 +129,5 @@ const es: Record<MessageKey, string> = {
   'footer.attributionSuffix': ', utilizados bajo CC BY-SA 4.0.',
 };
 
+const es: Record<string, string> = esShape;
 export default es;
