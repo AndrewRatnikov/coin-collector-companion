@@ -7,8 +7,10 @@ import { RequireAuth } from '@/components/auth/require-auth';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { useCollection } from '@/lib/hooks/use-collection';
 import type { CollectionFilters } from '@/lib/collection-api';
+import { useTranslation } from '@/lib/i18n/i18n-context';
 
 function CollectionList() {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<CollectionFilters>({});
   const [country, setCountry] = useState('');
   const [year, setYear] = useState('');
@@ -25,12 +27,12 @@ function CollectionList() {
 
   return (
     <main data-testid="collection-page" className="flex flex-1 flex-col gap-6 p-8">
-      <h1 className="text-lg font-semibold">My Collection</h1>
+      <h1 className="text-lg font-semibold">{t('collection.title')}</h1>
 
       <form data-testid="collection-filter-form" onSubmit={handleSubmit} className="flex flex-wrap items-end gap-4">
         <div className="flex flex-col gap-1">
           <label htmlFor="collection-country" className="text-sm font-medium">
-            Country
+            {t('common.country')}
           </label>
           <input
             id="collection-country"
@@ -43,7 +45,7 @@ function CollectionList() {
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="collection-year" className="text-sm font-medium">
-            Year
+            {t('common.year')}
           </label>
           <input
             id="collection-year"
@@ -59,7 +61,7 @@ function CollectionList() {
           data-testid="collection-filter-submit"
           className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
         >
-          Search
+          {t('common.search')}
         </button>
       </form>
 
@@ -71,14 +73,14 @@ function CollectionList() {
 
       {isError && (
         <p data-testid="collection-error" className="text-sm text-red-600">
-          Something went wrong loading your collection. Please try again.
+          {t('collection.errorLoading')}
         </p>
       )}
 
       {data &&
         (data.length === 0 ? (
           <p data-testid="collection-empty" className="text-sm text-gray-600">
-            You don&apos;t own any coins yet.
+            {t('collection.emptyMessage')}
           </p>
         ) : (
           <ul data-testid="collection-list" className="flex flex-col gap-2">
