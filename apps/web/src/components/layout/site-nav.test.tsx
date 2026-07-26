@@ -1,7 +1,9 @@
 /**
  * Tests for: SiteNav
- * Contract source: runs/run_20260722_121303/plan.md § Interface Contract → Component: SiteNav
- * Covers criteria: #2 (from prd.md)
+ * Contract source: runs/run_20260726_221855/plan.md § Interface Contract → Modified: SiteNav
+ * (existing describe blocks below are carried over unchanged from
+ * runs/run_20260722_121303/plan.md § Interface Contract → Component: SiteNav)
+ * Covers criteria: #2, #3 (from prd.md)
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -83,6 +85,16 @@ describe('SiteNav', () => {
 
       expect(getStoredToken()).toBeNull();
       expect(pushMock).toHaveBeenCalledWith('/login');
+    });
+  });
+
+  describe('criterion 3: language switcher is mounted in the site chrome', () => {
+    it('renders the LanguageSwitcher inside the nav', () => {
+      render(<SiteNav />);
+
+      expect(screen.getByTestId('language-switcher')).toBeInTheDocument();
+      expect(screen.getByTestId('language-switcher-en')).toBeInTheDocument();
+      expect(screen.getByTestId('language-switcher-es')).toBeInTheDocument();
     });
   });
 });
