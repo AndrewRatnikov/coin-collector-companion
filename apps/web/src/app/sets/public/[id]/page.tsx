@@ -7,8 +7,11 @@ import { getStoredToken } from '@/lib/auth-token';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import { useSetGaps } from '@/lib/hooks/use-user-sets';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/lib/i18n/i18n-context';
+import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
 export default function PublicSetDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t, locale } = useTranslation();
   const [id, setId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -43,14 +46,14 @@ export default function PublicSetDetailPage({ params }: { params: Promise<{ id: 
 
       {isError && (
         <p data-testid="public-set-detail-error" className="text-sm text-red-600">
-          Something went wrong loading this set. Please try again.
+          {t('publicSetDetail.errorLoading')}
         </p>
       )}
 
       {set && (
         <>
           <h1 data-testid="public-set-detail-name" className="text-lg font-semibold">
-            {set.name}
+            {resolveLocalizedText(set.name, locale)}
           </h1>
 
           {isLoggedIn && (
@@ -59,7 +62,7 @@ export default function PublicSetDetailPage({ params }: { params: Promise<{ id: 
               data-testid="public-set-clone-cta"
               className="w-fit rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
             >
-              Clone into my sets
+              {t('publicSetDetail.cloneCta')}
             </Link>
           )}
 
@@ -75,7 +78,7 @@ export default function PublicSetDetailPage({ params }: { params: Promise<{ id: 
                   <span>{formatCoinLabel(item.coin)}</span>
                   {gapsQuery.isSuccess && ownedById.has(item.coin.id) && (
                     <span data-testid="public-set-detail-coin-status" className="text-xs text-gray-500">
-                      {ownedById.get(item.coin.id) ? 'owned' : 'missing'}
+                      {ownedById.get(item.coin.id) ? t('common.owned') : t('common.missing')}
                     </span>
                   )}
                 </li>
