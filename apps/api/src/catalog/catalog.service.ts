@@ -7,6 +7,26 @@ import { CreateCoinDto } from './dto/create-coin.dto';
 
 const MAX_LIMIT = 100;
 
+// Every read path returns this exact column set — never submittedByUserId. GET /catalog/:id
+// is public and unauthenticated (System Design §4.7), so a raw submitter id here would leak
+// identity the same way an unguarded POST /catalog response would (backlog 1.4).
+const CATALOG_COIN_SELECT = {
+  id: true,
+  country: true,
+  denomination: true,
+  year: true,
+  mintMark: true,
+  variety: true,
+  name: true,
+  imageUrl: true,
+  imageSource: true,
+  imageLicense: true,
+  status: true,
+  submittedAt: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.CoinSelect;
+
 @Injectable()
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
@@ -33,6 +53,7 @@ export class CatalogService {
     const [items, total] = await Promise.all([
       this.prisma.coin.findMany({
         where,
+        select: CATALOG_COIN_SELECT,
         skip: (page - 1) * limit,
         take: limit,
         orderBy: [{ year: 'asc' }, { id: 'asc' }],
@@ -44,7 +65,7 @@ export class CatalogService {
   }
 
   async findOne(id: string): Promise<CatalogCoin> {
-    const coin = await this.prisma.coin.findUnique({ where: { id } });
+    const coin = await this.prisma.coin.findUnique({ where: { id }, select: CATALOG_COIN_SELECT });
     if (!coin) {
       throw new NotFoundException('Coin not found');
     }
@@ -78,22 +99,7 @@ export class CatalogService {
           submittedByUserId: userId,
           submittedAt: new Date(),
         },
-        select: {
-          id: true,
-          country: true,
-          denomination: true,
-          year: true,
-          mintMark: true,
-          variety: true,
-          name: true,
-          imageUrl: true,
-          imageSource: true,
-          imageLicense: true,
-          status: true,
-          submittedAt: true,
-          createdAt: true,
-          updatedAt: true,
-        },
+        select: CATALOG_COIN_SELECT,
       });
     } catch (err) {
       if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {

@@ -173,6 +173,13 @@ describe('CatalogService', () => {
       const query = makeQuery();
       expect((query as unknown as Record<string, unknown>).status).toBeUndefined();
     });
+
+    it('the select clause omits submittedByUserId — GET /catalog is public and unauthenticated', async () => {
+      await service.findAll(makeQuery());
+
+      const { select } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(select.submittedByUserId).toBeUndefined();
+    });
   });
 
   describe('findAll — pagination (criteria #6, #7, #8)', () => {
@@ -243,9 +250,17 @@ describe('CatalogService', () => {
       const result = await service.findOne(coin.id);
 
       expect(result).toBe(coin);
-      expect(mockPrismaService.coin.findUnique).toHaveBeenCalledWith({
-        where: { id: coin.id },
-      });
+      const call = mockPrismaService.coin.findUnique.mock.calls[0][0];
+      expect(call.where).toEqual({ id: coin.id });
+    });
+
+    it('the select clause omits submittedByUserId — GET /catalog/:id is public and unauthenticated', async () => {
+      mockPrismaService.coin.findUnique.mockResolvedValue({ id: 'x' });
+
+      await service.findOne('x');
+
+      const { select } = mockPrismaService.coin.findUnique.mock.calls[0][0];
+      expect(select.submittedByUserId).toBeUndefined();
     });
 
     it('throws NotFoundException when no coin matches', async () => {

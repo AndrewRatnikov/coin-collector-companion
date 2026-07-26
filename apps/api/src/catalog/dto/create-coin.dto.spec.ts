@@ -75,19 +75,22 @@ describe('CreateCoinDto (criterion #3)', () => {
   });
 
   it('fails when country is missing', async () => {
-    const { country, ...rest } = VALID_BODY;
+    const rest: Record<string, unknown> = { ...VALID_BODY };
+    delete rest.country;
     const { errors } = await validateBody(rest);
     expect(errors.some((e) => e.property === 'country')).toBe(true);
   });
 
   it('fails when denomination is missing', async () => {
-    const { denomination, ...rest } = VALID_BODY;
+    const rest: Record<string, unknown> = { ...VALID_BODY };
+    delete rest.denomination;
     const { errors } = await validateBody(rest);
     expect(errors.some((e) => e.property === 'denomination')).toBe(true);
   });
 
   it('fails when name is missing', async () => {
-    const { name, ...rest } = VALID_BODY;
+    const rest: Record<string, unknown> = { ...VALID_BODY };
+    delete rest.name;
     const { errors } = await validateBody(rest);
     expect(errors.some((e) => e.property === 'name')).toBe(true);
   });
