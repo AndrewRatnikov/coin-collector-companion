@@ -12,12 +12,15 @@ import { useSetOwnership } from '@/lib/hooks/use-collection';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import type { CatalogFilters } from '@/lib/catalog-api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/lib/i18n/i18n-context';
+import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
 const ADD_COINS_LIMIT = 20;
 const PAGE_WRAPPER_CLASSNAME = 'flex flex-1 flex-col gap-6 p-8';
 
 function SetEditor({ id }: { id: string }) {
   const router = useRouter();
+  const { t, locale } = useTranslation();
 
   const { data: set, isLoading: setLoading, isError: setIsError } = usePublicSet(id);
   const { data: gaps, isLoading: gapsLoading, isError: gapsIsError } = useSetGaps(id);
@@ -80,7 +83,7 @@ function SetEditor({ id }: { id: string }) {
     return (
       <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME}>
         <p data-testid="set-editor-error" className="text-sm text-red-600">
-          Something went wrong loading this set. Please try again.
+          {t('setEditor.errorLoading')}
         </p>
       </main>
     );
@@ -95,7 +98,7 @@ function SetEditor({ id }: { id: string }) {
   return (
     <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME}>
       <h1 data-testid="set-editor-name" className="text-lg font-semibold">
-        {set.name}
+        {resolveLocalizedText(set.name, locale)}
       </h1>
       <span data-testid="set-editor-completion" className="text-sm text-gray-600">
         {gaps.completionPercent}%
@@ -115,7 +118,7 @@ function SetEditor({ id }: { id: string }) {
             data-testid="set-editor-rename-submit"
             className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
           >
-            Rename
+            {t('setEditor.renameSubmit')}
           </button>
         </form>
       )}
@@ -127,7 +130,7 @@ function SetEditor({ id }: { id: string }) {
           onClick={handleDelete}
           className="w-fit rounded border border-red-600 px-4 py-2 text-sm font-medium text-red-600"
         >
-          Delete set
+          {t('setEditor.deleteButton')}
         </button>
       )}
 
@@ -140,7 +143,7 @@ function SetEditor({ id }: { id: string }) {
           >
             <span>{formatCoinLabel(slot.coin)}</span>
             <span data-testid="set-editor-gap-status" className="text-xs text-gray-500">
-              {slot.owned ? 'owned' : 'missing'}
+              {slot.owned ? t('common.owned') : t('common.missing')}
             </span>
             {isOwner && (
               <button
@@ -149,7 +152,7 @@ function SetEditor({ id }: { id: string }) {
                 onClick={() => handleToggle(slot.coin.id, slot.owned)}
                 className="rounded border border-gray-300 px-2 py-1 text-xs"
               >
-                {slot.owned ? 'Mark not owned' : 'Mark owned'}
+                {slot.owned ? t('setEditor.markNotOwned') : t('setEditor.markOwned')}
               </button>
             )}
             {isOwner && (
@@ -159,7 +162,7 @@ function SetEditor({ id }: { id: string }) {
                 onClick={() => handleRemove(slot.coin.id)}
                 className="rounded border border-gray-300 px-2 py-1 text-xs"
               >
-                Remove
+                {t('setEditor.removeButton')}
               </button>
             )}
           </li>
@@ -168,7 +171,7 @@ function SetEditor({ id }: { id: string }) {
 
       {isOwner && (
         <div data-testid="set-editor-add-coins-panel" className="flex flex-col gap-3 rounded border border-gray-200 p-4">
-          <h2 className="text-sm font-semibold">Add coins</h2>
+          <h2 className="text-sm font-semibold">{t('setEditor.addCoinsHeading')}</h2>
           <CatalogFilterForm testIdPrefix="set-editor-add-coins" onSubmit={handleAddCoinsFilterSubmit} />
           <ul data-testid="set-editor-add-coins-results" className="flex flex-col gap-2">
             {(catalogQuery.data?.items ?? []).map((coin) => (
@@ -184,7 +187,7 @@ function SetEditor({ id }: { id: string }) {
                   onClick={() => handleAdd(coin.id)}
                   className="rounded border border-gray-300 px-2 py-1 text-xs"
                 >
-                  Add
+                  {t('setEditor.addButton')}
                 </button>
               </li>
             ))}
