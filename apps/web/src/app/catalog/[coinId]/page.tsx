@@ -4,8 +4,11 @@ import { useEffect, useState } from 'react';
 import { formatCoinLabel } from '@coin-collector/shared';
 import { useCoin } from '@/lib/hooks/use-catalog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/lib/i18n/i18n-context';
+import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
 export default function CoinDetailPage({ params }: { params: Promise<{ coinId: string }> }) {
+  const { t, locale } = useTranslation();
   const [coinId, setCoinId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,7 +37,7 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
 
       {isError && (
         <p data-testid="coin-detail-error" className="text-sm text-red-600">
-          Something went wrong loading this coin. Please try again.
+          {t('coinDetail.errorLoading')}
         </p>
       )}
 
@@ -48,19 +51,19 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
               data-testid="coin-detail-pending-badge"
               className="w-fit rounded bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-800"
             >
-              Pending review
+              {t('coinDetail.pendingBadge')}
             </span>
           )}
           <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-            <dt className="font-medium">Country</dt>
-            <dd data-testid="coin-detail-country">{coin.country}</dd>
-            <dt className="font-medium">Denomination</dt>
-            <dd data-testid="coin-detail-denomination">{coin.denomination}</dd>
-            <dt className="font-medium">Year</dt>
+            <dt className="font-medium">{t('common.country')}</dt>
+            <dd data-testid="coin-detail-country">{resolveLocalizedText(coin.country, locale)}</dd>
+            <dt className="font-medium">{t('common.denomination')}</dt>
+            <dd data-testid="coin-detail-denomination">{resolveLocalizedText(coin.denomination, locale)}</dd>
+            <dt className="font-medium">{t('common.year')}</dt>
             <dd data-testid="coin-detail-year">{coin.year}</dd>
-            <dt className="font-medium">Mint mark</dt>
+            <dt className="font-medium">{t('common.mintMark')}</dt>
             <dd data-testid="coin-detail-mint-mark">{coin.mintMark}</dd>
-            <dt className="font-medium">Variety</dt>
+            <dt className="font-medium">{t('common.variety')}</dt>
             <dd data-testid="coin-detail-variety">{coin.variety}</dd>
           </dl>
 
@@ -73,7 +76,7 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
                 className="max-w-xs rounded"
               />
               <figcaption data-testid="coin-detail-attribution" className="text-xs text-gray-500">
-                Image: {coin.imageSource ?? 'Unknown source'}
+                {t('coinDetail.imageAttributionPrefix')} {coin.imageSource ?? t('coinDetail.unknownSource')}
                 {coin.imageLicense ? `, ${coin.imageLicense}` : ''}
               </figcaption>
             </figure>
