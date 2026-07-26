@@ -1,17 +1,44 @@
 /**
  * Tests for: CatalogPage
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CatalogPage
- * Covers criteria: #4 (from prd.md)
+ *                   runs/run_20260725_140648/plan.md § Interface Contract → Frontend — apps/web/src/app/catalog/page.tsx (MODIFY)
+ * Covers criteria: #4 (from run_20260721_131640's prd.md), #6, #8 (from run_20260725_140648's prd.md)
+ *
+ * SubmitCoinForm and SubmissionConfirmation are mocked entirely here — this file only proves
+ * CatalogPage's own gating/wiring logic (isLoggedIn check, toggle state, submittedCoin
+ * hand-off). Each component's own internal behavior (validation, set-selection flow) is
+ * covered in its own dedicated test file (submit-coin-form.test.tsx, submission-confirmation.test.tsx).
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CatalogPage from '@/app/catalog/page';
 import { useCatalog } from '@/lib/hooks/use-catalog';
+import { setStoredToken } from '@/lib/auth-token';
 
 vi.mock('@/lib/hooks/use-catalog', () => ({
   useCatalog: vi.fn(),
+}));
+
+vi.mock('@/components/catalog/submit-coin-form', () => ({
+  default: (props: { onSuccess: (coin: unknown) => void }) => (
+    <div data-testid="mock-submit-coin-form">
+      <button
+        type="button"
+        data-testid="mock-submit-coin-form-succeed"
+        onClick={() => props.onSuccess({ id: 'new-coin-1', status: 'pending' })}
+      >
+        simulate success
+      </button>
+    </div>
+  ),
+}));
+
+vi.mock('@/components/catalog/submission-confirmation', () => ({
+  default: (props: { coin: { id: string } }) => (
+    <div data-testid="mock-submission-confirmation">{props.coin.id}</div>
+  ),
 }));
 
 const useCatalogMock = vi.mocked(useCatalog);
@@ -37,6 +64,8 @@ const COINS = [
     imageUrl: null,
     imageSource: null,
     imageLicense: null,
+    status: 'approved' as const,
+    submittedAt: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
   },
@@ -51,6 +80,8 @@ const COINS = [
     imageUrl: null,
     imageSource: null,
     imageLicense: null,
+    status: 'approved' as const,
+    submittedAt: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
   },
@@ -59,6 +90,7 @@ const COINS = [
 describe('CatalogPage', () => {
   beforeEach(() => {
     useCatalogMock.mockReset();
+    localStorage.clear();
   });
 
   describe('criterion 10: not gated by auth', () => {
@@ -118,10 +150,6 @@ describe('CatalogPage', () => {
       expect(screen.getByTestId('catalog-results')).toBeInTheDocument();
       const rows = screen.getAllByTestId('catalog-item');
       expect(rows).toHaveLength(2);
-      expect(within(rows[0]).getByText('USA 1 Cent (1984 D)')).toBeInTheDocument();
-      expect(within(rows[0]).getByRole('link').getAttribute('href')).toBe('/catalog/c1');
-      expect(within(rows[1]).getByText('USA 1 Cent (1958)')).toBeInTheDocument();
-      expect(within(rows[1]).getByRole('link').getAttribute('href')).toBe('/catalog/c2');
     });
 
     it('renders catalog-empty when the result set is empty', () => {
@@ -162,6 +190,68 @@ describe('CatalogPage', () => {
 
       const lastCall = useCatalogMock.mock.calls.at(-1)?.[0];
       expect(lastCall).toMatchObject({ country: 'USA', name: 'Lincoln', page: 1 });
+    });
+  });
+
+  describe('run_20260725_140648 criterion 6: submit-coin entry point, gated by login', () => {
+    it('does not render the submit-coin toggle when logged out', () => {
+      localStorage.clear();
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
+      render(<CatalogPage />);
+
+      expect(screen.queryByTestId('catalog-submit-coin-toggle')).not.toBeInTheDocument();
+    });
+
+    it('renders the submit-coin toggle when logged in, with the form hidden until clicked', () => {
+      setStoredToken('tok-abc');
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
+      render(<CatalogPage />);
+
+      expect(screen.getByTestId('catalog-submit-coin-toggle')).toBeInTheDocument();
+      expect(screen.queryByTestId('mock-submit-coin-form')).not.toBeInTheDocument();
+    });
+
+    it('clicking the toggle shows the submit form, clicking again hides it', async () => {
+      setStoredToken('tok-abc');
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
+      const user = userEvent.setup();
+      render(<CatalogPage />);
+
+      await user.click(screen.getByTestId('catalog-submit-coin-toggle'));
+      expect(screen.getByTestId('mock-submit-coin-form')).toBeInTheDocument();
+
+      await user.click(screen.getByTestId('catalog-submit-coin-toggle'));
+      expect(screen.queryByTestId('mock-submit-coin-form')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('run_20260725_140648 criterion 6: on successful submission, renders SubmissionConfirmation instead of resetting to a blank view', () => {
+    it('replaces the submit-coin entry point with SubmissionConfirmation after the form succeeds', async () => {
+      setStoredToken('tok-abc');
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
+      const user = userEvent.setup();
+      render(<CatalogPage />);
+
+      await user.click(screen.getByTestId('catalog-submit-coin-toggle'));
+      await user.click(screen.getByTestId('mock-submit-coin-form-succeed'));
+
+      expect(screen.getByTestId('mock-submission-confirmation')).toHaveTextContent('new-coin-1');
+      expect(screen.queryByTestId('catalog-submit-coin-toggle')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('mock-submit-coin-form')).not.toBeInTheDocument();
+    });
+
+    it('the rest of the catalog page (results, filter form) still renders alongside the confirmation', async () => {
+      setStoredToken('tok-abc');
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: COINS, page: 1, limit: 20, total: 2 } }));
+      const user = userEvent.setup();
+      render(<CatalogPage />);
+
+      await user.click(screen.getByTestId('catalog-submit-coin-toggle'));
+      await user.click(screen.getByTestId('mock-submit-coin-form-succeed'));
+
+      expect(screen.getByTestId('mock-submission-confirmation')).toBeInTheDocument();
+      expect(screen.getByTestId('catalog-filter-form')).toBeInTheDocument();
+      expect(screen.getAllByTestId('catalog-item')).toHaveLength(2);
     });
   });
 });

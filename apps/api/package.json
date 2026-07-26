@@ -71,7 +71,11 @@
     ],
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
+      "packages/shared/src/.*\\.ts$": "<rootDir>/../test/support/shared-esm-transformer.js",
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "moduleNameMapper": {
+      "^@coin-collector/shared$": "<rootDir>/../../../packages/shared/src/index.ts"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

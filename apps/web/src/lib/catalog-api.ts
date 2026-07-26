@@ -1,4 +1,4 @@
-import type { CatalogCoin, PaginatedResponse } from '@coin-collector/shared';
+import type { CatalogCoin, CreateCoinRequest, PaginatedResponse } from '@coin-collector/shared';
 import { apiFetch } from './api-client';
 
 export interface CatalogFilters {
@@ -23,4 +23,11 @@ export async function getCatalog(filters: CatalogFilters = {}): Promise<Paginate
 
 export async function getCoin(id: string): Promise<CatalogCoin> {
   return apiFetch<CatalogCoin>(`/catalog/${id}`);
+}
+
+export async function submitCoin(payload: CreateCoinRequest): Promise<CatalogCoin> {
+  return apiFetch<CatalogCoin>('/catalog', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 }

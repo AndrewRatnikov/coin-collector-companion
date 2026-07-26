@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 // store entry apps/api's own `prisma generate` already populates — so this resolves
 // to a real generated client without apps/api having to re-export or re-generate it.
 import { PrismaClient } from '@prisma/client';
-import { sanitizeIdentityField } from './lib/sanitize';
+import { sanitizeIdentityField } from '@coin-collector/shared';
 import { toImageFields } from './lib/image';
 import type { RawFixtureFile } from './lib/types';
 

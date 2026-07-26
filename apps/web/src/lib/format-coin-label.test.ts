@@ -29,6 +29,8 @@ function makeCoin(overrides: Partial<CatalogCoin> = {}): CatalogCoin {
     imageUrl: null,
     imageSource: null,
     imageLicense: null,
+    status: 'approved',
+    submittedAt: null,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,

@@ -1,6 +1,19 @@
 // v2 catalog contracts (docs/system-design_v2.md §3–§4.1). Populated as real v2 DTOs/enums
 // are authored — keep this the single source of truth shared by both apps (CLAUDE.md).
 
+export type CoinStatus = 'approved' | 'pending' | 'rejected';
+
+// Any of these (case-insensitive, whitespace-trimmed) means "no value" — they all
+// must collapse to the same '' before reaching Prisma, or the Coin natural-key
+// unique constraint silently stops deduping (system-design_v2.md §4.1/§4.3).
+const NONE_PLACEHOLDERS = new Set(['', 'none', 'n/a', 'na']);
+
+export function sanitizeIdentityField(value: string | null | undefined): string {
+  if (value == null) return '';
+  const trimmed = value.trim();
+  return NONE_PLACEHOLDERS.has(trimmed.toLowerCase()) ? '' : trimmed;
+}
+
 export interface CatalogCoin {
   id: string;
   country: string;
@@ -12,8 +25,19 @@ export interface CatalogCoin {
   imageUrl: string | null;
   imageSource: string | null;
   imageLicense: string | null;
+  status: CoinStatus;
+  submittedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface CreateCoinRequest {
+  country: string;
+  denomination: string;
+  name: string;
+  year: number;
+  mintMark?: string;
+  variety?: string;
 }
 
 export interface PaginatedResponse<T> {

@@ -52,6 +52,8 @@ const sampleCatalogCoin: CatalogCoin = {
   imageUrl: null,
   imageSource: null,
   imageLicense: null,
+  status: 'approved',
+  submittedAt: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

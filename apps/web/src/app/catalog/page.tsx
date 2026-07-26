@@ -2,18 +2,25 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import type { CatalogCoin } from '@coin-collector/shared';
 import { formatCoinLabel } from '@coin-collector/shared';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
 import CatalogFilterForm, { type CatalogFilterFormValues } from '@/components/catalog/catalog-filter-form';
+import SubmitCoinForm from '@/components/catalog/submit-coin-form';
+import SubmissionConfirmation from '@/components/catalog/submission-confirmation';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import type { CatalogFilters } from '@/lib/catalog-api';
+import { getStoredToken } from '@/lib/auth-token';
 
 const DEFAULT_LIMIT = 20;
 
 export default function CatalogPage() {
   const [filters, setFilters] = useState<CatalogFilters>({ page: 1, limit: DEFAULT_LIMIT });
+  const [showSubmitForm, setShowSubmitForm] = useState(false);
+  const [submittedCoin, setSubmittedCoin] = useState<CatalogCoin | null>(null);
 
   const { data, isLoading, isError } = useCatalog(filters);
+  const isLoggedIn = Boolean(getStoredToken());
 
   function handleFilterSubmit(values: CatalogFilterFormValues) {
     setFilters({ ...values, page: 1, limit: DEFAULT_LIMIT });
@@ -28,6 +35,29 @@ export default function CatalogPage() {
       <h1 className="text-lg font-semibold">Catalog</h1>
 
       <CatalogFilterForm testIdPrefix="catalog" onSubmit={handleFilterSubmit} />
+
+      {isLoggedIn && !submittedCoin && (
+        <div data-testid="catalog-submit-coin-entry">
+          <button
+            type="button"
+            data-testid="catalog-submit-coin-toggle"
+            onClick={() => setShowSubmitForm((v) => !v)}
+            className="rounded border border-gray-300 px-3 py-1 text-sm"
+          >
+            Can&apos;t find this coin? Add it
+          </button>
+          {showSubmitForm && (
+            <SubmitCoinForm
+              onSuccess={(coin) => {
+                setSubmittedCoin(coin);
+                setShowSubmitForm(false);
+              }}
+            />
+          )}
+        </div>
+      )}
+
+      {submittedCoin && <SubmissionConfirmation coin={submittedCoin} />}
 
       {isLoading && (
         <div data-testid="catalog-loading">
