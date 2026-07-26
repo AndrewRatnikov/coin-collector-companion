@@ -4,10 +4,13 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { clearStoredToken, getStoredToken } from '@/lib/auth-token';
+import { useTranslation } from '@/lib/i18n/i18n-context';
+import { LanguageSwitcher } from '@/components/layout/language-switcher';
 
 export function SiteNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
@@ -27,23 +30,23 @@ export function SiteNav() {
     >
       <div className="flex items-center gap-4">
         <Link href="/catalog" data-testid="site-nav-catalog-link" className="hover:underline">
-          Catalog
+          {t('nav.catalog')}
         </Link>
         <Link href="/sets/canonical" data-testid="site-nav-canonical-link" className="hover:underline">
-          Canonical sets
+          {t('nav.canonicalSets')}
         </Link>
         <Link href="/sets/public" data-testid="site-nav-public-link" className="hover:underline">
-          Public sets
+          {t('nav.publicSets')}
         </Link>
       </div>
       <div className="flex items-center gap-4">
         {isAuthenticated ? (
           <>
             <Link href="/dashboard" data-testid="site-nav-dashboard-link" className="hover:underline">
-              Dashboard
+              {t('nav.dashboard')}
             </Link>
             <Link href="/collection" data-testid="site-nav-collection-link" className="hover:underline">
-              Collection
+              {t('nav.collection')}
             </Link>
             <button
               type="button"
@@ -51,14 +54,15 @@ export function SiteNav() {
               data-testid="site-nav-logout"
               className="hover:underline"
             >
-              Log out
+              {t('nav.logOut')}
             </button>
           </>
         ) : (
           <Link href="/login" data-testid="site-nav-login-link" className="hover:underline">
-            Log in
+            {t('nav.logIn')}
           </Link>
         )}
+        <LanguageSwitcher />
       </div>
     </nav>
   );
