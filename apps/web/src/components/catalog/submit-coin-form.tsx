@@ -7,6 +7,7 @@ import { FormField } from '@/components/auth/form-field';
 import { fieldErrorsFrom } from '@/lib/form-errors';
 import { ApiError } from '@/lib/api-client';
 import { useSubmitCoin } from '@/lib/hooks/use-catalog';
+import { useTranslation } from '@/lib/i18n/i18n-context';
 
 export interface SubmitCoinFormProps {
   onSuccess: (coin: CatalogCoin) => void;
@@ -15,6 +16,7 @@ export interface SubmitCoinFormProps {
 const FIELDS = ['country', 'denomination', 'name', 'year', 'mintMark', 'variety'];
 
 export default function SubmitCoinForm({ onSuccess }: SubmitCoinFormProps) {
+  const { t } = useTranslation();
   const [country, setCountry] = useState('');
   const [denomination, setDenomination] = useState('');
   const [name, setName] = useState('');
@@ -54,7 +56,7 @@ export default function SubmitCoinForm({ onSuccess }: SubmitCoinFormProps) {
               setFormError(error.details.join(', '));
             }
           } else {
-            setFormError('Something went wrong. Please try again.');
+            setFormError(t('common.somethingWentWrong'));
           }
         },
       },
@@ -65,22 +67,28 @@ export default function SubmitCoinForm({ onSuccess }: SubmitCoinFormProps) {
     <form data-testid="submit-coin-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
       <FormField
         id="submit-coin-country"
-        label="Country"
+        label={t('common.country')}
         value={country}
         onChange={setCountry}
         error={fieldErrors.country}
       />
       <FormField
         id="submit-coin-denomination"
-        label="Denomination"
+        label={t('common.denomination')}
         value={denomination}
         onChange={setDenomination}
         error={fieldErrors.denomination}
       />
-      <FormField id="submit-coin-name" label="Name" value={name} onChange={setName} error={fieldErrors.name} />
+      <FormField
+        id="submit-coin-name"
+        label={t('common.name')}
+        value={name}
+        onChange={setName}
+        error={fieldErrors.name}
+      />
       <FormField
         id="submit-coin-year"
-        label="Year"
+        label={t('common.year')}
         type="number"
         value={year}
         onChange={setYear}
@@ -88,14 +96,14 @@ export default function SubmitCoinForm({ onSuccess }: SubmitCoinFormProps) {
       />
       <FormField
         id="submit-coin-mint-mark"
-        label="Mint mark"
+        label={t('common.mintMark')}
         value={mintMark}
         onChange={setMintMark}
         error={fieldErrors.mintMark}
       />
       <FormField
         id="submit-coin-variety"
-        label="Variety"
+        label={t('common.variety')}
         value={variety}
         onChange={setVariety}
         error={fieldErrors.variety}
@@ -110,7 +118,7 @@ export default function SubmitCoinForm({ onSuccess }: SubmitCoinFormProps) {
         data-testid="submit-coin-submit"
         className="w-fit rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
       >
-        Submit coin
+        {t('submitCoinForm.submit')}
       </button>
     </form>
   );
