@@ -11,10 +11,12 @@ import SubmissionConfirmation from '@/components/catalog/submission-confirmation
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import type { CatalogFilters } from '@/lib/catalog-api';
 import { getStoredToken } from '@/lib/auth-token';
+import { useTranslation } from '@/lib/i18n/i18n-context';
 
 const DEFAULT_LIMIT = 20;
 
 export default function CatalogPage() {
+  const { t } = useTranslation();
   const [filters, setFilters] = useState<CatalogFilters>({ page: 1, limit: DEFAULT_LIMIT });
   const [showSubmitForm, setShowSubmitForm] = useState(false);
   const [submittedCoin, setSubmittedCoin] = useState<CatalogCoin | null>(null);
@@ -32,7 +34,7 @@ export default function CatalogPage() {
 
   return (
     <main data-testid="catalog-page" className="flex flex-1 flex-col gap-6 p-8">
-      <h1 className="text-lg font-semibold">Catalog</h1>
+      <h1 className="text-lg font-semibold">{t('catalog.title')}</h1>
 
       <CatalogFilterForm testIdPrefix="catalog" onSubmit={handleFilterSubmit} />
 
@@ -44,7 +46,7 @@ export default function CatalogPage() {
             onClick={() => setShowSubmitForm((v) => !v)}
             className="rounded border border-gray-300 px-3 py-1 text-sm"
           >
-            Can&apos;t find this coin? Add it
+            {t('catalog.addCoinCta')}
           </button>
           {showSubmitForm && (
             <SubmitCoinForm
@@ -67,7 +69,7 @@ export default function CatalogPage() {
 
       {isError && (
         <p data-testid="catalog-error" className="text-sm text-red-600">
-          Something went wrong loading the catalog. Please try again.
+          {t('catalog.errorLoading')}
         </p>
       )}
 
@@ -75,7 +77,7 @@ export default function CatalogPage() {
         <>
           {data.items.length === 0 ? (
             <p data-testid="catalog-empty" className="text-sm text-gray-600">
-              No coins found.
+              {t('catalog.emptyMessage')}
             </p>
           ) : (
             <ul data-testid="catalog-results" className="flex flex-col gap-2">
@@ -101,10 +103,10 @@ export default function CatalogPage() {
               onClick={() => goToPage(data.page - 1)}
               className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
             >
-              Prev
+              {t('common.prev')}
             </button>
             <span data-testid="catalog-page-indicator" className="text-sm text-gray-600">
-              Page {data.page} of {Math.max(1, Math.ceil(data.total / data.limit))}
+              {t('common.pagePrefix')} {data.page} {t('common.ofSeparator')} {Math.max(1, Math.ceil(data.total / data.limit))}
             </span>
             <button
               type="button"
@@ -113,7 +115,7 @@ export default function CatalogPage() {
               onClick={() => goToPage(data.page + 1)}
               className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
             >
-              Next
+              {t('common.next')}
             </button>
           </div>
         </>
