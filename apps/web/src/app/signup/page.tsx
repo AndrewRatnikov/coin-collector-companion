@@ -7,11 +7,13 @@ import { FormField } from '@/components/auth/form-field';
 import { register } from '@/lib/auth-api';
 import { ApiError } from '@/lib/api-client';
 import { fieldErrorsFrom } from '@/lib/form-errors';
+import { useTranslation } from '@/lib/i18n/i18n-context';
 
 const FIELDS = ['email', 'password'];
 
 export default function SignupPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -24,7 +26,10 @@ export default function SignupPage() {
     setFormError('');
 
     if (password !== confirmPassword) {
-      setFieldErrors({ password: 'Passwords do not match', confirmPassword: 'Passwords do not match' });
+      setFieldErrors({
+        password: t('signup.passwordsDoNotMatch'),
+        confirmPassword: t('signup.passwordsDoNotMatch'),
+      });
       return;
     }
 
@@ -50,7 +55,7 @@ export default function SignupPage() {
           setFormError(error.details.join(', '));
         }
       } else {
-        setFormError('Something went wrong. Please try again.');
+        setFormError(t('common.somethingWentWrong'));
       }
     }
   }
@@ -58,10 +63,10 @@ export default function SignupPage() {
   return (
     <main data-testid="signup-page" className="flex flex-1 items-center justify-center p-8">
       <form data-testid="signup-form" onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
-        <h1 className="text-lg font-semibold">Sign up</h1>
+        <h1 className="text-lg font-semibold">{t('signup.title')}</h1>
         <FormField
           id="email"
-          label="Email"
+          label={t('common.email')}
           type="email"
           autoComplete="email"
           value={email}
@@ -70,7 +75,7 @@ export default function SignupPage() {
         />
         <FormField
           id="password"
-          label="Password"
+          label={t('common.password')}
           type="password"
           autoComplete="new-password"
           value={password}
@@ -79,7 +84,7 @@ export default function SignupPage() {
         />
         <FormField
           id="confirmPassword"
-          label="Confirm password"
+          label={t('signup.confirmPasswordLabel')}
           type="password"
           autoComplete="new-password"
           value={confirmPassword}
@@ -96,7 +101,7 @@ export default function SignupPage() {
           data-testid="signup-submit"
           className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
         >
-          Sign up
+          {t('signup.submit')}
         </button>
       </form>
     </main>
