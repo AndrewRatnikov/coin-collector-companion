@@ -79,6 +79,39 @@ describe('I18nProvider', () => {
     });
   });
 
+  describe('document.documentElement.lang stays in sync with locale', () => {
+    it('sets html lang to "es" after switching and back to "en" after switching back', async () => {
+      const user = userEvent.setup();
+      render(
+        <I18nProvider>
+          <Consumer />
+        </I18nProvider>,
+      );
+
+      expect(document.documentElement.lang).toBe('en');
+
+      await user.click(screen.getByRole('button', { name: 'set es' }));
+
+      await waitFor(() => {
+        expect(document.documentElement.lang).toBe('es');
+      });
+    });
+
+    it('applies "es" to html lang when a stored preference is picked up on mount', async () => {
+      localStorage.setItem(LOCALE_STORAGE_KEY, 'es');
+
+      render(
+        <I18nProvider>
+          <Consumer />
+        </I18nProvider>,
+      );
+
+      await waitFor(() => {
+        expect(document.documentElement.lang).toBe('es');
+      });
+    });
+  });
+
   describe('criterion 4: persisted language choice', () => {
     it('writes the selected locale to localStorage under LOCALE_STORAGE_KEY when changed', async () => {
       const user = userEvent.setup();

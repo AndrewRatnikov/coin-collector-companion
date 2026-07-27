@@ -43,6 +43,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Keeps the root <html lang> attribute (set server-side to "en" in layout.tsx,
+  // since the initial client render must also be "en" to avoid a hydration
+  // mismatch) truthful for screen readers/SEO once a stored non-English
+  // preference is applied or the user switches languages.
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
+
   function setLocale(next: Locale) {
     setLocaleState(next);
     window.localStorage.setItem(LOCALE_STORAGE_KEY, next);
