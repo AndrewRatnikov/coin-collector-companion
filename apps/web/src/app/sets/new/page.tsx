@@ -8,12 +8,15 @@ import { RequireAuth } from '@/components/auth/require-auth';
 import { useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
 import { usePublicSets } from '@/lib/hooks/use-public-sets';
 import { useCreateSet } from '@/lib/hooks/use-user-sets';
+import { useTranslation } from '@/lib/i18n/i18n-context';
+import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
 type Mode = 'blank' | 'canonical' | 'public';
 
 function NewSetForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t, locale } = useTranslation();
 
   const initialCloneFrom = searchParams.get('cloneFrom');
   const initialCloneFromId = searchParams.get('cloneFromId') ?? '';
@@ -46,19 +49,19 @@ function NewSetForm() {
         router.push(`/sets/${result.id}`);
       },
       onError: (err: unknown) => {
-        setError(err instanceof Error ? err.message : 'Something went wrong creating the set.');
+        setError(err instanceof Error ? err.message : t('setNew.defaultError'));
       },
     });
   }
 
   return (
     <main data-testid="set-new-page" className="flex flex-1 flex-col gap-6 p-8">
-      <h1 className="text-lg font-semibold">Start a new set</h1>
+      <h1 className="text-lg font-semibold">{t('setNew.title')}</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <label htmlFor="set-new-name" className="text-sm font-medium">
-            Name
+            {t('common.name')}
           </label>
           <input
             id="set-new-name"
@@ -72,7 +75,7 @@ function NewSetForm() {
         </div>
 
         <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-medium">Start from</legend>
+          <legend className="text-sm font-medium">{t('setNew.startFromLegend')}</legend>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="radio"
@@ -81,7 +84,7 @@ function NewSetForm() {
               checked={mode === 'blank'}
               onChange={() => setMode('blank')}
             />
-            Blank set
+            {t('setNew.modeBlank')}
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -91,7 +94,7 @@ function NewSetForm() {
               checked={mode === 'canonical'}
               onChange={() => setMode('canonical')}
             />
-            Clone a canonical set
+            {t('setNew.modeCanonical')}
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -101,7 +104,7 @@ function NewSetForm() {
               checked={mode === 'public'}
               onChange={() => setMode('public')}
             />
-            Clone a public set
+            {t('setNew.modePublic')}
           </label>
         </fieldset>
 
@@ -112,10 +115,10 @@ function NewSetForm() {
             onChange={(e) => setCanonicalId(e.target.value)}
             className="rounded border border-gray-300 px-3 py-2 text-sm"
           >
-            <option value="">Select a canonical set…</option>
+            <option value="">{t('setNew.selectCanonicalPlaceholder')}</option>
             {(canonicalSets ?? []).map((set) => (
               <option key={set.id} value={set.id}>
-                {set.name}
+                {resolveLocalizedText(set.name, locale)}
               </option>
             ))}
           </select>
@@ -128,10 +131,10 @@ function NewSetForm() {
             onChange={(e) => setPublicId(e.target.value)}
             className="rounded border border-gray-300 px-3 py-2 text-sm"
           >
-            <option value="">Select a public set…</option>
+            <option value="">{t('setNew.selectPublicPlaceholder')}</option>
             {(publicSetsPage?.items ?? []).map((set) => (
               <option key={set.id} value={set.id}>
-                {set.name}
+                {resolveLocalizedText(set.name, locale)}
               </option>
             ))}
           </select>
@@ -148,7 +151,7 @@ function NewSetForm() {
           data-testid="set-new-submit"
           className="w-fit rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
         >
-          Create set
+          {t('setNew.submit')}
         </button>
       </form>
     </main>

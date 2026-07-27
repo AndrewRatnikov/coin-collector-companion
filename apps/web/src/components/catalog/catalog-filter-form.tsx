@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { useTranslation } from '@/lib/i18n/i18n-context';
 
 export interface CatalogFilterFormValues {
   country?: string;
@@ -17,6 +18,7 @@ export interface CatalogFilterFormProps {
 }
 
 export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFilterFormProps) {
+  const { t } = useTranslation();
   const [country, setCountry] = useState('');
   const [denomination, setDenomination] = useState('');
   const [name, setName] = useState('');
@@ -42,7 +44,7 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
     >
       <div className="flex flex-col gap-1">
         <label htmlFor={`${testIdPrefix}-country`} className="text-sm font-medium">
-          Country
+          {t('common.country')}
         </label>
         <input
           id={`${testIdPrefix}-country`}
@@ -55,7 +57,7 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor={`${testIdPrefix}-denomination`} className="text-sm font-medium">
-          Denomination
+          {t('common.denomination')}
         </label>
         <input
           id={`${testIdPrefix}-denomination`}
@@ -68,7 +70,7 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor={`${testIdPrefix}-name`} className="text-sm font-medium">
-          Name
+          {t('common.name')}
         </label>
         <input
           id={`${testIdPrefix}-name`}
@@ -81,7 +83,7 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor={`${testIdPrefix}-year-min`} className="text-sm font-medium">
-          Year min
+          {t('common.yearMin')}
         </label>
         <input
           id={`${testIdPrefix}-year-min`}
@@ -94,7 +96,7 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor={`${testIdPrefix}-year-max`} className="text-sm font-medium">
-          Year max
+          {t('common.yearMax')}
         </label>
         <input
           id={`${testIdPrefix}-year-max`}
@@ -110,7 +112,7 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
         data-testid={`${testIdPrefix}-filter-submit`}
         className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
       >
-        Search
+        {t('common.search')}
       </button>
     </form>
   );

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteNav } from '@/components/layout/site-nav';
+import { I18nProvider } from '@/lib/i18n/i18n-context';
 import './globals.css';
 
 const geistSans = Geist({
@@ -28,11 +29,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <QueryProvider>
-          <SiteNav />
-          {children}
-        </QueryProvider>
-        <SiteFooter />
+        <I18nProvider>
+          <QueryProvider>
+            <SiteNav />
+            {children}
+          </QueryProvider>
+          <SiteFooter />
+        </I18nProvider>
       </body>
     </html>
   );

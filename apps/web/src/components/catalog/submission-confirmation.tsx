@@ -6,6 +6,8 @@ import Link from 'next/link';
 import type { CatalogCoin, UserSetSummary } from '@coin-collector/shared';
 import { useCreateSet, usePatchSetCoins, useUserSets } from '@/lib/hooks/use-user-sets';
 import { patchSetCoins } from '@/lib/user-sets-api';
+import { useTranslation } from '@/lib/i18n/i18n-context';
+import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
 export interface SubmissionConfirmationProps {
   coin: CatalogCoin;
@@ -20,6 +22,7 @@ interface AddToSetRowProps {
 // Its own component (not a callback inside a .map in the parent) so usePatchSetCoins(set.id)
 // — a fixed, already-known id — is called once per row, following the Rules of Hooks.
 function AddToSetRow({ set, coinId, onAdded }: AddToSetRowProps) {
+  const { t, locale } = useTranslation();
   const patchMutation = usePatchSetCoins(set.id);
 
   function handleAdd() {
@@ -28,20 +31,21 @@ function AddToSetRow({ set, coinId, onAdded }: AddToSetRowProps) {
 
   return (
     <li data-testid="submission-confirmation-set-item" className="flex items-center justify-between gap-4 rounded border border-gray-200 p-3">
-      <span>{set.name}</span>
+      <span>{resolveLocalizedText(set.name, locale)}</span>
       <button
         type="button"
         data-testid="submission-confirmation-add-to-set-button"
         onClick={handleAdd}
         className="rounded border border-gray-300 px-3 py-1 text-xs"
       >
-        Add to this set
+        {t('submissionConfirmation.addToSetButton')}
       </button>
     </li>
   );
 }
 
 export default function SubmissionConfirmation({ coin }: SubmissionConfirmationProps) {
+  const { t } = useTranslation();
   const { data: userSets, isLoading } = useUserSets();
   const createSetMutation = useCreateSet();
   const [newSetName, setNewSetName] = useState('');
@@ -97,14 +101,14 @@ export default function SubmissionConfirmation({ coin }: SubmissionConfirmationP
             data-testid="submission-confirmation-create-set-submit"
             className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
           >
-            Create set and add coin
+            {t('submissionConfirmation.createSetSubmit')}
           </button>
         </form>
       )}
 
       {linkedSetId && (
         <Link href={`/sets/${linkedSetId}`} data-testid="submission-confirmation-view-set-link" className="underline">
-          View set
+          {t('submissionConfirmation.viewSetLink')}
         </Link>
       )}
     </div>

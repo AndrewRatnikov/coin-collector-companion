@@ -7,11 +7,13 @@ import { FormField } from '@/components/auth/form-field';
 import { login } from '@/lib/auth-api';
 import { ApiError } from '@/lib/api-client';
 import { fieldErrorsFrom } from '@/lib/form-errors';
+import { useTranslation } from '@/lib/i18n/i18n-context';
 
 const FIELDS = ['email', 'password'];
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -44,7 +46,7 @@ export default function LoginPage() {
           setFormError(error.details.join(', '));
         }
       } else {
-        setFormError('Something went wrong. Please try again.');
+        setFormError(t('common.somethingWentWrong'));
       }
     }
   }
@@ -52,10 +54,10 @@ export default function LoginPage() {
   return (
     <main data-testid="login-page" className="flex flex-1 items-center justify-center p-8">
       <form data-testid="login-form" onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
-        <h1 className="text-lg font-semibold">Log in</h1>
+        <h1 className="text-lg font-semibold">{t('login.title')}</h1>
         <FormField
           id="email"
-          label="Email"
+          label={t('common.email')}
           type="email"
           autoComplete="email"
           value={email}
@@ -64,7 +66,7 @@ export default function LoginPage() {
         />
         <FormField
           id="password"
-          label="Password"
+          label={t('common.password')}
           type="password"
           autoComplete="current-password"
           value={password}
@@ -81,7 +83,7 @@ export default function LoginPage() {
           data-testid="login-submit"
           className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
         >
-          Log in
+          {t('login.submit')}
         </button>
       </form>
     </main>

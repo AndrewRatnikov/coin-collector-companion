@@ -6,8 +6,11 @@ import { formatCoinLabel } from '@coin-collector/shared';
 import { getStoredToken } from '@/lib/auth-token';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/lib/i18n/i18n-context';
+import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
 export default function CanonicalSetDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t, locale } = useTranslation();
   const [id, setId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,18 +40,18 @@ export default function CanonicalSetDetailPage({ params }: { params: Promise<{ i
 
       {isError && (
         <p data-testid="canonical-set-detail-error" className="text-sm text-red-600">
-          Something went wrong loading this canonical set. Please try again.
+          {t('canonicalSetDetail.errorLoading')}
         </p>
       )}
 
       {set && (
         <>
           <h1 data-testid="canonical-set-detail-name" className="text-lg font-semibold">
-            {set.name}
+            {resolveLocalizedText(set.name, locale)}
           </h1>
           {set.description && (
             <p data-testid="canonical-set-detail-description" className="text-sm text-gray-600">
-              {set.description}
+              {resolveLocalizedText(set.description, locale)}
             </p>
           )}
 
@@ -58,7 +61,7 @@ export default function CanonicalSetDetailPage({ params }: { params: Promise<{ i
               data-testid="canonical-set-clone-cta"
               className="w-fit rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
             >
-              Clone into my sets
+              {t('canonicalSetDetail.cloneCta')}
             </Link>
           )}
 

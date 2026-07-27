@@ -1,16 +1,22 @@
+'use client';
+
+import { useTranslation } from '@/lib/i18n/i18n-context';
+
 export function SiteFooter() {
+  const { t } = useTranslation();
+
   return (
     <footer className="mt-auto py-4 text-center text-xs text-gray-500 dark:text-gray-400">
-      Catalog data derived from{' '}
+      {t('footer.attributionPrefix')}{' '}
       <a
         href="https://en.wikipedia.org/wiki/Wikipedia:Reusing_Wikipedia_content"
         target="_blank"
         rel="noopener noreferrer"
         className="underline"
       >
-        Wikipedia
+        {t('footer.wikipediaLinkText')}
       </a>
-      , used under CC BY-SA 4.0.
+      {t('footer.attributionSuffix')}
     </footer>
   );
 }
