@@ -61,9 +61,16 @@ export default function SignupPage() {
   }
 
   return (
-    <main data-testid="signup-page" className="flex flex-1 items-center justify-center p-8">
-      <form data-testid="signup-form" onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-4">
-        <h1 className="text-lg font-semibold">{t('signup.title')}</h1>
+    <main
+      data-testid="signup-page"
+      className="mx-auto flex w-full max-w-[420px] flex-1 flex-col items-stretch justify-center gap-8 px-6 py-16 text-[var(--color-text)]"
+    >
+      <div className="flex flex-col items-center gap-4 border-b border-[var(--color-divider)] pb-6">
+        <span className="text-[22px] font-semibold [font-family:var(--font-heading)]">{t('nav.brand')}</span>
+      </div>
+
+      <form data-testid="signup-form" onSubmit={handleSubmit} className="flex w-full flex-col gap-5">
+        <h1 className="text-[24px] font-normal [font-family:var(--font-heading)]">{t('signup.title')}</h1>
         <FormField
           id="email"
           label={t('common.email')}
@@ -92,14 +99,14 @@ export default function SignupPage() {
           error={fieldErrors.confirmPassword}
         />
         {formError && (
-          <p data-testid="signup-form-error" className="text-sm text-red-600">
+          <p data-testid="signup-form-error" className="text-sm text-red-700">
             {formError}
           </p>
         )}
         <button
           type="submit"
           data-testid="signup-submit"
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+          className="w-full rounded-[2px] bg-[var(--color-accent)] px-[26px] py-[13px] text-[12px] font-medium uppercase tracking-[0.1em] text-[var(--color-bg)] hover:bg-[color-mix(in_srgb,var(--color-accent)_86%,#000)]"
         >
           {t('signup.submit')}
         </button>
