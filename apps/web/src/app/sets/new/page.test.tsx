@@ -175,7 +175,7 @@ function makeMutationMock<T>({
 function findRowByText(testId: string, text: string) {
   const rows = screen.getAllByTestId(testId);
   const match = rows.find((row) => row.textContent?.includes(text));
-  if (!match) throw new Error(`No [data-testid="${testId}"] row found containing "${text}"`);
+  if (!match) throw new Error(`No row with testId ${testId} found containing "${text}"`);
   return match;
 }
 
