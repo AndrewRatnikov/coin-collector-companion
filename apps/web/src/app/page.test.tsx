@@ -120,6 +120,15 @@ describe('Home', () => {
       expect(link).toHaveTextContent('coins');
     });
 
+    it('shows a different catalogue total when the fixture differs (proves the number is derived, not hardcoded)', () => {
+      useCatalogMock.mockReturnValue(catalogResult({ data: { items: [], page: 1, limit: 1, total: 17 } }));
+      render(<Home />);
+
+      const link = screen.getByTestId('home-catalog-link');
+      expect(link).toHaveTextContent('17');
+      expect(link.textContent).not.toMatch(/4213/);
+    });
+
     it('calls useCatalog with page 1 / limit 1 (cheap total-only fetch, no full page needed)', () => {
       render(<Home />);
       expect(useCatalogMock).toHaveBeenCalledWith({ page: 1, limit: 1 });
@@ -134,6 +143,20 @@ describe('Home', () => {
       expect(link).toHaveTextContent('sets');
     });
 
+    it('shows a different canonical-sets count when the fixture array length differs (proves the number is derived, not hardcoded)', () => {
+      const FIVE_CANONICAL_SETS = [
+        ...CANONICAL_SETS,
+        { id: 's4', name: 'Mercury Dimes', description: 'a', source: 'seed-template', templateVersion: 'v1' },
+        { id: 's5', name: 'Morgan Dollars', description: 'b', source: 'seed-template', templateVersion: 'v1' },
+      ];
+      useCanonicalSetsMock.mockReturnValue(canonicalSetsResult({ data: FIVE_CANONICAL_SETS as never }));
+      render(<Home />);
+
+      const link = screen.getByTestId('home-canonical-link');
+      expect(link).toHaveTextContent('5');
+      expect(link.textContent).not.toMatch(/(?<!\d)3(?!\d)/);
+    });
+
     it('shows the real public-sets total (from usePublicSets().data.total) and the "sets" unit', () => {
       usePublicSetsMock.mockReturnValue(publicSetsResult({ data: { items: [], page: 1, limit: 1, total: 87 } }));
       render(<Home />);
@@ -141,6 +164,15 @@ describe('Home', () => {
       const link = screen.getByTestId('home-public-link');
       expect(link).toHaveTextContent('87');
       expect(link).toHaveTextContent('sets');
+    });
+
+    it('shows a different public-sets total when the fixture differs (proves the number is derived, not hardcoded)', () => {
+      usePublicSetsMock.mockReturnValue(publicSetsResult({ data: { items: [], page: 1, limit: 1, total: 250 } }));
+      render(<Home />);
+
+      const link = screen.getByTestId('home-public-link');
+      expect(link).toHaveTextContent('250');
+      expect(link.textContent).not.toMatch(/87/);
     });
 
     it('calls usePublicSets with page 1 / limit 1 (cheap total-only fetch, no full page needed)', () => {

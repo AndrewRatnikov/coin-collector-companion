@@ -215,8 +215,33 @@ describe('PublicSetDetailPage', () => {
 
       const overlap = await screen.findByTestId('public-set-detail-overlap');
       expect(overlap).toHaveTextContent('You already own');
-      expect(overlap).toHaveTextContent('1');
-      expect(overlap).toHaveTextContent('2');
+      expect(overlap.textContent).toMatch(/1\s*of\s*2/);
+    });
+
+    it('renders a different N of M when the gaps fixture differs (proves the numbers are derived, not hardcoded)', async () => {
+      getStoredTokenMock.mockReturnValue('tok-abc');
+      usePublicSetMock.mockReturnValue(publicSetResult({ data: DETAIL as never }));
+      const DIFFERENT_GAPS = {
+        ...GAPS,
+        ownedCount: 5,
+        totalCount: 9,
+        slots: [
+          ...GAPS.slots,
+          { id: 'usc-3', position: 2, coin: DETAIL.coins[0].coin, owned: true },
+          { id: 'usc-4', position: 3, coin: DETAIL.coins[1].coin, owned: true },
+          { id: 'usc-5', position: 4, coin: DETAIL.coins[0].coin, owned: true },
+          { id: 'usc-6', position: 5, coin: DETAIL.coins[1].coin, owned: true },
+          { id: 'usc-7', position: 6, coin: DETAIL.coins[0].coin, owned: false },
+          { id: 'usc-8', position: 7, coin: DETAIL.coins[1].coin, owned: false },
+          { id: 'usc-9', position: 8, coin: DETAIL.coins[0].coin, owned: false },
+        ],
+      };
+      useSetGapsMock.mockReturnValue(gapsResult({ data: DIFFERENT_GAPS as never, isSuccess: true }));
+      renderPage('set-1');
+
+      const overlap = await screen.findByTestId('public-set-detail-overlap');
+      expect(overlap.textContent).toMatch(/5\s*of\s*9/);
+      expect(overlap.textContent).not.toMatch(/1\s*of\s*2/);
     });
 
     it('does not render public-set-detail-overlap when signed out', async () => {
