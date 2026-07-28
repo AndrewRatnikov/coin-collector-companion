@@ -116,7 +116,7 @@ export default function SubmitCoinForm({ onSuccess }: SubmitCoinFormProps) {
       <button
         type="submit"
         data-testid="submit-coin-submit"
-        className="w-fit rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+        className="w-fit rounded-[var(--radius-sm)] bg-[var(--color-accent)] px-[26px] py-[13px] text-[12px] font-medium uppercase tracking-[0.1em] text-[var(--color-bg)] hover:bg-[color-mix(in_srgb,var(--color-accent)_86%,#000)]"
       >
         {t('submitCoinForm.submit')}
       </button>
