@@ -14,12 +14,14 @@
 const enShape = {
   // nav
   'nav.catalog': 'Catalog',
-  'nav.canonicalSets': 'Canonical sets',
-  'nav.publicSets': 'Public sets',
+  'nav.canonicalSets': 'Canonical Sets',
+  'nav.publicSets': 'Public Sets',
   'nav.dashboard': 'Dashboard',
   'nav.collection': 'Collection',
   'nav.logOut': 'Log out',
   'nav.logIn': 'Log in',
+  'nav.brand': 'Coin Collector Companion',
+  'nav.signUp': 'Sign up',
 
   // language switcher
   'languageSwitcher.english': 'English',
@@ -44,9 +46,19 @@ const enShape = {
   'common.ofSeparator': 'of',
   'common.owned': 'owned',
   'common.missing': 'missing',
+  'common.clear': 'Clear',
 
   // home
   'home.title': 'Coin Collector Companion',
+  'home.eyebrow': 'Est. catalogue & personal ledger',
+  'home.headline': 'A quiet place to record what you have — and what you are still looking for.',
+  'home.paragraph':
+    'Define a set on your own terms, mark the coins you own, and see the gaps that remain. Browsing needs no account.',
+  'home.browseCatalogue': 'Browse the catalogue',
+  'home.browseCanonical': 'Browse canonical sets',
+  'home.browsePublic': "Browse collectors' sets",
+  'home.coinsUnit': 'coins',
+  'home.setsUnit': 'sets',
 
   // login
   'login.title': 'Log in',
@@ -63,6 +75,9 @@ const enShape = {
   'dashboard.errorLoadingSets': 'Something went wrong loading your sets. Please try again.',
   'dashboard.emptyMessage': "You don't have any sets yet.",
   'dashboard.startFirstSetCta': 'Start your first set',
+  'dashboard.statSets': 'Sets',
+  'dashboard.statCoinsOwned': 'Coins owned',
+  'dashboard.statAverageCompletion': 'Average completion',
 
   // collection
   'collection.title': 'My Collection',
@@ -80,6 +95,11 @@ const enShape = {
   'coinDetail.pendingBadge': 'Pending review',
   'coinDetail.imageAttributionPrefix': 'Image:',
   'coinDetail.unknownSource': 'Unknown source',
+  'coinDetail.markOwned': 'Mark as owned',
+  'coinDetail.removeOwned': 'Remove from collection',
+  'coinDetail.inCollection': 'In your collection',
+  'coinDetail.loginPrompt': 'Log in to record this coin in your collection.',
+  'coinDetail.appearsInSets': 'Appears in your sets',
 
   // submit coin form
   'submitCoinForm.submit': 'Submit coin',
@@ -98,6 +118,12 @@ const enShape = {
   'setEditor.addCoinsHeading': 'Add coins',
   'setEditor.addButton': 'Add',
   'setEditor.errorLoading': 'Something went wrong loading this set. Please try again.',
+  'setEditor.allCoins': 'All coins',
+  'setEditor.missing': 'missing',
+  'setEditor.addCoins': 'Add coins',
+  'setEditor.closePicker': 'Close picker',
+  'setEditor.undo': 'Undo',
+  'setEditor.noCoinsYet': 'No coins yet — add some below.',
 
   // canonical sets
   'canonicalSets.title': 'Canonical sets',
@@ -118,6 +144,14 @@ const enShape = {
   'setNew.selectPublicPlaceholder': 'Select a public set…',
   'setNew.defaultError': 'Something went wrong creating the set.',
   'setNew.submit': 'Create set',
+  'setNew.chooseCanonical': 'Choose a canonical set',
+  'setNew.choosePublic': "Choose a collector's set",
+  'setNew.inThisSet': 'In this set',
+  'setNew.nothingAdded': 'Nothing added yet.',
+  'setNew.add': 'Add',
+  'setNew.remove': 'Remove',
+  'setNew.createSet': 'Create Set',
+  'setNew.addFromCatalogue': 'Add from the catalogue',
 
   // public sets
   'publicSets.title': 'Public sets',
@@ -127,6 +161,7 @@ const enShape = {
   // public set detail
   'publicSetDetail.errorLoading': 'Something went wrong loading this set. Please try again.',
   'publicSetDetail.cloneCta': 'Clone into my sets',
+  'publicSetDetail.overlap': 'You already own',
 
   // footer
   'footer.attributionPrefix': 'Catalog data derived from',
