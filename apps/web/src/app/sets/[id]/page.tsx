@@ -72,18 +72,24 @@ function SetEditor({ id }: { id: string }) {
 
   const [nameValue, setNameValue] = useState('');
   const savedNameRef = useRef('');
+  const syncedSetRef = useRef<typeof set>(undefined);
   const [gapOnly, setGapOnly] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [collapsedDecades, setCollapsedDecades] = useState<Record<string, boolean>>({});
   const [addCoinsFilters, setAddCoinsFilters] = useState<CatalogFilters>({ page: 1, limit: ADD_COINS_LIMIT });
   const catalogQuery = useCatalog(addCoinsFilters);
 
-  useEffect(() => {
-    if (set) {
-      setNameValue(set.name);
-      savedNameRef.current = set.name;
-    }
-  }, [set]);
+  // Adjust nameValue during render (React's endorsed "adjust state" pattern) rather than
+  // via useEffect: an effect only fires after commit, so the input would first paint with
+  // its stale initial value on the very render where `set` becomes available (it's already
+  // guaranteed non-null by the time this component reaches its main return, since the
+  // !set/!gaps branch above returns early) before a second render corrected it, racing any
+  // assertion or blur made immediately after the input appears.
+  if (set && syncedSetRef.current !== set) {
+    syncedSetRef.current = set;
+    setNameValue(set.name);
+    savedNameRef.current = set.name;
+  }
 
   function handleToggle(coinId: string, currentlyOwned: boolean) {
     ownershipMutation.mutate({ coinId, owned: !currentlyOwned });
@@ -247,7 +253,10 @@ function SetEditor({ id }: { id: string }) {
                       data-testid="set-editor-gap-item"
                       className="flex items-center justify-between gap-4 rounded border border-gray-200 p-3"
                     >
-                      <span>{formatCoinLabel(slot.coin)}</span>
+                      <span className="flex flex-col">
+                        <span className="text-[15px] font-medium">{slot.coin.name}</span>
+                        <span className="text-xs text-gray-500">{formatCoinLabel(slot.coin)}</span>
+                      </span>
                       <span data-testid="set-editor-gap-status" className="text-xs text-gray-500">
                         {slot.owned ? t('common.owned') : t('common.missing')}
                       </span>
