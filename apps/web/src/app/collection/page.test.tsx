@@ -1,7 +1,14 @@
 /**
  * Tests for: CollectionPage
  * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Page: CollectionPage (CREATE)
- * Covers criteria: #7 (from prd.md)
+ *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/collection/page.tsx
+ * Covers criteria: #7 (from run_20260721_171115's prd.md), #10 (from run_20260728_071525's prd.md)
+ *
+ * run_20260728_071525: plan.md keeps `useCollection(filters)` exact-match on year (§4 of
+ * plan.md — changing to prefix-match is out of scope) and adds a `collection-filter-clear`
+ * button, local to this page's own inline filter form (NOT the shared CatalogFilterForm —
+ * Collection never used that component). Every other assertion below is carried over
+ * unchanged from run_20260721_171115.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -107,9 +114,19 @@ describe('CollectionPage', () => {
       });
       expect(screen.getByText('USA 1 Cent (1909 S)')).toBeInTheDocument();
     });
+
+    it('run_20260728_071525 criterion 10: also shows the coin\'s year and mint mark within the row (additional content, no new testid)', async () => {
+      setStoredToken('tok-abc');
+      useCollectionMock.mockReturnValue(queryResult({ data: OWNERSHIP_ITEMS }));
+      render(<CollectionPage />);
+
+      const item = await screen.findByTestId('collection-item');
+      expect(item).toHaveTextContent('1909');
+      expect(item).toHaveTextContent('S');
+    });
   });
 
-  describe('criterion 7: filtering by country and year', () => {
+  describe('criterion 7: filtering by country and year (exact-match, wired to the real API — plan.md §4)', () => {
     function lastCollectionFilters() {
       const calls = useCollectionMock.mock.calls;
       return calls[calls.length - 1][0] as { country?: string; year?: number };
@@ -147,6 +164,42 @@ describe('CollectionPage', () => {
       await waitFor(() => {
         expect(lastCollectionFilters().year).toBe(1943);
         expect(lastCollectionFilters().country).toBeUndefined();
+      });
+    });
+  });
+
+  describe('run_20260728_071525 criterion 10: filter Clear button', () => {
+    it('renders collection-filter-clear inside the filter form', async () => {
+      setStoredToken('tok-abc');
+      render(<CollectionPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('collection-filter-clear')).toBeInTheDocument();
+      });
+    });
+
+    it('resets filled filter fields to empty and resubmits with no filter values', async () => {
+      setStoredToken('tok-abc');
+      const user = userEvent.setup();
+      render(<CollectionPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('collection-filter-form')).toBeInTheDocument();
+      });
+      await user.type(screen.getByTestId('collection-filter-country'), 'USA');
+      await user.type(screen.getByTestId('collection-filter-year'), '1909');
+      await user.click(screen.getByTestId('collection-filter-submit'));
+
+      await user.click(screen.getByTestId('collection-filter-clear'));
+
+      expect(screen.getByTestId('collection-filter-country')).toHaveValue('');
+      expect(screen.getByTestId('collection-filter-year')).toHaveValue(null);
+
+      await waitFor(() => {
+        const calls = useCollectionMock.mock.calls;
+        const last = calls[calls.length - 1][0] as { country?: string; year?: number };
+        expect(last.country).toBeUndefined();
+        expect(last.year).toBeUndefined();
       });
     });
   });

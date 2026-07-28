@@ -2,11 +2,17 @@
  * Tests for: PublicSetDetailPage
  * Contract source: runs/run_20260721_161448/plan.md § Interface Contract → Component: PublicSetDetailPage
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
- * Covers criteria: #5, #6, #7 (from run_20260721_161448's prd.md), #1 (from run_20260722_121303's prd.md)
+ *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/sets/public/[id]/page.tsx
+ * Covers criteria: #5, #6, #7 (from run_20260721_161448's prd.md), #1 (from run_20260722_121303's prd.md),
+ *                  #7 (from run_20260728_071525's prd.md)
  *
  * Unwraps params via useEffect+useState (matching the fix already applied to
  * sets/canonical/[id]/page.tsx per memory.md's recorded use()+Suspense gotcha), not
  * React's use() — no <Suspense> boundary is needed for this render.
+ *
+ * run_20260728_071525: adds coverage for the new public-set-detail-overlap line, which
+ * reuses the already-mocked useSetGaps result (gaps.ownedCount / gaps.slots.length) — no
+ * new fetch/mock is introduced. Every other assertion below is carried over unchanged.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -197,6 +203,43 @@ describe('PublicSetDetailPage', () => {
       });
       const href = screen.getByTestId('public-set-clone-cta').getAttribute('href');
       expect(href).toBe('/sets/new?cloneFrom=user&cloneFromId=set-1');
+    });
+  });
+
+  describe('run_20260728_071525 criterion 7: "you already own N of M" overlap line', () => {
+    it('renders public-set-detail-overlap with the ownedCount/slots.length from the already-fetched gaps, when signed in and gaps resolve', async () => {
+      getStoredTokenMock.mockReturnValue('tok-abc');
+      usePublicSetMock.mockReturnValue(publicSetResult({ data: DETAIL as never }));
+      useSetGapsMock.mockReturnValue(gapsResult({ data: GAPS as never, isSuccess: true }));
+      renderPage('set-1');
+
+      const overlap = await screen.findByTestId('public-set-detail-overlap');
+      expect(overlap).toHaveTextContent('You already own');
+      expect(overlap).toHaveTextContent('1');
+      expect(overlap).toHaveTextContent('2');
+    });
+
+    it('does not render public-set-detail-overlap when signed out', async () => {
+      getStoredTokenMock.mockReturnValue(null);
+      usePublicSetMock.mockReturnValue(publicSetResult({ data: DETAIL as never }));
+      renderPage('set-1');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('public-set-detail-name')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('public-set-detail-overlap')).not.toBeInTheDocument();
+    });
+
+    it('does not render public-set-detail-overlap when gaps have not resolved successfully (still loading/errored)', async () => {
+      getStoredTokenMock.mockReturnValue('tok-abc');
+      usePublicSetMock.mockReturnValue(publicSetResult({ data: DETAIL as never }));
+      useSetGapsMock.mockReturnValue(gapsResult({ isLoading: true }));
+      renderPage('set-1');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('public-set-detail-name')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('public-set-detail-overlap')).not.toBeInTheDocument();
     });
   });
 });

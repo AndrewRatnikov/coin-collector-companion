@@ -1,8 +1,9 @@
 /**
  * Tests for: SiteNav
- * Contract source: runs/run_20260726_221855/plan.md § Interface Contract → Modified: SiteNav
+ * Contract source: runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/components/layout/site-nav.tsx
  * (existing describe blocks below are carried over unchanged from
- * runs/run_20260722_121303/plan.md § Interface Contract → Component: SiteNav)
+ * runs/run_20260726_221855/plan.md § Interface Contract → Modified: SiteNav, which itself
+ * carried over runs/run_20260722_121303's original SiteNav coverage)
  * Covers criteria: #2, #3 (from prd.md)
  */
 
@@ -95,6 +96,56 @@ describe('SiteNav', () => {
       expect(screen.getByTestId('language-switcher')).toBeInTheDocument();
       expect(screen.getByTestId('language-switcher-en')).toBeInTheDocument();
       expect(screen.getByTestId('language-switcher-es')).toBeInTheDocument();
+    });
+  });
+
+  describe('criterion 2: brand element (new in run_20260728_071525)', () => {
+    it('renders a site-nav-brand element with the nav.brand copy, linking to Home', () => {
+      render(<SiteNav />);
+
+      const brand = screen.getByTestId('site-nav-brand');
+      expect(brand).toBeInTheDocument();
+      expect(brand).toHaveTextContent('Coin Collector Companion');
+      expect(brand.getAttribute('href')).toBe('/');
+    });
+
+    it('renders the brand element regardless of auth state', async () => {
+      setStoredToken('tok-abc');
+      render(<SiteNav />);
+
+      expect(await screen.findByTestId('site-nav-dashboard-link')).toBeInTheDocument();
+      const brand = screen.getByTestId('site-nav-brand');
+      expect(brand).toBeInTheDocument();
+      expect(brand.getAttribute('href')).toBe('/');
+    });
+  });
+
+  describe('criterion 2: signup link, signed-out only (new in run_20260728_071525)', () => {
+    it('renders site-nav-signup-link alongside the login link when signed out', () => {
+      render(<SiteNav />);
+
+      expect(screen.getByTestId('site-nav-login-link')).toBeInTheDocument();
+      const signup = screen.getByTestId('site-nav-signup-link');
+      expect(signup).toBeInTheDocument();
+      expect(signup).toHaveTextContent('Sign up');
+      expect(signup.getAttribute('href')).toBe('/signup');
+    });
+
+    it('hides site-nav-signup-link when a token is stored', async () => {
+      setStoredToken('tok-abc');
+      render(<SiteNav />);
+
+      expect(await screen.findByTestId('site-nav-dashboard-link')).toBeInTheDocument();
+      expect(screen.queryByTestId('site-nav-signup-link')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('criterion 2: Title Case copy for canonical/public sets links (changed in run_20260728_071525)', () => {
+    it('renders "Canonical Sets" and "Public Sets" in Title Case', () => {
+      render(<SiteNav />);
+
+      expect(screen.getByTestId('site-nav-canonical-link')).toHaveTextContent('Canonical Sets');
+      expect(screen.getByTestId('site-nav-public-link')).toHaveTextContent('Public Sets');
     });
   });
 });
