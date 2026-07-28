@@ -38,7 +38,10 @@ export default function Home() {
         >
           {t('home.headline')}
         </h1>
-        <p className="max-w-[60ch] text-[15px] leading-relaxed text-[color:var(--color-neutral-700)]">
+        <p
+          data-testid="home-paragraph"
+          className="max-w-[60ch] text-[15px] leading-relaxed text-[color:var(--color-neutral-700)]"
+        >
           {t('home.paragraph')}
         </p>
       </div>
