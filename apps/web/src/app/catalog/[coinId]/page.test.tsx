@@ -35,6 +35,7 @@ import { useCollection, useSetOwnership } from '@/lib/hooks/use-collection';
 import { useUserSets } from '@/lib/hooks/use-user-sets';
 import { getSetGaps } from '@/lib/user-sets-api';
 import { getStoredToken } from '@/lib/auth-token';
+import type { CatalogCoin } from '@coin-collector/shared';
 
 vi.mock('@/lib/hooks/use-catalog', () => ({
   useCoin: vi.fn(),
@@ -104,7 +105,7 @@ function renderPage(coinId = 'coin-1') {
   );
 }
 
-const COIN_WITH_IMAGE = {
+const COIN_WITH_IMAGE: CatalogCoin = {
   id: 'coin-1',
   country: 'USA',
   denomination: '1 Cent',
@@ -117,6 +118,8 @@ const COIN_WITH_IMAGE = {
   imageLicense: 'CC BY-SA 4.0',
   status: 'approved',
   submittedAt: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 const COIN_NO_IMAGE = { ...COIN_WITH_IMAGE, imageUrl: null, imageSource: null, imageLicense: null };
