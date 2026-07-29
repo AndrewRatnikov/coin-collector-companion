@@ -100,7 +100,6 @@ function NewSetForm() {
     );
     // Intentionally keyed only on createdSet: it is set exactly once per submission, and
     // patchCoinsMutation for this render is already bound to createdSet.id by then.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [createdSet]);
 
   function handleSelectSource(id: string) {
