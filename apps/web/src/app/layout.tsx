@@ -1,19 +1,30 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Cormorant_Garamond, IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteNav } from '@/components/layout/site-nav';
 import { I18nProvider } from '@/lib/i18n/i18n-context';
 import './globals.css';
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+// Heading font (Cormorant Garamond, weight 600 ceiling) — Classical design system.
+const cormorantGaramond = Cormorant_Garamond({
+  variable: '--font-heading-family',
   subsets: ['latin'],
+  weight: ['400', '500', '600'],
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+// Body font override for this specific mock (the DS's own default is Lora).
+const ibmPlexSans = IBM_Plex_Sans({
+  variable: '--font-body-family',
   subsets: ['latin'],
+  weight: ['400', '500'],
+});
+
+// Numeric/tabular font for prices, years, counts, percentages, pagination.
+const ibmPlexMono = IBM_Plex_Mono({
+  variable: '--font-mono-family',
+  subsets: ['latin'],
+  weight: ['400', '500'],
 });
 
 export const metadata: Metadata = {
@@ -27,7 +38,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      className={[
+        cormorantGaramond.variable,
+        ibmPlexSans.variable,
+        ibmPlexMono.variable,
+        'h-full antialiased',
+      ].join(' ')}
+    >
       <body className="min-h-full flex flex-col">
         <I18nProvider>
           <QueryProvider>

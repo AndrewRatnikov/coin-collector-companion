@@ -30,13 +30,16 @@ function AddToSetRow({ set, coinId, onAdded }: AddToSetRowProps) {
   }
 
   return (
-    <li data-testid="submission-confirmation-set-item" className="flex items-center justify-between gap-4 rounded border border-gray-200 p-3">
-      <span>{resolveLocalizedText(set.name, locale)}</span>
+    <li
+      data-testid="submission-confirmation-set-item"
+      className="flex items-center justify-between gap-4 rounded-[var(--radius-md)] border border-[var(--color-divider)] p-3"
+    >
+      <span className="text-[var(--color-text)]">{resolveLocalizedText(set.name, locale)}</span>
       <button
         type="button"
         data-testid="submission-confirmation-add-to-set-button"
         onClick={handleAdd}
-        className="rounded border border-gray-300 px-3 py-1 text-xs"
+        className="rounded-[var(--radius-sm)] border border-[var(--color-divider)] px-3 py-1 text-xs text-[var(--color-text)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
       >
         {t('submissionConfirmation.addToSetButton')}
       </button>
@@ -75,7 +78,10 @@ export default function SubmissionConfirmation({ coin }: SubmissionConfirmationP
   const hasExistingSets = Boolean(userSets && userSets.length > 0);
 
   return (
-    <div data-testid="submission-confirmation" className="flex flex-col gap-4 rounded border border-gray-200 p-4">
+    <div
+      data-testid="submission-confirmation"
+      className="flex flex-col gap-4 rounded-[var(--radius-md)] border border-[var(--color-divider)] p-4"
+    >
       {hasExistingSets ? (
         <ul data-testid="submission-confirmation-existing-sets" className="flex flex-col gap-2">
           {(userSets ?? []).map((set) => (
@@ -94,12 +100,12 @@ export default function SubmissionConfirmation({ coin }: SubmissionConfirmationP
             required
             value={newSetName}
             onChange={(e) => setNewSetName(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-2 text-sm"
+            className="rounded-[var(--radius-sm)] border-0 border-b border-[var(--color-divider)] bg-transparent px-1 py-2 text-sm text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none"
           />
           <button
             type="submit"
             data-testid="submission-confirmation-create-set-submit"
-            className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+            className="rounded-[var(--radius-sm)] bg-[var(--color-accent)] px-[26px] py-[13px] text-[12px] font-medium uppercase tracking-[0.1em] text-[var(--color-bg)] hover:bg-[color-mix(in_srgb,var(--color-accent)_86%,#000)]"
           >
             {t('submissionConfirmation.createSetSubmit')}
           </button>
@@ -107,7 +113,11 @@ export default function SubmissionConfirmation({ coin }: SubmissionConfirmationP
       )}
 
       {linkedSetId && (
-        <Link href={`/sets/${linkedSetId}`} data-testid="submission-confirmation-view-set-link" className="underline">
+        <Link
+          href={`/sets/${linkedSetId}`}
+          data-testid="submission-confirmation-view-set-link"
+          className="text-[var(--color-accent)] underline"
+        >
           {t('submissionConfirmation.viewSetLink')}
         </Link>
       )}

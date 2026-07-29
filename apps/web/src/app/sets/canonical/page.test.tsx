@@ -3,6 +3,10 @@
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CanonicalSetsPage
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
  * Covers criteria: #8 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md)
+ *
+ * run_20260728_071525: plan.md's Interface Contract for this page states "No export/
+ * prop/testid/hook changes at all — pure token/copy/layout restyle." No assertion in
+ * this file changes as a result; it is carried over byte-for-byte from the prior run.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';

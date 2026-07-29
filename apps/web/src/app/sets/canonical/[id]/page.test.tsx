@@ -7,6 +7,12 @@
  * Like CoinDetailPage, this page unwraps a Promise `params` prop via React's `use()`,
  * which suspends on first render — rendered here inside a <Suspense> boundary for the
  * same reason (no app-level Suspense exists under a raw RTL render()).
+ *
+ * run_20260728_071525: plan.md's Interface Contract for this page states "No export/
+ * prop/testid/hook changes at all ... The clone CTA on the detail page keeps testid
+ * canonical-set-clone-cta and its existing <Link> behavior, restyled as the design's
+ * solid-accent button." No assertion in this file changes as a result; it is carried
+ * over byte-for-byte from the prior run.
  */
 
 import { Suspense } from 'react';

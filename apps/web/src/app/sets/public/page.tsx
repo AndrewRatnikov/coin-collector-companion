@@ -18,9 +18,17 @@ export default function PublicSetsPage() {
     setPage(nextPage);
   }
 
+  const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
+  const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
+
   return (
-    <main data-testid="public-sets-page" className="flex flex-1 flex-col gap-6 p-8">
-      <h1 className="text-lg font-semibold">{t('publicSets.title')}</h1>
+    <main
+      data-testid="public-sets-page"
+      className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-6 px-[clamp(20px,5vw,48px)] py-10 text-[var(--color-text)]"
+    >
+      <h1 className="text-[28px] font-normal leading-tight [font-family:var(--font-heading)]">
+        {t('publicSets.title')}
+      </h1>
 
       {isLoading && (
         <div data-testid="public-sets-loading">
@@ -29,7 +37,7 @@ export default function PublicSetsPage() {
       )}
 
       {isError && (
-        <p data-testid="public-sets-error" className="text-sm text-red-600">
+        <p data-testid="public-sets-error" className="text-sm text-red-700">
           {t('publicSets.errorLoading')}
         </p>
       )}
@@ -37,43 +45,54 @@ export default function PublicSetsPage() {
       {data && (
         <>
           {data.items.length === 0 ? (
-            <p data-testid="public-sets-empty" className="text-sm text-gray-600">
+            <p data-testid="public-sets-empty" className="text-sm text-[var(--color-neutral-600)]">
               {t('publicSets.emptyMessage')}
             </p>
           ) : (
-            <ul data-testid="public-sets-list" className="flex flex-col gap-2">
+            <ul
+              data-testid="public-sets-list"
+              className="flex flex-col border-t border-[var(--color-divider)]"
+            >
               {data.items.map((set) => (
-                <li key={set.id} data-testid="public-set-item" className="rounded-lg border border-gray-200 p-4">
-                  <Link href={`/sets/public/${set.id}`} className="underline">
-                    {resolveLocalizedText(set.name, locale)}
+                <li
+                  key={set.id}
+                  data-testid="public-set-item"
+                  className="border-b border-[var(--color-divider)] transition-colors hover:bg-[color-mix(in_srgb,var(--color-text)_3%,transparent)]"
+                >
+                  <Link href={`/sets/public/${set.id}`} className="flex items-center justify-between gap-4 px-1 py-4">
+                    <span className="text-[16px] [font-family:var(--font-heading)]">
+                      {resolveLocalizedText(set.name, locale)}
+                    </span>
                   </Link>
                 </li>
               ))}
             </ul>
           )}
 
-          <div data-testid="public-sets-pagination" className="flex items-center gap-3">
-            <button
-              type="button"
-              data-testid="public-sets-page-prev"
-              disabled={data.page <= 1}
-              onClick={() => goToPage(data.page - 1)}
-              className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
-            >
-              {t('common.prev')}
-            </button>
-            <span data-testid="public-sets-page-indicator" className="text-sm text-gray-600">
-              {t('common.pagePrefix')} {data.page} {t('common.ofSeparator')} {Math.max(1, Math.ceil(data.total / data.limit))}
-            </span>
-            <button
-              type="button"
-              data-testid="public-sets-page-next"
-              disabled={data.page * data.limit >= data.total}
-              onClick={() => goToPage(data.page + 1)}
-              className="rounded border border-gray-300 px-3 py-1 text-sm disabled:opacity-50"
-            >
-              {t('common.next')}
-            </button>
+          <div data-testid="public-sets-pagination" className="flex items-center justify-center gap-4 pt-2">
+            {pageNumbers.map((num) => {
+              const isActive = num === data.page;
+              return isActive ? (
+                <span
+                  key={num}
+                  data-testid="public-sets-pagination-page"
+                  aria-current="page"
+                  className="[font-family:var(--font-mono)] text-[13px] tabular-nums text-[var(--color-text)] underline underline-offset-4"
+                >
+                  {num}
+                </span>
+              ) : (
+                <button
+                  key={num}
+                  type="button"
+                  data-testid="public-sets-pagination-page"
+                  onClick={() => goToPage(num)}
+                  className="[font-family:var(--font-mono)] text-[13px] tabular-nums text-[var(--color-neutral-600)] hover:text-[var(--color-accent)]"
+                >
+                  {num}
+                </button>
+              );
+            })}
           </div>
         </>
       )}

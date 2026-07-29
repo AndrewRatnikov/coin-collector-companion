@@ -12,7 +12,11 @@ export function LanguageSwitcher() {
         data-testid="language-switcher-en"
         aria-pressed={locale === 'en'}
         onClick={() => setLocale('en')}
-        className={`rounded px-2 py-1 ${locale === 'en' ? 'font-semibold underline' : ''}`}
+        className={`rounded-[var(--radius-sm)] px-2 py-1 ${
+          locale === 'en'
+            ? 'font-semibold text-[var(--color-accent)] underline'
+            : 'text-[var(--color-neutral-600)]'
+        }`}
       >
         {t('languageSwitcher.english')}
       </button>
@@ -21,7 +25,11 @@ export function LanguageSwitcher() {
         data-testid="language-switcher-es"
         aria-pressed={locale === 'es'}
         onClick={() => setLocale('es')}
-        className={`rounded px-2 py-1 ${locale === 'es' ? 'font-semibold underline' : ''}`}
+        className={`rounded-[var(--radius-sm)] px-2 py-1 ${
+          locale === 'es'
+            ? 'font-semibold text-[var(--color-accent)] underline'
+            : 'text-[var(--color-neutral-600)]'
+        }`}
       >
         {t('languageSwitcher.spanish')}
       </button>

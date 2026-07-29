@@ -1,11 +1,18 @@
 /**
  * Tests for: PublicSetsPage
  * Contract source: runs/run_20260721_161448/plan.md § Interface Contract → Component: PublicSetsPage
- * Covers criteria: #4 (from prd.md)
+ *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/sets/public/page.tsx
+ * Covers criteria: #4 (from run_20260721_161448's prd.md), #7 (from run_20260728_071525's prd.md)
+ *
+ * run_20260728_071525: replaces the Prev/indicator/Next pagination assertions with
+ * numbered public-sets-pagination-page assertions (REMOVE public-sets-page-prev/
+ * -page-indicator/-page-next per plan.md, same pattern as Catalog's numbered
+ * pagination). Every other assertion below is carried over unchanged.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import PublicSetsPage from '@/app/sets/public/page';
 import { usePublicSets } from '@/lib/hooks/use-public-sets';
 
@@ -103,22 +110,50 @@ describe('PublicSetsPage', () => {
       expect(screen.getByTestId('public-sets-empty')).toBeInTheDocument();
       expect(screen.queryByTestId('public-set-item')).not.toBeInTheDocument();
     });
+  });
 
-    it('disables Prev on page 1 and enables Next when more pages remain', () => {
-      usePublicSetsMock.mockReturnValue(queryResult({ data: { items: SETS, page: 1, limit: 1, total: 3 } }));
+  describe('run_20260728_071525 criterion 7: numbered pagination (replaces Prev/indicator/Next)', () => {
+    it('renders one public-sets-pagination-page element per page, numbered in order', () => {
+      usePublicSetsMock.mockReturnValue(queryResult({ data: { items: SETS, page: 2, limit: 1, total: 3 } }));
       render(<PublicSetsPage />);
 
-      expect(screen.getByTestId('public-sets-page-prev')).toBeDisabled();
-      expect(screen.getByTestId('public-sets-page-next')).not.toBeDisabled();
-      expect(screen.getByTestId('public-sets-page-indicator')).toHaveTextContent('1');
+      const pages = screen.getAllByTestId('public-sets-pagination-page');
+      expect(pages).toHaveLength(3);
+      expect(pages.map((page) => page.textContent)).toEqual(['1', '2', '3']);
     });
 
-    it('disables Next on the last page', () => {
-      usePublicSetsMock.mockReturnValue(queryResult({ data: { items: SETS, page: 3, limit: 1, total: 3 } }));
+    it('marks the active page with aria-current="page" and leaves the others without it', () => {
+      usePublicSetsMock.mockReturnValue(queryResult({ data: { items: SETS, page: 2, limit: 1, total: 3 } }));
       render(<PublicSetsPage />);
 
-      expect(screen.getByTestId('public-sets-page-next')).toBeDisabled();
-      expect(screen.getByTestId('public-sets-page-prev')).not.toBeDisabled();
+      const pages = screen.getAllByTestId('public-sets-pagination-page');
+      expect(pages[1]).toHaveAttribute('aria-current', 'page');
+      expect(pages[0]).not.toHaveAttribute('aria-current');
+      expect(pages[2]).not.toHaveAttribute('aria-current');
+    });
+
+    it('clicking an inactive page number calls usePublicSets with that page number', async () => {
+      usePublicSetsMock.mockReturnValue(queryResult({ data: { items: SETS, page: 1, limit: 1, total: 3 } }));
+      const user = userEvent.setup();
+      render(<PublicSetsPage />);
+
+      const pages = screen.getAllByTestId('public-sets-pagination-page');
+      await user.click(pages[2]);
+
+      const lastCall = usePublicSetsMock.mock.calls.at(-1)?.[0];
+      expect(lastCall).toMatchObject({ page: 3 });
+    });
+
+    it('the active page is not clickable — clicking it triggers no additional usePublicSets call', async () => {
+      usePublicSetsMock.mockReturnValue(queryResult({ data: { items: SETS, page: 1, limit: 1, total: 3 } }));
+      const user = userEvent.setup();
+      render(<PublicSetsPage />);
+
+      const callCountBefore = usePublicSetsMock.mock.calls.length;
+      const pages = screen.getAllByTestId('public-sets-pagination-page');
+      await user.click(pages[0]);
+
+      expect(usePublicSetsMock.mock.calls.length).toBe(callCountBefore);
     });
   });
 });

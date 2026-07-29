@@ -2,12 +2,25 @@
  * Tests for: CatalogPage
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CatalogPage
  *                   runs/run_20260725_140648/plan.md § Interface Contract → Frontend — apps/web/src/app/catalog/page.tsx (MODIFY)
- * Covers criteria: #4 (from run_20260721_131640's prd.md), #6, #8 (from run_20260725_140648's prd.md)
+ *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/catalog/page.tsx
+ *                     and § apps/web/src/components/catalog/catalog-filter-form.tsx
+ * Covers criteria: #4 (from run_20260721_131640's prd.md), #6, #8 (from run_20260725_140648's prd.md),
+ *                  #4 (from run_20260728_071525's prd.md)
  *
  * SubmitCoinForm and SubmissionConfirmation are mocked entirely here — this file only proves
  * CatalogPage's own gating/wiring logic (isLoggedIn check, toggle state, submittedCoin
  * hand-off). Each component's own internal behavior (validation, set-selection flow) is
  * covered in its own dedicated test file (submit-coin-form.test.tsx, submission-confirmation.test.tsx).
+ *
+ * CatalogFilterForm itself is NOT mocked here (its Clear button lives inside it) — this
+ * file exercises the real CatalogFilterForm to prove the Clear button's effect on
+ * CatalogPage's filter state end-to-end, matching this file's existing pattern of proving
+ * the real Submit-button effect the same way.
+ *
+ * run_20260728_071525: replaces the Prev/indicator/Next pagination assertions with
+ * numbered catalog-pagination-page assertions (REMOVE catalog-page-prev/-page-indicator/
+ * -page-next per plan.md), and adds a catalog-filter-clear assertion. Every other
+ * assertion below is carried over unchanged.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -159,22 +172,50 @@ describe('CatalogPage', () => {
       expect(screen.getByTestId('catalog-empty')).toBeInTheDocument();
       expect(screen.queryByTestId('catalog-item')).not.toBeInTheDocument();
     });
+  });
 
-    it('disables Prev on page 1 and enables Next when more pages remain', () => {
-      useCatalogMock.mockReturnValue(queryResult({ data: { items: COINS, page: 1, limit: 1, total: 3 } }));
+  describe('run_20260728_071525 criterion 4: numbered pagination (replaces Prev/indicator/Next)', () => {
+    it('renders one catalog-pagination-page element per page, numbered in order', () => {
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: COINS, page: 2, limit: 1, total: 3 } }));
       render(<CatalogPage />);
 
-      expect(screen.getByTestId('catalog-page-prev')).toBeDisabled();
-      expect(screen.getByTestId('catalog-page-next')).not.toBeDisabled();
-      expect(screen.getByTestId('catalog-page-indicator')).toHaveTextContent('1');
+      const pages = screen.getAllByTestId('catalog-pagination-page');
+      expect(pages).toHaveLength(3);
+      expect(pages.map((page) => page.textContent)).toEqual(['1', '2', '3']);
     });
 
-    it('disables Next on the last page', () => {
-      useCatalogMock.mockReturnValue(queryResult({ data: { items: COINS, page: 3, limit: 1, total: 3 } }));
+    it('marks the active page with aria-current="page" and leaves the others without it', () => {
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: COINS, page: 2, limit: 1, total: 3 } }));
       render(<CatalogPage />);
 
-      expect(screen.getByTestId('catalog-page-next')).toBeDisabled();
-      expect(screen.getByTestId('catalog-page-prev')).not.toBeDisabled();
+      const pages = screen.getAllByTestId('catalog-pagination-page');
+      expect(pages[1]).toHaveAttribute('aria-current', 'page');
+      expect(pages[0]).not.toHaveAttribute('aria-current');
+      expect(pages[2]).not.toHaveAttribute('aria-current');
+    });
+
+    it('clicking an inactive page number calls useCatalog with that page number', async () => {
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: COINS, page: 1, limit: 1, total: 3 } }));
+      const user = userEvent.setup();
+      render(<CatalogPage />);
+
+      const pages = screen.getAllByTestId('catalog-pagination-page');
+      await user.click(pages[2]);
+
+      const lastCall = useCatalogMock.mock.calls.at(-1)?.[0];
+      expect(lastCall).toMatchObject({ page: 3 });
+    });
+
+    it('the active page is not clickable — clicking it triggers no additional useCatalog call', async () => {
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: COINS, page: 1, limit: 1, total: 3 } }));
+      const user = userEvent.setup();
+      render(<CatalogPage />);
+
+      const callCountBefore = useCatalogMock.mock.calls.length;
+      const pages = screen.getAllByTestId('catalog-pagination-page');
+      await user.click(pages[0]);
+
+      expect(useCatalogMock.mock.calls.length).toBe(callCountBefore);
     });
   });
 
@@ -190,6 +231,28 @@ describe('CatalogPage', () => {
 
       const lastCall = useCatalogMock.mock.calls.at(-1)?.[0];
       expect(lastCall).toMatchObject({ country: 'USA', name: 'Lincoln', page: 1 });
+    });
+  });
+
+  describe('run_20260728_071525 criterion 4: filter Clear button', () => {
+    it('resets filled filter fields to empty and resubmits with page 1 and no filter values', async () => {
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
+      const user = userEvent.setup();
+      render(<CatalogPage />);
+
+      await user.type(screen.getByTestId('catalog-filter-country'), 'USA');
+      await user.type(screen.getByTestId('catalog-filter-name'), 'Lincoln');
+      await user.click(screen.getByTestId('catalog-filter-submit'));
+
+      await user.click(screen.getByTestId('catalog-filter-clear'));
+
+      expect(screen.getByTestId('catalog-filter-country')).toHaveValue('');
+      expect(screen.getByTestId('catalog-filter-name')).toHaveValue('');
+
+      const lastCall = useCatalogMock.mock.calls.at(-1)?.[0];
+      expect(lastCall).toMatchObject({ page: 1 });
+      expect(lastCall?.country).toBeUndefined();
+      expect(lastCall?.name).toBeUndefined();
     });
   });
 

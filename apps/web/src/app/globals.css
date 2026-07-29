@@ -1,26 +1,112 @@
 @import 'tailwindcss';
 
+/*
+ * Classical design tokens — verbatim values from design-spec.md's "Design tokens"
+ * section. These are static (build-time-known) so they live in a plain `@theme`
+ * block: Tailwind both registers them as design tokens (generating utilities like
+ * `bg-accent`, `text-neutral-600`, `border-divider`, `rounded-lg`, `shadow-md`) and
+ * emits them as real CSS custom properties, so `var(--color-accent)` etc. also
+ * works directly (e.g. inside arbitrary-value utilities or plain CSS).
+ */
+@theme {
+  --color-bg: #f3f2f2;
+  --color-surface: #eae9e9;
+  --color-text: #201f1d;
+  --color-accent: #b68235;
+  --color-accent-2: #ac803e;
+  --color-divider: color-mix(in srgb, #201f1d 16%, transparent);
+
+  --color-neutral-100: #f8f4f4;
+  --color-neutral-200: #eae7e7;
+  --color-neutral-300: #d7d3d3;
+  --color-neutral-400: #bab6b6;
+  --color-neutral-500: #9b9797;
+  --color-neutral-600: #7d7979;
+  --color-neutral-700: #605d5d;
+  --color-neutral-800: #444141;
+  --color-neutral-900: #2d2b2b;
+
+  --color-accent-100: #fff3e4;
+  --color-accent-200: #ffe3bf;
+  --color-accent-300: #facb8d;
+  --color-accent-400: #e1ad66;
+  --color-accent-500: #c28d41;
+  --color-accent-600: #a06f24;
+  --color-accent-700: #7d5411;
+  --color-accent-800: #5a3b0a;
+  --color-accent-900: #3a270d;
+
+  /* accent-2 is a machine-derived stand-in per design-spec.md — same role as
+     accent (mono color scheme, one accent only), kept for parity with the DS. */
+  --color-accent-2-100: #fff3e4;
+  --color-accent-2-200: #ffe3be;
+  --color-accent-2-300: #f5cd96;
+  --color-accent-2-400: #dbaf70;
+  --color-accent-2-500: #bc8f4e;
+  --color-accent-2-600: #9b7232;
+  --color-accent-2-700: #79561f;
+  --color-accent-2-800: #573d14;
+  --color-accent-2-900: #382810;
+
+  /* design-spec.md's literal --space-1..8 names (1,2,3,4,6,8 — 5 and 7 are
+     intentionally absent from the DS scale), plus a --spacing-* mirror so
+     Tailwind's built-in spacing utilities (p-1, gap-3, etc.) pick up the same
+     values for the keys we override. */
+  --space-1: 4.6px;
+  --space-2: 9.2px;
+  --space-3: 13.8px;
+  --space-4: 18.4px;
+  --space-6: 27.6px;
+  --space-8: 36.8px;
+  --spacing-1: 4.6px;
+  --spacing-2: 9.2px;
+  --spacing-3: 13.8px;
+  --spacing-4: 18.4px;
+  --spacing-6: 27.6px;
+  --spacing-8: 36.8px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 7px;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #2d2b2b 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Semibold is the ceiling for headings; bold is never used, per design-spec.md. */
+  --font-heading-weight: 600;
 }
 
+/*
+ * Font family tokens use `@theme inline` (not `@theme`) because their value
+ * depends on --font-heading-family / --font-body-family / --font-mono-family —
+ * CSS custom properties that next/font/google injects at runtime via each
+ * loader's `.variable` className on <html> in layout.tsx, not something Tailwind
+ * can resolve to a static value at build time. This mirrors the pattern already
+ * used by the pre-Classical globals.css (`--font-sans: var(--font-geist-sans)`).
+ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-heading: var(--font-heading-family), 'Cormorant Garamond', serif;
+  --font-body: var(--font-body-family), 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: var(--font-mono-family), 'IBM Plex Mono', ui-monospace, monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
 }

@@ -7,6 +7,9 @@ import { clearStoredToken, getStoredToken } from '@/lib/auth-token';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 
+const navLinkClassName =
+  'text-[13px] text-[var(--color-text)] opacity-70 transition-opacity hover:text-[var(--color-accent)] hover:opacity-100';
+
 export function SiteNav() {
   const pathname = usePathname();
   const router = useRouter();
@@ -26,42 +29,54 @@ export function SiteNav() {
   return (
     <nav
       data-testid="site-nav"
-      className="flex items-center justify-between gap-4 border-b border-gray-200 px-8 py-4 text-sm dark:border-gray-800"
+      className="sticky top-0 z-[9] border-b border-[var(--color-divider)] bg-[var(--color-bg)]"
     >
-      <div className="flex items-center gap-4">
-        <Link href="/catalog" data-testid="site-nav-catalog-link" className="hover:underline">
+      <div className="mx-auto flex max-w-[1080px] flex-wrap items-baseline gap-6 px-[clamp(20px,5vw,48px)] py-4">
+        <Link
+          href="/"
+          data-testid="site-nav-brand"
+          className="mr-auto font-heading text-[19px] font-semibold text-[var(--color-text)]"
+        >
+          {t('nav.brand')}
+        </Link>
+        <Link href="/catalog" data-testid="site-nav-catalog-link" className={navLinkClassName}>
           {t('nav.catalog')}
         </Link>
-        <Link href="/sets/canonical" data-testid="site-nav-canonical-link" className="hover:underline">
+        <Link href="/sets/canonical" data-testid="site-nav-canonical-link" className={navLinkClassName}>
           {t('nav.canonicalSets')}
         </Link>
-        <Link href="/sets/public" data-testid="site-nav-public-link" className="hover:underline">
+        <Link href="/sets/public" data-testid="site-nav-public-link" className={navLinkClassName}>
           {t('nav.publicSets')}
         </Link>
-      </div>
-      <div className="flex items-center gap-4">
-        {isAuthenticated ? (
-          <>
-            <Link href="/dashboard" data-testid="site-nav-dashboard-link" className="hover:underline">
-              {t('nav.dashboard')}
-            </Link>
-            <Link href="/collection" data-testid="site-nav-collection-link" className="hover:underline">
-              {t('nav.collection')}
-            </Link>
-            <button
-              type="button"
-              onClick={handleLogout}
-              data-testid="site-nav-logout"
-              className="hover:underline"
-            >
-              {t('nav.logOut')}
-            </button>
-          </>
-        ) : (
-          <Link href="/login" data-testid="site-nav-login-link" className="hover:underline">
-            {t('nav.logIn')}
-          </Link>
-        )}
+        <div className="flex items-baseline gap-6 border-l border-[var(--color-divider)] pl-6">
+          {isAuthenticated ? (
+            <>
+              <Link href="/dashboard" data-testid="site-nav-dashboard-link" className={navLinkClassName}>
+                {t('nav.dashboard')}
+              </Link>
+              <Link href="/collection" data-testid="site-nav-collection-link" className={navLinkClassName}>
+                {t('nav.collection')}
+              </Link>
+              <button
+                type="button"
+                onClick={handleLogout}
+                data-testid="site-nav-logout"
+                className="text-[13px] text-[var(--color-neutral-600)] transition-colors hover:text-[var(--color-accent)]"
+              >
+                {t('nav.logOut')}
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" data-testid="site-nav-login-link" className={navLinkClassName}>
+                {t('nav.logIn')}
+              </Link>
+              <Link href="/signup" data-testid="site-nav-signup-link" className={navLinkClassName}>
+                {t('nav.signUp')}
+              </Link>
+            </>
+          )}
+        </div>
         <LanguageSwitcher />
       </div>
     </nav>

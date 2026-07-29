@@ -2,6 +2,11 @@
  * Tests for: LoginPage
  * Contract source: runs/run_20260721_094026/plan.md § Interface Contract → Page: Login
  * Covers criteria: #4 (from prd.md)
+ *
+ * run_20260728_071525: plan.md's Interface Contract states "No export/prop/hook/testid
+ * changes — pure layout/token restyle of the existing form, fields, and error handling
+ * ... real login()/register() calls and error taxonomy unchanged." No assertion in this
+ * file changes as a result; it is carried over byte-for-byte from the prior run.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';

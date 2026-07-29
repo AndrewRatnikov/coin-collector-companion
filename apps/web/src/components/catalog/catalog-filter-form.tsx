@@ -17,6 +17,11 @@ export interface CatalogFilterFormProps {
   onSubmit: (values: CatalogFilterFormValues) => void;
 }
 
+const inputClassName =
+  'border-0 border-b border-[var(--color-divider)] bg-transparent px-1 py-2 text-sm text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none';
+
+const labelClassName = 'text-[11px] uppercase tracking-[0.14em] text-[var(--color-neutral-600)]';
+
 export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFilterFormProps) {
   const { t } = useTranslation();
   const [country, setCountry] = useState('');
@@ -25,15 +30,34 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
   const [yearMin, setYearMin] = useState('');
   const [yearMax, setYearMax] = useState('');
 
+  function submitValues(values: {
+    country: string;
+    denomination: string;
+    name: string;
+    yearMin: string;
+    yearMax: string;
+  }) {
+    onSubmit({
+      country: values.country || undefined,
+      denomination: values.denomination || undefined,
+      name: values.name || undefined,
+      yearMin: values.yearMin ? Number(values.yearMin) : undefined,
+      yearMax: values.yearMax ? Number(values.yearMax) : undefined,
+    });
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmit({
-      country: country || undefined,
-      denomination: denomination || undefined,
-      name: name || undefined,
-      yearMin: yearMin ? Number(yearMin) : undefined,
-      yearMax: yearMax ? Number(yearMax) : undefined,
-    });
+    submitValues({ country, denomination, name, yearMin, yearMax });
+  }
+
+  function handleClear() {
+    setCountry('');
+    setDenomination('');
+    setName('');
+    setYearMin('');
+    setYearMax('');
+    submitValues({ country: '', denomination: '', name: '', yearMin: '', yearMax: '' });
   }
 
   return (
@@ -43,7 +67,7 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
       className="flex flex-wrap items-end gap-4"
     >
       <div className="flex flex-col gap-1">
-        <label htmlFor={`${testIdPrefix}-country`} className="text-sm font-medium">
+        <label htmlFor={`${testIdPrefix}-country`} className={labelClassName}>
           {t('common.country')}
         </label>
         <input
@@ -52,11 +76,11 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
           type="text"
           value={country}
           onChange={(e) => setCountry(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2 text-sm"
+          className={inputClassName}
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor={`${testIdPrefix}-denomination`} className="text-sm font-medium">
+        <label htmlFor={`${testIdPrefix}-denomination`} className={labelClassName}>
           {t('common.denomination')}
         </label>
         <input
@@ -65,11 +89,11 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
           type="text"
           value={denomination}
           onChange={(e) => setDenomination(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2 text-sm"
+          className={inputClassName}
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor={`${testIdPrefix}-name`} className="text-sm font-medium">
+        <label htmlFor={`${testIdPrefix}-name`} className={labelClassName}>
           {t('common.name')}
         </label>
         <input
@@ -78,11 +102,11 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2 text-sm"
+          className={inputClassName}
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor={`${testIdPrefix}-year-min`} className="text-sm font-medium">
+        <label htmlFor={`${testIdPrefix}-year-min`} className={labelClassName}>
           {t('common.yearMin')}
         </label>
         <input
@@ -91,11 +115,11 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
           type="number"
           value={yearMin}
           onChange={(e) => setYearMin(e.target.value)}
-          className="w-24 rounded border border-gray-300 px-3 py-2 text-sm"
+          className={`w-24 font-mono ${inputClassName}`}
         />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor={`${testIdPrefix}-year-max`} className="text-sm font-medium">
+        <label htmlFor={`${testIdPrefix}-year-max`} className={labelClassName}>
           {t('common.yearMax')}
         </label>
         <input
@@ -104,15 +128,23 @@ export default function CatalogFilterForm({ testIdPrefix, onSubmit }: CatalogFil
           type="number"
           value={yearMax}
           onChange={(e) => setYearMax(e.target.value)}
-          className="w-24 rounded border border-gray-300 px-3 py-2 text-sm"
+          className={`w-24 font-mono ${inputClassName}`}
         />
       </div>
       <button
         type="submit"
         data-testid={`${testIdPrefix}-filter-submit`}
-        className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+        className="rounded-[var(--radius-sm)] bg-[var(--color-accent)] px-[26px] py-[13px] text-[12px] font-medium uppercase tracking-[0.1em] text-[var(--color-bg)] hover:bg-[color-mix(in_srgb,var(--color-accent)_86%,#000)]"
       >
         {t('common.search')}
+      </button>
+      <button
+        type="button"
+        data-testid={`${testIdPrefix}-filter-clear`}
+        onClick={handleClear}
+        className="text-[13px] text-[var(--color-neutral-600)] underline hover:text-[var(--color-accent)]"
+      >
+        {t('common.clear')}
       </button>
     </form>
   );

@@ -9,7 +9,7 @@ export function ListSkeleton({ rows = 4 }: { rows?: number }) {
       {Array.from({ length: rows }, (_, index) => (
         <li
           key={index}
-          className="flex items-center justify-between gap-4 rounded-lg border border-gray-200 p-4"
+          className="flex items-center justify-between gap-4 rounded-[var(--radius-lg)] border border-[var(--color-divider)] p-4"
         >
           <div className="flex flex-col gap-2">
             <Skeleton className="h-4 w-40" />

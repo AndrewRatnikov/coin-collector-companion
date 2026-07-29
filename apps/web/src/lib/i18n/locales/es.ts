@@ -15,6 +15,8 @@ const esShape: Record<MessageKey, string> = {
   'nav.collection': 'Colección',
   'nav.logOut': 'Cerrar sesión',
   'nav.logIn': 'Iniciar sesión',
+  'nav.brand': 'Coin Collector Companion',
+  'nav.signUp': 'Registrarse',
 
   // language switcher
   'languageSwitcher.english': 'English',
@@ -39,9 +41,19 @@ const esShape: Record<MessageKey, string> = {
   'common.ofSeparator': 'de',
   'common.owned': 'en posesión',
   'common.missing': 'faltante',
+  'common.clear': 'Borrar',
 
   // home
   'home.title': 'Coin Collector Companion',
+  'home.eyebrow': 'Catálogo y registro personal',
+  'home.headline': 'Un lugar tranquilo para registrar lo que tienes, y lo que aún buscas.',
+  'home.paragraph':
+    'Define una colección a tu manera, marca las monedas que posees y ve los huecos que quedan. Explorar no requiere cuenta.',
+  'home.browseCatalogue': 'Explorar el catálogo',
+  'home.browseCanonical': 'Explorar colecciones canónicas',
+  'home.browsePublic': 'Explorar colecciones de coleccionistas',
+  'home.coinsUnit': 'monedas',
+  'home.setsUnit': 'colecciones',
 
   // login
   'login.title': 'Iniciar sesión',
@@ -58,6 +70,9 @@ const esShape: Record<MessageKey, string> = {
   'dashboard.errorLoadingSets': 'Algo salió mal al cargar tus colecciones. Inténtalo de nuevo.',
   'dashboard.emptyMessage': 'Todavía no tienes ninguna colección.',
   'dashboard.startFirstSetCta': 'Comienza tu primera colección',
+  'dashboard.statSets': 'Colecciones',
+  'dashboard.statCoinsOwned': 'Monedas en posesión',
+  'dashboard.statAverageCompletion': 'Finalización promedio',
 
   // collection
   'collection.title': 'Mi colección',
@@ -75,6 +90,11 @@ const esShape: Record<MessageKey, string> = {
   'coinDetail.pendingBadge': 'Revisión pendiente',
   'coinDetail.imageAttributionPrefix': 'Imagen:',
   'coinDetail.unknownSource': 'Fuente desconocida',
+  'coinDetail.markOwned': 'Marcar como poseída',
+  'coinDetail.removeOwned': 'Quitar de la colección',
+  'coinDetail.inCollection': 'En tu colección',
+  'coinDetail.loginPrompt': 'Inicia sesión para registrar esta moneda en tu colección.',
+  'coinDetail.appearsInSets': 'Aparece en tus colecciones',
 
   // submit coin form
   'submitCoinForm.submit': 'Enviar moneda',
@@ -93,6 +113,12 @@ const esShape: Record<MessageKey, string> = {
   'setEditor.addCoinsHeading': 'Añadir monedas',
   'setEditor.addButton': 'Añadir',
   'setEditor.errorLoading': 'Algo salió mal al cargar esta colección. Inténtalo de nuevo.',
+  'setEditor.allCoins': 'Todas las monedas',
+  'setEditor.missing': 'faltantes',
+  'setEditor.addCoins': 'Añadir monedas',
+  'setEditor.closePicker': 'Cerrar selector',
+  'setEditor.undo': 'Deshacer',
+  'setEditor.noCoinsYet': 'Todavía no hay monedas — añade algunas abajo.',
 
   // canonical sets
   'canonicalSets.title': 'Colecciones canónicas',
@@ -113,6 +139,14 @@ const esShape: Record<MessageKey, string> = {
   'setNew.selectPublicPlaceholder': 'Selecciona una colección pública…',
   'setNew.defaultError': 'Algo salió mal al crear la colección.',
   'setNew.submit': 'Crear colección',
+  'setNew.chooseCanonical': 'Elige una colección canónica',
+  'setNew.choosePublic': 'Elige una colección de un coleccionista',
+  'setNew.inThisSet': 'En esta colección',
+  'setNew.nothingAdded': 'Todavía no se ha añadido nada.',
+  'setNew.add': 'Añadir',
+  'setNew.remove': 'Quitar',
+  'setNew.createSet': 'Crear Colección',
+  'setNew.addFromCatalogue': 'Añadir desde el catálogo',
 
   // public sets
   'publicSets.title': 'Colecciones públicas',
@@ -122,6 +156,7 @@ const esShape: Record<MessageKey, string> = {
   // public set detail
   'publicSetDetail.errorLoading': 'Algo salió mal al cargar esta colección. Inténtalo de nuevo.',
   'publicSetDetail.cloneCta': 'Clonar a mis colecciones',
+  'publicSetDetail.overlap': 'Ya posees',
 
   // footer
   'footer.attributionPrefix': 'Datos del catálogo obtenidos de',

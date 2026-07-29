@@ -2,11 +2,17 @@
  * Tests for: PublicSetDetailPage
  * Contract source: runs/run_20260721_161448/plan.md § Interface Contract → Component: PublicSetDetailPage
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
- * Covers criteria: #5, #6, #7 (from run_20260721_161448's prd.md), #1 (from run_20260722_121303's prd.md)
+ *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/sets/public/[id]/page.tsx
+ * Covers criteria: #5, #6, #7 (from run_20260721_161448's prd.md), #1 (from run_20260722_121303's prd.md),
+ *                  #7 (from run_20260728_071525's prd.md)
  *
  * Unwraps params via useEffect+useState (matching the fix already applied to
  * sets/canonical/[id]/page.tsx per memory.md's recorded use()+Suspense gotcha), not
  * React's use() — no <Suspense> boundary is needed for this render.
+ *
+ * run_20260728_071525: adds coverage for the new public-set-detail-overlap line, which
+ * reuses the already-mocked useSetGaps result (gaps.ownedCount / gaps.slots.length) — no
+ * new fetch/mock is introduced. Every other assertion below is carried over unchanged.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -197,6 +203,68 @@ describe('PublicSetDetailPage', () => {
       });
       const href = screen.getByTestId('public-set-clone-cta').getAttribute('href');
       expect(href).toBe('/sets/new?cloneFrom=user&cloneFromId=set-1');
+    });
+  });
+
+  describe('run_20260728_071525 criterion 7: "you already own N of M" overlap line', () => {
+    it('renders public-set-detail-overlap with the ownedCount/slots.length from the already-fetched gaps, when signed in and gaps resolve', async () => {
+      getStoredTokenMock.mockReturnValue('tok-abc');
+      usePublicSetMock.mockReturnValue(publicSetResult({ data: DETAIL as never }));
+      useSetGapsMock.mockReturnValue(gapsResult({ data: GAPS as never, isSuccess: true }));
+      renderPage('set-1');
+
+      const overlap = await screen.findByTestId('public-set-detail-overlap');
+      expect(overlap).toHaveTextContent('You already own');
+      expect(overlap.textContent).toMatch(/1\s*of\s*2/);
+    });
+
+    it('renders a different N of M when the gaps fixture differs (proves the numbers are derived, not hardcoded)', async () => {
+      getStoredTokenMock.mockReturnValue('tok-abc');
+      usePublicSetMock.mockReturnValue(publicSetResult({ data: DETAIL as never }));
+      const DIFFERENT_GAPS = {
+        ...GAPS,
+        ownedCount: 5,
+        totalCount: 9,
+        slots: [
+          ...GAPS.slots,
+          { id: 'usc-3', position: 2, coin: DETAIL.coins[0].coin, owned: true },
+          { id: 'usc-4', position: 3, coin: DETAIL.coins[1].coin, owned: true },
+          { id: 'usc-5', position: 4, coin: DETAIL.coins[0].coin, owned: true },
+          { id: 'usc-6', position: 5, coin: DETAIL.coins[1].coin, owned: true },
+          { id: 'usc-7', position: 6, coin: DETAIL.coins[0].coin, owned: false },
+          { id: 'usc-8', position: 7, coin: DETAIL.coins[1].coin, owned: false },
+          { id: 'usc-9', position: 8, coin: DETAIL.coins[0].coin, owned: false },
+        ],
+      };
+      useSetGapsMock.mockReturnValue(gapsResult({ data: DIFFERENT_GAPS as never, isSuccess: true }));
+      renderPage('set-1');
+
+      const overlap = await screen.findByTestId('public-set-detail-overlap');
+      expect(overlap.textContent).toMatch(/5\s*of\s*9/);
+      expect(overlap.textContent).not.toMatch(/1\s*of\s*2/);
+    });
+
+    it('does not render public-set-detail-overlap when signed out', async () => {
+      getStoredTokenMock.mockReturnValue(null);
+      usePublicSetMock.mockReturnValue(publicSetResult({ data: DETAIL as never }));
+      renderPage('set-1');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('public-set-detail-name')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('public-set-detail-overlap')).not.toBeInTheDocument();
+    });
+
+    it('does not render public-set-detail-overlap when gaps have not resolved successfully (still loading/errored)', async () => {
+      getStoredTokenMock.mockReturnValue('tok-abc');
+      usePublicSetMock.mockReturnValue(publicSetResult({ data: DETAIL as never }));
+      useSetGapsMock.mockReturnValue(gapsResult({ isLoading: true }));
+      renderPage('set-1');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('public-set-detail-name')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('public-set-detail-overlap')).not.toBeInTheDocument();
     });
   });
 });
