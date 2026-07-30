@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -35,8 +36,9 @@ export function SiteNav() {
         <Link
           href="/"
           data-testid="site-nav-brand"
-          className="mr-auto font-heading text-[19px] font-semibold text-[var(--color-text)]"
+          className="mr-auto flex items-center gap-2 font-heading text-[19px] font-semibold text-[var(--color-text)]"
         >
+          <Image src="/coin-logo.png" alt="" width={24} height={24} priority />
           {t('nav.brand')}
         </Link>
         <Link href="/catalog" data-testid="site-nav-catalog-link" className={navLinkClassName}>
