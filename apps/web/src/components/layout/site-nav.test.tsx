@@ -5,6 +5,13 @@
  * runs/run_20260726_221855/plan.md § Interface Contract → Modified: SiteNav, which itself
  * carried over runs/run_20260722_121303's original SiteNav coverage)
  * Covers criteria: #2, #3 (from prd.md)
+ *
+ * run_20260730_153718: LanguageSwitcher migrated from two buttons to a single
+ * dropdown (see runs/run_20260730_153718/plan.md § Interface Contract → Existing
+ * (unmodified) dependency: SiteNav). Only the "criterion 3: language switcher is
+ * mounted" block below changes — its `language-switcher-en`/`language-switcher-es`
+ * assertions are replaced with a single `language-switcher-select` assertion. Every
+ * other describe block is untouched.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -94,8 +101,7 @@ describe('SiteNav', () => {
       render(<SiteNav />);
 
       expect(screen.getByTestId('language-switcher')).toBeInTheDocument();
-      expect(screen.getByTestId('language-switcher-en')).toBeInTheDocument();
-      expect(screen.getByTestId('language-switcher-es')).toBeInTheDocument();
+      expect(screen.getByTestId('language-switcher-select')).toBeInTheDocument();
     });
   });
 
