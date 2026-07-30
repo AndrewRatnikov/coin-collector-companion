@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -31,12 +32,13 @@ export function SiteNav() {
       data-testid="site-nav"
       className="sticky top-0 z-[9] border-b border-[var(--color-divider)] bg-[var(--color-bg)]"
     >
-      <div className="mx-auto flex max-w-[1080px] flex-wrap items-baseline gap-6 px-[clamp(20px,5vw,48px)] py-4">
+      <div className="mx-auto flex max-w-[1080px] flex-wrap items-center gap-6 px-[clamp(20px,5vw,48px)] py-4">
         <Link
           href="/"
           data-testid="site-nav-brand"
-          className="mr-auto font-heading text-[19px] font-semibold text-[var(--color-text)]"
+          className="mr-auto flex items-center gap-2 font-heading text-[19px] font-semibold text-[var(--color-text)]"
         >
+          <Image src="/coin-logo.png" alt="" width={24} height={24} priority />
           {t('nav.brand')}
         </Link>
         <Link href="/catalog" data-testid="site-nav-catalog-link" className={navLinkClassName}>
@@ -48,7 +50,7 @@ export function SiteNav() {
         <Link href="/sets/public" data-testid="site-nav-public-link" className={navLinkClassName}>
           {t('nav.publicSets')}
         </Link>
-        <div className="flex items-baseline gap-6 border-l border-[var(--color-divider)] pl-6">
+        <div className="flex items-center gap-6 border-l border-[var(--color-divider)] pl-6">
           {isAuthenticated ? (
             <>
               <Link href="/dashboard" data-testid="site-nav-dashboard-link" className={navLinkClassName}>
