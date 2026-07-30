@@ -30,13 +30,13 @@ describe('LanguageSwitcher', () => {
   });
 
   describe('rendering', () => {
-    it('renders the root wrapper and a single select dropdown, with no leftover button-based switcher', () => {
+    it('renders the root wrapper and a single select dropdown, with no button-based controls', () => {
       renderSwitcher();
 
-      expect(screen.getByTestId('language-switcher')).toBeInTheDocument();
+      const root = screen.getByTestId('language-switcher');
+      expect(root).toBeInTheDocument();
       expect(screen.getByTestId('language-switcher-select')).toBeInTheDocument();
-      expect(screen.queryByTestId('language-switcher-en')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('language-switcher-es')).not.toBeInTheDocument();
+      expect(within(root).queryAllByRole('button')).toHaveLength(0);
     });
   });
 
