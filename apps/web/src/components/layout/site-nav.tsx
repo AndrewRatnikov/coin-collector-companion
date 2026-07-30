@@ -32,7 +32,7 @@ export function SiteNav() {
       data-testid="site-nav"
       className="sticky top-0 z-[9] border-b border-[var(--color-divider)] bg-[var(--color-bg)]"
     >
-      <div className="mx-auto flex max-w-[1080px] flex-wrap items-baseline gap-6 px-[clamp(20px,5vw,48px)] py-4">
+      <div className="mx-auto flex max-w-[1080px] flex-wrap items-center gap-6 px-[clamp(20px,5vw,48px)] py-4">
         <Link
           href="/"
           data-testid="site-nav-brand"
@@ -50,7 +50,7 @@ export function SiteNav() {
         <Link href="/sets/public" data-testid="site-nav-public-link" className={navLinkClassName}>
           {t('nav.publicSets')}
         </Link>
-        <div className="flex items-baseline gap-6 border-l border-[var(--color-divider)] pl-6">
+        <div className="flex items-center gap-6 border-l border-[var(--color-divider)] pl-6">
           {isAuthenticated ? (
             <>
               <Link href="/dashboard" data-testid="site-nav-dashboard-link" className={navLinkClassName}>
