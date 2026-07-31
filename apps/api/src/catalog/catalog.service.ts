@@ -31,12 +31,12 @@ const CATALOG_COIN_SELECT = {
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(query: FindCatalogQueryDto): Promise<PaginatedResponse<CatalogCoin>> {
+  async findAll(query: FindCatalogQueryDto, userId?: string): Promise<PaginatedResponse<CatalogCoin>> {
     const page = query.page;
     const limit = Math.min(query.limit, MAX_LIMIT);
 
     const where: Prisma.CoinWhereInput = {
-      status: 'approved',
+      ...(query.submittedByMe && userId ? { submittedByUserId: userId } : { status: 'approved' }),
       ...(query.country ? { country: query.country } : {}),
       ...(query.denomination ? { denomination: query.denomination } : {}),
       ...(query.name ? { name: { contains: query.name, mode: 'insensitive' as const } } : {}),
