@@ -2,13 +2,15 @@
  * Tests for: use-catalog hooks
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Module: use-catalog hooks
  *                   runs/run_20260725_140648/plan.md § Interface Contract → Frontend — apps/web/src/lib/hooks/use-catalog.ts (MODIFY)
- * Covers criteria: #2 (from run_20260721_131640's prd.md), #3 (from run_20260725_140648's prd.md)
+ *                   runs/run_20260731_132040/plan.md § Interface Contract → Hook: useMySubmissions (CREATE)
+ * Covers criteria: #2 (from run_20260721_131640's prd.md), #3 (from run_20260725_140648's prd.md),
+ *                  #6 (from run_20260731_132040's prd.md)
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCatalog, useCoin, useSubmitCoin } from '@/lib/hooks/use-catalog';
+import { useCatalog, useCoin, useMySubmissions, useSubmitCoin } from '@/lib/hooks/use-catalog';
 import { getCatalog, getCoin, submitCoin } from '@/lib/catalog-api';
 
 vi.mock('@/lib/catalog-api', () => ({
@@ -131,6 +133,53 @@ describe('use-catalog hooks', () => {
         expect(result.current.isSuccess).toBe(true);
       });
       expect(getCatalogMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('run_20260731_132040 criterion 6: useMySubmissions wraps getCatalog with submittedByMe: true', () => {
+    it('calls getCatalog with { submittedByMe: true } and exposes the resolved data', async () => {
+      const page = {
+        items: [
+          { id: 'pending-1', status: 'pending' },
+          { id: 'approved-1', status: 'approved' },
+        ],
+        page: 1,
+        limit: 20,
+        total: 2,
+      };
+      getCatalogMock.mockResolvedValue(page as never);
+
+      const { result } = renderHook(() => useMySubmissions(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.data).toEqual(page);
+      });
+      expect(getCatalogMock).toHaveBeenCalledWith({ submittedByMe: true });
+    });
+
+    it('surfaces an error state when getCatalog rejects', async () => {
+      getCatalogMock.mockRejectedValue(new Error('network down'));
+
+      const { result } = renderHook(() => useMySubmissions(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
+    });
+
+    it('uses a distinct query key from the plain catalog browse cache (["catalog", "mine"])', async () => {
+      getCatalogMock.mockResolvedValue({ items: [], page: 1, limit: 20, total: 0 } as never);
+
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      function localWrapper({ children }: { children: React.ReactNode }) {
+        return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+      }
+
+      renderHook(() => useMySubmissions(), { wrapper: localWrapper });
+
+      await waitFor(() => expect(getCatalogMock).toHaveBeenCalledTimes(1));
+
+      expect(queryClient.getQueryData(['catalog', 'mine'])).toEqual({ items: [], page: 1, limit: 20, total: 0 });
     });
   });
 });

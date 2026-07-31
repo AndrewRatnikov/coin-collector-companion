@@ -2,7 +2,9 @@
  * Tests for: catalog-api
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Module: catalog-api
  *                   runs/run_20260725_140648/plan.md § Interface Contract → Frontend — apps/web/src/lib/catalog-api.ts (MODIFY)
- * Covers criteria: #1 (from run_20260721_131640's prd.md), #3 (from run_20260725_140648's prd.md)
+ *                   runs/run_20260731_132040/plan.md § Interface Contract → Type: CatalogFilters.submittedByMe (MODIFY)
+ * Covers criteria: #1 (from run_20260721_131640's prd.md), #3 (from run_20260725_140648's prd.md),
+ *                  #1 (from run_20260731_132040's prd.md)
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -65,6 +67,31 @@ describe('catalog-api', () => {
       const page = { items: [{ id: 'c1' }], page: 1, limit: 20, total: 1 };
       stubFetchResolving(200, page);
       await expect(getCatalog()).resolves.toEqual(page);
+    });
+  });
+
+  describe('run_20260731_132040 criterion 1: getCatalog with submittedByMe', () => {
+    it('appends submittedByMe=true to the query string when set to true', async () => {
+      const fetchMock = stubFetchResolving(200, PAGE);
+      await getCatalog({ submittedByMe: true });
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url).toContain('submittedByMe=true');
+    });
+
+    it('combines submittedByMe with other filters in the same query string', async () => {
+      const fetchMock = stubFetchResolving(200, PAGE);
+      await getCatalog({ submittedByMe: true, country: 'USA', yearMin: 1909 });
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url).toContain('submittedByMe=true');
+      expect(url).toContain('country=USA');
+      expect(url).toContain('yearMin=1909');
+    });
+
+    it('omits submittedByMe from the query string when not provided', async () => {
+      const fetchMock = stubFetchResolving(200, PAGE);
+      await getCatalog({ country: 'USA' });
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url).not.toContain('submittedByMe');
     });
   });
 

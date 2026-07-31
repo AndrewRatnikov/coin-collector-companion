@@ -2,8 +2,10 @@
  * Tests for: CatalogService
  * Contract source: runs/run_20260719_190933/plan.md § Interface Contract (Service: CatalogService)
  *                   runs/run_20260725_140648/plan.md § Interface Contract → Backend — CatalogService (MODIFY)
+ *                   runs/run_20260731_132040/plan.md § Interface Contract → Service: CatalogService.findAll (MODIFY)
  * Covers criteria: #2, #3, #4, #5, #6, #7, #8, #9, #11 (from run_20260719_190933's prd.md),
- *                  #1, #2, #3, #4 (from run_20260725_140648's prd.md)
+ *                  #1, #2, #3, #4 (from run_20260725_140648's prd.md),
+ *                  #1, #2, #3, #4, #5 (from run_20260731_132040's prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -19,6 +21,11 @@
  * makeP2003Error) rather than a shape-alike plain object, so the
  * `err instanceof Prisma.PrismaClientKnownRequestError` check in the implementation is
  * exercised faithfully.
+ *
+ * run_20260731_132040: findAll now takes a second `userId?: string` argument. All existing
+ * call sites below (`service.findAll(makeQuery(...))`) are preserved verbatim — calling with
+ * one argument still exercises the pre-existing anonymous/no-submittedByMe behavior, since
+ * `userId` is optional and `query.submittedByMe` is undefined on every pre-existing fixture.
  */
 
 import { ConflictException, NotFoundException } from '@nestjs/common';
@@ -53,6 +60,7 @@ function makeP2002Error(): Prisma.PrismaClientKnownRequestError {
 }
 
 const SUBMITTER_USER_ID = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+const OTHER_USER_ID = '4a1b2c3d-6717-4562-b3fc-2c963f66afa7';
 
 describe('CatalogService', () => {
   let service: CatalogService;
@@ -179,6 +187,91 @@ describe('CatalogService', () => {
 
       const { select } = mockPrismaService.coin.findMany.mock.calls[0][0];
       expect(select.submittedByUserId).toBeUndefined();
+    });
+  });
+
+  describe('findAll — submittedByMe (run_20260731_132040 criteria #1, #2, #3, #4, #5)', () => {
+    it('replaces status with submittedByUserId when submittedByMe is true and a userId is given (criterion #1)', async () => {
+      await service.findAll(makeQuery({ submittedByMe: true }), SUBMITTER_USER_ID);
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.submittedByUserId).toBe(SUBMITTER_USER_ID);
+      expect(where.status).toBeUndefined();
+    });
+
+    it('falls back to status: approved when submittedByMe is true but no userId is given — anonymous caller (criterion #2)', async () => {
+      await service.findAll(makeQuery({ submittedByMe: true }));
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.status).toBe('approved');
+      expect(where.submittedByUserId).toBeUndefined();
+    });
+
+    it('behaves identically to submittedByMe unset when submittedByMe is false, even with a userId present (criterion #3)', async () => {
+      await service.findAll(makeQuery({ submittedByMe: false }), SUBMITTER_USER_ID);
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.status).toBe('approved');
+      expect(where.submittedByUserId).toBeUndefined();
+    });
+
+    it('behaves identically to submittedByMe=true+no-userId when submittedByMe is unset and userId is present — status stays approved unless submittedByMe is explicitly true (criterion #3)', async () => {
+      await service.findAll(makeQuery(), SUBMITTER_USER_ID);
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.status).toBe('approved');
+      expect(where.submittedByUserId).toBeUndefined();
+    });
+
+    it('still applies country/denomination/name/year filters on top of the submitter filter (criterion #4)', async () => {
+      await service.findAll(
+        makeQuery({ submittedByMe: true, country: 'USA', denomination: '1 Cent', yearMin: 1909, yearMax: 1958 }),
+        SUBMITTER_USER_ID,
+      );
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.submittedByUserId).toBe(SUBMITTER_USER_ID);
+      expect(where.country).toBe('USA');
+      expect(where.denomination).toBe('1 Cent');
+      expect(where.year).toEqual({ gte: 1909, lte: 1958 });
+    });
+
+    it('scopes strictly to the calling userId — a different caller only sees their own submitter filter, never another user\'s (criterion #1 contrast)', async () => {
+      await service.findAll(makeQuery({ submittedByMe: true }), OTHER_USER_ID);
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.submittedByUserId).toBe(OTHER_USER_ID);
+      expect(where.submittedByUserId).not.toBe(SUBMITTER_USER_ID);
+    });
+
+    it('applies the same submitter where clause to the count query as findMany (criterion #1)', async () => {
+      await service.findAll(makeQuery({ submittedByMe: true }), SUBMITTER_USER_ID);
+
+      const findManyWhere = mockPrismaService.coin.findMany.mock.calls[0][0].where;
+      const countWhere = mockPrismaService.coin.count.mock.calls[0][0].where;
+      expect(countWhere).toEqual(findManyWhere);
+      expect(countWhere.submittedByUserId).toBe(SUBMITTER_USER_ID);
+    });
+
+    it('the select clause still omits submittedByUserId even in the submittedByMe branch (criterion #5)', async () => {
+      await service.findAll(makeQuery({ submittedByMe: true }), SUBMITTER_USER_ID);
+
+      const { select } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(select.submittedByUserId).toBeUndefined();
+    });
+
+    it('the response shape is unchanged in the submittedByMe branch — { items, page, limit, total } (criterion #5)', async () => {
+      mockPrismaService.coin.findMany.mockResolvedValue([{ id: 'pending-1', status: 'pending' }]);
+      mockPrismaService.coin.count.mockResolvedValue(1);
+
+      const result = await service.findAll(makeQuery({ submittedByMe: true }), SUBMITTER_USER_ID);
+
+      expect(result).toEqual({
+        items: [{ id: 'pending-1', status: 'pending' }],
+        page: 1,
+        limit: 20,
+        total: 1,
+      });
     });
   });
 
