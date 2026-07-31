@@ -30,5 +30,14 @@ export default tseslint.config(
       '@typescript-eslint/no-require-imports': 'off',
     },
   },
+  {
+    // handleRequest overrides Passport's AuthGuard signature positionally (err, user, info,
+    // context, status) — the trailing params after the last used one (`user`) must stay
+    // present to match the base signature/call sites, but are otherwise unused.
+    files: ['apps/api/src/auth/guards/optional-jwt-auth.guard.ts'],
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
   eslintConfigPrettier,
 );

@@ -12,6 +12,11 @@
  * mounted" block below changes — its `language-switcher-en`/`language-switcher-es`
  * assertions are replaced with a single `language-switcher-select` assertion. Every
  * other describe block is untouched.
+ *
+ * run_20260731_132040: adds `site-nav-my-submissions-link` to the authenticated-only
+ * link group (runs/run_20260731_132040/plan.md § Interface Contract → Component: SiteNav
+ * (MODIFY)). Only the new describe block below is added; every existing block is
+ * otherwise untouched.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -152,6 +157,23 @@ describe('SiteNav', () => {
 
       expect(screen.getByTestId('site-nav-canonical-link')).toHaveTextContent('Canonical Sets');
       expect(screen.getByTestId('site-nav-public-link')).toHaveTextContent('Public Sets');
+    });
+  });
+
+  describe('run_20260731_132040 criterion 7: My Submissions link, authenticated only', () => {
+    it('renders site-nav-my-submissions-link pointing at /catalog/mine when a token is stored', async () => {
+      setStoredToken('tok-abc');
+      render(<SiteNav />);
+
+      const link = await screen.findByTestId('site-nav-my-submissions-link');
+      expect(link).toBeInTheDocument();
+      expect(link.getAttribute('href')).toBe('/catalog/mine');
+    });
+
+    it('hides site-nav-my-submissions-link when no token is stored', () => {
+      render(<SiteNav />);
+
+      expect(screen.queryByTestId('site-nav-my-submissions-link')).not.toBeInTheDocument();
     });
   });
 });

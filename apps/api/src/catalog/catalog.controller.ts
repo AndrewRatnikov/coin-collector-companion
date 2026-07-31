@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiConflictResponse,
@@ -10,7 +10,9 @@ import {
 } from '@nestjs/swagger';
 import type { CatalogCoin, PaginatedResponse } from '@coin-collector/shared';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { OptionalCurrentUser } from '../auth/decorators/optional-current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CatalogService } from './catalog.service';
 import { FindCatalogQueryDto } from './dto/find-catalog-query.dto';
@@ -23,11 +25,15 @@ export class CatalogController {
   constructor(private readonly catalogService: CatalogService) {}
 
   @Public()
+  @UseGuards(OptionalJwtAuthGuard)
   @Get()
   @ApiOperation({ summary: 'List/filter the coin catalog' })
   @ApiOkResponse({ description: 'Paginated list of catalog coins' })
-  findAll(@Query() query: FindCatalogQueryDto): Promise<PaginatedResponse<CatalogCoin>> {
-    return this.catalogService.findAll(query);
+  findAll(
+    @Query() query: FindCatalogQueryDto,
+    @OptionalCurrentUser() user: AuthenticatedUser | undefined,
+  ): Promise<PaginatedResponse<CatalogCoin>> {
+    return this.catalogService.findAll(query, user?.userId);
   }
 
   @Public()

@@ -13,6 +13,7 @@ const esShape: Record<MessageKey, string> = {
   'nav.publicSets': 'Colecciones públicas',
   'nav.dashboard': 'Panel',
   'nav.collection': 'Colección',
+  'nav.mySubmissions': 'Mis envíos',
   'nav.logOut': 'Cerrar sesión',
   'nav.logIn': 'Iniciar sesión',
   'nav.brand': 'Coin Collector Companion',
@@ -157,6 +158,14 @@ const esShape: Record<MessageKey, string> = {
   'publicSetDetail.errorLoading': 'Algo salió mal al cargar esta colección. Inténtalo de nuevo.',
   'publicSetDetail.cloneCta': 'Clonar a mis colecciones',
   'publicSetDetail.overlap': 'Ya posees',
+
+  // my submissions
+  'mySubmissions.title': 'Mis envíos',
+  'mySubmissions.errorLoading': 'Algo salió mal al cargar tus envíos. Inténtalo de nuevo.',
+  'mySubmissions.emptyMessage': 'Aún no has enviado ninguna moneda.',
+  'mySubmissions.statusPending': 'Pendiente de revisión',
+  'mySubmissions.statusApproved': 'Aprobada',
+  'mySubmissions.statusRejected': 'No aprobada',
 
   // footer
   'footer.attributionPrefix': 'Datos del catálogo obtenidos de',

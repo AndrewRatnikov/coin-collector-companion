@@ -18,6 +18,7 @@ const enShape = {
   'nav.publicSets': 'Public Sets',
   'nav.dashboard': 'Dashboard',
   'nav.collection': 'Collection',
+  'nav.mySubmissions': 'My Submissions',
   'nav.logOut': 'Log out',
   'nav.logIn': 'Log in',
   'nav.brand': 'Coin Collector Companion',
@@ -162,6 +163,14 @@ const enShape = {
   'publicSetDetail.errorLoading': 'Something went wrong loading this set. Please try again.',
   'publicSetDetail.cloneCta': 'Clone into my sets',
   'publicSetDetail.overlap': 'You already own',
+
+  // my submissions
+  'mySubmissions.title': 'My Submissions',
+  'mySubmissions.errorLoading': 'Something went wrong loading your submissions. Please try again.',
+  'mySubmissions.emptyMessage': "You haven't submitted any coins yet.",
+  'mySubmissions.statusPending': 'Pending review',
+  'mySubmissions.statusApproved': 'Approved',
+  'mySubmissions.statusRejected': 'Not approved',
 
   // footer
   'footer.attributionPrefix': 'Catalog data derived from',

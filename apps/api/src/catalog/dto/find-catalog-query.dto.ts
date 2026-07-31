@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class FindCatalogQueryDto {
   @ApiPropertyOptional({ example: 'USA' })
@@ -43,4 +43,14 @@ export class FindCatalogQueryDto {
   @IsInt()
   @Min(1)
   limit: number = 20;
+
+  // Only honored when the caller is authenticated (see CatalogService.findAll) — an
+  // anonymous caller sending this is silently ignored, not rejected. Query params always
+  // arrive as strings even under the global transform: true pipe, hence the explicit
+  // @Transform rather than relying on @IsBoolean() alone.
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
+  @IsBoolean()
+  submittedByMe?: boolean;
 }

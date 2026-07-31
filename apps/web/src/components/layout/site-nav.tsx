@@ -59,6 +59,9 @@ export function SiteNav() {
               <Link href="/collection" data-testid="site-nav-collection-link" className={navLinkClassName}>
                 {t('nav.collection')}
               </Link>
+              <Link href="/catalog/mine" data-testid="site-nav-my-submissions-link" className={navLinkClassName}>
+                {t('nav.mySubmissions')}
+              </Link>
               <button
                 type="button"
                 onClick={handleLogout}
