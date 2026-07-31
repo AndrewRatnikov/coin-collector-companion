@@ -25,3 +25,12 @@ export function useSubmitCoin() {
     mutationFn: (payload) => submitCoin(payload),
   });
 }
+
+// Own query key (not ['catalog', filters]) so it never collides with the plain browse cache —
+// this is a distinct "my submissions, whatever their status" list, not a filtered browse view.
+export function useMySubmissions() {
+  return useQuery({
+    queryKey: ['catalog', 'mine'],
+    queryFn: () => getCatalog({ submittedByMe: true }),
+  });
+}
