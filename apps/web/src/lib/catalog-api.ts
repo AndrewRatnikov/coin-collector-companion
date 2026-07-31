@@ -9,6 +9,7 @@ export interface CatalogFilters {
   yearMax?: number;
   page?: number;
   limit?: number;
+  submittedByMe?: boolean;
 }
 
 export async function getCatalog(filters: CatalogFilters = {}): Promise<PaginatedResponse<CatalogCoin>> {
