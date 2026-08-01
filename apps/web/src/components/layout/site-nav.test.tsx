@@ -17,6 +17,11 @@
  * link group (runs/run_20260731_132040/plan.md § Interface Contract → Component: SiteNav
  * (MODIFY)). Only the new describe block below is added; every existing block is
  * otherwise untouched.
+ *
+ * run_20260801_142634: adds `site-nav-glossary-link` to the always-visible link group
+ * (runs/run_20260801_142634/plan.md § Interface Contract → Existing (MODIFIED)
+ * component: SiteNav). Only the new describe block below is added; every existing
+ * block is otherwise untouched.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -174,6 +179,26 @@ describe('SiteNav', () => {
       render(<SiteNav />);
 
       expect(screen.queryByTestId('site-nav-my-submissions-link')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('run_20260801_142634 criterion 5: Glossary link, always visible', () => {
+    it('renders site-nav-glossary-link pointing at /glossary when unauthenticated', () => {
+      render(<SiteNav />);
+
+      const link = screen.getByTestId('site-nav-glossary-link');
+      expect(link).toBeInTheDocument();
+      expect(link.getAttribute('href')).toBe('/glossary');
+    });
+
+    it('renders site-nav-glossary-link when authenticated (not gated by auth state)', async () => {
+      setStoredToken('tok-abc');
+      render(<SiteNav />);
+
+      expect(await screen.findByTestId('site-nav-dashboard-link')).toBeInTheDocument();
+      const link = screen.getByTestId('site-nav-glossary-link');
+      expect(link).toBeInTheDocument();
+      expect(link.getAttribute('href')).toBe('/glossary');
     });
   });
 });
