@@ -214,7 +214,7 @@ function SetEditor({ id }: { id: string }) {
             type="button"
             data-testid="set-editor-toggle-add-coins"
             onClick={() => setPickerOpen((prev) => !prev)}
-            className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+            className="rounded border border-gray-300 px-4 py-2 text-sm font-medium"
           >
             {pickerOpen ? t('setEditor.closePicker') : t('setEditor.addCoins')}
           </button>
