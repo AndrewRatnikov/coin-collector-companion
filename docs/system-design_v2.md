@@ -144,6 +144,7 @@ For MVP, `name` is a simple case-insensitive substring match against `coins.name
 | `/sets/canonical/[id]` | none | Canonical set detail (with "clone" CTA if logged in) |
 | `/sets/public` | none | Browse public sets created by other users (§4.6) |
 | `/sets/public/[id]` | none | Public set detail (with "clone" CTA if logged in; shows the caller's own owned/missing status against the set's coins if logged in, §4.6) |
+| `/glossary` | none | Static coin-collecting term glossary — app-specific and general numismatic vocabulary |
 | `/login`, `/signup` | none | Neon Auth flows |
 | `/dashboard` | required | User's sets overview |
 | `/collection` | required | Full collection, filterable by country/year |
