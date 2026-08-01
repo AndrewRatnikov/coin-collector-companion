@@ -28,7 +28,12 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
   }, [params]);
 
   const { data: coin, isLoading, isError } = useCoin(coinId ?? '');
-  const isLoggedIn = Boolean(getStoredToken());
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(Boolean(getStoredToken()));
+  }, []);
+
   const { data: collection } = useCollection();
   const { mutate: setOwnership } = useSetOwnership();
   const { data: userSets } = useUserSets();

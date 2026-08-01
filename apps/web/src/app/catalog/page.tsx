@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { CatalogCoin } from '@coin-collector/shared';
 import { formatCoinLabel } from '@coin-collector/shared';
@@ -25,7 +25,11 @@ export default function CatalogPage() {
   const [submittedCoin, setSubmittedCoin] = useState<CatalogCoin | null>(null);
 
   const { data, isLoading, isError } = useCatalog(filters);
-  const isLoggedIn = Boolean(getStoredToken());
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(Boolean(getStoredToken()));
+  }, []);
 
   function handleFilterSubmit(values: CatalogFilterFormValues) {
     setFilters({ ...values, page: 1, limit: DEFAULT_LIMIT });
