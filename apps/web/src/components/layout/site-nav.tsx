@@ -50,6 +50,9 @@ export function SiteNav() {
         <Link href="/sets/public" data-testid="site-nav-public-link" className={navLinkClassName}>
           {t('nav.publicSets')}
         </Link>
+        <Link href="/glossary" data-testid="site-nav-glossary-link" className={navLinkClassName}>
+          {t('nav.glossary')}
+        </Link>
         <div className="flex items-center gap-6 border-l border-[var(--color-divider)] pl-6">
           {isAuthenticated ? (
             <>
