@@ -48,6 +48,7 @@ const enShape = {
   'common.owned': 'owned',
   'common.missing': 'missing',
   'common.clear': 'Clear',
+  'common.close': 'Close',
 
   // home
   'home.title': 'Coin Collector Companion',
@@ -88,6 +89,7 @@ const enShape = {
   // catalog
   'catalog.title': 'Catalog',
   'catalog.addCoinCta': "Can't find this coin? Add it",
+  'catalog.addCoinSheetTitle': 'Add a coin',
   'catalog.errorLoading': 'Something went wrong loading the catalog. Please try again.',
   'catalog.emptyMessage': 'No coins found.',
 

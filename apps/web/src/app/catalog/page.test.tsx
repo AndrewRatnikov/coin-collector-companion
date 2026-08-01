@@ -274,22 +274,26 @@ describe('CatalogPage', () => {
       expect(screen.queryByTestId('mock-submit-coin-form')).not.toBeInTheDocument();
     });
 
-    it('clicking the toggle shows the submit form, clicking again hides it', async () => {
+    it('clicking the toggle opens the sheet showing the submit form; the sheet\'s close button hides it', async () => {
       setStoredToken('tok-abc');
       useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
       const user = userEvent.setup();
       render(<CatalogPage />);
 
-      await user.click(screen.getByTestId('catalog-submit-coin-toggle'));
-      expect(screen.getByTestId('mock-submit-coin-form')).toBeInTheDocument();
+      expect(screen.queryByTestId('sheet')).not.toBeInTheDocument();
 
       await user.click(screen.getByTestId('catalog-submit-coin-toggle'));
+      expect(screen.getByTestId('sheet')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-submit-coin-form')).toBeInTheDocument();
+
+      await user.click(screen.getByTestId('sheet-close'));
+      expect(screen.queryByTestId('sheet')).not.toBeInTheDocument();
       expect(screen.queryByTestId('mock-submit-coin-form')).not.toBeInTheDocument();
     });
   });
 
   describe('run_20260725_140648 criterion 6: on successful submission, renders SubmissionConfirmation instead of resetting to a blank view', () => {
-    it('replaces the submit-coin entry point with SubmissionConfirmation after the form succeeds', async () => {
+    it('swaps the sheet contents to SubmissionConfirmation after the form succeeds, leaving the trigger button in place', async () => {
       setStoredToken('tok-abc');
       useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
       const user = userEvent.setup();
@@ -299,7 +303,7 @@ describe('CatalogPage', () => {
       await user.click(screen.getByTestId('mock-submit-coin-form-succeed'));
 
       expect(screen.getByTestId('mock-submission-confirmation')).toHaveTextContent('new-coin-1');
-      expect(screen.queryByTestId('catalog-submit-coin-toggle')).not.toBeInTheDocument();
+      expect(screen.getByTestId('catalog-submit-coin-toggle')).toBeInTheDocument();
       expect(screen.queryByTestId('mock-submit-coin-form')).not.toBeInTheDocument();
     });
 
@@ -315,6 +319,21 @@ describe('CatalogPage', () => {
       expect(screen.getByTestId('mock-submission-confirmation')).toBeInTheDocument();
       expect(screen.getByTestId('catalog-filter-form')).toBeInTheDocument();
       expect(screen.getAllByTestId('catalog-item')).toHaveLength(2);
+    });
+
+    it('closing the sheet after a successful submission resets it, so reopening shows a fresh submit form', async () => {
+      setStoredToken('tok-abc');
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
+      const user = userEvent.setup();
+      render(<CatalogPage />);
+
+      await user.click(screen.getByTestId('catalog-submit-coin-toggle'));
+      await user.click(screen.getByTestId('mock-submit-coin-form-succeed'));
+      await user.click(screen.getByTestId('sheet-close'));
+
+      await user.click(screen.getByTestId('catalog-submit-coin-toggle'));
+      expect(screen.getByTestId('mock-submit-coin-form')).toBeInTheDocument();
+      expect(screen.queryByTestId('mock-submission-confirmation')).not.toBeInTheDocument();
     });
   });
 });

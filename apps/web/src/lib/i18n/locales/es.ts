@@ -43,6 +43,7 @@ const esShape: Record<MessageKey, string> = {
   'common.owned': 'en posesión',
   'common.missing': 'faltante',
   'common.clear': 'Borrar',
+  'common.close': 'Cerrar',
 
   // home
   'home.title': 'Coin Collector Companion',
@@ -83,6 +84,7 @@ const esShape: Record<MessageKey, string> = {
   // catalog
   'catalog.title': 'Catálogo',
   'catalog.addCoinCta': '¿No encuentras esta moneda? Añádela',
+  'catalog.addCoinSheetTitle': 'Añadir una moneda',
   'catalog.errorLoading': 'Algo salió mal al cargar el catálogo. Inténtalo de nuevo.',
   'catalog.emptyMessage': 'No se encontraron monedas.',
 
