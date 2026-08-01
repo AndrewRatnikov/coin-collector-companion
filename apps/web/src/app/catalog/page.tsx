@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { CatalogCoin } from '@coin-collector/shared';
 import { formatCoinLabel } from '@coin-collector/shared';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
+import { Sheet } from '@/components/ui/sheet';
 import CatalogFilterForm, { type CatalogFilterFormValues } from '@/components/catalog/catalog-filter-form';
 import SubmitCoinForm from '@/components/catalog/submit-coin-form';
 import SubmissionConfirmation from '@/components/catalog/submission-confirmation';
@@ -18,7 +19,7 @@ const DEFAULT_LIMIT = 20;
 export default function CatalogPage() {
   const { t } = useTranslation();
   const [filters, setFilters] = useState<CatalogFilters>({ page: 1, limit: DEFAULT_LIMIT });
-  const [showSubmitForm, setShowSubmitForm] = useState(false);
+  const [isAddCoinSheetOpen, setIsAddCoinSheetOpen] = useState(false);
   const [submittedCoin, setSubmittedCoin] = useState<CatalogCoin | null>(null);
 
   const { data, isLoading, isError } = useCatalog(filters);
@@ -50,28 +51,33 @@ export default function CatalogPage() {
 
       <CatalogFilterForm testIdPrefix="catalog" onSubmit={handleFilterSubmit} />
 
-      {isLoggedIn && !submittedCoin && (
-        <div data-testid="catalog-submit-coin-entry" className="flex flex-col gap-3">
+      {isLoggedIn && (
+        <div data-testid="catalog-submit-coin-entry">
           <button
             type="button"
             data-testid="catalog-submit-coin-toggle"
-            onClick={() => setShowSubmitForm((v) => !v)}
+            onClick={() => setIsAddCoinSheetOpen(true)}
             className="w-fit rounded-[2px] border border-[color:var(--color-divider)] px-3 py-1.5 text-sm text-[color:var(--color-text)] transition-colors hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]"
           >
             {t('catalog.addCoinCta')}
           </button>
-          {showSubmitForm && (
-            <SubmitCoinForm
-              onSuccess={(coin) => {
-                setSubmittedCoin(coin);
-                setShowSubmitForm(false);
-              }}
-            />
-          )}
         </div>
       )}
 
-      {submittedCoin && <SubmissionConfirmation coin={submittedCoin} />}
+      <Sheet
+        open={isAddCoinSheetOpen}
+        onClose={() => {
+          setIsAddCoinSheetOpen(false);
+          setSubmittedCoin(null);
+        }}
+        title={t('catalog.addCoinSheetTitle')}
+      >
+        {submittedCoin ? (
+          <SubmissionConfirmation coin={submittedCoin} />
+        ) : (
+          <SubmitCoinForm onSuccess={(coin) => setSubmittedCoin(coin)} />
+        )}
+      </Sheet>
 
       {isLoading && (
         <div data-testid="catalog-loading">

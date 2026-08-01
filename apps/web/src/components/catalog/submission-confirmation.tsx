@@ -78,10 +78,7 @@ export default function SubmissionConfirmation({ coin }: SubmissionConfirmationP
   const hasExistingSets = Boolean(userSets && userSets.length > 0);
 
   return (
-    <div
-      data-testid="submission-confirmation"
-      className="flex flex-col gap-4 rounded-[var(--radius-md)] border border-[var(--color-divider)] p-4"
-    >
+    <div data-testid="submission-confirmation" className="flex flex-col gap-4">
       {hasExistingSets ? (
         <ul data-testid="submission-confirmation-existing-sets" className="flex flex-col gap-2">
           {(userSets ?? []).map((set) => (
