@@ -12,6 +12,7 @@ import { useSetOwnership } from '@/lib/hooks/use-collection';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import type { CatalogFilters } from '@/lib/catalog-api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
@@ -75,6 +76,7 @@ function SetEditor({ id }: { id: string }) {
   const syncedSetRef = useRef<typeof set>(undefined);
   const [gapOnly, setGapOnly] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [collapsedDecades, setCollapsedDecades] = useState<Record<string, boolean>>({});
   const [addCoinsFilters, setAddCoinsFilters] = useState<CatalogFilters>({ page: 1, limit: ADD_COINS_LIMIT });
   const catalogQuery = useCatalog(addCoinsFilters);
@@ -115,6 +117,7 @@ function SetEditor({ id }: { id: string }) {
   }
 
   function handleDelete() {
+    setDeleteConfirmOpen(false);
     deleteMutation.mutate(id, {
       onSuccess: () => {
         router.push('/dashboard');
@@ -175,7 +178,7 @@ function SetEditor({ id }: { id: string }) {
           <button
             type="button"
             data-testid="set-editor-delete-button"
-            onClick={handleDelete}
+            onClick={() => setDeleteConfirmOpen(true)}
             className="w-fit shrink-0 rounded border border-red-600 px-4 py-2 text-sm font-medium text-red-600"
           >
             {t('setEditor.deleteButton')}
@@ -314,6 +317,17 @@ function SetEditor({ id }: { id: string }) {
           </ul>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title={t('setEditor.deleteConfirmTitle')}
+        description={t('setEditor.deleteConfirmMessage')}
+        confirmLabel={t('setEditor.deleteButton')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirmOpen(false)}
+        testIdPrefix="set-editor-delete-confirm"
+      />
     </main>
   );
 }

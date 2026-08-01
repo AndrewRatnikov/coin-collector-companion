@@ -47,6 +47,7 @@ const esShape: Record<MessageKey, string> = {
   'common.missing': 'faltante',
   'common.clear': 'Borrar',
   'common.close': 'Cerrar',
+  'common.cancel': 'Cancelar',
 
   // home
   'home.title': 'Coin Collector Companion',
@@ -113,6 +114,8 @@ const esShape: Record<MessageKey, string> = {
   // set editor
   'setEditor.renameSubmit': 'Renombrar',
   'setEditor.deleteButton': 'Eliminar colección',
+  'setEditor.deleteConfirmTitle': '¿Eliminar esta colección?',
+  'setEditor.deleteConfirmMessage': 'Esta acción no se puede deshacer.',
   'setEditor.markNotOwned': 'Marcar como no poseída',
   'setEditor.markOwned': 'Marcar como poseída',
   'setEditor.removeButton': 'Quitar',

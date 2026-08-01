@@ -52,6 +52,7 @@ const enShape = {
   'common.missing': 'missing',
   'common.clear': 'Clear',
   'common.close': 'Close',
+  'common.cancel': 'Cancel',
 
   // home
   'home.title': 'Coin Collector Companion',
@@ -118,6 +119,8 @@ const enShape = {
   // set editor
   'setEditor.renameSubmit': 'Rename',
   'setEditor.deleteButton': 'Delete set',
+  'setEditor.deleteConfirmTitle': 'Delete this set?',
+  'setEditor.deleteConfirmMessage': 'This action cannot be undone.',
   'setEditor.markNotOwned': 'Mark not owned',
   'setEditor.markOwned': 'Mark owned',
   'setEditor.removeButton': 'Remove',

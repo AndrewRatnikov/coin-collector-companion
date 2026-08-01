@@ -520,7 +520,42 @@ describe('SetEditorPage', () => {
       expect(usePatchSetCoinsMock).toHaveBeenCalledWith('set-1');
     });
 
-    it('deleting calls useDeleteSet().mutate with the id and redirects to /dashboard on success', async () => {
+    it('clicking delete opens a confirmation dialog rather than deleting immediately', async () => {
+      setStoredToken('tok-abc');
+      const deleteMutate = vi.fn();
+      useDeleteSetMock.mockReturnValue({ mutate: deleteMutate, isPending: false } as never);
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-delete-button')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('set-editor-delete-confirm')).not.toBeInTheDocument();
+
+      await user.click(screen.getByTestId('set-editor-delete-button'));
+
+      expect(screen.getByTestId('set-editor-delete-confirm')).toBeInTheDocument();
+      expect(deleteMutate).not.toHaveBeenCalled();
+    });
+
+    it('clicking cancel in the confirmation dialog closes it without deleting', async () => {
+      setStoredToken('tok-abc');
+      const deleteMutate = vi.fn();
+      useDeleteSetMock.mockReturnValue({ mutate: deleteMutate, isPending: false } as never);
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-delete-button')).toBeInTheDocument();
+      });
+      await user.click(screen.getByTestId('set-editor-delete-button'));
+      await user.click(screen.getByTestId('set-editor-delete-confirm-cancel'));
+
+      expect(screen.queryByTestId('set-editor-delete-confirm')).not.toBeInTheDocument();
+      expect(deleteMutate).not.toHaveBeenCalled();
+    });
+
+    it('confirming in the dialog calls useDeleteSet().mutate with the id and redirects to /dashboard on success', async () => {
       setStoredToken('tok-abc');
       useDeleteSetMock.mockReturnValue(mutationMock({ resolvedValue: undefined }));
       const user = userEvent.setup();
@@ -530,7 +565,9 @@ describe('SetEditorPage', () => {
         expect(screen.getByTestId('set-editor-delete-button')).toBeInTheDocument();
       });
       await user.click(screen.getByTestId('set-editor-delete-button'));
+      await user.click(screen.getByTestId('set-editor-delete-confirm-confirm'));
 
+      expect(screen.queryByTestId('set-editor-delete-confirm')).not.toBeInTheDocument();
       await waitFor(() => {
         expect(pushMock).toHaveBeenCalledWith('/dashboard');
       });
