@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
+import { SetsTabs } from '@/components/layout/sets-tabs';
 import { usePublicSets } from '@/lib/hooks/use-public-sets';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
@@ -26,6 +27,8 @@ export default function PublicSetsPage() {
       data-testid="public-sets-page"
       className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-6 px-[clamp(20px,5vw,48px)] py-10"
     >
+      <SetsTabs />
+
       <div className="flex flex-col gap-2 border-b border-[color:var(--color-divider)] pb-4">
         <h1 className="font-[family-name:var(--font-heading)] text-[32px] font-semibold text-[color:var(--color-text)]">
           {t('publicSets.title')}

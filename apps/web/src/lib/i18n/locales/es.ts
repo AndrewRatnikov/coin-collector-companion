@@ -9,6 +9,7 @@ import type { MessageKey } from './en';
 const esShape: Record<MessageKey, string> = {
   // nav
   'nav.catalog': 'Catálogo',
+  'nav.sets': 'Colecciones',
   'nav.canonicalSets': 'Colecciones canónicas',
   'nav.publicSets': 'Colecciones públicas',
   'nav.dashboard': 'Panel',

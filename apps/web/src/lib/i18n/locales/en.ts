@@ -14,6 +14,7 @@
 const enShape = {
   // nav
   'nav.catalog': 'Catalog',
+  'nav.sets': 'Sets',
   'nav.canonicalSets': 'Canonical Sets',
   'nav.publicSets': 'Public Sets',
   'nav.dashboard': 'Dashboard',
