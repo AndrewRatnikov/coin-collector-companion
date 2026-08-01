@@ -24,6 +24,7 @@ const enShape = {
   'nav.brand': 'Coin Collector Companion',
   'nav.signUp': 'Sign up',
   'nav.glossary': 'Glossary',
+  'nav.account': 'Account',
 
   // language switcher
   'languageSwitcher.english': 'English',

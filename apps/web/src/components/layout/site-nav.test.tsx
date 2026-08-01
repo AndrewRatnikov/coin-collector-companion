@@ -60,9 +60,12 @@ describe('SiteNav', () => {
 
     it('renders the catalog, canonical-sets, and public-sets links when authenticated', async () => {
       setStoredToken('tok-abc');
+      const user = userEvent.setup();
       render(<SiteNav />);
 
-      expect(await screen.findByTestId('site-nav-dashboard-link')).toBeInTheDocument();
+      expect(await screen.findByTestId('site-nav-account-trigger')).toBeInTheDocument();
+      await user.click(screen.getByTestId('site-nav-account-trigger'));
+      expect(screen.getByTestId('site-nav-dashboard-link')).toBeInTheDocument();
       expect(screen.getByTestId('site-nav-catalog-link')).toBeInTheDocument();
       expect(screen.getByTestId('site-nav-canonical-link')).toBeInTheDocument();
       expect(screen.getByTestId('site-nav-public-link')).toBeInTheDocument();
@@ -70,11 +73,14 @@ describe('SiteNav', () => {
   });
 
   describe('criterion 2: authenticated state', () => {
-    it('shows dashboard, collection, and logout, and hides the login link, when a token is stored', async () => {
+    it('shows dashboard, collection, and logout inside the account menu, and hides the login link, when a token is stored', async () => {
       setStoredToken('tok-abc');
+      const user = userEvent.setup();
       render(<SiteNav />);
 
-      expect(await screen.findByTestId('site-nav-dashboard-link')).toBeInTheDocument();
+      expect(await screen.findByTestId('site-nav-account-trigger')).toBeInTheDocument();
+      await user.click(screen.getByTestId('site-nav-account-trigger'));
+      expect(screen.getByTestId('site-nav-dashboard-link')).toBeInTheDocument();
       expect(screen.getByTestId('site-nav-collection-link')).toBeInTheDocument();
       expect(screen.getByTestId('site-nav-logout')).toBeInTheDocument();
       expect(screen.queryByTestId('site-nav-login-link')).not.toBeInTheDocument();
@@ -82,10 +88,11 @@ describe('SiteNav', () => {
   });
 
   describe('criterion 2: unauthenticated state', () => {
-    it('shows the login link, and hides dashboard/collection/logout, when no token is stored', () => {
+    it('shows the login link, and hides the account menu trigger, when no token is stored', () => {
       render(<SiteNav />);
 
       expect(screen.getByTestId('site-nav-login-link')).toBeInTheDocument();
+      expect(screen.queryByTestId('site-nav-account-trigger')).not.toBeInTheDocument();
       expect(screen.queryByTestId('site-nav-dashboard-link')).not.toBeInTheDocument();
       expect(screen.queryByTestId('site-nav-collection-link')).not.toBeInTheDocument();
       expect(screen.queryByTestId('site-nav-logout')).not.toBeInTheDocument();
@@ -98,11 +105,56 @@ describe('SiteNav', () => {
       setStoredToken('tok-abc');
       render(<SiteNav />);
 
-      const logoutButton = await screen.findByTestId('site-nav-logout');
+      await screen.findByTestId('site-nav-account-trigger');
+      await user.click(screen.getByTestId('site-nav-account-trigger'));
+      const logoutButton = screen.getByTestId('site-nav-logout');
       await user.click(logoutButton);
 
       expect(getStoredToken()).toBeNull();
       expect(pushMock).toHaveBeenCalledWith('/login');
+    });
+  });
+
+  describe('account menu behaviour', () => {
+    it('opens the menu on trigger click and closes it again on a second click', async () => {
+      setStoredToken('tok-abc');
+      const user = userEvent.setup();
+      render(<SiteNav />);
+
+      await screen.findByTestId('site-nav-account-trigger');
+      expect(screen.queryByTestId('site-nav-account-menu')).not.toBeInTheDocument();
+
+      await user.click(screen.getByTestId('site-nav-account-trigger'));
+      expect(screen.getByTestId('site-nav-account-menu')).toBeInTheDocument();
+
+      await user.click(screen.getByTestId('site-nav-account-trigger'));
+      expect(screen.queryByTestId('site-nav-account-menu')).not.toBeInTheDocument();
+    });
+
+    it('closes the menu when clicking outside it', async () => {
+      setStoredToken('tok-abc');
+      const user = userEvent.setup();
+      render(<SiteNav />);
+
+      await screen.findByTestId('site-nav-account-trigger');
+      await user.click(screen.getByTestId('site-nav-account-trigger'));
+      expect(screen.getByTestId('site-nav-account-menu')).toBeInTheDocument();
+
+      await user.click(document.body);
+      expect(screen.queryByTestId('site-nav-account-menu')).not.toBeInTheDocument();
+    });
+
+    it('closes the menu on Escape', async () => {
+      setStoredToken('tok-abc');
+      const user = userEvent.setup();
+      render(<SiteNav />);
+
+      await screen.findByTestId('site-nav-account-trigger');
+      await user.click(screen.getByTestId('site-nav-account-trigger'));
+      expect(screen.getByTestId('site-nav-account-menu')).toBeInTheDocument();
+
+      await user.keyboard('{Escape}');
+      expect(screen.queryByTestId('site-nav-account-menu')).not.toBeInTheDocument();
     });
   });
 
@@ -129,7 +181,7 @@ describe('SiteNav', () => {
       setStoredToken('tok-abc');
       render(<SiteNav />);
 
-      expect(await screen.findByTestId('site-nav-dashboard-link')).toBeInTheDocument();
+      expect(await screen.findByTestId('site-nav-account-trigger')).toBeInTheDocument();
       const brand = screen.getByTestId('site-nav-brand');
       expect(brand).toBeInTheDocument();
       expect(brand.getAttribute('href')).toBe('/');
@@ -151,7 +203,7 @@ describe('SiteNav', () => {
       setStoredToken('tok-abc');
       render(<SiteNav />);
 
-      expect(await screen.findByTestId('site-nav-dashboard-link')).toBeInTheDocument();
+      expect(await screen.findByTestId('site-nav-account-trigger')).toBeInTheDocument();
       expect(screen.queryByTestId('site-nav-signup-link')).not.toBeInTheDocument();
     });
   });
@@ -168,9 +220,12 @@ describe('SiteNav', () => {
   describe('run_20260731_132040 criterion 7: My Submissions link, authenticated only', () => {
     it('renders site-nav-my-submissions-link pointing at /catalog/mine when a token is stored', async () => {
       setStoredToken('tok-abc');
+      const user = userEvent.setup();
       render(<SiteNav />);
 
-      const link = await screen.findByTestId('site-nav-my-submissions-link');
+      await screen.findByTestId('site-nav-account-trigger');
+      await user.click(screen.getByTestId('site-nav-account-trigger'));
+      const link = screen.getByTestId('site-nav-my-submissions-link');
       expect(link).toBeInTheDocument();
       expect(link.getAttribute('href')).toBe('/catalog/mine');
     });
@@ -195,7 +250,7 @@ describe('SiteNav', () => {
       setStoredToken('tok-abc');
       render(<SiteNav />);
 
-      expect(await screen.findByTestId('site-nav-dashboard-link')).toBeInTheDocument();
+      expect(await screen.findByTestId('site-nav-account-trigger')).toBeInTheDocument();
       const link = screen.getByTestId('site-nav-glossary-link');
       expect(link).toBeInTheDocument();
       expect(link.getAttribute('href')).toBe('/glossary');

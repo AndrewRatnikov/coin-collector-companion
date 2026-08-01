@@ -19,6 +19,7 @@ const esShape: Record<MessageKey, string> = {
   'nav.brand': 'Coin Collector Companion',
   'nav.signUp': 'Registrarse',
   'nav.glossary': 'Glosario',
+  'nav.account': 'Cuenta',
 
   // language switcher
   'languageSwitcher.english': 'English',

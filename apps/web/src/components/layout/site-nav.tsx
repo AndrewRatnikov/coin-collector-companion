@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { clearStoredToken, getStoredToken } from '@/lib/auth-token';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
+import { AccountMenu } from '@/components/layout/account-menu';
 
 const navLinkClassName =
   'text-[13px] text-[var(--color-text)] opacity-70 transition-opacity hover:text-[var(--color-accent)] hover:opacity-100';
@@ -55,25 +56,7 @@ export function SiteNav() {
         </Link>
         <div className="flex items-center gap-6 border-l border-[var(--color-divider)] pl-6">
           {isAuthenticated ? (
-            <>
-              <Link href="/dashboard" data-testid="site-nav-dashboard-link" className={navLinkClassName}>
-                {t('nav.dashboard')}
-              </Link>
-              <Link href="/collection" data-testid="site-nav-collection-link" className={navLinkClassName}>
-                {t('nav.collection')}
-              </Link>
-              <Link href="/catalog/mine" data-testid="site-nav-my-submissions-link" className={navLinkClassName}>
-                {t('nav.mySubmissions')}
-              </Link>
-              <button
-                type="button"
-                onClick={handleLogout}
-                data-testid="site-nav-logout"
-                className="text-[13px] text-[var(--color-neutral-600)] transition-colors hover:text-[var(--color-accent)]"
-              >
-                {t('nav.logOut')}
-              </button>
-            </>
+            <AccountMenu onLogout={handleLogout} />
           ) : (
             <>
               <Link href="/login" data-testid="site-nav-login-link" className={navLinkClassName}>
