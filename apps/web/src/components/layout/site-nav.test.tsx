@@ -49,16 +49,15 @@ describe('SiteNav', () => {
   });
 
   describe('criterion 2: always-visible links', () => {
-    it('renders the catalog, canonical-sets, and public-sets links when unauthenticated', () => {
+    it('renders the catalog and sets links when unauthenticated', () => {
       render(<SiteNav />);
 
       expect(screen.getByTestId('site-nav')).toBeInTheDocument();
       expect(screen.getByTestId('site-nav-catalog-link')).toBeInTheDocument();
-      expect(screen.getByTestId('site-nav-canonical-link')).toBeInTheDocument();
-      expect(screen.getByTestId('site-nav-public-link')).toBeInTheDocument();
+      expect(screen.getByTestId('site-nav-sets-link')).toBeInTheDocument();
     });
 
-    it('renders the catalog, canonical-sets, and public-sets links when authenticated', async () => {
+    it('renders the catalog and sets links when authenticated', async () => {
       setStoredToken('tok-abc');
       const user = userEvent.setup();
       render(<SiteNav />);
@@ -67,8 +66,7 @@ describe('SiteNav', () => {
       await user.click(screen.getByTestId('site-nav-account-trigger'));
       expect(screen.getByTestId('site-nav-dashboard-link')).toBeInTheDocument();
       expect(screen.getByTestId('site-nav-catalog-link')).toBeInTheDocument();
-      expect(screen.getByTestId('site-nav-canonical-link')).toBeInTheDocument();
-      expect(screen.getByTestId('site-nav-public-link')).toBeInTheDocument();
+      expect(screen.getByTestId('site-nav-sets-link')).toBeInTheDocument();
     });
   });
 
@@ -208,12 +206,13 @@ describe('SiteNav', () => {
     });
   });
 
-  describe('criterion 2: Title Case copy for canonical/public sets links (changed in run_20260728_071525)', () => {
-    it('renders "Canonical Sets" and "Public Sets" in Title Case', () => {
+  describe('criterion 2: single Sets link (canonical/public merged behind tabs)', () => {
+    it('renders a single "Sets" link pointing at /sets', () => {
       render(<SiteNav />);
 
-      expect(screen.getByTestId('site-nav-canonical-link')).toHaveTextContent('Canonical Sets');
-      expect(screen.getByTestId('site-nav-public-link')).toHaveTextContent('Public Sets');
+      const link = screen.getByTestId('site-nav-sets-link');
+      expect(link).toHaveTextContent('Sets');
+      expect(link.getAttribute('href')).toBe('/sets');
     });
   });
 

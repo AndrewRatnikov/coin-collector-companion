@@ -12,11 +12,14 @@ import { useSetOwnership } from '@/lib/hooks/use-collection';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import type { CatalogFilters } from '@/lib/catalog-api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Sheet } from '@/components/ui/sheet';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
 const ADD_COINS_LIMIT = 20;
-const PAGE_WRAPPER_CLASSNAME = 'flex flex-1 flex-col gap-6 p-8';
+const PAGE_WRAPPER_CLASSNAME =
+  'mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-6 px-[clamp(20px,5vw,48px)] py-10';
 
 interface DecadeGroup {
   decade: number;
@@ -75,6 +78,7 @@ function SetEditor({ id }: { id: string }) {
   const syncedSetRef = useRef<typeof set>(undefined);
   const [gapOnly, setGapOnly] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [collapsedDecades, setCollapsedDecades] = useState<Record<string, boolean>>({});
   const [addCoinsFilters, setAddCoinsFilters] = useState<CatalogFilters>({ page: 1, limit: ADD_COINS_LIMIT });
   const catalogQuery = useCatalog(addCoinsFilters);
@@ -115,6 +119,7 @@ function SetEditor({ id }: { id: string }) {
   }
 
   function handleDelete() {
+    setDeleteConfirmOpen(false);
     deleteMutation.mutate(id, {
       onSuccess: () => {
         router.push('/dashboard');
@@ -175,7 +180,7 @@ function SetEditor({ id }: { id: string }) {
           <button
             type="button"
             data-testid="set-editor-delete-button"
-            onClick={handleDelete}
+            onClick={() => setDeleteConfirmOpen(true)}
             className="w-fit shrink-0 rounded border border-red-600 px-4 py-2 text-sm font-medium text-red-600"
           >
             {t('setEditor.deleteButton')}
@@ -213,10 +218,10 @@ function SetEditor({ id }: { id: string }) {
           <button
             type="button"
             data-testid="set-editor-toggle-add-coins"
-            onClick={() => setPickerOpen((prev) => !prev)}
-            className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+            onClick={() => setPickerOpen(true)}
+            className="rounded border border-gray-300 px-4 py-2 text-sm font-medium"
           >
-            {pickerOpen ? t('setEditor.closePicker') : t('setEditor.addCoins')}
+            {t('setEditor.addCoins')}
           </button>
         )}
       </div>
@@ -289,9 +294,8 @@ function SetEditor({ id }: { id: string }) {
         })}
       </ul>
 
-      {isOwner && pickerOpen && (
-        <div data-testid="set-editor-add-coins-panel" className="flex flex-col gap-3 rounded border border-gray-200 p-4">
-          <h2 className="text-sm font-semibold">{t('setEditor.addCoinsHeading')}</h2>
+      <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title={t('setEditor.addCoinsHeading')}>
+        <div data-testid="set-editor-add-coins-panel" className="flex flex-col gap-3">
           <CatalogFilterForm testIdPrefix="set-editor-add-coins" onSubmit={handleAddCoinsFilterSubmit} />
           <ul data-testid="set-editor-add-coins-results" className="flex flex-col gap-2">
             {(catalogQuery.data?.items ?? []).map((coin) => (
@@ -313,7 +317,18 @@ function SetEditor({ id }: { id: string }) {
             ))}
           </ul>
         </div>
-      )}
+      </Sheet>
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title={t('setEditor.deleteConfirmTitle')}
+        description={t('setEditor.deleteConfirmMessage')}
+        confirmLabel={t('setEditor.deleteButton')}
+        cancelLabel={t('common.cancel')}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirmOpen(false)}
+        testIdPrefix="set-editor-delete-confirm"
+      />
     </main>
   );
 }

@@ -24,7 +24,11 @@ export default function CanonicalSetDetailPage({ params }: { params: Promise<{ i
   }, [params]);
 
   const { data: set, isLoading, isError } = useCanonicalSet(id ?? '');
-  const isLoggedIn = Boolean(getStoredToken());
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(Boolean(getStoredToken()));
+  }, []);
 
   if (id === null) {
     return <main data-testid="canonical-set-detail-page" />;

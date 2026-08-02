@@ -9,6 +9,7 @@ import type { MessageKey } from './en';
 const esShape: Record<MessageKey, string> = {
   // nav
   'nav.catalog': 'Catálogo',
+  'nav.sets': 'Colecciones',
   'nav.canonicalSets': 'Colecciones canónicas',
   'nav.publicSets': 'Colecciones públicas',
   'nav.dashboard': 'Panel',
@@ -46,6 +47,7 @@ const esShape: Record<MessageKey, string> = {
   'common.missing': 'faltante',
   'common.clear': 'Borrar',
   'common.close': 'Cerrar',
+  'common.cancel': 'Cancelar',
 
   // home
   'home.title': 'Coin Collector Companion',
@@ -112,6 +114,8 @@ const esShape: Record<MessageKey, string> = {
   // set editor
   'setEditor.renameSubmit': 'Renombrar',
   'setEditor.deleteButton': 'Eliminar colección',
+  'setEditor.deleteConfirmTitle': '¿Eliminar esta colección?',
+  'setEditor.deleteConfirmMessage': 'Esta acción no se puede deshacer.',
   'setEditor.markNotOwned': 'Marcar como no poseída',
   'setEditor.markOwned': 'Marcar como poseída',
   'setEditor.removeButton': 'Quitar',
@@ -121,7 +125,6 @@ const esShape: Record<MessageKey, string> = {
   'setEditor.allCoins': 'Todas las monedas',
   'setEditor.missing': 'faltantes',
   'setEditor.addCoins': 'Añadir monedas',
-  'setEditor.closePicker': 'Cerrar selector',
   'setEditor.undo': 'Deshacer',
   'setEditor.noCoinsYet': 'Todavía no hay monedas — añade algunas abajo.',
 

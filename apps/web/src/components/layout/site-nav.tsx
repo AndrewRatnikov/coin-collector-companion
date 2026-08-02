@@ -45,11 +45,8 @@ export function SiteNav() {
         <Link href="/catalog" data-testid="site-nav-catalog-link" className={navLinkClassName}>
           {t('nav.catalog')}
         </Link>
-        <Link href="/sets/canonical" data-testid="site-nav-canonical-link" className={navLinkClassName}>
-          {t('nav.canonicalSets')}
-        </Link>
-        <Link href="/sets/public" data-testid="site-nav-public-link" className={navLinkClassName}>
-          {t('nav.publicSets')}
+        <Link href="/sets" data-testid="site-nav-sets-link" className={navLinkClassName}>
+          {t('nav.sets')}
         </Link>
         <Link href="/glossary" data-testid="site-nav-glossary-link" className={navLinkClassName}>
           {t('nav.glossary')}

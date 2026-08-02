@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { CatalogCoin } from '@coin-collector/shared';
 import { formatCoinLabel } from '@coin-collector/shared';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { Sheet } from '@/components/ui/sheet';
-import CatalogFilterForm, { type CatalogFilterFormValues } from '@/components/catalog/catalog-filter-form';
+import CatalogFilterForm, {
+  type CatalogFilterFormValues,
+} from '@/components/catalog/catalog-filter-form';
 import SubmitCoinForm from '@/components/catalog/submit-coin-form';
 import SubmissionConfirmation from '@/components/catalog/submission-confirmation';
 import { useCatalog } from '@/lib/hooks/use-catalog';
@@ -23,7 +25,11 @@ export default function CatalogPage() {
   const [submittedCoin, setSubmittedCoin] = useState<CatalogCoin | null>(null);
 
   const { data, isLoading, isError } = useCatalog(filters);
-  const isLoggedIn = Boolean(getStoredToken());
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(Boolean(getStoredToken()));
+  }, []);
 
   function handleFilterSubmit(values: CatalogFilterFormValues) {
     setFilters({ ...values, page: 1, limit: DEFAULT_LIMIT });
@@ -45,12 +51,12 @@ export default function CatalogPage() {
           {t('catalog.title')}
         </h1>
         {data && (
-          <span className="font-mono text-sm tabular-nums text-[color:var(--color-neutral-600)]">{data.total}</span>
+          <span className="font-mono text-sm tabular-nums text-[color:var(--color-neutral-600)]">
+            {data.total}
+          </span>
         )}
       </div>
-
       <CatalogFilterForm testIdPrefix="catalog" onSubmit={handleFilterSubmit} />
-
       {isLoggedIn && (
         <div data-testid="catalog-submit-coin-entry">
           <button
@@ -63,7 +69,6 @@ export default function CatalogPage() {
           </button>
         </div>
       )}
-
       <Sheet
         open={isAddCoinSheetOpen}
         onClose={() => {
@@ -78,23 +83,23 @@ export default function CatalogPage() {
           <SubmitCoinForm onSuccess={(coin) => setSubmittedCoin(coin)} />
         )}
       </Sheet>
-
       {isLoading && (
         <div data-testid="catalog-loading">
           <ListSkeleton />
         </div>
       )}
-
       {isError && (
         <p data-testid="catalog-error" className="text-sm text-[color:var(--color-accent-800)]">
           {t('catalog.errorLoading')}
         </p>
       )}
-
       {data && (
         <>
           {data.items.length === 0 ? (
-            <p data-testid="catalog-empty" className="text-sm text-[color:var(--color-neutral-600)]">
+            <p
+              data-testid="catalog-empty"
+              className="text-sm text-[color:var(--color-neutral-600)]"
+            >
               {t('catalog.emptyMessage')}
             </p>
           ) : (
@@ -118,7 +123,9 @@ export default function CatalogPage() {
                     <span className="flex flex-col gap-0.5">
                       <span className="text-[15px]">{formatCoinLabel(coin)}</span>
                       {coin.variety && (
-                        <span className="text-xs text-[color:var(--color-neutral-600)]">{coin.variety}</span>
+                        <span className="text-xs text-[color:var(--color-neutral-600)]">
+                          {coin.variety}
+                        </span>
                       )}
                     </span>
                   </Link>

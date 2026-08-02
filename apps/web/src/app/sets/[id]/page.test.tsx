@@ -269,7 +269,8 @@ describe('SetEditorPage', () => {
       expect(page).toHaveClass('flex');
       expect(page).toHaveClass('flex-col');
       expect(page).toHaveClass('gap-6');
-      expect(page).toHaveClass('p-8');
+      expect(page).toHaveClass('mx-auto');
+      expect(page).toHaveClass('max-w-[1080px]');
     });
   });
 
@@ -520,7 +521,42 @@ describe('SetEditorPage', () => {
       expect(usePatchSetCoinsMock).toHaveBeenCalledWith('set-1');
     });
 
-    it('deleting calls useDeleteSet().mutate with the id and redirects to /dashboard on success', async () => {
+    it('clicking delete opens a confirmation dialog rather than deleting immediately', async () => {
+      setStoredToken('tok-abc');
+      const deleteMutate = vi.fn();
+      useDeleteSetMock.mockReturnValue({ mutate: deleteMutate, isPending: false } as never);
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-delete-button')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('set-editor-delete-confirm')).not.toBeInTheDocument();
+
+      await user.click(screen.getByTestId('set-editor-delete-button'));
+
+      expect(screen.getByTestId('set-editor-delete-confirm')).toBeInTheDocument();
+      expect(deleteMutate).not.toHaveBeenCalled();
+    });
+
+    it('clicking cancel in the confirmation dialog closes it without deleting', async () => {
+      setStoredToken('tok-abc');
+      const deleteMutate = vi.fn();
+      useDeleteSetMock.mockReturnValue({ mutate: deleteMutate, isPending: false } as never);
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-delete-button')).toBeInTheDocument();
+      });
+      await user.click(screen.getByTestId('set-editor-delete-button'));
+      await user.click(screen.getByTestId('set-editor-delete-confirm-cancel'));
+
+      expect(screen.queryByTestId('set-editor-delete-confirm')).not.toBeInTheDocument();
+      expect(deleteMutate).not.toHaveBeenCalled();
+    });
+
+    it('confirming in the dialog calls useDeleteSet().mutate with the id and redirects to /dashboard on success', async () => {
       setStoredToken('tok-abc');
       useDeleteSetMock.mockReturnValue(mutationMock({ resolvedValue: undefined }));
       const user = userEvent.setup();
@@ -530,7 +566,9 @@ describe('SetEditorPage', () => {
         expect(screen.getByTestId('set-editor-delete-button')).toBeInTheDocument();
       });
       await user.click(screen.getByTestId('set-editor-delete-button'));
+      await user.click(screen.getByTestId('set-editor-delete-confirm-confirm'));
 
+      expect(screen.queryByTestId('set-editor-delete-confirm')).not.toBeInTheDocument();
       await waitFor(() => {
         expect(pushMock).toHaveBeenCalledWith('/dashboard');
       });
@@ -538,7 +576,7 @@ describe('SetEditorPage', () => {
   });
 
   describe('run_20260728_071525 criterion 12: add-coins panel is gated behind set-editor-toggle-add-coins', () => {
-    it('shows the panel only after clicking the toggle, and hides it again on a second click', async () => {
+    it('shows the panel in a sheet only after clicking the toggle, and hides it again via the sheet close button', async () => {
       setStoredToken('tok-abc');
       const user = userEvent.setup();
       renderPage();
@@ -549,9 +587,10 @@ describe('SetEditorPage', () => {
       expect(screen.queryByTestId('set-editor-add-coins-panel')).not.toBeInTheDocument();
 
       await user.click(screen.getByTestId('set-editor-toggle-add-coins'));
+      expect(screen.getByTestId('sheet')).toBeInTheDocument();
       expect(screen.getByTestId('set-editor-add-coins-panel')).toBeInTheDocument();
 
-      await user.click(screen.getByTestId('set-editor-toggle-add-coins'));
+      await user.click(screen.getByTestId('sheet-close'));
       expect(screen.queryByTestId('set-editor-add-coins-panel')).not.toBeInTheDocument();
     });
 

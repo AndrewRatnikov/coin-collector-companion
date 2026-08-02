@@ -14,6 +14,7 @@
 const enShape = {
   // nav
   'nav.catalog': 'Catalog',
+  'nav.sets': 'Sets',
   'nav.canonicalSets': 'Canonical Sets',
   'nav.publicSets': 'Public Sets',
   'nav.dashboard': 'Dashboard',
@@ -51,6 +52,7 @@ const enShape = {
   'common.missing': 'missing',
   'common.clear': 'Clear',
   'common.close': 'Close',
+  'common.cancel': 'Cancel',
 
   // home
   'home.title': 'Coin Collector Companion',
@@ -117,6 +119,8 @@ const enShape = {
   // set editor
   'setEditor.renameSubmit': 'Rename',
   'setEditor.deleteButton': 'Delete set',
+  'setEditor.deleteConfirmTitle': 'Delete this set?',
+  'setEditor.deleteConfirmMessage': 'This action cannot be undone.',
   'setEditor.markNotOwned': 'Mark not owned',
   'setEditor.markOwned': 'Mark owned',
   'setEditor.removeButton': 'Remove',
@@ -126,7 +130,6 @@ const enShape = {
   'setEditor.allCoins': 'All coins',
   'setEditor.missing': 'missing',
   'setEditor.addCoins': 'Add coins',
-  'setEditor.closePicker': 'Close picker',
   'setEditor.undo': 'Undo',
   'setEditor.noCoinsYet': 'No coins yet — add some below.',
 

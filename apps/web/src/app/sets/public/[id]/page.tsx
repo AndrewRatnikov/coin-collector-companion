@@ -25,7 +25,12 @@ export default function PublicSetDetailPage({ params }: { params: Promise<{ id: 
   }, [params]);
 
   const { data: set, isLoading, isError } = usePublicSet(id ?? '');
-  const isLoggedIn = Boolean(getStoredToken());
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    setIsLoggedIn(Boolean(getStoredToken()));
+  }, []);
+
   const gapsQuery = useSetGaps(isLoggedIn ? (id ?? '') : '');
 
   if (id === null) {
