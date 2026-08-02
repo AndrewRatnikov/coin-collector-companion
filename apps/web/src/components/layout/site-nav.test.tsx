@@ -22,6 +22,11 @@
  * (runs/run_20260801_142634/plan.md § Interface Contract → Existing (MODIFIED)
  * component: SiteNav). Only the new describe block below is added; every existing
  * block is otherwise untouched.
+ *
+ * run_20260802_172836: adds `site-nav-settings-link` to the authenticated-only link
+ * group inside AccountMenu (runs/run_20260802_172836/plan.md § Interface Contract →
+ * Component: AccountMenu (MODIFY)). Only the new describe block below is added; every
+ * existing block is otherwise untouched.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -253,6 +258,26 @@ describe('SiteNav', () => {
       const link = screen.getByTestId('site-nav-glossary-link');
       expect(link).toBeInTheDocument();
       expect(link.getAttribute('href')).toBe('/glossary');
+    });
+  });
+
+  describe('run_20260802_172836 criterion 7: Settings link, authenticated only', () => {
+    it('renders site-nav-settings-link pointing at /settings when a token is stored', async () => {
+      setStoredToken('tok-abc');
+      const user = userEvent.setup();
+      render(<SiteNav />);
+
+      await screen.findByTestId('site-nav-account-trigger');
+      await user.click(screen.getByTestId('site-nav-account-trigger'));
+      const link = screen.getByTestId('site-nav-settings-link');
+      expect(link).toBeInTheDocument();
+      expect(link.getAttribute('href')).toBe('/settings');
+    });
+
+    it('hides site-nav-settings-link when no token is stored', () => {
+      render(<SiteNav />);
+
+      expect(screen.queryByTestId('site-nav-settings-link')).not.toBeInTheDocument();
     });
   });
 });
