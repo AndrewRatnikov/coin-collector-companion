@@ -17,6 +17,14 @@ export class ApiError extends Error {
   }
 }
 
+interface ApiFetchOptions {
+  // Set when a 401 from this specific call means something other than "the session itself
+  // is invalid" (e.g. PATCH /auth/password's "wrong current password" response, which is
+  // still a fully authenticated request) — skips the default clear-token-and-redirect
+  // behavior below so the caller can show an inline error instead of losing the session.
+  skipAuthRedirectOn401?: boolean;
+}
+
 async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -35,7 +43,7 @@ function isColdStartFailure(error: unknown): boolean {
   return (error instanceof DOMException && error.name === 'AbortError') || error instanceof TypeError;
 }
 
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function apiFetch<T>(path: string, init: RequestInit = {}, options: ApiFetchOptions = {}): Promise<T> {
   if (!API_BASE_URL) {
     throw new Error('NEXT_PUBLIC_API_URL is not set');
   }
@@ -64,8 +72,10 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     // rejected (expired/invalid JWT) — clear it and bounce to /login. A 401 with no
     // token attached (e.g. /auth/login's own wrong-password response) is a normal
     // anonymous-request failure, not a session invalidation, so it's left for the
-    // caller (the login/signup form) to handle inline.
-    if (token && response.status === 401) {
+    // caller (the login/signup form) to handle inline. `skipAuthRedirectOn401` opts a
+    // specific authenticated call out of this entirely, for the same reason — its 401
+    // doesn't mean the session is invalid either (see ApiFetchOptions above).
+    if (token && response.status === 401 && !options.skipAuthRedirectOn401) {
       clearStoredToken();
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
