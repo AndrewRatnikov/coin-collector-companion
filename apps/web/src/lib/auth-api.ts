@@ -1,5 +1,5 @@
 import { apiFetch } from './api-client';
-import { setStoredToken } from './auth-token';
+import { clearStoredToken, setStoredToken } from './auth-token';
 
 export interface LoginCredentials {
   email: string;
@@ -54,4 +54,26 @@ export async function changePassword(currentPassword: string, newPassword: strin
     { method: 'PATCH', body: JSON.stringify({ currentPassword, newPassword }) },
     { skipAuthRedirectOn401: true },
   );
+}
+
+// POST /auth/refresh (backlog_password-management.md Step 2, task 2.11). A pure
+// request/response call with no redirect side effect of its own (skipAuthRedirectOn401) —
+// the redirect-on-failure behavior lives entirely in apiFetch's own internal silent-refresh
+// path, not here.
+export async function refreshAccessToken(): Promise<AuthResponse> {
+  const response = await apiFetch<AuthResponse>(
+    '/auth/refresh',
+    { method: 'POST' },
+    { skipAuthRedirectOn401: true },
+  );
+  setStoredToken(response.accessToken);
+  return response;
+}
+
+// POST /auth/logout (backlog_password-management.md Step 2, task 2.11). Awaited, not
+// fire-and-forget, so the server-side revocation actually completes before local state
+// clears.
+export async function logout(): Promise<void> {
+  await apiFetch<void>('/auth/logout', { method: 'POST' }, { skipAuthRedirectOn401: true });
+  clearStoredToken();
 }
