@@ -86,6 +86,9 @@ export function AccountMenu({ onLogout }: AccountMenuProps) {
           >
             {t('nav.mySubmissions')}
           </Link>
+          <Link href="/settings" data-testid="site-nav-settings-link" className={menuLinkClassName} role="menuitem">
+            {t('nav.settings')}
+          </Link>
           <button
             type="button"
             onClick={onLogout}
