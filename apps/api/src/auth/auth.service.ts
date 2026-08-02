@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 
@@ -60,5 +61,19 @@ export class AuthService {
       where: { id: userId },
       select: { id: true, email: true, createdAt: true },
     });
+  }
+
+  // PATCH /auth/password (backlog_password-management.md Step 1, task 1.1). Ships without
+  // cross-session revocation on purpose — decision 3 defers that to Step 2 (task 2.7), once
+  // the refresh-token table this needs actually exists.
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const isCurrentPasswordValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_COST);
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
   }
 }
