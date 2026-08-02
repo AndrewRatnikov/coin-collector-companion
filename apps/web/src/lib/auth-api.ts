@@ -44,3 +44,14 @@ export async function register(credentials: RegisterCredentials): Promise<AuthRe
 export async function getCurrentUser(): Promise<CurrentUser> {
   return apiFetch<CurrentUser>('/auth/me');
 }
+
+// PATCH /auth/password (backlog_password-management.md Step 1, task 1.3). Opts out of
+// apiFetch's default 401-clears-session behavior — a wrong current password is a normal,
+// still-authenticated rejection, not a signal that the session itself is invalid.
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  return apiFetch<void>(
+    '/auth/password',
+    { method: 'PATCH', body: JSON.stringify({ currentPassword, newPassword }) },
+    { skipAuthRedirectOn401: true },
+  );
+}
