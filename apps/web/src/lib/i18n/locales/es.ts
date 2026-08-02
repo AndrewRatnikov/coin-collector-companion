@@ -21,6 +21,7 @@ const esShape: Record<MessageKey, string> = {
   'nav.signUp': 'Registrarse',
   'nav.glossary': 'Glosario',
   'nav.account': 'Cuenta',
+  'nav.settings': 'Configuración',
 
   // language switcher
   'languageSwitcher.english': 'English',
@@ -241,6 +242,11 @@ const esShape: Record<MessageKey, string> = {
   'glossary.term.uncirculated': 'Sin circular',
   'glossary.definition.uncirculated':
     'Una moneda que no muestra desgaste por haber sido usada en transacciones cotidianas.',
+
+  // settings
+  'settings.title': 'Configuración',
+  'settings.emailLabel': 'Correo electrónico',
+  'settings.memberSinceLabel': 'Miembro desde',
 };
 
 const es: Record<string, string> = esShape;
