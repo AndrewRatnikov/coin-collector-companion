@@ -27,6 +27,16 @@
  * group inside AccountMenu (runs/run_20260802_172836/plan.md § Interface Contract →
  * Component: AccountMenu (MODIFY)). Only the new describe block below is added; every
  * existing block is otherwise untouched.
+ *
+ * run_20260802_221803: `handleLogout` becomes async and now calls the new `logout()`
+ * from `@/lib/auth-api`, which makes a real `POST /auth/logout` network call
+ * (runs/run_20260802_221803/plan.md § Interface Contract → Module:
+ * apps/web/src/components/layout/site-nav.tsx (MODIFY)). The "criterion 2: logout
+ * behaviour" describe block below is the ONLY block that changes — it previously had no
+ * fetch mock at all (handleLogout was purely synchronous/local); it now stubs `fetch`
+ * to resolve the logout call, following the same `vi.stubGlobal('fetch', ...)` pattern
+ * `auth-api.test.ts`/`api-client.test.ts` already use, and awaits the click before
+ * asserting. Every other describe block in this file is untouched.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -104,6 +114,13 @@ describe('SiteNav', () => {
 
   describe('criterion 2: logout behaviour', () => {
     it('clears the stored token and navigates to /login when the logout button is clicked', async () => {
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 204,
+        json: async () => undefined,
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
       const user = userEvent.setup();
       setStoredToken('tok-abc');
       render(<SiteNav />);
@@ -113,8 +130,15 @@ describe('SiteNav', () => {
       const logoutButton = screen.getByTestId('site-nav-logout');
       await user.click(logoutButton);
 
+      expect(fetchMock).toHaveBeenCalled();
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('/auth/logout');
+      expect(init.method).toBe('POST');
+
       expect(getStoredToken()).toBeNull();
       expect(pushMock).toHaveBeenCalledWith('/login');
+
+      vi.unstubAllGlobals();
     });
   });
 
