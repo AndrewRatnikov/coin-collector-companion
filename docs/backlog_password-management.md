@@ -77,14 +77,14 @@ Stands up `/settings` itself and shows the account's email on it (decision 10), 
 
 Ships without cross-session revocation (decision 3) — Step 2 retrofits that in (task 2.7).
 
-- [ ] 1.1 New `ChangePasswordDto` (`currentPassword`, `newPassword`, same `@MinLength(8)` as `RegisterDto`) and `PATCH /auth/password` on `AuthController` — guarded (no `@Public()`), takes `@CurrentUser()`. `AuthService.changePassword`: verify `currentPassword` via `bcrypt.compare` against the stored hash (401 if wrong), hash and save `newPassword`.
-- [ ] 1.2 Unit tests (`auth.service.spec.ts`/`auth.controller.spec.ts`, mocked Prisma, existing convention): wrong `currentPassword` → 401 and no write; correct call hashes and persists the new password.
-- [ ] 1.3 `apps/web/src/lib/auth-api.ts`: add `changePassword(currentPassword, newPassword)` (`PATCH /auth/password`).
-- [ ] 1.4 Extend the `/settings` page Step 0 built (`apps/web/src/app/settings/page.tsx`) with a `currentPassword`/`newPassword` form below the read-only account-info block, reusing the existing `FormField` component and `lib/form-errors.ts` convention (same pattern as `login`/`signup`), calling 1.3's `changePassword` on submit.
-- [ ] 1.5 `apps/web/src/lib/i18n/locales/en.ts` and `es.ts`: add the password-form-specific `settings.*` keys (current/new password labels, submit button, success/error messages) to **both** files — `nav.settings`/`settings.title` already exist from Step 0.
-- [ ] 1.6 Extend Step 0's settings-page component test with the change-password form's happy path plus the wrong-current-password error case.
-- [ ] 1.7 Manual pass against the real Neon dev DB: log in, change password via `/settings`, log out, confirm login with the *old* password now fails and the *new* one succeeds. Clean up the throwaway user afterward.
-- [ ] 1.8 `pnpm --filter api typecheck`/`build`/`test`, `pnpm --filter web typecheck`/`build`/`test`, `pnpm lint` all clean.
+- [x] 1.1 New `ChangePasswordDto` (`currentPassword`, `newPassword`, same `@MinLength(8)` as `RegisterDto`) and `PATCH /auth/password` on `AuthController` — guarded (no `@Public()`), takes `@CurrentUser()`. `AuthService.changePassword`: verify `currentPassword` via `bcrypt.compare` against the stored hash (401 if wrong), hash and save `newPassword`.
+- [x] 1.2 Unit tests (`auth.service.spec.ts`/`auth.controller.spec.ts`, mocked Prisma, existing convention): wrong `currentPassword` → 401 and no write; correct call hashes and persists the new password.
+- [x] 1.3 `apps/web/src/lib/auth-api.ts`: add `changePassword(currentPassword, newPassword)` (`PATCH /auth/password`).
+- [x] 1.4 Extend the `/settings` page Step 0 built (`apps/web/src/app/settings/page.tsx`) with a `currentPassword`/`newPassword` form below the read-only account-info block, reusing the existing `FormField` component and `lib/form-errors.ts` convention (same pattern as `login`/`signup`), calling 1.3's `changePassword` on submit.
+- [x] 1.5 `apps/web/src/lib/i18n/locales/en.ts` and `es.ts`: add the password-form-specific `settings.*` keys (current/new password labels, submit button, success/error messages) to **both** files — `nav.settings`/`settings.title` already exist from Step 0.
+- [x] 1.6 Extend Step 0's settings-page component test with the change-password form's happy path plus the wrong-current-password error case.
+- [x] 1.7 Manual pass against the real Neon dev DB: log in, change password via `/settings`, log out, confirm login with the *old* password now fails and the *new* one succeeds. Clean up the throwaway user afterward.
+- [x] 1.8 `pnpm --filter api typecheck`/`build`/`test`, `pnpm --filter web typecheck`/`build`/`test`, `pnpm lint` all clean.
 
 **Checkpoint 1:** a logged-in user can change their own password from `/settings`. No other-session revocation yet — that arrives in Step 2.
 
