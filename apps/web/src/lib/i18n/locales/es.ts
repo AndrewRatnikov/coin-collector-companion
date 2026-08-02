@@ -125,7 +125,6 @@ const esShape: Record<MessageKey, string> = {
   'setEditor.allCoins': 'Todas las monedas',
   'setEditor.missing': 'faltantes',
   'setEditor.addCoins': 'Añadir monedas',
-  'setEditor.closePicker': 'Cerrar selector',
   'setEditor.undo': 'Deshacer',
   'setEditor.noCoinsYet': 'Todavía no hay monedas — añade algunas abajo.',
 

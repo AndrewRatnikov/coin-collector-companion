@@ -130,7 +130,6 @@ const enShape = {
   'setEditor.allCoins': 'All coins',
   'setEditor.missing': 'missing',
   'setEditor.addCoins': 'Add coins',
-  'setEditor.closePicker': 'Close picker',
   'setEditor.undo': 'Undo',
   'setEditor.noCoinsYet': 'No coins yet — add some below.',
 
