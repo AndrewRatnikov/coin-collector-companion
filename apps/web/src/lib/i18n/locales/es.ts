@@ -250,6 +250,8 @@ const esShape: Record<MessageKey, string> = {
   'settings.changePasswordTitle': 'Cambiar contraseña',
   'settings.currentPasswordLabel': 'Contraseña actual',
   'settings.newPasswordLabel': 'Nueva contraseña',
+  'settings.confirmNewPasswordLabel': 'Confirmar nueva contraseña',
+  'settings.passwordsDoNotMatch': 'Las contraseñas no coinciden',
   'settings.changePasswordSubmit': 'Cambiar contraseña',
   'settings.changePasswordSuccess': 'Contraseña actualizada correctamente.',
   'settings.changePasswordError': 'Ocurrió un error al cambiar tu contraseña. Inténtalo de nuevo.',

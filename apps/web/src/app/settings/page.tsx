@@ -17,6 +17,7 @@ function ChangePasswordForm() {
   const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -27,11 +28,20 @@ function ChangePasswordForm() {
     setFormError('');
     setSuccessMessage('');
 
+    if (newPassword !== confirmNewPassword) {
+      setFieldErrors({
+        newPassword: t('settings.passwordsDoNotMatch'),
+        confirmNewPassword: t('settings.passwordsDoNotMatch'),
+      });
+      return;
+    }
+
     try {
       await changePassword(currentPassword, newPassword);
       setSuccessMessage(t('settings.changePasswordSuccess'));
       setCurrentPassword('');
       setNewPassword('');
+      setConfirmNewPassword('');
     } catch (error) {
       if (error instanceof ApiError) {
         // Only a 400 (Nest's ValidationPipe) carries an array of class-validator's
@@ -77,6 +87,15 @@ function ChangePasswordForm() {
         value={newPassword}
         onChange={setNewPassword}
         error={fieldErrors.newPassword}
+      />
+      <FormField
+        id="confirmNewPassword"
+        label={t('settings.confirmNewPasswordLabel')}
+        type="password"
+        autoComplete="new-password"
+        value={confirmNewPassword}
+        onChange={setConfirmNewPassword}
+        error={fieldErrors.confirmNewPassword}
       />
       {formError && (
         <p data-testid="settings-change-password-error" className="text-sm text-red-700">

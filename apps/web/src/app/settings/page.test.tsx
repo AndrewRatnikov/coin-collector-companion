@@ -57,12 +57,18 @@ const CURRENT_USER = {
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 
-async function fillAndSubmitChangePassword(currentPassword: string, newPassword: string) {
+async function fillAndSubmitChangePassword(
+  currentPassword: string,
+  newPassword: string,
+  confirmNewPassword: string = newPassword,
+) {
   const user = userEvent.setup();
   const currentPasswordInput = document.getElementById('currentPassword') as HTMLInputElement;
   const newPasswordInput = document.getElementById('newPassword') as HTMLInputElement;
+  const confirmNewPasswordInput = document.getElementById('confirmNewPassword') as HTMLInputElement;
   await user.type(currentPasswordInput, currentPassword);
   await user.type(newPasswordInput, newPassword);
+  await user.type(confirmNewPasswordInput, confirmNewPassword);
   await user.click(screen.getByTestId('settings-change-password-submit'));
 }
 
@@ -158,6 +164,7 @@ describe('SettingsPage', () => {
       });
       expect(document.getElementById('currentPassword')).toBeInTheDocument();
       expect(document.getElementById('newPassword')).toBeInTheDocument();
+      expect(document.getElementById('confirmNewPassword')).toBeInTheDocument();
     });
   });
 
@@ -234,6 +241,28 @@ describe('SettingsPage', () => {
         expect(screen.getByTestId('settings-change-password-error')).toBeInTheDocument();
       });
       expect(screen.getByTestId('settings-account-info')).toBeInTheDocument();
+    });
+  });
+
+  describe('confirm-new-password mismatch', () => {
+    it('shows a mismatch error on both fields and does not call changePassword', async () => {
+      setStoredToken('tok-abc');
+      useCurrentUserMock.mockReturnValue(queryResult({ data: CURRENT_USER }));
+      render(<SettingsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('settings-change-password-form')).toBeInTheDocument();
+      });
+
+      await fillAndSubmitChangePassword('oldpassword123', 'newpassword123', 'somethingelse123');
+
+      await waitFor(() => {
+        expect(document.getElementById('confirmNewPassword-error')?.textContent).toBe('Passwords do not match');
+      });
+      expect(document.getElementById('newPassword-error')?.textContent).toBe('Passwords do not match');
+      expect(document.getElementById('newPassword')).toHaveAttribute('aria-invalid', 'true');
+      expect(document.getElementById('confirmNewPassword')).toHaveAttribute('aria-invalid', 'true');
+      expect(changePasswordMock).not.toHaveBeenCalled();
     });
   });
 });
