@@ -1,7 +1,14 @@
 /**
  * Tests for: api-client (modified apiFetch)
  * Contract source: runs/run_20260721_094026/plan.md § Interface Contract → Module: api-client (existing file, modified)
- * Covers criteria: #3 (from prd.md)
+ *                   runs/run_20260802_183303/plan.md § Interface Contract → Module: api-client (MODIFY)
+ * Covers criteria: #3 (from run_20260721_094026's prd.md), #7 (from run_20260802_183303's prd.md)
+ *
+ * CONTRACT_GAP: none.
+ *
+ * run_20260802_183303: adds coverage for the new `skipAuthRedirectOn401` opt-out (new
+ * describe block below) plus a regression guard confirming the default (no opt-out) behavior
+ * is unchanged. Every existing describe block above is carried over byte-identical.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -98,6 +105,39 @@ describe('apiFetch', () => {
 
       expect(getStoredToken()).toBe('tok-abc');
       expect(window.location.href).toBe('http://localhost/dashboard');
+    });
+  });
+
+  describe('criterion 7 (run_20260802_183303): skipAuthRedirectOn401 opt-out', () => {
+    it('does not clear the token or redirect on a 401 when skipAuthRedirectOn401 is true', async () => {
+      setStoredToken('tok-abc');
+      stubFetchResolving(401, { message: 'Current password is incorrect' });
+
+      await expect(
+        apiFetch('/auth/password', { method: 'PATCH' }, { skipAuthRedirectOn401: true }),
+      ).rejects.toThrow(ApiError);
+
+      expect(getStoredToken()).toBe('tok-abc');
+      expect(window.location.href).toBe('http://localhost/dashboard');
+    });
+
+    it('still throws ApiError with the response details when skipAuthRedirectOn401 is true', async () => {
+      setStoredToken('tok-abc');
+      stubFetchResolving(401, { message: 'Current password is incorrect' });
+
+      await expect(
+        apiFetch('/auth/password', { method: 'PATCH' }, { skipAuthRedirectOn401: true }),
+      ).rejects.toMatchObject({ status: 401 });
+    });
+
+    it('regression guard: still redirects on a 401 for a normal call without the opt-out', async () => {
+      setStoredToken('tok-abc');
+      stubFetchResolving(401, { message: 'Unauthorized' });
+
+      await expect(apiFetch('/protected')).rejects.toThrow(ApiError);
+
+      expect(getStoredToken()).toBeNull();
+      expect(window.location.href).toBe('/login');
     });
   });
 });
