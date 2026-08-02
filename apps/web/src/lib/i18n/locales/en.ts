@@ -26,6 +26,7 @@ const enShape = {
   'nav.signUp': 'Sign up',
   'nav.glossary': 'Glossary',
   'nav.account': 'Account',
+  'nav.settings': 'Settings',
 
   // language switcher
   'languageSwitcher.english': 'English',
@@ -245,6 +246,11 @@ const enShape = {
   'glossary.term.uncirculated': 'Uncirculated',
   'glossary.definition.uncirculated':
     'A coin that shows no wear from having been used in everyday transactions.',
+
+  // settings
+  'settings.title': 'Settings',
+  'settings.emailLabel': 'Email',
+  'settings.memberSinceLabel': 'Member since',
 } satisfies Record<string, string>;
 
 const en: Record<string, string> = enShape;
