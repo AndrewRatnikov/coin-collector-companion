@@ -15,6 +15,12 @@ export interface AuthResponse {
   accessToken: string;
 }
 
+export interface CurrentUser {
+  id: string;
+  email: string;
+  createdAt: string;
+}
+
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {
   const response = await apiFetch<AuthResponse>('/auth/login', {
     method: 'POST',
@@ -33,4 +39,8 @@ export async function register(credentials: RegisterCredentials): Promise<AuthRe
     body: JSON.stringify(credentials),
   });
   return login(credentials);
+}
+
+export async function getCurrentUser(): Promise<CurrentUser> {
+  return apiFetch<CurrentUser>('/auth/me');
 }

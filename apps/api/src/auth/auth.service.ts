@@ -50,4 +50,15 @@ export class AuthService {
     const accessToken = await this.jwtService.signAsync({ sub: user.id, email: user.email });
     return { accessToken };
   }
+
+  // GET /auth/me (backlog_password-management.md Step 0, decision 10). `select` excludes
+  // passwordHash at the query level — same defense-in-depth reasoning CatalogService's
+  // submittedByUserId omission follows — never rely on the controller alone to keep a
+  // sensitive field out of the response.
+  async me(userId: string): Promise<RegisteredUser> {
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { id: true, email: true, createdAt: true },
+    });
+  }
 }

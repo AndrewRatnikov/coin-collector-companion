@@ -61,15 +61,15 @@ Today's auth (`apps/api/src/auth`) has no self-service account recovery: a forgo
 
 Stands up `/settings` itself and shows the account's email on it (decision 10), ahead of Step 1 dropping a change-password form onto the same page.
 
-- [ ] 0.1 New `GET /auth/me` on `AuthController` — guarded (no `@Public()`), takes `@CurrentUser()`. `AuthService.me(userId)` returns the same `{ id, email, createdAt }` shape as `RegisteredUser` (already defined in `auth.service.ts`, reused as-is — no new interface). A `select` excluding `passwordHash` (same defense-in-depth reasoning `CatalogService`'s `submittedByUserId` omission already follows — never rely on the controller alone to keep a sensitive field out of the response).
-- [ ] 0.2 Unit tests: `GET /auth/me` returns the expected shape with no `passwordHash` key; unauthenticated request → 401.
-- [ ] 0.3 `apps/web/src/lib/auth-api.ts`: add `getCurrentUser()` (`GET /auth/me`).
-- [ ] 0.4 New `apps/web/src/app/settings/page.tsx` — `RequireAuth`-wrapped, fetches 0.3's `getCurrentUser()` and renders a read-only account-info block (email, plus "member since {createdAt}"). This is the page Step 1 extends with the change-password form — deliberately built as its own task first rather than entangled with that form.
-- [ ] 0.5 `apps/web/src/components/layout/site-nav.tsx`: add a `/settings` nav link next to `/dashboard`/`/collection` in the authenticated link group.
-- [ ] 0.6 `apps/web/src/lib/i18n/locales/en.ts` and `es.ts`: add `nav.settings`, `settings.title`, `settings.emailLabel`, `settings.memberSinceLabel` keys to **both** files (a missing translation is a `tsc` error by design, per the existing i18n convention — add both together, not one now and the other later).
-- [ ] 0.7 Component test for the settings page's account-info block, following the existing convention — renders the email and member-since date from a mocked `getCurrentUser()` response.
-- [ ] 0.8 Manual pass against the real Neon dev DB: log in, open `/settings`, confirm the displayed email matches the logged-in account and the member-since date matches `createdAt`. Clean up the throwaway user afterward.
-- [ ] 0.9 `pnpm --filter api typecheck`/`build`/`test`, `pnpm --filter web typecheck`/`build`/`test`, `pnpm lint` all clean.
+- [x] 0.1 New `GET /auth/me` on `AuthController` — guarded (no `@Public()`), takes `@CurrentUser()`. `AuthService.me(userId)` returns the same `{ id, email, createdAt }` shape as `RegisteredUser` (already defined in `auth.service.ts`, reused as-is — no new interface). A `select` excluding `passwordHash` (same defense-in-depth reasoning `CatalogService`'s `submittedByUserId` omission already follows — never rely on the controller alone to keep a sensitive field out of the response).
+- [x] 0.2 Unit tests: `GET /auth/me` returns the expected shape with no `passwordHash` key; unauthenticated request → 401.
+- [x] 0.3 `apps/web/src/lib/auth-api.ts`: add `getCurrentUser()` (`GET /auth/me`).
+- [x] 0.4 New `apps/web/src/app/settings/page.tsx` — `RequireAuth`-wrapped, fetches 0.3's `getCurrentUser()` and renders a read-only account-info block (email, plus "member since {createdAt}"). This is the page Step 1 extends with the change-password form — deliberately built as its own task first rather than entangled with that form.
+- [x] 0.5 `apps/web/src/components/layout/site-nav.tsx`: add a `/settings` nav link next to `/dashboard`/`/collection` in the authenticated link group. (Landed inside a new `AccountMenu` dropdown component rather than directly in `site-nav.tsx`'s row — an unrelated prior change collapsed the authenticated links behind one trigger — but the link exists and is wired to real auth state either way.)
+- [x] 0.6 `apps/web/src/lib/i18n/locales/en.ts` and `es.ts`: add `nav.settings`, `settings.title`, `settings.emailLabel`, `settings.memberSinceLabel` keys to **both** files (a missing translation is a `tsc` error by design, per the existing i18n convention — add both together, not one now and the other later).
+- [x] 0.7 Component test for the settings page's account-info block, following the existing convention — renders the email and member-since date from a mocked `getCurrentUser()` response.
+- [x] 0.8 Manual pass against the real Neon dev DB: log in, open `/settings`, confirm the displayed email matches the logged-in account and the member-since date matches `createdAt`. Clean up the throwaway user afterward.
+- [x] 0.9 `pnpm --filter api typecheck`/`build`/`test`, `pnpm --filter web typecheck`/`build`/`test`, `pnpm lint` all clean.
 
 **Checkpoint 0:** a logged-in user can reach `/settings` (linked from the nav) and see their account's email and join date. No password-management functionality yet — that arrives in Step 1.
 
