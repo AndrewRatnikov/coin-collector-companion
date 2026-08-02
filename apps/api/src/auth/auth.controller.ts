@@ -1,8 +1,9 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -11,6 +12,7 @@ import {
 import { AuthService, LoginResponse, RegisteredUser } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import type { AuthenticatedUser } from './strategies/jwt.strategy';
@@ -49,5 +51,16 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: 'No or invalid access token' })
   me(@CurrentUser() user: AuthenticatedUser): Promise<RegisteredUser> {
     return this.authService.me(user.userId);
+  }
+
+  // No @Public() — guarded by the global JwtAuthGuard, same as `me`
+  // (backlog_password-management.md Step 1, task 1.1).
+  @Patch('password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "Change the current user's password" })
+  @ApiNoContentResponse({ description: 'Password changed' })
+  @ApiUnauthorizedResponse({ description: 'Current password is incorrect, or no/invalid access token' })
+  changePassword(@CurrentUser() user: AuthenticatedUser, @Body() dto: ChangePasswordDto): Promise<void> {
+    return this.authService.changePassword(user.userId, dto);
   }
 }
