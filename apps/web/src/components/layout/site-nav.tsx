@@ -4,7 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { clearStoredToken, getStoredToken } from '@/lib/auth-token';
+import { logout } from '@/lib/auth-api';
+import { getStoredToken } from '@/lib/auth-token';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { AccountMenu } from '@/components/layout/account-menu';
@@ -22,8 +23,11 @@ export function SiteNav() {
     setIsAuthenticated(Boolean(getStoredToken()));
   }, [pathname]);
 
-  function handleLogout() {
-    clearStoredToken();
+  // Awaits logout() (backlog_password-management.md Step 2, task 2.12) — today's purely
+  // client-side logout no longer actually ends the session once a server-tracked refresh
+  // token exists; logout() itself clears the stored token after the server call resolves.
+  async function handleLogout() {
+    await logout();
     setIsAuthenticated(false);
     router.push('/login');
   }
