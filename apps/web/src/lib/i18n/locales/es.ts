@@ -247,6 +247,12 @@ const esShape: Record<MessageKey, string> = {
   'settings.title': 'Configuración',
   'settings.emailLabel': 'Correo electrónico',
   'settings.memberSinceLabel': 'Miembro desde',
+  'settings.changePasswordTitle': 'Cambiar contraseña',
+  'settings.currentPasswordLabel': 'Contraseña actual',
+  'settings.newPasswordLabel': 'Nueva contraseña',
+  'settings.changePasswordSubmit': 'Cambiar contraseña',
+  'settings.changePasswordSuccess': 'Contraseña actualizada correctamente.',
+  'settings.changePasswordError': 'Ocurrió un error al cambiar tu contraseña. Inténtalo de nuevo.',
 };
 
 const es: Record<string, string> = esShape;
