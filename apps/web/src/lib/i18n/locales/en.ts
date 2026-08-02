@@ -251,6 +251,12 @@ const enShape = {
   'settings.title': 'Settings',
   'settings.emailLabel': 'Email',
   'settings.memberSinceLabel': 'Member since',
+  'settings.changePasswordTitle': 'Change password',
+  'settings.currentPasswordLabel': 'Current password',
+  'settings.newPasswordLabel': 'New password',
+  'settings.changePasswordSubmit': 'Change password',
+  'settings.changePasswordSuccess': 'Password changed successfully.',
+  'settings.changePasswordError': 'Something went wrong changing your password. Please try again.',
 } satisfies Record<string, string>;
 
 const en: Record<string, string> = enShape;
