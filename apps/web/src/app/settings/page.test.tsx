@@ -2,7 +2,8 @@
  * Tests for: SettingsPage
  * Contract source: runs/run_20260802_172836/plan.md § Interface Contract → Page: SettingsPage (CREATE)
  *                   runs/run_20260802_183303/plan.md § Interface Contract → Component: ChangePasswordForm (CREATE, inline)
- * Covers criteria: #5, #6, #9 (from run_20260802_172836's prd.md), #6, #7, #9 (from run_20260802_183303's prd.md)
+ *                   runs/run_20260804_165504/plan.md § Interface Contract → Page: SettingsPage (Account tab) — apps/web/src/app/settings/page.tsx (MODIFY)
+ * Covers criteria: #5, #6, #9 (from run_20260802_172836's prd.md), #6, #7, #9 (from run_20260802_183303's prd.md), #1 (from run_20260804_165504's prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -19,6 +20,14 @@
  * run_20260802_183303: adds changePassword coverage (new describe blocks below). `changePassword`
  * from '@/lib/auth-api' is mocked (same technique as login/page.test.tsx mocking `login`) — no
  * real network call. Every existing describe block above is carried over byte-identical.
+ *
+ * run_20260804_165504: SettingsPage now renders <SettingsTabs /> (apps/web/src/components/layout/settings-tabs.tsx),
+ * which calls next/navigation's usePathname(). The previous `vi.mock('next/navigation', ...)`
+ * in this file replaced the whole module with only `useRouter` exported, which would make
+ * every existing test below throw once SettingsTabs mounts — the mock is extended here to
+ * also export `usePathname`, same convention as apps/web/src/components/layout/site-nav.test.tsx.
+ * Every existing describe block below is otherwise carried over byte-identical; only a new
+ * "criterion #1" describe block is added at the end.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -31,9 +40,11 @@ import { ApiError } from '@/lib/api-client';
 import { setStoredToken } from '@/lib/auth-token';
 
 const replaceMock = vi.fn();
+const usePathnameMock = vi.fn(() => '/settings');
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: replaceMock }),
+  usePathname: () => usePathnameMock(),
 }));
 
 vi.mock('@/lib/hooks/use-current-user', () => ({
@@ -76,6 +87,8 @@ describe('SettingsPage', () => {
   beforeEach(() => {
     localStorage.clear();
     replaceMock.mockClear();
+    usePathnameMock.mockClear();
+    usePathnameMock.mockReturnValue('/settings');
     useCurrentUserMock.mockReset();
     useCurrentUserMock.mockReturnValue(queryResult());
     changePasswordMock.mockReset();
@@ -263,6 +276,31 @@ describe('SettingsPage', () => {
       expect(document.getElementById('newPassword')).toHaveAttribute('aria-invalid', 'true');
       expect(document.getElementById('confirmNewPassword')).toHaveAttribute('aria-invalid', 'true');
       expect(changePasswordMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('criterion #1 (run_20260804_165504): renders SettingsTabs with the account tab active', () => {
+    it('renders settings-tabs with both tab links once authenticated', async () => {
+      setStoredToken('tok-abc');
+      useCurrentUserMock.mockReturnValue(queryResult({ data: CURRENT_USER }));
+      render(<SettingsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('settings-tabs')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('settings-tab-account')).toBeInTheDocument();
+      expect(screen.getByTestId('settings-tab-feedback')).toBeInTheDocument();
+    });
+
+    it('marks the account tab as the current page via aria-current, not the feedback tab', async () => {
+      setStoredToken('tok-abc');
+      useCurrentUserMock.mockReturnValue(queryResult({ data: CURRENT_USER }));
+      render(<SettingsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('settings-tab-account')).toHaveAttribute('aria-current', 'page');
+      });
+      expect(screen.getByTestId('settings-tab-feedback')).not.toHaveAttribute('aria-current');
     });
   });
 });
