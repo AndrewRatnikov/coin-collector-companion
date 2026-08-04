@@ -20,25 +20,14 @@
  * useGlobalPipes already are in auth.e2e-spec.ts — main.ts's imperative bootstrap() calls
  * are not part of AppModule's declarative metadata, so Test.createTestingModule({imports:
  * [AppModule]}) does not pick them up automatically.
- *
- * `cookie-parser` is loaded via require(), not a static `import cookie-parser from
- * 'cookie-parser'`, deliberately: this Tester stage runs BEFORE the Coder stage that adds
- * `cookie-parser` to apps/api/package.json (plan.md's Files-changed table), and the
- * mechanical pre-Coder contract check (check-contract.sh Check 2) greps only literal
- * `^import ...` statements against the repo's CURRENT (pre-Coder) package.json. By the time
- * this file is ever actually executed (this run's own Coder stage, or later in CI), the
- * dependency is already committed — require() just avoids a same-run staging-order false
- * positive on a package that will genuinely exist by then, not a permanently-missing one.
  */
 
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const cookieParser = require('cookie-parser');
 
 function extractRefreshCookie(res: request.Response): string {
   const setCookie = (res.headers['set-cookie'] as unknown as string[] | undefined) ?? [];
