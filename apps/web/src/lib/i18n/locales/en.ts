@@ -259,6 +259,15 @@ const enShape = {
   'settings.changePasswordSubmit': 'Change password',
   'settings.changePasswordSuccess': 'Password changed successfully.',
   'settings.changePasswordError': 'Something went wrong changing your password. Please try again.',
+  'settings.accountTabLabel': 'Account',
+  'settings.feedbackTabLabel': 'Feedback',
+  'settings.feedbackTitle': 'Send feedback',
+  'settings.feedbackTextLabel': 'Your feedback',
+  'settings.feedbackSubmit': 'Submit feedback',
+  'settings.feedbackSuccess': 'Thanks for your feedback!',
+  'settings.feedbackError': 'Something went wrong sending your feedback. Please try again.',
+  'settings.feedbackValidationEmpty': 'Please enter some feedback before submitting.',
+  'settings.feedbackValidationTooLong': 'Feedback must be 2000 characters or fewer.',
 } satisfies Record<string, string>;
 
 const en: Record<string, string> = enShape;
