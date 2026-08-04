@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { FormField } from '@/components/auth/form-field';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
+import { SettingsTabs } from '@/components/layout/settings-tabs';
 import { useCurrentUser } from '@/lib/hooks/use-current-user';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { changePassword } from '@/lib/auth-api';
@@ -127,6 +128,8 @@ function SettingsContent() {
       data-testid="settings-page"
       className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-6 px-[clamp(20px,5vw,48px)] py-10 text-[var(--color-text)]"
     >
+      <SettingsTabs />
+
       <h1 className="text-[28px] font-normal [font-family:var(--font-heading)]">{t('settings.title')}</h1>
 
       {isLoading && (
