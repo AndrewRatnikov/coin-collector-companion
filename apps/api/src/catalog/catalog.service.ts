@@ -37,8 +37,8 @@ export class CatalogService {
 
     const where: Prisma.CoinWhereInput = {
       ...(query.submittedByMe && userId ? { submittedByUserId: userId } : { status: 'approved' }),
-      ...(query.country ? { country: query.country } : {}),
-      ...(query.denomination ? { denomination: query.denomination } : {}),
+      ...(query.country ? { country: { equals: query.country, mode: 'insensitive' as const } } : {}),
+      ...(query.denomination ? { denomination: { equals: query.denomination, mode: 'insensitive' as const } } : {}),
       ...(query.name ? { name: { contains: query.name, mode: 'insensitive' as const } } : {}),
       ...(query.yearMin !== undefined || query.yearMax !== undefined
         ? {

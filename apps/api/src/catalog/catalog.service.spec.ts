@@ -93,18 +93,18 @@ describe('CatalogService', () => {
   });
 
   describe('findAll — filter construction', () => {
-    it('applies an exact-match country filter (criterion #2)', async () => {
+    it('applies a case-insensitive country filter (criterion #2)', async () => {
       await service.findAll(makeQuery({ country: 'USA' }));
 
       const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
-      expect(where.country).toBe('USA');
+      expect(where.country).toEqual({ equals: 'USA', mode: 'insensitive' });
     });
 
-    it('applies an exact-match denomination filter (criterion #3)', async () => {
+    it('applies a case-insensitive denomination filter (criterion #3)', async () => {
       await service.findAll(makeQuery({ denomination: 'Cent' }));
 
       const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
-      expect(where.denomination).toBe('Cent');
+      expect(where.denomination).toEqual({ equals: 'Cent', mode: 'insensitive' });
     });
 
     it('applies a case-insensitive substring match on name (criterion #4)', async () => {
@@ -165,7 +165,7 @@ describe('CatalogService', () => {
 
       const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
       expect(where.status).toBe('approved');
-      expect(where.country).toBe('USA');
+      expect(where.country).toEqual({ equals: 'USA', mode: 'insensitive' });
     });
 
     it('applies the same status filter to the count query as findMany', async () => {
@@ -231,8 +231,8 @@ describe('CatalogService', () => {
 
       const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
       expect(where.submittedByUserId).toBe(SUBMITTER_USER_ID);
-      expect(where.country).toBe('USA');
-      expect(where.denomination).toBe('1 Cent');
+      expect(where.country).toEqual({ equals: 'USA', mode: 'insensitive' });
+      expect(where.denomination).toEqual({ equals: '1 Cent', mode: 'insensitive' });
       expect(where.year).toEqual({ gte: 1909, lte: 1958 });
     });
 
