@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, Req, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
   ApiConflictResponse,
@@ -9,6 +9,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import type { Request, Response } from 'express';
 import { AuthService, LoginResponse, RegisteredUser } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
@@ -16,6 +17,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import type { AuthenticatedUser } from './strategies/jwt.strategy';
+import { REFRESH_TOKEN_COOKIE_NAME, clearedRefreshTokenCookieOptions, refreshTokenCookieOptions } from './token.service';
 
 // SD D2 / backlog 2.4: tighter throttle on auth routes than the app-wide default
 @Throttle({ default: { limit: 5, ttl: 60_000 } })
@@ -39,8 +41,39 @@ export class AuthController {
   @ApiOperation({ summary: 'Log in and receive a JWT' })
   @ApiOkResponse({ description: 'Login succeeded' })
   @ApiUnauthorizedResponse({ description: 'Invalid credentials' })
-  login(@Body() dto: LoginDto): Promise<LoginResponse> {
-    return this.authService.login(dto);
+  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response): Promise<LoginResponse> {
+    const { accessToken, refreshToken } = await this.authService.login(dto);
+    res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, refreshTokenCookieOptions());
+    return { accessToken };
+  }
+
+  // @Public() — authenticates via the refresh cookie, not the bearer-token guard
+  // (backlog_password-management.md Step 2, task 2.5).
+  @Public()
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Rotate the refresh token cookie and mint a new access token' })
+  @ApiOkResponse({ description: 'Refresh succeeded' })
+  @ApiUnauthorizedResponse({ description: 'Missing, invalid, expired, or already-rotated refresh token cookie' })
+  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<LoginResponse> {
+    const rawRefreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
+    const { accessToken, refreshToken } = await this.authService.refresh(rawRefreshToken);
+    res.cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken, refreshTokenCookieOptions());
+    return { accessToken };
+  }
+
+  // @Public() — authenticates via the refresh cookie, not the bearer-token guard
+  // (backlog_password-management.md Step 2, task 2.6). Idempotent: a missing/unknown
+  // cookie is a no-op, not an error.
+  @Public()
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Revoke the current refresh token and clear its cookie' })
+  @ApiNoContentResponse({ description: 'Logged out (idempotent)' })
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response): Promise<void> {
+    const rawRefreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
+    await this.authService.logout(rawRefreshToken);
+    res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, clearedRefreshTokenCookieOptions());
   }
 
   // No @Public() — guarded by the global JwtAuthGuard (APP_GUARD in app.module.ts),
