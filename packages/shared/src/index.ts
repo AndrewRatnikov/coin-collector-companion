@@ -138,6 +138,17 @@ export interface GapViewResponse {
   slots: GapSlot[];
 }
 
+export interface SubmitFeedbackRequest {
+  text: string;
+}
+
+export interface FeedbackResponse {
+  id: string;
+  userId: string;
+  text: string;
+  createdAt: Date;
+}
+
 // Compact coin label, SD §3.1: "{country} {denomination} ({year} {mintMark})" — drops the
 // mint mark from the parenthetical when it's empty. One formatter so both apps render a
 // coin's display label identically wherever it appears (catalog rows, coin detail header,

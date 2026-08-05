@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { FormField } from '@/components/auth/form-field';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
+import { SettingsTabs } from '@/components/layout/settings-tabs';
 import { useCurrentUser } from '@/lib/hooks/use-current-user';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { changePassword } from '@/lib/auth-api';
@@ -51,7 +52,10 @@ function ChangePasswordForm() {
         if (error.status === 400) {
           setFieldErrors(fieldErrorsFrom(error.details, CHANGE_PASSWORD_FIELDS));
           const unmatched = error.details.filter(
-            (detail) => !CHANGE_PASSWORD_FIELDS.some((field) => detail.toLowerCase().startsWith(field.toLowerCase())),
+            (detail) =>
+              !CHANGE_PASSWORD_FIELDS.some((field) =>
+                detail.toLowerCase().startsWith(field.toLowerCase()),
+              ),
           );
           setFormError(unmatched.join(', '));
         } else {
@@ -69,7 +73,9 @@ function ChangePasswordForm() {
       onSubmit={handleSubmit}
       className="flex w-full max-w-[420px] flex-col gap-5 border-t border-[var(--color-divider)] pt-6"
     >
-      <h2 className="text-[20px] font-normal [font-family:var(--font-heading)]">{t('settings.changePasswordTitle')}</h2>
+      <h2 className="text-[20px] font-normal [font-family:var(--font-heading)]">
+        {t('settings.changePasswordTitle')}
+      </h2>
       <FormField
         id="currentPassword"
         label={t('settings.currentPasswordLabel')}
@@ -127,7 +133,11 @@ function SettingsContent() {
       data-testid="settings-page"
       className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-6 px-[clamp(20px,5vw,48px)] py-10 text-[var(--color-text)]"
     >
-      <h1 className="text-[28px] font-normal [font-family:var(--font-heading)]">{t('settings.title')}</h1>
+      <h1 className="text-[28px] font-normal [font-family:var(--font-heading)]">
+        {t('settings.title')}
+      </h1>
+
+      <SettingsTabs />
 
       {isLoading && (
         <div data-testid="settings-loading">
@@ -142,11 +152,14 @@ function SettingsContent() {
       )}
 
       {data && (
-        <div data-testid="settings-account-info" className="flex flex-col gap-2 border-t border-[var(--color-divider)] pt-6">
+        <div data-testid="settings-account-info" className="flex flex-col gap-2 pt-6">
           <p data-testid="settings-email" className="text-sm">
             {t('settings.emailLabel')}: {data.email}
           </p>
-          <p data-testid="settings-member-since" className="text-sm text-[var(--color-neutral-600)]">
+          <p
+            data-testid="settings-member-since"
+            className="text-sm text-[var(--color-neutral-600)]"
+          >
             {t('settings.memberSinceLabel')}: {new Date(data.createdAt).toLocaleDateString()}
           </p>
         </div>

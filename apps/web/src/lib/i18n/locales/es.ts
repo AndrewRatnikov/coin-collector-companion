@@ -255,6 +255,15 @@ const esShape: Record<MessageKey, string> = {
   'settings.changePasswordSubmit': 'Cambiar contraseña',
   'settings.changePasswordSuccess': 'Contraseña actualizada correctamente.',
   'settings.changePasswordError': 'Ocurrió un error al cambiar tu contraseña. Inténtalo de nuevo.',
+  'settings.accountTabLabel': 'Cuenta',
+  'settings.feedbackTabLabel': 'Comentarios',
+  'settings.feedbackTitle': 'Enviar comentarios',
+  'settings.feedbackTextLabel': 'Tus comentarios',
+  'settings.feedbackSubmit': 'Enviar comentarios',
+  'settings.feedbackSuccess': '¡Gracias por tus comentarios!',
+  'settings.feedbackError': 'Ocurrió un error al enviar tus comentarios. Inténtalo de nuevo.',
+  'settings.feedbackValidationEmpty': 'Escribe algún comentario antes de enviar.',
+  'settings.feedbackValidationTooLong': 'Los comentarios deben tener 2000 caracteres o menos.',
 };
 
 const es: Record<string, string> = esShape;

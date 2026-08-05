@@ -28,6 +28,7 @@ model User {
   ownerships     Ownership[]
   submittedCoins Coin[]      @relation("CoinSubmitter")
   refreshTokens  RefreshToken[]
+  feedbacks      Feedback[]
 }
 
 model RefreshToken {
@@ -42,6 +43,17 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([familyId])
+}
+
+model Feedback {
+  id        String   @id @default(uuid())
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Coin {
