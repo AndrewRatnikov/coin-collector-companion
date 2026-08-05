@@ -55,9 +55,11 @@ export function FeedbackForm() {
     <form
       data-testid="settings-feedback-form"
       onSubmit={handleSubmit}
-      className="flex w-full max-w-[420px] flex-col gap-5 border-t border-[var(--color-divider)] pt-6"
+      className="flex w-full flex-col gap-5 pt-6"
     >
-      <h2 className="text-[20px] font-normal [font-family:var(--font-heading)]">{t('settings.feedbackTitle')}</h2>
+      <h2 className="text-[20px] font-normal [font-family:var(--font-heading)]">
+        {t('settings.feedbackTitle')}
+      </h2>
       <div className="flex flex-col gap-1">
         <label htmlFor="feedback-text" className="text-sm font-medium text-[var(--color-text)]">
           {t('settings.feedbackTextLabel')}
