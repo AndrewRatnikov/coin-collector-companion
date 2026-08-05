@@ -19,13 +19,16 @@ import { RegisterDto } from './dto/register.dto';
 import type { AuthenticatedUser } from './strategies/jwt.strategy';
 import { REFRESH_TOKEN_COOKIE_NAME, clearedRefreshTokenCookieOptions, refreshTokenCookieOptions } from './token.service';
 
-// SD D2 / backlog 2.4: tighter throttle on auth routes than the app-wide default
-@Throttle({ default: { limit: 5, ttl: 60_000 } })
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // SD D2 / backlog 2.4: tighter throttle than the app-wide default, scoped to just the two
+  // credential-guessing-sensitive routes (not the whole controller — `me`/`refresh`/`logout`/
+  // `password` are legitimately called far more than 5x/min in normal use, e.g. every mount
+  // of a page that reads the current user).
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
@@ -35,6 +38,7 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
