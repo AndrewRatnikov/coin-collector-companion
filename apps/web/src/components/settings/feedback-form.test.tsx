@@ -35,7 +35,7 @@ function mutationMock({ resolvedValue, rejectedValue }: { resolvedValue?: unknow
       else opts?.onSuccess?.(resolvedValue);
     },
   );
-  return { mutate, isPending: false } as never;
+  return { mutate, isPending: false };
 }
 
 async function typeAndSubmit(text: string) {
@@ -48,7 +48,7 @@ async function typeAndSubmit(text: string) {
 describe('FeedbackForm', () => {
   beforeEach(() => {
     useSubmitFeedbackMock.mockReset();
-    useSubmitFeedbackMock.mockReturnValue(mutationMock());
+    useSubmitFeedbackMock.mockReturnValue(mutationMock() as never);
   });
 
   describe('rendering', () => {
@@ -110,7 +110,7 @@ describe('FeedbackForm', () => {
   describe('criteria #2, #3: valid submission calls mutate with the trimmed text', () => {
     it('calls mutate with { text } trimmed of surrounding whitespace', async () => {
       const mutation = mutationMock();
-      useSubmitFeedbackMock.mockReturnValue(mutation);
+      useSubmitFeedbackMock.mockReturnValue(mutation as never);
       render(<FeedbackForm />);
 
       const textarea = document.getElementById('feedback-text') as HTMLTextAreaElement;
@@ -127,7 +127,7 @@ describe('FeedbackForm', () => {
 
   describe('criterion #4: success shows confirmation and clears the input', () => {
     it('renders settings-feedback-success and clears the textarea on success', async () => {
-      useSubmitFeedbackMock.mockReturnValue(mutationMock({ resolvedValue: { id: 'f1' } }));
+      useSubmitFeedbackMock.mockReturnValue(mutationMock({ resolvedValue: { id: 'f1' } }) as never);
       render(<FeedbackForm />);
 
       await typeAndSubmit('Great app!');
@@ -142,7 +142,7 @@ describe('FeedbackForm', () => {
   describe('criterion #5: failure shows an error and preserves the typed text', () => {
     it('renders settings-feedback-error with the ApiError details and does not clear the textarea', async () => {
       useSubmitFeedbackMock.mockReturnValue(
-        mutationMock({ rejectedValue: new ApiError(400, 'text must be shorter than or equal to 2000 characters') }),
+        mutationMock({ rejectedValue: new ApiError(400, 'text must be shorter than or equal to 2000 characters') }) as never,
       );
       render(<FeedbackForm />);
 
@@ -158,7 +158,7 @@ describe('FeedbackForm', () => {
     });
 
     it('renders a generic fallback error for a non-ApiError failure', async () => {
-      useSubmitFeedbackMock.mockReturnValue(mutationMock({ rejectedValue: new Error('network down') }));
+      useSubmitFeedbackMock.mockReturnValue(mutationMock({ rejectedValue: new Error('network down') }) as never);
       render(<FeedbackForm />);
 
       await typeAndSubmit('Great app!');
