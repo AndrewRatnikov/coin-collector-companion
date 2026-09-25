@@ -8,7 +8,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { TokenService } from './token.service';
 
-const BCRYPT_COST = 10;
+export const BCRYPT_COST = 10;
 
 export interface RegisteredUser {
   id: string;

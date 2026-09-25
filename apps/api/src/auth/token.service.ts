@@ -12,7 +12,7 @@ export interface IssuedRefreshToken {
   expiresAt: Date;
 }
 
-function hashToken(rawToken: string): string {
+export function hashToken(rawToken: string): string {
   return createHash('sha256').update(rawToken).digest('hex');
 }
 

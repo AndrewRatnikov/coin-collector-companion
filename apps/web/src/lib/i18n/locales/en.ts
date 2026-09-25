@@ -70,6 +70,23 @@ const enShape = {
   // login
   'login.title': 'Log in',
   'login.submit': 'Log in',
+  'login.forgotPasswordLink': 'Forgot password?',
+  'login.passwordResetNotice': 'Your password was reset. Log in with your new password.',
+
+  // forgot / reset password
+  'forgotPassword.title': 'Reset your password',
+  'forgotPassword.intro': "Enter the email for your account and we'll send you a link to set a new password.",
+  'forgotPassword.submit': 'Send reset link',
+  'forgotPassword.sent': "If an account exists for that email, we've sent a link to reset your password. The link expires in 1 hour.",
+  'forgotPassword.tooManyRequests': 'Too many reset requests. Please try again later.',
+  'forgotPassword.backToLogin': 'Back to log in',
+  'resetPassword.title': 'Choose a new password',
+  'resetPassword.newPasswordLabel': 'New password',
+  'resetPassword.confirmPasswordLabel': 'Confirm new password',
+  'resetPassword.passwordsDoNotMatch': 'Passwords do not match',
+  'resetPassword.submit': 'Set new password',
+  'resetPassword.invalidLink': 'This reset link is invalid or has expired.',
+  'resetPassword.requestNewLink': 'Request a new link',
 
   // signup
   'signup.title': 'Sign up',

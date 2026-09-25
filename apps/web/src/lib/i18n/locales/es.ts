@@ -65,6 +65,23 @@ const esShape: Record<MessageKey, string> = {
   // login
   'login.title': 'Iniciar sesión',
   'login.submit': 'Iniciar sesión',
+  'login.forgotPasswordLink': '¿Olvidaste tu contraseña?',
+  'login.passwordResetNotice': 'Tu contraseña se restableció. Inicia sesión con tu nueva contraseña.',
+
+  // forgot / reset password
+  'forgotPassword.title': 'Restablecer contraseña',
+  'forgotPassword.intro': 'Introduce el correo de tu cuenta y te enviaremos un enlace para crear una nueva contraseña.',
+  'forgotPassword.submit': 'Enviar enlace',
+  'forgotPassword.sent': 'Si existe una cuenta con ese correo, te hemos enviado un enlace para restablecer tu contraseña. El enlace caduca en 1 hora.',
+  'forgotPassword.tooManyRequests': 'Demasiadas solicitudes. Inténtalo de nuevo más tarde.',
+  'forgotPassword.backToLogin': 'Volver a iniciar sesión',
+  'resetPassword.title': 'Elige una nueva contraseña',
+  'resetPassword.newPasswordLabel': 'Nueva contraseña',
+  'resetPassword.confirmPasswordLabel': 'Confirmar nueva contraseña',
+  'resetPassword.passwordsDoNotMatch': 'Las contraseñas no coinciden',
+  'resetPassword.submit': 'Guardar nueva contraseña',
+  'resetPassword.invalidLink': 'Este enlace no es válido o ha caducado.',
+  'resetPassword.requestNewLink': 'Solicitar un nuevo enlace',
 
   // signup
   'signup.title': 'Registrarse',

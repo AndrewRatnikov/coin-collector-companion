@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import type { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormField } from '@/components/auth/form-field';
@@ -18,6 +19,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
+  const [showResetNotice, setShowResetNotice] = useState(false);
+
+  // /reset-password sends users here with ?reset=success. Read in an effect (not
+  // useSearchParams) so the page needs no Suspense boundary and server/client markup match.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('reset') === 'success') {
+      setShowResetNotice(true);
+    }
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,6 +72,11 @@ export default function LoginPage() {
 
       <form data-testid="login-form" onSubmit={handleSubmit} className="flex w-full flex-col gap-5">
         <h1 className="text-[24px] font-normal [font-family:var(--font-heading)]">{t('login.title')}</h1>
+        {showResetNotice && (
+          <p data-testid="login-reset-notice" role="status" className="text-sm">
+            {t('login.passwordResetNotice')}
+          </p>
+        )}
         <FormField
           id="email"
           label={t('common.email')}
@@ -80,6 +95,13 @@ export default function LoginPage() {
           onChange={setPassword}
           error={fieldErrors.password}
         />
+        <Link
+          href="/forgot-password"
+          data-testid="login-forgot-password-link"
+          className="-mt-3 self-end text-sm underline"
+        >
+          {t('login.forgotPasswordLink')}
+        </Link>
         {formError && (
           <p data-testid="login-form-error" className="text-sm text-red-700">
             {formError}

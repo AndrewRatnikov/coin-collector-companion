@@ -116,4 +116,23 @@ describe('LoginPage', () => {
       expect(document.getElementById('email-error')).not.toBeInTheDocument();
     });
   });
+
+  // backlog_password-management.md Step 3, task 3.9.
+  describe('forgot / reset password', () => {
+    it('links to /forgot-password', () => {
+      render(<LoginPage />);
+      expect(screen.getByTestId('login-forgot-password-link')).toHaveAttribute('href', '/forgot-password');
+    });
+
+    it('shows the password-reset notice only when arriving with ?reset=success', async () => {
+      window.history.pushState({}, '', '/login?reset=success');
+      const { unmount } = render(<LoginPage />);
+      expect(await screen.findByTestId('login-reset-notice')).toBeInTheDocument();
+      unmount();
+
+      window.history.pushState({}, '', '/login');
+      render(<LoginPage />);
+      expect(screen.queryByTestId('login-reset-notice')).not.toBeInTheDocument();
+    });
+  });
 });
