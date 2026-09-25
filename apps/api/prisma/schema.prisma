@@ -28,6 +28,7 @@ model User {
   ownerships     Ownership[]
   submittedCoins Coin[]      @relation("CoinSubmitter")
   refreshTokens  RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
   feedbacks      Feedback[]
 }
 
@@ -142,4 +143,19 @@ model Ownership {
   coin Coin @relation(fields: [coinId], references: [id])
 
   @@id([userId, coinId])
+}
+
+// backlog_password-management.md Step 3 (decision 8) — single-use, short-lived password
+// reset tokens. Only a sha256 hash of the raw token is stored, same as RefreshToken.
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

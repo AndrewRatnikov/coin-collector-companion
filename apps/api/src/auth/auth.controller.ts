@@ -1,6 +1,7 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, Req, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
+  ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
   ApiNoContentResponse,
@@ -14,15 +15,21 @@ import { AuthService, LoginResponse, RegisteredUser } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ForgotPasswordResponse, PasswordResetService } from './password-reset.service';
 import type { AuthenticatedUser } from './strategies/jwt.strategy';
 import { REFRESH_TOKEN_COOKIE_NAME, clearedRefreshTokenCookieOptions, refreshTokenCookieOptions } from './token.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly passwordResetService: PasswordResetService,
+  ) {}
 
   // SD D2 / backlog 2.4: tighter throttle than the app-wide default, scoped to just the two
   // credential-guessing-sensitive routes (not the whole controller — `me`/`refresh`/`logout`/
@@ -99,5 +106,30 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: 'Current password is incorrect, or no/invalid access token' })
   changePassword(@CurrentUser() user: AuthenticatedUser, @Body() dto: ChangePasswordDto): Promise<void> {
     return this.authService.changePassword(user.userId, dto);
+  }
+
+  // backlog_password-management.md Step 3, task 3.3 / decision 7: 3 requests per hour per
+  // IP, since every accepted request can send an email.
+  @Throttle({ default: { limit: 3, ttl: 3_600_000 } })
+  @Public()
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Email a password reset link, if the account exists' })
+  @ApiOkResponse({ description: 'Same generic response whether or not the email is registered' })
+  forgotPassword(@Body() dto: ForgotPasswordDto): Promise<ForgotPasswordResponse> {
+    return this.passwordResetService.forgotPassword(dto);
+  }
+
+  // Task 3.4. Same 5/min throttle as login: reset tokens are 256-bit random values, so this
+  // isn't guessable anyway, but there's no reason to allow unlimited attempts.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Public()
+  @Post('reset-password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Set a new password using a reset link token' })
+  @ApiNoContentResponse({ description: 'Password reset; all existing sessions are logged out' })
+  @ApiBadRequestResponse({ description: 'Invalid, expired, or already-used reset token' })
+  resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+    return this.passwordResetService.resetPassword(dto);
   }
 }

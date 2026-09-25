@@ -36,6 +36,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { PasswordResetService } from './password-reset.service';
 import { IS_PUBLIC_KEY } from './decorators/public.decorator';
 import { REFRESH_TOKEN_COOKIE_NAME } from './token.service';
 import type { AuthenticatedUser } from './strategies/jwt.strategy';
@@ -62,6 +63,10 @@ describe('AuthController', () => {
     refresh: jest.Mock;
     logout: jest.Mock;
   };
+  let mockPasswordResetService: {
+    forgotPassword: jest.Mock;
+    resetPassword: jest.Mock;
+  };
 
   beforeEach(async () => {
     mockAuthService = {
@@ -72,10 +77,17 @@ describe('AuthController', () => {
       refresh: jest.fn(),
       logout: jest.fn(),
     };
+    mockPasswordResetService = {
+      forgotPassword: jest.fn(),
+      resetPassword: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
-      providers: [{ provide: AuthService, useValue: mockAuthService }],
+      providers: [
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: PasswordResetService, useValue: mockPasswordResetService },
+      ],
     }).compile();
 
     controller = module.get(AuthController);
@@ -225,6 +237,40 @@ describe('AuthController', () => {
 
       expect(mockAuthService.logout).toHaveBeenCalledWith(undefined);
       expect(res.clearCookie).toHaveBeenCalledWith(REFRESH_TOKEN_COOKIE_NAME, expect.any(Object));
+    });
+  });
+
+  // backlog_password-management.md Step 3 (tasks 3.3, 3.4).
+  describe('forgotPassword / resetPassword', () => {
+    const reflector = new Reflector();
+
+    it('marks both routes as public', () => {
+      expect(reflector.get<boolean>(IS_PUBLIC_KEY, controller.forgotPassword)).toBe(true);
+      expect(reflector.get<boolean>(IS_PUBLIC_KEY, controller.resetPassword)).toBe(true);
+    });
+
+    it('throttles forgot-password to 3 requests per hour (decision 7)', () => {
+      expect(reflector.get<number>('THROTTLER:LIMITdefault', controller.forgotPassword)).toBe(3);
+      expect(reflector.get<number>('THROTTLER:TTLdefault', controller.forgotPassword)).toBe(3_600_000);
+    });
+
+    it('forgotPassword delegates to the service and returns its generic message', async () => {
+      const serviceResult = { message: 'generic' };
+      mockPasswordResetService.forgotPassword.mockResolvedValue(serviceResult);
+
+      const result = await controller.forgotPassword({ email: 'collector@example.com' });
+
+      expect(mockPasswordResetService.forgotPassword).toHaveBeenCalledWith({ email: 'collector@example.com' });
+      expect(result).toBe(serviceResult);
+    });
+
+    it('resetPassword delegates the dto to the service', async () => {
+      mockPasswordResetService.resetPassword.mockResolvedValue(undefined);
+      const dto = { token: 'raw-token', newPassword: 'new-password-123' };
+
+      await controller.resetPassword(dto);
+
+      expect(mockPasswordResetService.resetPassword).toHaveBeenCalledWith(dto);
     });
   });
 });
