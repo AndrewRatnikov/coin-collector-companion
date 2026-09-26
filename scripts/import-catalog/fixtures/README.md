@@ -14,6 +14,12 @@ against Wikipedia and standard Red Book mint-mark-by-year tables) and recovered 
 history (`git show 4c7795a~1:seed/templates/lincoln-wheat-cents.json`) rather than re-derived,
 since those facts don't change between v1 and v2 — only the schema shape does.
 
+**Specs and mintage:** file-level `specs` (19.05 mm, 3.11 g, bronze) with per-coin overrides for
+the 1943 steel cents and the 1944–1946 brass cents. Mintages are per year/mint from Wikipedia's
+"Lincoln cent mintage figures"; the 1922 No D and 1955 Doubled Die error varieties are `null`, since
+they were struck inside their parent issue's mintage and have no separate figure. Thickness is
+only set where a source gives it (1943 steel). Provenance is in the file's `sources` field.
+
 **Not yet included: images.** No `imageUrl`/`imageSource`/`imageLicense` data — Wikimedia Commons
 images need per-image license vetting via the `extmetadata` gate described in
 [docs/catalog-data-licensing.md](../../../docs/catalog-data-licensing.md) §2, which is separate

@@ -1,11 +1,17 @@
 {
-  "$schema-note": "Raw source-shaped fixture, pre-sanitization. mintMark/variety use null (no value) here on purpose \u2014 the import script (backlog Day 4, task 4.1) is responsible for normalizing null/undefined/placeholder strings to the DB-required empty string per system-design_v2.md #4.1/#4.3.",
+  "$schema-note": "Raw source-shaped fixture, pre-sanitization. mintMark/variety use null (no value) here on purpose — the import script (backlog Day 4, task 4.1) is responsible for normalizing null/undefined/placeholder strings to the DB-required empty string per system-design_v2.md #4.1/#4.3.",
   "sources": [
     {
       "type": "coin identity / mint-mark-by-year data",
       "origin": "Wikipedia \"Lincoln cent\" article (en.wikipedia.org/wiki/Lincoln_cent) plus standard Red Book (Whitman \"A Guide Book of United States Coins\") mint-mark-by-year cross-reference",
       "license": "Wikipedia text is CC BY-SA 4.0; the identity facts reproduced here (which year/mint-mark/variety combinations exist) are historical facts, not copyrightable expression -- no attribution obligation for the facts themselves, though the app footer still credits Wikipedia generally per PRD/system-design (task 5.2)",
       "note": "This list was originally authored and verified during the v1 build (see CLAUDE.md changelog, backlog item 3.2) and recovered from git history (commit 4c7795a~1:seed/templates/lincoln-wheat-cents.json) rather than re-derived from scratch, since the underlying year/mint-mark/variety facts do not change between v1 and v2 -- only the schema shape holding them does."
+    },
+    {
+      "type": "mintage figures and physical specs",
+      "origin": "Wikipedia \"Lincoln cent mintage figures\" (en.wikipedia.org/wiki/Lincoln_cent_mintage_figures) for per-year/mint mintages; \"Lincoln cent\" and \"1943 steel cent\" infoboxes for diameter/weight/composition",
+      "license": "Numeric facts, not copyrightable expression (same reasoning as the identity data above)",
+      "note": "Error varieties (1922 No D, 1955 Doubled Die) have mintage null: they were struck within their parent issue's mintage and have no separate official figure. Thickness is only set where a source gives it (1943 steel, 1.55 mm)."
     }
   ],
   "country": "USA",
@@ -15,858 +21,1047 @@
     1909,
     1958
   ],
+  "specs": {
+    "diameterMm": 19.05,
+    "weightG": 3.11,
+    "material": "Bronze (95% copper, 5% tin and zinc)"
+  },
   "coins": [
     {
       "year": 1909,
       "mintMark": null,
       "variety": "VDB",
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 27995000
     },
     {
       "year": 1909,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 72702618
     },
     {
       "year": 1909,
       "mintMark": "S",
       "variety": "VDB",
-      "isKeyDate": true
+      "isKeyDate": true,
+      "mintage": 484000
     },
     {
       "year": 1909,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": true
+      "isKeyDate": true,
+      "mintage": 1825000
     },
     {
       "year": 1910,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 146801218
     },
     {
       "year": 1910,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 6045000
     },
     {
       "year": 1911,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 101177787
     },
     {
       "year": 1911,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 12672000
     },
     {
       "year": 1911,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 4026000
     },
     {
       "year": 1912,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 68153060
     },
     {
       "year": 1912,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 10411000
     },
     {
       "year": 1912,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 4431000
     },
     {
       "year": 1913,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 76532352
     },
     {
       "year": 1913,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 15804000
     },
     {
       "year": 1913,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 6101000
     },
     {
       "year": 1914,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 75238432
     },
     {
       "year": 1914,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": true
+      "isKeyDate": true,
+      "mintage": 1193000
     },
     {
       "year": 1914,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 4137000
     },
     {
       "year": 1915,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 29092120
     },
     {
       "year": 1915,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 22050000
     },
     {
       "year": 1915,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 4833000
     },
     {
       "year": 1916,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 131832627
     },
     {
       "year": 1916,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 35956000
     },
     {
       "year": 1916,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 22510000
     },
     {
       "year": 1917,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 196429785
     },
     {
       "year": 1917,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 55120000
     },
     {
       "year": 1917,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 32620000
     },
     {
       "year": 1918,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 288104634
     },
     {
       "year": 1918,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 47830000
     },
     {
       "year": 1918,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 34680000
     },
     {
       "year": 1919,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 392021000
     },
     {
       "year": 1919,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 57154000
     },
     {
       "year": 1919,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 139760000
     },
     {
       "year": 1920,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 310165000
     },
     {
       "year": 1920,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 49280000
     },
     {
       "year": 1920,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 46220000
     },
     {
       "year": 1921,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 39157000
     },
     {
       "year": 1921,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 15274000
     },
     {
       "year": 1922,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 7160000
     },
     {
       "year": 1922,
       "mintMark": null,
       "variety": "No D",
-      "isKeyDate": true
+      "isKeyDate": true,
+      "mintage": null
     },
     {
       "year": 1923,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 74723000
     },
     {
       "year": 1923,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 8700000
     },
     {
       "year": 1924,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 75178000
     },
     {
       "year": 1924,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": true
+      "isKeyDate": true,
+      "mintage": 2520000
     },
     {
       "year": 1924,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 11696000
     },
     {
       "year": 1925,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 139949000
     },
     {
       "year": 1925,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 22580000
     },
     {
       "year": 1925,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 26380000
     },
     {
       "year": 1926,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 157088000
     },
     {
       "year": 1926,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 28020000
     },
     {
       "year": 1926,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 4550000
     },
     {
       "year": 1927,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 144440000
     },
     {
       "year": 1927,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 27170000
     },
     {
       "year": 1927,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 14276000
     },
     {
       "year": 1928,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 134116000
     },
     {
       "year": 1928,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 31170000
     },
     {
       "year": 1928,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 17266000
     },
     {
       "year": 1929,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 185262000
     },
     {
       "year": 1929,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 41730000
     },
     {
       "year": 1929,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 50148000
     },
     {
       "year": 1930,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 157415000
     },
     {
       "year": 1930,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 40100000
     },
     {
       "year": 1930,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 24286000
     },
     {
       "year": 1931,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 19396000
     },
     {
       "year": 1931,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 4480000
     },
     {
       "year": 1931,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": true
+      "isKeyDate": true,
+      "mintage": 866000
     },
     {
       "year": 1932,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 9062000
     },
     {
       "year": 1932,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 10500000
     },
     {
       "year": 1933,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 14360000
     },
     {
       "year": 1933,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 6200000
     },
     {
       "year": 1934,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 219080000
     },
     {
       "year": 1934,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 28446000
     },
     {
       "year": 1935,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 245388000
     },
     {
       "year": 1935,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 47000000
     },
     {
       "year": 1935,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 38702000
     },
     {
       "year": 1936,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 309632000
     },
     {
       "year": 1936,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 40620000
     },
     {
       "year": 1936,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 29130000
     },
     {
       "year": 1937,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 309170000
     },
     {
       "year": 1937,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 50430000
     },
     {
       "year": 1937,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 34500000
     },
     {
       "year": 1938,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 156682000
     },
     {
       "year": 1938,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 20010000
     },
     {
       "year": 1938,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 15180000
     },
     {
       "year": 1939,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 316466000
     },
     {
       "year": 1939,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 15160000
     },
     {
       "year": 1939,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 52070000
     },
     {
       "year": 1940,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 586810000
     },
     {
       "year": 1940,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 81390000
     },
     {
       "year": 1940,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 112940000
     },
     {
       "year": 1941,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 887018000
     },
     {
       "year": 1941,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 128700000
     },
     {
       "year": 1941,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 92360000
     },
     {
       "year": 1942,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 657796000
     },
     {
       "year": 1942,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 206698000
     },
     {
       "year": 1942,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 85590000
     },
     {
       "year": 1943,
       "mintMark": null,
       "variety": "Steel",
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 684628670,
+      "specs": {
+        "weightG": 2.7,
+        "thicknessMm": 1.55,
+        "material": "Zinc-plated steel"
+      }
     },
     {
       "year": 1943,
       "mintMark": "D",
       "variety": "Steel",
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 217660000,
+      "specs": {
+        "weightG": 2.7,
+        "thicknessMm": 1.55,
+        "material": "Zinc-plated steel"
+      }
     },
     {
       "year": 1943,
       "mintMark": "S",
       "variety": "Steel",
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 191550000,
+      "specs": {
+        "weightG": 2.7,
+        "thicknessMm": 1.55,
+        "material": "Zinc-plated steel"
+      }
     },
     {
       "year": 1944,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 1435000000,
+      "specs": {
+        "material": "Brass (95% copper, 5% zinc)"
+      }
     },
     {
       "year": 1944,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 430578000,
+      "specs": {
+        "material": "Brass (95% copper, 5% zinc)"
+      }
     },
     {
       "year": 1944,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 282760000,
+      "specs": {
+        "material": "Brass (95% copper, 5% zinc)"
+      }
     },
     {
       "year": 1945,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 1040515000,
+      "specs": {
+        "material": "Brass (95% copper, 5% zinc)"
+      }
     },
     {
       "year": 1945,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 266268000,
+      "specs": {
+        "material": "Brass (95% copper, 5% zinc)"
+      }
     },
     {
       "year": 1945,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 181770000,
+      "specs": {
+        "material": "Brass (95% copper, 5% zinc)"
+      }
     },
     {
       "year": 1946,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 991655000,
+      "specs": {
+        "material": "Brass (95% copper, 5% zinc)"
+      }
     },
     {
       "year": 1946,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 315690000,
+      "specs": {
+        "material": "Brass (95% copper, 5% zinc)"
+      }
     },
     {
       "year": 1946,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 198100000,
+      "specs": {
+        "material": "Brass (95% copper, 5% zinc)"
+      }
     },
     {
       "year": 1947,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 190555000
     },
     {
       "year": 1947,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 194750000
     },
     {
       "year": 1947,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 99000000
     },
     {
       "year": 1948,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 317570000
     },
     {
       "year": 1948,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 172637500
     },
     {
       "year": 1948,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 81735000
     },
     {
       "year": 1949,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 217775000
     },
     {
       "year": 1949,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 153132500
     },
     {
       "year": 1949,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 64290000
     },
     {
       "year": 1950,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 272635000
     },
     {
       "year": 1950,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 334950000
     },
     {
       "year": 1950,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 118505000
     },
     {
       "year": 1951,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 284576000
     },
     {
       "year": 1951,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 625355000
     },
     {
       "year": 1951,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 136010000
     },
     {
       "year": 1952,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 186775000
     },
     {
       "year": 1952,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 746130000
     },
     {
       "year": 1952,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 137800004
     },
     {
       "year": 1953,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 256755000
     },
     {
       "year": 1953,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 700515000
     },
     {
       "year": 1953,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 181835000
     },
     {
       "year": 1954,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 71640050
     },
     {
       "year": 1954,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 251552500
     },
     {
       "year": 1954,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 96190000
     },
     {
       "year": 1955,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 330580000
     },
     {
       "year": 1955,
       "mintMark": null,
       "variety": "Doubled Die",
-      "isKeyDate": true
+      "isKeyDate": true,
+      "mintage": null
     },
     {
       "year": 1955,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 563257500
     },
     {
       "year": 1955,
       "mintMark": "S",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 44610000
     },
     {
       "year": 1956,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 420745000
     },
     {
       "year": 1956,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 1098201100
     },
     {
       "year": 1957,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 282540000
     },
     {
       "year": 1957,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 1051342000
     },
     {
       "year": 1958,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 252525000
     },
     {
       "year": 1958,
       "mintMark": "D",
       "variety": null,
-      "isKeyDate": false
+      "isKeyDate": false,
+      "mintage": 800953300
     }
   ]
 }

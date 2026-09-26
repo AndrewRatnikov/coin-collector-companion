@@ -7,6 +7,7 @@ import { join, resolve } from 'node:path';
 import { PrismaClient } from '@prisma/client';
 import { sanitizeIdentityField } from '@coin-collector/shared';
 import { toImageFields } from './lib/image';
+import { toSpecFields } from './lib/specs';
 import type { RawFixtureFile } from './lib/types';
 
 const FIXTURES_DIR = join(__dirname, 'fixtures');
@@ -34,6 +35,7 @@ async function importFixtureFile(prisma: PrismaClient, filePath: string): Promis
       variety: sanitizeIdentityField(entry.variety),
     };
     const imageFields = toImageFields(entry.image);
+    const specFields = toSpecFields(raw, entry);
 
     const existing = await prisma.coin.findUnique({
       where: { country_denomination_year_mintMark_variety: naturalKey },
@@ -42,12 +44,12 @@ async function importFixtureFile(prisma: PrismaClient, filePath: string): Promis
     if (existing) {
       await prisma.coin.update({
         where: { id: existing.id },
-        data: { name: raw.name, ...imageFields },
+        data: { name: raw.name, ...imageFields, ...specFields },
       });
       updated++;
     } else {
       await prisma.coin.create({
-        data: { ...naturalKey, name: raw.name, ...imageFields },
+        data: { ...naturalKey, name: raw.name, ...imageFields, ...specFields },
       });
       created++;
     }

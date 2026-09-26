@@ -71,6 +71,17 @@ model Coin {
   imageUrl          String?
   imageSource       String?
   imageLicense      String?
+  // Physical specs + mintage. Float (Postgres double precision), not Decimal/BigInt:
+  // sets/collection return coins via `include: { coin: true }`, where Decimal would
+  // serialize as a string and BigInt would throw in JSON.stringify. Doubles hold
+  // integers exactly up to 2^53, far beyond any real mintage. All nullable: an
+  // unknown value is shown as absent, never guessed.
+  diameterMm        Float?
+  weightG           Float?
+  thicknessMm       Float?
+  material          String?
+  mintage           Float?
+  isKeyDate         Boolean    @default(false)
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 

@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Coin" ADD COLUMN     "diameterMm" DOUBLE PRECISION,
+ADD COLUMN     "isKeyDate" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "material" TEXT,
+ADD COLUMN     "mintage" DOUBLE PRECISION,
+ADD COLUMN     "thicknessMm" DOUBLE PRECISION,
+ADD COLUMN     "weightG" DOUBLE PRECISION;
