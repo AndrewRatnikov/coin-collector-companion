@@ -35,9 +35,11 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
     setIsLoggedIn(Boolean(getStoredToken()));
   }, []);
 
-  const { data: collection } = useCollection();
+  // Both are authenticated endpoints: gate them on isLoggedIn so an anonymous visitor
+  // doesn't fire two requests that can only 401 on this public page.
+  const { data: collection } = useCollection({}, { enabled: isLoggedIn });
   const { mutate: setOwnership } = useSetOwnership();
-  const { data: userSets } = useUserSets();
+  const { data: userSets } = useUserSets({ enabled: isLoggedIn });
 
   const setsToCheck = isLoggedIn ? (userSets ?? []) : [];
   const gapQueries = useQueries({

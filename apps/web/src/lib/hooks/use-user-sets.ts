@@ -9,10 +9,13 @@ import type {
 import { ApiError } from '@/lib/api-client';
 import { createSet, deleteSet, getSetGaps, getUserSets, patchSetCoins, renameSet } from '@/lib/user-sets-api';
 
-export function useUserSets() {
+// `enabled` lets a public page skip this authenticated call for an anonymous visitor
+// (see useCollection).
+export function useUserSets({ enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['user-sets'],
     queryFn: getUserSets,
+    enabled,
   });
 }
 
