@@ -3,10 +3,13 @@ import type { SetOwnershipResponse } from '@coin-collector/shared';
 import { ApiError } from '@/lib/api-client';
 import { getCollection, setOwnership, type CollectionFilters } from '@/lib/collection-api';
 
-export function useCollection(filters: CollectionFilters = {}) {
+// `enabled` lets a public page (e.g. /catalog/[coinId]) skip this authenticated call for
+// an anonymous visitor instead of firing a request that can only come back 401.
+export function useCollection(filters: CollectionFilters = {}, { enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: ['collection', filters],
     queryFn: () => getCollection(filters),
+    enabled,
   });
 }
 

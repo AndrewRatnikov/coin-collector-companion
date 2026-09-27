@@ -79,6 +79,15 @@ describe('use-user-sets hooks', () => {
       });
       expect(getUserSetsMock).toHaveBeenCalledTimes(1);
     });
+
+    it('does not call getUserSets when enabled is false', async () => {
+      const { wrapper } = makeWrapper();
+      const { result } = renderHook(() => useUserSets({ enabled: false }), { wrapper });
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(getUserSetsMock).not.toHaveBeenCalled();
+      expect(result.current.fetchStatus).toBe('idle');
+    });
   });
 
   describe('criterion 2: useSetGaps wraps getSetGaps and is disabled for an empty id', () => {

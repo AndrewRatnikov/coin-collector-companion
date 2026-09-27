@@ -413,6 +413,38 @@ describe('CoinDetailPage', () => {
     });
   });
 
+  describe('authenticated queries are gated on login (no 401s for anonymous visitors)', () => {
+    it('disables useCollection and useUserSets on every render when signed out', async () => {
+      getStoredTokenMock.mockReturnValue(null);
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_WITH_IMAGE as never }));
+      renderPage('coin-1');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-login-prompt')).toBeInTheDocument();
+      });
+      expect(useCollectionMock).toHaveBeenCalled();
+      for (const call of useCollectionMock.mock.calls) {
+        expect(call[1]).toEqual({ enabled: false });
+      }
+      expect(useUserSetsMock).toHaveBeenCalled();
+      for (const call of useUserSetsMock.mock.calls) {
+        expect(call[0]).toEqual({ enabled: false });
+      }
+    });
+
+    it('enables useCollection and useUserSets once a stored token is detected', async () => {
+      getStoredTokenMock.mockReturnValue('tok-abc');
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_WITH_IMAGE as never }));
+      renderPage('coin-1');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-owned-toggle')).toBeInTheDocument();
+      });
+      expect(useCollectionMock.mock.calls.at(-1)?.[1]).toEqual({ enabled: true });
+      expect(useUserSetsMock.mock.calls.at(-1)?.[0]).toEqual({ enabled: true });
+    });
+  });
+
   describe('run_20260728_071525 criterion 5: "Appears in your sets" section', () => {
     it('renders coin-detail-sets-list with one coin-detail-set-item per own set that contains this coin, when signed in', async () => {
       getStoredTokenMock.mockReturnValue('tok-abc');

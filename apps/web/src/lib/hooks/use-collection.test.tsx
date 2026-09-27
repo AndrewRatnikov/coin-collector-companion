@@ -80,6 +80,15 @@ describe('use-collection hooks', () => {
         expect(getCollectionMock).toHaveBeenCalledWith({});
       });
     });
+
+    it('does not call getCollection when enabled is false', async () => {
+      const { wrapper } = makeWrapper();
+      const { result } = renderHook(() => useCollection({}, { enabled: false }), { wrapper });
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(getCollectionMock).not.toHaveBeenCalled();
+      expect(result.current.fetchStatus).toBe('idle');
+    });
   });
 
   describe('criterion 3/8: useSetOwnership calls setOwnership with an explicit owned value and invalidates both the user-sets and collection query prefixes', () => {
