@@ -12,6 +12,7 @@ import { getStoredToken } from '@/lib/auth-token';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
+import type { MessageKey } from '@/lib/i18n/locales/en';
 
 export default function CoinDetailPage({ params }: { params: Promise<{ coinId: string }> }) {
   const { t, locale } = useTranslation();
@@ -50,6 +51,22 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
   if (coinId === null) {
     return <main data-testid="coin-detail-page" />;
   }
+
+  // Specs are optional catalog data: a row only renders when the value is known,
+  // so a sparsely-filled coin doesn't show a wall of dashes.
+  const numberFormat = new Intl.NumberFormat(locale);
+  const withUnit = (value: number | null, unit: string) =>
+    value === null ? null : `${numberFormat.format(value)}${unit}`;
+  const allSpecRows: { testId: string; labelKey: MessageKey; value: string | null }[] = coin
+    ? [
+        { testId: 'diameter', labelKey: 'coinDetail.diameter', value: withUnit(coin.diameterMm, ' mm') },
+        { testId: 'weight', labelKey: 'coinDetail.weight', value: withUnit(coin.weightG, ' g') },
+        { testId: 'thickness', labelKey: 'coinDetail.thickness', value: withUnit(coin.thicknessMm, ' mm') },
+        { testId: 'material', labelKey: 'coinDetail.material', value: coin.material },
+        { testId: 'mintage', labelKey: 'coinDetail.mintage', value: withUnit(coin.mintage, '') },
+      ]
+    : [];
+  const specRows = allSpecRows.filter((row) => row.value !== null);
 
   const coinIsOwned = collection?.some((item) => item.coinId === coinId) ?? false;
   const coinAppearsIn = setsToCheck.filter((_set, index) => {
@@ -107,6 +124,15 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
             </h1>
             {coin.variety && <p className="text-sm text-[color:var(--color-neutral-600)]">{coin.variety}</p>}
 
+            {coin.isKeyDate && (
+              <span
+                data-testid="coin-detail-key-date-badge"
+                className="w-fit rounded-[2px] bg-[color:var(--color-accent-100)] px-2 py-1 text-xs font-medium text-[color:var(--color-accent-800)]"
+              >
+                ★ {t('coinDetail.keyDateBadge')}
+              </span>
+            )}
+
             {coin.status !== 'approved' && (
               <span
                 data-testid="coin-detail-pending-badge"
@@ -153,6 +179,17 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
                   {coin.variety || '—'}
                 </dd>
               </div>
+              {specRows.map((row) => (
+                <div key={row.testId} className="flex items-center justify-between py-2">
+                  <dt className="text-[color:var(--color-neutral-600)]">{t(row.labelKey)}</dt>
+                  <dd
+                    data-testid={`coin-detail-${row.testId}`}
+                    className="text-right font-mono tabular-nums text-[color:var(--color-text)]"
+                  >
+                    {row.value}
+                  </dd>
+                </div>
+              ))}
             </dl>
 
             {coin.imageUrl && (

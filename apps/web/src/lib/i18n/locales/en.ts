@@ -125,6 +125,12 @@ const enShape = {
   'coinDetail.inCollection': 'In your collection',
   'coinDetail.loginPrompt': 'Log in to record this coin in your collection.',
   'coinDetail.appearsInSets': 'Appears in your sets',
+  'coinDetail.keyDateBadge': 'Key date',
+  'coinDetail.diameter': 'Diameter',
+  'coinDetail.weight': 'Weight',
+  'coinDetail.thickness': 'Thickness',
+  'coinDetail.material': 'Material',
+  'coinDetail.mintage': 'Mintage',
 
   // submit coin form
   'submitCoinForm.submit': 'Submit coin',

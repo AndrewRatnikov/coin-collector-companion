@@ -32,6 +32,10 @@ For each fixture file (shape: `../fixtures/README.md`):
   (`docs/catalog-data-licensing.md` §2): only `Copyrighted: false` or `AttributionRequired: false`
   images get an `imageUrl`/`imageSource`/`imageLicense`; anything else (e.g. CC BY/BY-SA) is
   skipped, since there's no per-image attribution UI to satisfy it
+- merges physical specs (`diameterMm`, `weightG`, `thicknessMm`, `material`): a fixture's
+  file-level `specs` object is the default, and a coin's own `specs` overrides it field by field
+  (e.g. the 1943 steel cent). Per-coin `mintage` and `isKeyDate` are written as-is. Anything
+  missing imports as `null` (or `false` for `isKeyDate`) and is simply not shown in the UI
 - upserts each coin by its natural key (`country`, `denomination`, `year`, `mintMark`, `variety`),
   so re-running (or resuming after a failure) is a no-op for rows already imported
 

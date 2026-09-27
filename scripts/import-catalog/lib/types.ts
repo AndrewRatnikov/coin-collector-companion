@@ -13,14 +13,25 @@ export interface RawCoinImage {
   attributionRequired?: boolean;
 }
 
+// Physical specs. Set once at file level (the common case: a coin type shares one
+// spec for most years) and overridden per coin where it differs (e.g. the 1943
+// steel cent). A missing field means "unknown" and imports as null.
+export interface RawCoinSpecs {
+  diameterMm?: number | null;
+  weightG?: number | null;
+  thicknessMm?: number | null;
+  material?: string | null;
+}
+
 export interface RawCoinEntry {
   year: number;
   mintMark?: string | null;
   variety?: string | null;
-  // Not stored: v2's `Coin` model has no key-date column (that was a v1 `SetSlot`
-  // concept). Carried in fixtures for future canonical-set/seed-template authoring,
-  // not for this task.
   isKeyDate?: boolean;
+  // Coins struck for this exact year/mint/variety; null when unknown or not
+  // separately recorded (e.g. error varieties counted inside their parent mintage).
+  mintage?: number | null;
+  specs?: RawCoinSpecs;
   image?: RawCoinImage | null;
 }
 
@@ -28,5 +39,6 @@ export interface RawFixtureFile {
   country: string;
   denomination: string;
   name: string;
+  specs?: RawCoinSpecs;
   coins: RawCoinEntry[];
 }

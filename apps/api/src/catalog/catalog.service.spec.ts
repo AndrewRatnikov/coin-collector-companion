@@ -182,6 +182,15 @@ describe('CatalogService', () => {
       expect((query as unknown as Record<string, unknown>).status).toBeUndefined();
     });
 
+    it('the select clause includes physical specs, mintage, and key-date flag', async () => {
+      await service.findAll(makeQuery());
+
+      const { select } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      for (const field of ['diameterMm', 'weightG', 'thicknessMm', 'material', 'mintage', 'isKeyDate']) {
+        expect(select[field]).toBe(true);
+      }
+    });
+
     it('the select clause omits submittedByUserId — GET /catalog is public and unauthenticated', async () => {
       await service.findAll(makeQuery());
 

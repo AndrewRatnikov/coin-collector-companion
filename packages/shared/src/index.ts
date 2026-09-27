@@ -25,6 +25,12 @@ export interface CatalogCoin {
   imageUrl: string | null;
   imageSource: string | null;
   imageLicense: string | null;
+  diameterMm: number | null;
+  weightG: number | null;
+  thicknessMm: number | null;
+  material: string | null;
+  mintage: number | null;
+  isKeyDate: boolean;
   status: CoinStatus;
   submittedAt: Date | null;
   createdAt: Date;

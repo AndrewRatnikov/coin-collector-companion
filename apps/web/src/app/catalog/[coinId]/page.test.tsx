@@ -116,6 +116,12 @@ const COIN_WITH_IMAGE: CatalogCoin = {
   imageUrl: 'https://upload.wikimedia.org/coin.jpg',
   imageSource: 'Wikimedia Commons',
   imageLicense: 'CC BY-SA 4.0',
+  diameterMm: null,
+  weightG: null,
+  thicknessMm: null,
+  material: null,
+  mintage: null,
+  isKeyDate: false,
   status: 'approved',
   submittedAt: null,
   createdAt: new Date(),
@@ -214,6 +220,61 @@ describe('CoinDetailPage', () => {
       expect(screen.getByTestId('coin-detail-mint-mark')).toHaveTextContent('D');
       expect(screen.getByTestId('coin-detail-variety')).toHaveTextContent('Type 2');
       expect(useCoinMock).toHaveBeenCalledWith('coin-1');
+    });
+  });
+
+  describe('physical specs and mintage', () => {
+    it('renders each known spec with its unit and a grouped mintage', async () => {
+      useCoinMock.mockReturnValue(
+        queryResult({
+          data: {
+            ...COIN_NO_IMAGE,
+            diameterMm: 19.05,
+            weightG: 3.11,
+            thicknessMm: 1.55,
+            material: 'Bronze (95% copper, 5% tin and zinc)',
+            mintage: 484000,
+          },
+        }),
+      );
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-diameter')).toHaveTextContent('19.05 mm');
+      });
+      expect(screen.getByTestId('coin-detail-weight')).toHaveTextContent('3.11 g');
+      expect(screen.getByTestId('coin-detail-thickness')).toHaveTextContent('1.55 mm');
+      expect(screen.getByTestId('coin-detail-material')).toHaveTextContent('Bronze (95% copper, 5% tin and zinc)');
+      expect(screen.getByTestId('coin-detail-mintage')).toHaveTextContent('484,000');
+    });
+
+    it('omits rows for unknown specs instead of rendering placeholders', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: { ...COIN_NO_IMAGE, diameterMm: 19.05 } }));
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-diameter')).toBeInTheDocument();
+      });
+      for (const testId of ['weight', 'thickness', 'material', 'mintage']) {
+        expect(screen.queryByTestId(`coin-detail-${testId}`)).not.toBeInTheDocument();
+      }
+    });
+
+    it('shows the key-date badge only for key-date coins', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: { ...COIN_NO_IMAGE, isKeyDate: true } }));
+      const { unmount } = renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-key-date-badge')).toHaveTextContent('Key date');
+      });
+      unmount();
+
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE }));
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-label')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('coin-detail-key-date-badge')).not.toBeInTheDocument();
     });
   });
 

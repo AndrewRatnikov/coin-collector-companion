@@ -120,6 +120,12 @@ const esShape: Record<MessageKey, string> = {
   'coinDetail.inCollection': 'En tu colección',
   'coinDetail.loginPrompt': 'Inicia sesión para registrar esta moneda en tu colección.',
   'coinDetail.appearsInSets': 'Aparece en tus colecciones',
+  'coinDetail.keyDateBadge': 'Fecha clave',
+  'coinDetail.diameter': 'Diámetro',
+  'coinDetail.weight': 'Peso',
+  'coinDetail.thickness': 'Grosor',
+  'coinDetail.material': 'Material',
+  'coinDetail.mintage': 'Tirada',
 
   // submit coin form
   'submitCoinForm.submit': 'Enviar moneda',
