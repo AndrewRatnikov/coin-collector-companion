@@ -1,0 +1,165 @@
+{
+  "$schema-note": "Raw source-shaped fixture, pre-sanitization. mintMark is null (Ukrainian coins carry no mint mark). `variety` is null for a denomination's main type and set only to tell apart a second type struck in the same years (e.g. brass-plated steel vs aluminium bronze 10 kopiyok in 2014-2016), since the Coin natural key has no per-coin name.",
+  "sources": [
+    {
+      "type": "scope (which coin types and year ranges to include)",
+      "origin": "uCoin.net catalog: Ukraine, State of Ukraine 1992-2026, 'Circulation coins' filter (en.ucoin.net/catalog/?country=ukraine&period=54&type=1), 26 types as of 2026-09-28",
+      "license": "uCoin's footer prohibits republishing its text and images, so nothing from uCoin is copied: only its list of types and year ranges was used to decide scope. No uCoin images."
+    },
+    {
+      "type": "which years were struck, mintages, physical specs",
+      "origin": "Ukrainian Wikipedia 'Монети української гривні' (uk.wikipedia.org/wiki/Монети_української_гривні): per-year mintage table by denomination and the type spec tables; 1-hryvnia details cross-checked against '1 гривня (монета)'",
+      "license": "CC BY-SA 4.0 text; only facts (years, mintages, specs) are reproduced, which aren't copyrightable (docs/catalog-data-licensing.md §1)."
+    }
+  ],
+  "rules-note": "Year rules: a year is included when it falls inside one of uCoin's type ranges and Wikipedia's table shows the coin was struck that year. Probe strikes (Wikipedia '*', e.g. 1992 1 hryvnia, 150 pieces) are excluded. Set-only strikes ('**') are included with the set mintage. Coins officially not issued but known to exist ('***') are included. A year's mintage is only assigned when uCoin lists a single type for that denomination and year; where two types overlap, the table has one combined figure, so both entries get null. 1992 mintages for 10 and 25 kopiyok add the Italian and Luhansk strikes together. Values Wikipedia marks '?' are null.",
+  "country": "Ukraine",
+  "denomination": "2 Kopiyky",
+  "name": "Ukraine 2 Kopiyky",
+  "specs": {
+    "diameterMm": 17.3,
+    "weightG": 1.8,
+    "thicknessMm": null,
+    "material": "Stainless steel"
+  },
+  "coins": [
+    {
+      "year": 1993,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 240000000,
+      "specs": {
+        "diameterMm": 17.3,
+        "weightG": 0.64,
+        "thicknessMm": null,
+        "material": "Aluminium"
+      }
+    },
+    {
+      "year": 1994,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 120000000,
+      "specs": {
+        "diameterMm": 17.3,
+        "weightG": 0.64,
+        "thicknessMm": null,
+        "material": "Aluminium"
+      }
+    },
+    {
+      "year": 1996,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 7000,
+      "specs": {
+        "diameterMm": 17.3,
+        "weightG": 0.64,
+        "thicknessMm": null,
+        "material": "Aluminium"
+      }
+    },
+    {
+      "year": 2001,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 90000000
+    },
+    {
+      "year": 2002,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 30000000
+    },
+    {
+      "year": 2003,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 5000
+    },
+    {
+      "year": 2004,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 70000000
+    },
+    {
+      "year": 2005,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 140000000
+    },
+    {
+      "year": 2006,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 50000000
+    },
+    {
+      "year": 2007,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 90000000
+    },
+    {
+      "year": 2008,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 140000000
+    },
+    {
+      "year": 2009,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 125000000
+    },
+    {
+      "year": 2010,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 90000000
+    },
+    {
+      "year": 2011,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 55000000
+    },
+    {
+      "year": 2012,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 75000000
+    },
+    {
+      "year": 2013,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 10000
+    },
+    {
+      "year": 2014,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 10000
+    },
+    {
+      "year": 2015,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 10000
+    },
+    {
+      "year": 2016,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 10000
+    },
+    {
+      "year": 2018,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 10000
+    }
+  ]
+}
