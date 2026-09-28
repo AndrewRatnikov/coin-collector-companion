@@ -1,0 +1,56 @@
+{
+  "$schema-note": "Raw source-shaped fixture, pre-sanitization. mintMark is null on purpose (NBU coins carry no mint mark); the import script normalizes it to ''. Each coin's subject lives in `variety` because the Coin natural key (country, denomination, year, mintMark, variety) has no per-coin name, and several commemoratives share a year and denomination.",
+  "sources": [
+    {
+      "type": "scope (which coins to include)",
+      "origin": "uCoin.net catalog: Ukraine, State of Ukraine 1992-2026, 'Commemorative coins' filter (en.ucoin.net/catalog/?country=ukraine&period=54&type=2), 31 coins as of 2026-09-28",
+      "license": "uCoin's footer prohibits republishing its text and images, so nothing from uCoin is copied here: it was used only to decide which coins are in scope. Subject names are our own English renderings of the NBU's official Ukrainian titles; no uCoin images."
+    },
+    {
+      "type": "coin identity, issue years, mintages and physical specs",
+      "origin": "Ukrainian Wikipedia '1 гривня (монета)' (uk.wikipedia.org/wiki/1_гривня_(монета)), which cites National Bank of Ukraine releases",
+      "license": "Wikipedia text is CC BY-SA 4.0; only facts (subject, year, mintage, specs) are reproduced, which aren't copyrightable (docs/catalog-data-licensing.md §1); the app footer's Wikipedia credit covers attribution."
+    }
+  ],
+  "country": "Ukraine",
+  "denomination": "1 Hryvnia",
+  "name": "Ukraine Commemorative 1 Hryvnia",
+  "specs": {
+    "diameterMm": 26,
+    "weightG": 6.8,
+    "thicknessMm": 1.85,
+    "material": "Aluminium bronze"
+  },
+  "coins": [
+    {
+      "year": 2004,
+      "mintMark": null,
+      "variety": "60th Anniversary of the Liberation of Ukraine",
+      "mintage": 5000000
+    },
+    {
+      "year": 2005,
+      "mintMark": null,
+      "variety": "60th Anniversary of Victory in WWII",
+      "mintage": 5000000
+    },
+    {
+      "year": 2010,
+      "mintMark": null,
+      "variety": "65th Anniversary of Victory in WWII",
+      "mintage": 5000000
+    },
+    {
+      "year": 2012,
+      "mintMark": null,
+      "variety": "UEFA Euro 2012 Final Tournament",
+      "mintage": 5000000
+    },
+    {
+      "year": 2015,
+      "mintMark": null,
+      "variety": "70th Anniversary of Victory in WWII",
+      "mintage": 7000000
+    }
+  ]
+}

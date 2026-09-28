@@ -1,0 +1,188 @@
+{
+  "$schema-note": "Raw source-shaped fixture, pre-sanitization. mintMark is null on purpose (NBU coins carry no mint mark); the import script normalizes it to ''. Each coin's subject lives in `variety` because the Coin natural key (country, denomination, year, mintMark, variety) has no per-coin name, and several commemoratives share a year and denomination.",
+  "sources": [
+    {
+      "type": "scope (which coins to include)",
+      "origin": "uCoin.net catalog: Ukraine, State of Ukraine 1992-2026, 'Commemorative coins' filter (en.ucoin.net/catalog/?country=ukraine&period=54&type=2), 31 coins as of 2026-09-28",
+      "license": "uCoin's footer prohibits republishing its text and images, so nothing from uCoin is copied here: it was used only to decide which coins are in scope. Subject names are our own English renderings of the NBU's official Ukrainian titles; no uCoin images."
+    },
+    {
+      "type": "coin identity, issue years, mintages and physical specs",
+      "origin": "Ukrainian Wikipedia '10 гривень (монета)' (uk.wikipedia.org/wiki/10_гривень_(монета)), which cites National Bank of Ukraine releases",
+      "license": "Wikipedia text is CC BY-SA 4.0; only facts (subject, year, mintage, specs) are reproduced, which aren't copyrightable (docs/catalog-data-licensing.md §1); the app footer's Wikipedia credit covers attribution."
+    },
+    {
+      "type": "cross-check",
+      "origin": "NV Business report on the NBU's 28 July 2026 issue of the 'In Memory of Those Executed, Tortured or Killed in Captivity' coin (biz.nv.ua)",
+      "license": "Used only to confirm the 2,000,000 mintage and zinc-alloy/nickel-plated composition; nothing reproduced."
+    }
+  ],
+  "specs-note": "Covers only the second-type (2022+) 23.5 mm circulating commemoratives. The 14 first-type 30 mm / 12.4 g coins of 2018-2022 aren't in uCoin's 'Commemorative coins' list and are not included here.",
+  "country": "Ukraine",
+  "denomination": "10 Hryvnias",
+  "name": "Ukraine Commemorative 10 Hryvnias",
+  "specs": {
+    "diameterMm": 23.5,
+    "weightG": 6.4,
+    "thicknessMm": 2.3,
+    "material": "Nickel-plated zinc alloy"
+  },
+  "coins": [
+    {
+      "year": 2022,
+      "mintMark": null,
+      "variety": "Territorial Defense Forces of the Armed Forces of Ukraine",
+      "mintage": 10000000
+    },
+    {
+      "year": 2023,
+      "mintMark": null,
+      "variety": "Air Defense: A Reliable Shield of Ukraine",
+      "mintage": 10000000
+    },
+    {
+      "year": 2023,
+      "mintMark": null,
+      "variety": "Antonivskyi Bridge",
+      "mintage": 10000000
+    },
+    {
+      "year": 2023,
+      "mintMark": null,
+      "variety": "Joint Forces Command of the Armed Forces of Ukraine",
+      "mintage": 10000000
+    },
+    {
+      "year": 2023,
+      "mintMark": null,
+      "variety": "Support Forces of the Armed Forces of Ukraine",
+      "mintage": 10000000
+    },
+    {
+      "year": 2024,
+      "mintMark": null,
+      "variety": "Logistics Forces of the Armed Forces of Ukraine",
+      "mintage": 10000000
+    },
+    {
+      "year": 2024,
+      "mintMark": null,
+      "variety": "Medical Forces of the Armed Forces of Ukraine",
+      "mintage": 10000000
+    },
+    {
+      "year": 2024,
+      "mintMark": null,
+      "variety": "Signal and Cyber Security Troops of the Armed Forces of Ukraine",
+      "mintage": 10000000
+    },
+    {
+      "year": 2024,
+      "mintMark": null,
+      "variety": "State Special Transport Service",
+      "mintage": 10000000
+    },
+    {
+      "year": 2025,
+      "mintMark": null,
+      "variety": "National Guard of Ukraine",
+      "mintage": 10000000
+    },
+    {
+      "year": 2025,
+      "mintMark": null,
+      "variety": "National Police of Ukraine",
+      "mintage": 10000000
+    },
+    {
+      "year": 2025,
+      "mintMark": null,
+      "variety": "State Emergency Service of Ukraine",
+      "mintage": 10000000
+    },
+    {
+      "year": 2025,
+      "mintMark": null,
+      "variety": "Unmanned Systems Forces of the Armed Forces of Ukraine",
+      "mintage": 10000000
+    },
+    {
+      "year": 2025,
+      "mintMark": null,
+      "variety": "We Are Strong. We Are Together: Autonomous Republic of Crimea",
+      "mintage": 2000000
+    },
+    {
+      "year": 2025,
+      "mintMark": null,
+      "variety": "We Are Strong. We Are Together: Donetsk Oblast",
+      "mintage": 2000000
+    },
+    {
+      "year": 2025,
+      "mintMark": null,
+      "variety": "We Are Strong. We Are Together: Luhansk Oblast",
+      "mintage": 2000000
+    },
+    {
+      "year": 2026,
+      "mintMark": null,
+      "variety": "In Memory of Those Executed, Tortured or Killed in Captivity",
+      "mintage": 2000000
+    },
+    {
+      "year": 2026,
+      "mintMark": null,
+      "variety": "We Are Strong. We Are Together: Chernihiv Oblast",
+      "mintage": 2000000
+    },
+    {
+      "year": 2026,
+      "mintMark": null,
+      "variety": "We Are Strong. We Are Together: Dnipropetrovsk Oblast",
+      "mintage": 2000000
+    },
+    {
+      "year": 2026,
+      "mintMark": null,
+      "variety": "We Are Strong. We Are Together: Kharkiv Oblast",
+      "mintage": 2000000
+    },
+    {
+      "year": 2026,
+      "mintMark": null,
+      "variety": "We Are Strong. We Are Together: Kherson Oblast",
+      "mintage": 2000000
+    },
+    {
+      "year": 2026,
+      "mintMark": null,
+      "variety": "We Are Strong. We Are Together: Kirovohrad Oblast",
+      "mintage": 2000000
+    },
+    {
+      "year": 2026,
+      "mintMark": null,
+      "variety": "We Are Strong. We Are Together: Mykolaiv Oblast",
+      "mintage": 2000000
+    },
+    {
+      "year": 2026,
+      "mintMark": null,
+      "variety": "We Are Strong. We Are Together: Odesa Oblast",
+      "mintage": 2000000
+    },
+    {
+      "year": 2026,
+      "mintMark": null,
+      "variety": "We Are Strong. We Are Together: Sumy Oblast",
+      "mintage": 2000000
+    },
+    {
+      "year": 2026,
+      "mintMark": null,
+      "variety": "We Are Strong. We Are Together: Zaporizhzhia Oblast",
+      "mintage": 2000000
+    }
+  ]
+}

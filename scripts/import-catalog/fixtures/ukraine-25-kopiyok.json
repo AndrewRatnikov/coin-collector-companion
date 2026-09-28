@@ -1,0 +1,184 @@
+{
+  "$schema-note": "Raw source-shaped fixture, pre-sanitization. mintMark is null (Ukrainian coins carry no mint mark). `variety` is null for a denomination's main type and set only to tell apart a second type struck in the same years (e.g. brass-plated steel vs aluminium bronze 10 kopiyok in 2014-2016), since the Coin natural key has no per-coin name.",
+  "sources": [
+    {
+      "type": "scope (which coin types and year ranges to include)",
+      "origin": "uCoin.net catalog: Ukraine, State of Ukraine 1992-2026, 'Circulation coins' filter (en.ucoin.net/catalog/?country=ukraine&period=54&type=1), 26 types as of 2026-09-28",
+      "license": "uCoin's footer prohibits republishing its text and images, so nothing from uCoin is copied: only its list of types and year ranges was used to decide scope. No uCoin images."
+    },
+    {
+      "type": "which years were struck, mintages, physical specs",
+      "origin": "Ukrainian Wikipedia 'Монети української гривні' (uk.wikipedia.org/wiki/Монети_української_гривні): per-year mintage table by denomination and the type spec tables; 1-hryvnia details cross-checked against '1 гривня (монета)'",
+      "license": "CC BY-SA 4.0 text; only facts (years, mintages, specs) are reproduced, which aren't copyrightable (docs/catalog-data-licensing.md §1)."
+    }
+  ],
+  "rules-note": "Year rules: a year is included when it falls inside one of uCoin's type ranges and Wikipedia's table shows the coin was struck that year. Probe strikes (Wikipedia '*', e.g. 1992 1 hryvnia, 150 pieces) are excluded. Set-only strikes ('**') are included with the set mintage. Coins officially not issued but known to exist ('***') are included. A year's mintage is only assigned when uCoin lists a single type for that denomination and year; where two types overlap, the table has one combined figure, so both entries get null. 1992 mintages for 10 and 25 kopiyok add the Italian and Luhansk strikes together. Values Wikipedia marks '?' are null.",
+  "types-note": "Main type (variety null) is aluminium bronze; 'English strike' is the 1992 English-struck issue (mintage unknown); 'Brass-plated steel' is the 2014-2018 steel type.",
+  "country": "Ukraine",
+  "denomination": "25 Kopiyok",
+  "name": "Ukraine 25 Kopiyok",
+  "specs": {
+    "diameterMm": 20.8,
+    "weightG": 2.9,
+    "thicknessMm": 1.35,
+    "material": "Aluminium bronze"
+  },
+  "coins": [
+    {
+      "year": 1992,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 482000000
+    },
+    {
+      "year": 1992,
+      "mintMark": null,
+      "variety": "English strike",
+      "mintage": null
+    },
+    {
+      "year": 1994,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 80000000
+    },
+    {
+      "year": 1995,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 20000
+    },
+    {
+      "year": 1996,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 38000000
+    },
+    {
+      "year": 2001,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 5000
+    },
+    {
+      "year": 2003,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 5000
+    },
+    {
+      "year": 2006,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 100000000
+    },
+    {
+      "year": 2007,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 70000000
+    },
+    {
+      "year": 2008,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 90000000
+    },
+    {
+      "year": 2009,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 170000000
+    },
+    {
+      "year": 2010,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 120000000
+    },
+    {
+      "year": 2011,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 70000000
+    },
+    {
+      "year": 2012,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 135000000
+    },
+    {
+      "year": 2013,
+      "mintMark": null,
+      "variety": null,
+      "mintage": 180000000
+    },
+    {
+      "year": 2014,
+      "mintMark": null,
+      "variety": null,
+      "mintage": null
+    },
+    {
+      "year": 2014,
+      "mintMark": null,
+      "variety": "Brass-plated steel",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 20.8,
+        "weightG": 2.9,
+        "thicknessMm": 1.35,
+        "material": "Brass-plated steel"
+      }
+    },
+    {
+      "year": 2015,
+      "mintMark": null,
+      "variety": null,
+      "mintage": null
+    },
+    {
+      "year": 2015,
+      "mintMark": null,
+      "variety": "Brass-plated steel",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 20.8,
+        "weightG": 2.9,
+        "thicknessMm": 1.35,
+        "material": "Brass-plated steel"
+      }
+    },
+    {
+      "year": 2016,
+      "mintMark": null,
+      "variety": null,
+      "mintage": null
+    },
+    {
+      "year": 2016,
+      "mintMark": null,
+      "variety": "Brass-plated steel",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 20.8,
+        "weightG": 2.9,
+        "thicknessMm": 1.35,
+        "material": "Brass-plated steel"
+      }
+    },
+    {
+      "year": 2018,
+      "mintMark": null,
+      "variety": "Brass-plated steel",
+      "mintage": 10000,
+      "specs": {
+        "diameterMm": 20.8,
+        "weightG": 2.9,
+        "thicknessMm": 1.35,
+        "material": "Brass-plated steel"
+      }
+    }
+  ]
+}
