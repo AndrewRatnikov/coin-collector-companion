@@ -1,0 +1,31 @@
+{
+  "$comment": "Read by the AI Orchestrator's Verify stage (.claude/scripts/verify.py) from the ORIGINAL branch, so a run can't weaken its own checks. Mirrors .github/workflows/ci.yml, plus the web tests and both builds that CI doesn't run. Steps run in order in a fresh worktree; database steps get a throwaway Postgres (Docker, or VERIFY_DATABASE_URL), never the real one.",
+  "install": "pnpm install --frozen-lockfile",
+  "env": {
+    "JWT_SECRET": "verify-secret-not-for-prod",
+    "CORS_ORIGIN": "http://localhost:3000",
+    "NEXT_PUBLIC_API_URL": "http://localhost:4000/api"
+  },
+  "database": { "provider": "docker", "image": "postgres:16-alpine", "env": "DATABASE_URL" },
+  "steps": [
+    { "name": "lint", "run": "pnpm lint" },
+    { "name": "shared build", "run": "pnpm --filter @coin-collector/shared build" },
+    { "name": "prisma generate", "run": "pnpm --filter api exec prisma generate" },
+    { "name": "typecheck", "run": "pnpm --filter @coin-collector/shared typecheck && pnpm --filter api typecheck && pnpm --filter web typecheck" },
+    { "name": "api build (as Render builds it)", "run": "pnpm --filter api build" },
+    { "name": "web build", "run": "pnpm --filter web build", "timeout": 900 },
+    { "name": "api unit tests", "run": "pnpm --filter api test" },
+    { "name": "web unit tests", "run": "pnpm --filter web test" },
+    { "name": "migrations apply to a fresh database", "run": "pnpm --filter api exec prisma migrate deploy", "needs": "database" },
+    { "name": "schema.prisma matches migrations", "run": "cd apps/api && pnpm exec prisma migrate diff --from-url \"$DATABASE_URL\" --to-schema-datamodel prisma/schema.prisma --exit-code", "needs": "database",
+      "hint": "schema.prisma has changes that no migration creates. Add a migration (prisma migrate dev --create-only) for them." },
+    { "name": "api e2e", "run": "pnpm --filter api test:e2e", "needs": "database" }
+  ],
+  "migrations": { "dir": "apps/api/prisma/migrations" },
+  "realDataCheck": {
+    "$comment": "Optional. When the branch adds migrations and NEON_API_KEY + NEON_PROJECT_ID are available (env or ~/.config/ai-orchestrator/neon.env), creates a temporary Neon branch (a copy of the real data), applies the migrations there, checks for drift, and deletes the branch.",
+    "provider": "neon",
+    "workdir": "apps/api",
+    "schema": "prisma/schema.prisma"
+  }
+}
