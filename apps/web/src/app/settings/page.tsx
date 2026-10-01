@@ -6,6 +6,7 @@ import { RequireAuth } from '@/components/auth/require-auth';
 import { FormField } from '@/components/auth/form-field';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { SettingsTabs } from '@/components/layout/settings-tabs';
+import { DeleteAccountSection } from '@/components/settings/delete-account-section';
 import { useCurrentUser } from '@/lib/hooks/use-current-user';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { changePassword } from '@/lib/auth-api';
@@ -166,6 +167,8 @@ function SettingsContent() {
       )}
 
       <ChangePasswordForm />
+
+      <DeleteAccountSection />
     </main>
   );
 }
