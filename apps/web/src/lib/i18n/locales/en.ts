@@ -156,6 +156,16 @@ const enShape = {
   'setEditor.addCoins': 'Add coins',
   'setEditor.undo': 'Undo',
   'setEditor.noCoinsYet': 'No coins yet — add some below.',
+  'setEditor.downloadMissing': 'Download missing (CSV)',
+  'setEditor.printMissing': 'Print missing list',
+
+  // missing list
+  'missingList.heading': 'Missing coins',
+  'missingList.dateLabel': 'Date',
+  'missingList.printButton': 'Print',
+  'missingList.colKeyDate': 'Key date',
+  'missingList.keyDateBadge': '★ Key date',
+  'missingList.empty': 'You own every coin in this set. Nothing to print.',
 
   // canonical sets
   'canonicalSets.title': 'Canonical sets',

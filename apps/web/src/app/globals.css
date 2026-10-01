@@ -110,3 +110,12 @@ h6 {
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
 }
+
+/* Print: hide site chrome (SiteNav's <nav>, SiteFooter's <footer>) and all buttons. */
+@media print {
+  nav,
+  footer,
+  button {
+    display: none !important;
+  }
+}
