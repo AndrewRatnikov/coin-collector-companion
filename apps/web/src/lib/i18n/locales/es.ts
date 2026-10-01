@@ -61,6 +61,7 @@ const esShape: Record<MessageKey, string> = {
   'home.browsePublic': 'Explorar colecciones de coleccionistas',
   'home.coinsUnit': 'monedas',
   'home.setsUnit': 'colecciones',
+  'home.accountDeletedNotice': 'Tu cuenta ha sido eliminada.',
 
   // login
   'login.title': 'Iniciar sesión',
@@ -297,6 +298,17 @@ const esShape: Record<MessageKey, string> = {
   'settings.feedbackError': 'Ocurrió un error al enviar tus comentarios. Inténtalo de nuevo.',
   'settings.feedbackValidationEmpty': 'Escribe algún comentario antes de enviar.',
   'settings.feedbackValidationTooLong': 'Los comentarios deben tener 2000 caracteres o menos.',
+  'settings.deleteAccountTitle': 'Eliminar cuenta',
+  'settings.deleteAccountIntro': 'Elimina de forma permanente tu cuenta y tus datos personales.',
+  'settings.deleteAccountOpen': 'Eliminar cuenta',
+  'settings.deleteAccountWhatIsDeleted': 'Esto elimina de forma permanente tus colecciones, tus monedas registradas y tus comentarios.',
+  'settings.deleteAccountWhatStays': 'Las monedas que enviaste al catálogo permanecen en él, sin vínculo contigo.',
+  'settings.deleteAccountPasswordLabel': 'Contraseña actual',
+  'settings.deleteAccountAcknowledge': 'Entiendo que esto no se puede deshacer',
+  'settings.deleteAccountSubmit': 'Eliminar mi cuenta de forma permanente',
+  'settings.deleteAccountCancel': 'Cancelar',
+  'settings.deleteAccountWrongPassword': 'La contraseña es incorrecta.',
+  'settings.deleteAccountError': 'Ocurrió un error al eliminar tu cuenta. Inténtalo de nuevo.',
 };
 
 const es: Record<string, string> = esShape;
