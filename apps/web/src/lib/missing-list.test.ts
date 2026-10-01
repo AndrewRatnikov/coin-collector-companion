@@ -41,7 +41,12 @@ const BASE_COIN = {
   updatedAt: new Date('2026-01-01T00:00:00.000Z'),
 };
 
-function slot(id: string, position: number, owned: boolean, coin: Partial<typeof BASE_COIN> = {}) {
+function slot(
+  id: string,
+  position: number,
+  owned: boolean,
+  coin: Partial<Omit<typeof BASE_COIN, 'mintage'>> & { mintage?: number | null } = {},
+) {
   return { id, position, owned, coin: { ...BASE_COIN, id: `coin-${id}`, ...coin } };
 }
 
