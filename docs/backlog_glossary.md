@@ -66,7 +66,7 @@ Not included, deliberately: highly specific variety/error terminology (doubled d
 
 ## Wrap-up
 
-- [ ] 2.1 Add a dated `CLAUDE.md` changelog entry once shipped.
+- [ ] 2.1 Add a dated changelog entry to `docs/history.md` once shipped.
 
 ---
 

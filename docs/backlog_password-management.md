@@ -140,7 +140,7 @@ Built last so it gets Step 2's session-revocation call for free from the start (
 
 - [ ] 4.1 Confirm the real Neon dev DB is back to its pre-pass baseline after all four steps — no leftover throwaway users, refresh tokens, or reset tokens from any manual pass above — same cleanup discipline as every prior backlog logged in `CLAUDE.md`.
 - [ ] 4.2 One final full-suite regression pass across all four steps together: `pnpm --filter api typecheck`/`build`/`test`/`test:e2e`, `pnpm --filter web typecheck`/`build`/`test`, `pnpm lint`, `pnpm --filter @coin-collector/shared build`.
-- [ ] 4.3 Add a dated `CLAUDE.md` changelog entry per step as it ships (matching the format of every prior entry in that file's "Project status" section) — four entries, not one at the very end, since each step is independently shippable (decision 3) and should be logged as it lands.
+- [ ] 4.3 Add a dated changelog entry to `docs/history.md` per step as it ships (matching the format of the prior entries there) — four entries, not one at the very end, since each step is independently shippable (decision 3) and should be logged as it lands.
 
 ## Explicitly NOT this scope (resist)
 
