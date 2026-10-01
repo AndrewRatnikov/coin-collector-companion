@@ -3,8 +3,10 @@
  * Contract source: runs/run_20260802_172836/plan.md § Interface Contract → Service: AuthService (MODIFY)
  *                   runs/run_20260802_183303/plan.md § Interface Contract → Service: AuthService (MODIFY)
  *                   runs/run_20260802_221803/plan.md § Interface Contract → Module: apps/api/src/auth/auth.service.ts (MODIFY)
+ *                   runs/run_20261001_214421/plan.md § Interface Contract → Service: AuthService.deleteAccount (MODIFY)
  * Covers criteria: #2, #3 (from run_20260802_172836's prd.md), #2, #3, #4 (from run_20260802_183303's prd.md),
- *                  #4, #5, #6, #7, #8 (from run_20260802_221803's prd.md)
+ *                  #4, #5, #6, #7, #8 (from run_20260802_221803's prd.md),
+ *                  #2, #3, #16 (from run_20261001_214421's prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -24,6 +26,10 @@
  * by the existing `me` tests, safe/inert for them. New describe blocks for `login`, `refresh`,
  * `logout`, and an extended `changePassword` revocation assertion are added below. Every
  * existing `me`/`changePassword` `it` block is carried over byte-identical.
+ *
+ * run_20261001_214421: adds `$transaction` to the Prisma mock (interactive form: invokes the
+ * callback with `mockTx`, a SEPARATE object from `mockPrismaService`, so the tests prove the
+ * deletes run on `tx`) and a new `deleteAccount` describe block. Existing blocks are untouched.
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -34,6 +40,7 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenService } from './token.service';
 import type { ChangePasswordDto } from './dto/change-password.dto';
+import type { DeleteAccountDto } from './dto/delete-account.dto';
 import type { LoginDto } from './dto/login.dto';
 
 jest.mock('bcrypt');
@@ -47,6 +54,13 @@ describe('AuthService', () => {
       update: jest.Mock;
       findUnique: jest.Mock;
     };
+    $transaction: jest.Mock;
+  };
+  let mockTx: {
+    ownership: { deleteMany: jest.Mock };
+    userSet: { deleteMany: jest.Mock };
+    user: { delete: jest.Mock };
+    coin: { updateMany: jest.Mock; update: jest.Mock; deleteMany: jest.Mock };
   };
   let mockJwtService: {
     signAsync: jest.Mock;
@@ -59,12 +73,19 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
+    mockTx = {
+      ownership: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
+      userSet: { deleteMany: jest.fn().mockResolvedValue({ count: 0 }) },
+      user: { delete: jest.fn().mockResolvedValue({}) },
+      coin: { updateMany: jest.fn(), update: jest.fn(), deleteMany: jest.fn() },
+    };
     mockPrismaService = {
       user: {
         findUniqueOrThrow: jest.fn(),
         update: jest.fn(),
         findUnique: jest.fn(),
       },
+      $transaction: jest.fn((cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx)),
     };
     mockJwtService = {
       signAsync: jest.fn(),
@@ -315,6 +336,108 @@ describe('AuthService', () => {
       await expect(service.logout(undefined)).resolves.toBeUndefined();
 
       expect(mockTokenService.revokeOne).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteAccount (criteria #2, #3, #16 from run_20261001_214421)', () => {
+    const userId = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+    const otherUserId = '9b2f1c3e-6a47-4d8e-8f10-2c5d7e9a1b34';
+    const dto: DeleteAccountDto = { password: 'correct-horse-battery' } as DeleteAccountDto;
+
+    function stubUser(id: string = userId) {
+      mockPrismaService.user.findUniqueOrThrow.mockResolvedValue({
+        id,
+        email: 'collector@example.com',
+        passwordHash: 'stored-hash',
+      });
+    }
+
+    it('looks up the user by id and compares the supplied password with the stored hash', async () => {
+      stubUser();
+      mockedBcrypt.compare.mockResolvedValue(true as never);
+
+      await service.deleteAccount(userId, dto);
+
+      expect(mockPrismaService.user.findUniqueOrThrow).toHaveBeenCalledWith({ where: { id: userId } });
+      expect(mockedBcrypt.compare).toHaveBeenCalledWith(dto.password, 'stored-hash');
+    });
+
+    it('rejects with UnauthorizedException and never opens the transaction on a wrong password', async () => {
+      stubUser();
+      mockedBcrypt.compare.mockResolvedValue(false as never);
+
+      await expect(service.deleteAccount(userId, { password: 'wrong-password' } as DeleteAccountDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+      expect(mockTx.ownership.deleteMany).not.toHaveBeenCalled();
+      expect(mockTx.userSet.deleteMany).not.toHaveBeenCalled();
+      expect(mockTx.user.delete).not.toHaveBeenCalled();
+    });
+
+    it('opens exactly one transaction on a correct password', async () => {
+      stubUser();
+      mockedBcrypt.compare.mockResolvedValue(true as never);
+
+      await service.deleteAccount(userId, dto);
+
+      expect(mockPrismaService.$transaction).toHaveBeenCalledTimes(1);
+      expect(typeof mockPrismaService.$transaction.mock.calls[0][0]).toBe('function');
+    });
+
+    it('deletes ownerships, then user sets, then the user, all on the tx client', async () => {
+      stubUser();
+      mockedBcrypt.compare.mockResolvedValue(true as never);
+
+      await service.deleteAccount(userId, dto);
+
+      expect(mockTx.ownership.deleteMany).toHaveBeenCalledWith({ where: { userId } });
+      expect(mockTx.userSet.deleteMany).toHaveBeenCalledWith({ where: { userId } });
+      expect(mockTx.user.delete).toHaveBeenCalledWith({ where: { id: userId } });
+
+      const ownershipOrder = mockTx.ownership.deleteMany.mock.invocationCallOrder[0];
+      const userSetOrder = mockTx.userSet.deleteMany.mock.invocationCallOrder[0];
+      const userOrder = mockTx.user.delete.mock.invocationCallOrder[0];
+      expect(ownershipOrder).toBeLessThan(userSetOrder);
+      expect(userSetOrder).toBeLessThan(userOrder);
+    });
+
+    it('scopes every delete to the id passed in (a different user id yields different where clauses)', async () => {
+      stubUser(otherUserId);
+      mockedBcrypt.compare.mockResolvedValue(true as never);
+
+      await service.deleteAccount(otherUserId, dto);
+
+      expect(mockTx.ownership.deleteMany).toHaveBeenCalledWith({ where: { userId: otherUserId } });
+      expect(mockTx.userSet.deleteMany).toHaveBeenCalledWith({ where: { userId: otherUserId } });
+      expect(mockTx.user.delete).toHaveBeenCalledWith({ where: { id: otherUserId } });
+      expect(mockTx.user.delete).not.toHaveBeenCalledWith({ where: { id: userId } });
+    });
+
+    it('never touches tokenService and never writes coins', async () => {
+      stubUser();
+      mockedBcrypt.compare.mockResolvedValue(true as never);
+
+      await service.deleteAccount(userId, dto);
+
+      expect(mockTokenService.issue).not.toHaveBeenCalled();
+      expect(mockTokenService.rotate).not.toHaveBeenCalled();
+      expect(mockTokenService.revokeAllForUser).not.toHaveBeenCalled();
+      expect(mockTokenService.revokeOne).not.toHaveBeenCalled();
+      expect(mockTx.coin.updateMany).not.toHaveBeenCalled();
+      expect(mockTx.coin.update).not.toHaveBeenCalled();
+      expect(mockTx.coin.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('propagates a failure inside the transaction', async () => {
+      stubUser();
+      mockedBcrypt.compare.mockResolvedValue(true as never);
+      mockTx.userSet.deleteMany.mockRejectedValue(new Error('db failure'));
+
+      await expect(service.deleteAccount(userId, dto)).rejects.toThrow('db failure');
+
+      expect(mockTx.user.delete).not.toHaveBeenCalled();
     });
   });
 });

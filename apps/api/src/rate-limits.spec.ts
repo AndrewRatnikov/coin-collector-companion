@@ -13,6 +13,7 @@ describe('route throttle metadata', () => {
     ['AuthController.login', AuthController.prototype.login, 5, 60_000],
     ['AuthController.forgotPassword', AuthController.prototype.forgotPassword, 3, 3_600_000],
     ['AuthController.resetPassword', AuthController.prototype.resetPassword, 5, 60_000],
+    ['AuthController.deleteAccount', AuthController.prototype.deleteAccount, 5, 60_000],
   ])('%s has limit %d / ttl %d', (_name, handler, limit, ttl) => {
     expect(limitOf(handler)).toBe(limit);
     expect(ttlOf(handler)).toBe(ttl);

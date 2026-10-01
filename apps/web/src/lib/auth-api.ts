@@ -56,6 +56,17 @@ export async function changePassword(currentPassword: string, newPassword: strin
   );
 }
 
+// DELETE /auth/account. Opts out of apiFetch's 401-clears-session behavior: a wrong password
+// is a normal, still-authenticated rejection. It does not clear the stored token on success;
+// the caller does that along with the rest of the local cleanup.
+export async function deleteAccount(password: string): Promise<void> {
+  return apiFetch<void>(
+    '/auth/account',
+    { method: 'DELETE', body: JSON.stringify({ password }) },
+    { skipAuthRedirectOn401: true },
+  );
+}
+
 // POST /auth/refresh (backlog_password-management.md Step 2, task 2.11). A pure
 // request/response call with no redirect side effect of its own (skipAuthRedirectOn401) —
 // the redirect-on-failure behavior lives entirely in apiFetch's own internal silent-refresh

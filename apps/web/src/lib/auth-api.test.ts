@@ -4,8 +4,10 @@
  *                   runs/run_20260802_172836/plan.md § Interface Contract → Module: auth-api (MODIFY)
  *                   runs/run_20260802_183303/plan.md § Interface Contract → Module: auth-api (MODIFY)
  *                   runs/run_20260802_221803/plan.md § Interface Contract → Module: apps/web/src/lib/auth-api.ts (MODIFY)
+ *                   runs/run_20261001_214421/plan.md § Interface Contract → Web API: deleteAccount (MODIFY)
  * Covers criteria: #2 (from run_20260721_094026's prd.md), #4 (from run_20260802_172836's prd.md),
- *                  #5 (from run_20260802_183303's prd.md), #11 (from run_20260802_221803's prd.md)
+ *                  #5 (from run_20260802_183303's prd.md), #11 (from run_20260802_221803's prd.md),
+ *                  #13 (from run_20261001_214421's prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -17,11 +19,21 @@
  *
  * run_20260802_221803: adds refreshAccessToken()/logout() coverage (new describe blocks
  * below). Every existing describe block above is carried over byte-identical.
+ *
+ * run_20261001_214421: adds deleteAccount() coverage (new describe block at the end).
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // fetch is mocked via vi.stubGlobal, not vi.mock(), see vitest.setup.ts
-import { login, register, getCurrentUser, changePassword, refreshAccessToken, logout } from '@/lib/auth-api';
+import {
+  login,
+  register,
+  getCurrentUser,
+  changePassword,
+  refreshAccessToken,
+  logout,
+  deleteAccount,
+} from '@/lib/auth-api';
 import { getStoredToken, setStoredToken } from '@/lib/auth-token';
 
 function stubFetchResolving(status: number, body: unknown) {
@@ -224,6 +236,46 @@ describe('auth-api', () => {
       stubFetchResolving(500, { message: 'Internal error' });
 
       await expect(logout()).rejects.toThrow();
+
+      expect(getStoredToken()).toBe('tok-abc');
+    });
+  });
+
+  describe('criterion 13 (run_20261001_214421): deleteAccount sends DELETE /auth/account', () => {
+    it('sends a DELETE request with the password as the JSON body', async () => {
+      const fetchMock = stubFetchResolving(204, undefined);
+
+      await deleteAccount('hunter2-hunter2');
+
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('/auth/account');
+      expect(init.method).toBe('DELETE');
+      expect(JSON.parse(init.body as string)).toEqual({ password: 'hunter2-hunter2' });
+    });
+
+    it('sends whatever password it is given (a second distinct input)', async () => {
+      const fetchMock = stubFetchResolving(204, undefined);
+
+      await deleteAccount('another-password');
+
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(JSON.parse(init.body as string)).toEqual({ password: 'another-password' });
+    });
+
+    it('resolves to undefined on a 204 response and does not clear the stored token itself', async () => {
+      setStoredToken('tok-abc');
+      stubFetchResolving(204, undefined);
+
+      await expect(deleteAccount('hunter2-hunter2')).resolves.toBeUndefined();
+
+      expect(getStoredToken()).toBe('tok-abc');
+    });
+
+    it('rejects on a wrong-password 401 and keeps the stored token (skipAuthRedirectOn401)', async () => {
+      setStoredToken('tok-abc');
+      stubFetchResolving(401, { message: 'Password is incorrect' });
+
+      await expect(deleteAccount('wrong-password')).rejects.toMatchObject({ status: 401 });
 
       expect(getStoredToken()).toBe('tok-abc');
     });

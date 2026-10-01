@@ -3,8 +3,9 @@
  * Contract source: runs/run_20260802_172836/plan.md § Interface Contract → Controller: AuthController (MODIFY)
  *                   runs/run_20260802_183303/plan.md § Interface Contract → Controller: AuthController (MODIFY)
  *                   runs/run_20260802_221803/plan.md § Interface Contract → Module: apps/api/src/auth/auth.controller.ts (MODIFY)
+ *                   runs/run_20261001_214421/plan.md § Interface Contract → Controller: AuthController.deleteAccount (MODIFY)
  * Covers criteria: #1, #3 (from run_20260802_172836's prd.md), #1, #4 (from run_20260802_183303's prd.md),
- *                  #4, #5, #6 (from run_20260802_221803's prd.md)
+ *                  #4, #5, #6 (from run_20260802_221803's prd.md), #1, #7 (from run_20261001_214421's prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -30,6 +31,10 @@
  * (`{ cookie: jest.fn(), clearCookie: jest.fn() }`) and a mock `req` object
  * (`{ cookies: {...} }`). Every existing `it`/`describe` block above is carried over
  * byte-identical.
+ *
+ * run_20261001_214421: adds `deleteAccount: jest.fn()` to the mock service and a new
+ * `deleteAccount` describe block (not public, throttle 5 / 60_000, delegates, clears the
+ * refresh cookie only on success). Existing blocks are untouched.
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -38,9 +43,10 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PasswordResetService } from './password-reset.service';
 import { IS_PUBLIC_KEY } from './decorators/public.decorator';
-import { REFRESH_TOKEN_COOKIE_NAME } from './token.service';
+import { REFRESH_TOKEN_COOKIE_NAME, clearedRefreshTokenCookieOptions } from './token.service';
 import type { AuthenticatedUser } from './strategies/jwt.strategy';
 import type { ChangePasswordDto } from './dto/change-password.dto';
+import type { DeleteAccountDto } from './dto/delete-account.dto';
 import type { LoginDto } from './dto/login.dto';
 
 const AUTH_USER: AuthenticatedUser = { userId: '3fa85f64-5717-4562-b3fc-2c963f66afa6', email: 'collector@example.com' };
@@ -62,6 +68,7 @@ describe('AuthController', () => {
     changePassword: jest.Mock;
     refresh: jest.Mock;
     logout: jest.Mock;
+    deleteAccount: jest.Mock;
   };
   let mockPasswordResetService: {
     forgotPassword: jest.Mock;
@@ -76,6 +83,7 @@ describe('AuthController', () => {
       changePassword: jest.fn(),
       refresh: jest.fn(),
       logout: jest.fn(),
+      deleteAccount: jest.fn(),
     };
     mockPasswordResetService = {
       forgotPassword: jest.fn(),
@@ -271,6 +279,48 @@ describe('AuthController', () => {
       await controller.resetPassword(dto);
 
       expect(mockPasswordResetService.resetPassword).toHaveBeenCalledWith(dto);
+    });
+  });
+
+  describe('deleteAccount (criteria #1, #7 from run_20261001_214421)', () => {
+    const reflector = new Reflector();
+    const dto: DeleteAccountDto = { password: 'correct-horse-battery' } as DeleteAccountDto;
+
+    it('does NOT mark deleteAccount as public — DELETE /auth/account requires auth', () => {
+      expect(reflector.get<boolean>(IS_PUBLIC_KEY, controller.deleteAccount)).toBeFalsy();
+    });
+
+    it('throttles deleteAccount to 5 requests per 60_000 ms', () => {
+      expect(reflector.get<number>('THROTTLER:LIMITdefault', controller.deleteAccount)).toBe(5);
+      expect(reflector.get<number>('THROTTLER:TTLdefault', controller.deleteAccount)).toBe(60_000);
+    });
+
+    it('delegates the caller userId and dto to authService.deleteAccount', async () => {
+      mockAuthService.deleteAccount.mockResolvedValue(undefined);
+
+      await controller.deleteAccount(AUTH_USER, dto, mockResponse());
+
+      expect(mockAuthService.deleteAccount).toHaveBeenCalledWith(AUTH_USER.userId, dto);
+    });
+
+    it('clears the refresh token cookie and returns nothing on success', async () => {
+      mockAuthService.deleteAccount.mockResolvedValue(undefined);
+      const res = mockResponse();
+
+      const result = await controller.deleteAccount(AUTH_USER, dto, res);
+
+      expect(res.clearCookie).toHaveBeenCalledTimes(1);
+      expect(res.clearCookie).toHaveBeenCalledWith(REFRESH_TOKEN_COOKIE_NAME, clearedRefreshTokenCookieOptions());
+      expect(result).toBeUndefined();
+    });
+
+    it('propagates a service rejection (wrong password) and does NOT clear the cookie', async () => {
+      mockAuthService.deleteAccount.mockRejectedValue(new Error('Password is incorrect'));
+      const res = mockResponse();
+
+      await expect(controller.deleteAccount(AUTH_USER, dto, res)).rejects.toThrow('Password is incorrect');
+
+      expect(res.clearCookie).not.toHaveBeenCalled();
     });
   });
 });

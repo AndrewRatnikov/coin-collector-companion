@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post, Req, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import {
   ApiBadRequestResponse,
@@ -15,6 +15,7 @@ import { AuthService, LoginResponse, RegisteredUser } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -106,6 +107,24 @@ export class AuthController {
   @ApiUnauthorizedResponse({ description: 'Current password is incorrect, or no/invalid access token' })
   changePassword(@CurrentUser() user: AuthenticatedUser, @Body() dto: ChangePasswordDto): Promise<void> {
     return this.authService.changePassword(user.userId, dto);
+  }
+
+  // No @Public() — guarded by the global JwtAuthGuard. Same 5/min throttle as login, since a
+  // wrong password here is a password-guessing attempt. The refresh cookie is cleared only on
+  // success: a wrong password rejects before clearCookie runs.
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @Delete('account')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "Permanently delete the current user's account" })
+  @ApiNoContentResponse({ description: 'Account deleted; refresh cookie cleared' })
+  @ApiUnauthorizedResponse({ description: 'Password is incorrect, or no/invalid access token' })
+  async deleteAccount(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: DeleteAccountDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    await this.authService.deleteAccount(user.userId, dto);
+    res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, clearedRefreshTokenCookieOptions());
   }
 
   // backlog_password-management.md Step 3, task 3.3 / decision 7: 3 requests per hour per
