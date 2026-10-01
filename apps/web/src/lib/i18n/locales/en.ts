@@ -66,6 +66,7 @@ const enShape = {
   'home.browsePublic': "Browse collectors' sets",
   'home.coinsUnit': 'coins',
   'home.setsUnit': 'sets',
+  'home.accountDeletedNotice': 'Your account has been deleted.',
 
   // login
   'login.title': 'Log in',
@@ -301,6 +302,17 @@ const enShape = {
   'settings.feedbackError': 'Something went wrong sending your feedback. Please try again.',
   'settings.feedbackValidationEmpty': 'Please enter some feedback before submitting.',
   'settings.feedbackValidationTooLong': 'Feedback must be 2000 characters or fewer.',
+  'settings.deleteAccountTitle': 'Delete account',
+  'settings.deleteAccountIntro': 'Permanently delete your account and personal data.',
+  'settings.deleteAccountOpen': 'Delete account',
+  'settings.deleteAccountWhatIsDeleted': 'This permanently deletes your sets, your collection and your feedback.',
+  'settings.deleteAccountWhatStays': 'Coins you submitted to the catalog stay in the catalog, no longer linked to you.',
+  'settings.deleteAccountPasswordLabel': 'Current password',
+  'settings.deleteAccountAcknowledge': 'I understand this cannot be undone',
+  'settings.deleteAccountSubmit': 'Permanently delete my account',
+  'settings.deleteAccountCancel': 'Cancel',
+  'settings.deleteAccountWrongPassword': 'Password is incorrect.',
+  'settings.deleteAccountError': 'Something went wrong deleting your account. Please try again.',
 } satisfies Record<string, string>;
 
 const en: Record<string, string> = enShape;
