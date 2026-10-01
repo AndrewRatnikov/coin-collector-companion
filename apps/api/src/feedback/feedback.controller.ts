@@ -1,5 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { FeedbackResponse } from '@coin-collector/shared';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
@@ -12,6 +13,8 @@ import { SubmitFeedbackDto } from './dto/submit-feedback.dto';
 export class FeedbackController {
   constructor(private readonly feedbackService: FeedbackService) {}
 
+  // Anti-spam: 5 feedback submissions per hour per client IP.
+  @Throttle({ default: { limit: 5, ttl: 3_600_000 } })
   @Post()
   @ApiOperation({ summary: 'Submit user feedback' })
   @ApiCreatedResponse({ description: 'The newly created feedback row' })
