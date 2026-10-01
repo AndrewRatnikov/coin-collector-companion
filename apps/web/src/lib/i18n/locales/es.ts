@@ -151,6 +151,16 @@ const esShape: Record<MessageKey, string> = {
   'setEditor.addCoins': 'Añadir monedas',
   'setEditor.undo': 'Deshacer',
   'setEditor.noCoinsYet': 'Todavía no hay monedas — añade algunas abajo.',
+  'setEditor.downloadMissing': 'Descargar faltantes (CSV)',
+  'setEditor.printMissing': 'Imprimir lista de faltantes',
+
+  // missing list
+  'missingList.heading': 'Monedas faltantes',
+  'missingList.dateLabel': 'Fecha',
+  'missingList.printButton': 'Imprimir',
+  'missingList.colKeyDate': 'Fecha clave',
+  'missingList.keyDateBadge': '★ Fecha clave',
+  'missingList.empty': 'Tienes todas las monedas de esta colección. No hay nada que imprimir.',
 
   // canonical sets
   'canonicalSets.title': 'Colecciones canónicas',
