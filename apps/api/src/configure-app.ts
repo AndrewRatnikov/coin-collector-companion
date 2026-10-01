@@ -44,7 +44,7 @@ export function configureApp(app: NestExpressApplication): void {
   app.use(cookieParser());
 
   app.enableCors({
-    origin: [process.env.CORS_ORIGIN, 'http://localhost:3000'].filter(Boolean),
+    origin: [process.env.CORS_ORIGIN, 'http://localhost:3000'].filter((o): o is string => Boolean(o)),
     credentials: true,
   });
 
