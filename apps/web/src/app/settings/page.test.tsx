@@ -3,7 +3,9 @@
  * Contract source: runs/run_20260802_172836/plan.md § Interface Contract → Page: SettingsPage (CREATE)
  *                   runs/run_20260802_183303/plan.md § Interface Contract → Component: ChangePasswordForm (CREATE, inline)
  *                   runs/run_20260804_165504/plan.md § Interface Contract → Page: SettingsPage (Account tab) — apps/web/src/app/settings/page.tsx (MODIFY)
- * Covers criteria: #5, #6, #9 (from run_20260802_172836's prd.md), #6, #7, #9 (from run_20260802_183303's prd.md), #1 (from run_20260804_165504's prd.md)
+ *                   runs/run_20261001_214421/plan.md § Interface Contract → Page: SettingsPage (MODIFY)
+ * Covers criteria: #5, #6, #9 (from run_20260802_172836's prd.md), #6, #7, #9 (from run_20260802_183303's prd.md), #1 (from run_20260804_165504's prd.md),
+ *                  #10 (from run_20261001_214421's prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -28,6 +30,10 @@
  * also export `usePathname`, same convention as apps/web/src/components/layout/site-nav.test.tsx.
  * Every existing describe block below is otherwise carried over byte-identical; only a new
  * "criterion #1" describe block is added at the end.
+ *
+ * run_20261001_214421: SettingsPage now renders <DeleteAccountSection />, which needs a
+ * QueryClientProvider this file never renders. It is stubbed via vi.mock (per plan.md) so the
+ * existing tests are unaffected; a new describe block at the end asserts placement only.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -53,6 +59,10 @@ vi.mock('@/lib/hooks/use-current-user', () => ({
 
 vi.mock('@/lib/auth-api', () => ({
   changePassword: vi.fn(),
+}));
+
+vi.mock('@/components/settings/delete-account-section', () => ({
+  DeleteAccountSection: () => <section data-testid="settings-delete-account" />,
 }));
 
 const useCurrentUserMock = vi.mocked(useCurrentUser);
@@ -301,6 +311,27 @@ describe('SettingsPage', () => {
         expect(screen.getByTestId('settings-tab-account')).toHaveAttribute('aria-current', 'page');
       });
       expect(screen.getByTestId('settings-tab-feedback')).not.toHaveAttribute('aria-current');
+    });
+  });
+
+  describe('criterion #10 (run_20261001_214421): delete-account section renders at the bottom', () => {
+    it('renders settings-delete-account inside settings-page after the change-password form', async () => {
+      setStoredToken('tok-abc');
+      useCurrentUserMock.mockReturnValue(queryResult({ data: CURRENT_USER }));
+      render(<SettingsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('settings-delete-account')).toBeInTheDocument();
+      });
+      const page = screen.getByTestId('settings-page');
+      const deleteSection = screen.getByTestId('settings-delete-account');
+      const changePasswordForm = screen.getByTestId('settings-change-password-form');
+
+      expect(page).toContainElement(deleteSection);
+      expect(
+        changePasswordForm.compareDocumentPosition(deleteSection) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(page.lastElementChild).toBe(deleteSection);
     });
   });
 });
