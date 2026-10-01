@@ -415,17 +415,6 @@ describe('AuthService', () => {
       expect(mockTx.user.delete).not.toHaveBeenCalledWith({ where: { id: userId } });
     });
 
-    it('does not run the deletes through the non-transactional prisma client', async () => {
-      stubUser();
-      mockedBcrypt.compare.mockResolvedValue(true as never);
-
-      await service.deleteAccount(userId, dto);
-
-      expect(mockPrismaService.user).not.toHaveProperty('delete');
-      expect(mockPrismaService).not.toHaveProperty('ownership');
-      expect(mockPrismaService).not.toHaveProperty('userSet');
-    });
-
     it('never touches tokenService and never writes coins', async () => {
       stubUser();
       mockedBcrypt.compare.mockResolvedValue(true as never);

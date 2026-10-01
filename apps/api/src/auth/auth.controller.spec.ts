@@ -43,7 +43,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { PasswordResetService } from './password-reset.service';
 import { IS_PUBLIC_KEY } from './decorators/public.decorator';
-import { REFRESH_TOKEN_COOKIE_NAME } from './token.service';
+import { REFRESH_TOKEN_COOKIE_NAME, clearedRefreshTokenCookieOptions } from './token.service';
 import type { AuthenticatedUser } from './strategies/jwt.strategy';
 import type { ChangePasswordDto } from './dto/change-password.dto';
 import type { DeleteAccountDto } from './dto/delete-account.dto';
@@ -310,7 +310,7 @@ describe('AuthController', () => {
       const result = await controller.deleteAccount(AUTH_USER, dto, res);
 
       expect(res.clearCookie).toHaveBeenCalledTimes(1);
-      expect(res.clearCookie).toHaveBeenCalledWith(REFRESH_TOKEN_COOKIE_NAME, expect.any(Object));
+      expect(res.clearCookie).toHaveBeenCalledWith(REFRESH_TOKEN_COOKIE_NAME, clearedRefreshTokenCookieOptions());
       expect(result).toBeUndefined();
     });
 

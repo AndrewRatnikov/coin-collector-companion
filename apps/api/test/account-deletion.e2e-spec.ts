@@ -6,7 +6,7 @@
  * CONTRACT_GAP: none.
  *
  * Hits the real test database via AppModule/PrismaService, like the other e2e specs.
- * Throttle budget: 2 registers, 3 logins, 2 DELETE /auth/account calls (limit 5/min each).
+ * Throttle budget: 2 registers, 3 logins, 4 DELETE /auth/account calls (limit 5/min each).
  */
 
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -108,11 +108,20 @@ describe('DELETE /auth/account (e2e)', () => {
   });
 
   afterAll(async () => {
-    await prisma.ownership.deleteMany({ where: { coinId } });
-    await prisma.userSetCoin.deleteMany({ where: { coinId } });
-    await prisma.userSet.deleteMany({ where: { userId: { in: [userAId, userBId] } } });
-    await prisma.ownership.deleteMany({ where: { userId: { in: [userAId, userBId] } } });
-    await prisma.coin.deleteMany({ where: { id: coinId } });
+    // Guard id-keyed cleanup: Prisma ignores `undefined` filters, so an unset id
+    // (beforeAll failed early) would otherwise match every row in the shared DB.
+    const userIds = [userAId, userBId].filter((id): id is string => Boolean(id));
+    if (coinId) {
+      await prisma.ownership.deleteMany({ where: { coinId } });
+      await prisma.userSetCoin.deleteMany({ where: { coinId } });
+    }
+    if (userIds.length > 0) {
+      await prisma.userSet.deleteMany({ where: { userId: { in: userIds } } });
+      await prisma.ownership.deleteMany({ where: { userId: { in: userIds } } });
+    }
+    if (coinId) {
+      await prisma.coin.deleteMany({ where: { id: coinId } });
+    }
     await prisma.user.deleteMany({ where: { email: { in: [emailA, emailB] } } });
     await app.close();
   });
