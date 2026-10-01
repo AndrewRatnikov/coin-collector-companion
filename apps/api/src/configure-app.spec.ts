@@ -77,7 +77,10 @@ describe('configureApp', () => {
     const { app, typed } = makeApp();
     configureApp(typed);
     expect(app.set).toHaveBeenCalledWith('trust proxy', 0);
-    expect(app.set).not.toHaveBeenCalledWith('trust proxy', true);
+    const proxyCalls = app.set.mock.calls.filter((call: unknown[]) => call[0] === 'trust proxy');
+    expect(proxyCalls).toHaveLength(1);
+    expect(typeof proxyCalls[0][1]).toBe('number');
+    expect(proxyCalls[0][1]).toBe(0);
     expect(warnSpy).toHaveBeenCalledTimes(1);
     expect(String(warnSpy.mock.calls[0][0])).toContain('TRUST_PROXY_HOPS');
   });
