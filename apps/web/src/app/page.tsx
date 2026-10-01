@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { AccountDeletedNotice } from '@/components/settings/account-deleted-notice';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import { useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
 import { usePublicSets } from '@/lib/hooks/use-public-sets';
@@ -25,6 +26,7 @@ export default function Home() {
       data-testid="home-page"
       className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-8 px-[clamp(20px,5vw,48px)] py-16"
     >
+      <AccountDeletedNotice />
       <div className="flex flex-col gap-5">
         <p
           data-testid="home-eyebrow"
