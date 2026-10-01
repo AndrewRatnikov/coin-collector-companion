@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { DeleteAccountDto } from './dto/delete-account.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { TokenService } from './token.service';
@@ -107,5 +108,24 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_COST);
     await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
     await this.tokenService.revokeAllForUser(userId);
+  }
+
+  // DELETE /auth/account. The password check runs before the transaction opens, so a wrong
+  // password changes nothing. UserSet.user and Ownership.user have no onDelete rule
+  // (Restrict), so those rows are deleted explicitly first. Everything else is handled by the
+  // schema: UserSetCoin, RefreshToken, PasswordResetToken and Feedback cascade;
+  // Coin.submittedByUserId and other users' UserSet.clonedFromUserSetId are SetNull.
+  async deleteAccount(userId: string, dto: DeleteAccountDto): Promise<void> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Password is incorrect');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.ownership.deleteMany({ where: { userId } });
+      await tx.userSet.deleteMany({ where: { userId } });
+      await tx.user.delete({ where: { id: userId } });
+    });
   }
 }
