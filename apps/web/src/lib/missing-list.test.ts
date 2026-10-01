@@ -251,10 +251,12 @@ describe('downloadMissingCsv', () => {
     });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // drain the pending setTimeout(..., 0) revoke before restoring URL
+    await new Promise((resolve) => setTimeout(resolve, 10));
     clickSpy.mockRestore();
-    URL.createObjectURL = originalCreate;
-    URL.revokeObjectURL = originalRevoke;
+    URL.createObjectURL = originalCreate ?? (() => 'blob:noop');
+    URL.revokeObjectURL = originalRevoke ?? (() => {});
   });
 
   function readBytes(blob: Blob): Promise<Uint8Array> {

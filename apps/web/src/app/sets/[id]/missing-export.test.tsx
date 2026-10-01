@@ -196,11 +196,13 @@ describe('SetEditorPage missing-list controls', () => {
     vi.setSystemTime(new Date(2026, 9, 1, 12, 0, 0));
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.useRealTimers();
+    // drain the pending setTimeout(..., 0) revoke before restoring URL
+    await new Promise((resolve) => setTimeout(resolve, 10));
     clickSpy.mockRestore();
-    URL.createObjectURL = originalCreate;
-    URL.revokeObjectURL = originalRevoke;
+    URL.createObjectURL = originalCreate ?? (() => 'blob:noop');
+    URL.revokeObjectURL = originalRevoke ?? (() => {});
   });
 
   describe('criterion 7: controls render when something is missing', () => {
@@ -261,7 +263,7 @@ describe('SetEditorPage missing-list controls', () => {
       expect(clicked).toHaveLength(0);
     });
 
-    it('prevents default when the disabled link is clicked, and not when enabled controls exist', async () => {
+    it('prevents default when the disabled link is clicked', async () => {
       setDefaultMocks(GAPS_ALL_OWNED);
       renderPage();
 
