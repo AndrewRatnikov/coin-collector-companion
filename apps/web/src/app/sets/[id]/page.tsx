@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { formatCoinLabel } from '@coin-collector/shared';
 import type { GapSlot } from '@coin-collector/shared';
@@ -10,6 +11,7 @@ import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import { useDeleteSet, usePatchSetCoins, useRenameSet, useSetGaps, useUserSets } from '@/lib/hooks/use-user-sets';
 import { useSetOwnership } from '@/lib/hooks/use-collection';
 import { useCatalog } from '@/lib/hooks/use-catalog';
+import { downloadMissingCsv } from '@/lib/missing-list';
 import type { CatalogFilters } from '@/lib/catalog-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -156,6 +158,7 @@ function SetEditor({ id }: { id: string }) {
   }
 
   const missingCount = gaps.slots.filter((slot) => !slot.owned).length;
+  const nothingMissing = missingCount === 0;
   const decadeGroups = buildDecadeGroups(gaps.slots, gapOnly);
 
   return (
@@ -191,6 +194,38 @@ function SetEditor({ id }: { id: string }) {
       <span data-testid="set-editor-completion" className="text-sm text-gray-600">
         {gaps.completionPercent}%
       </span>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          data-testid="set-editor-download-missing"
+          disabled={nothingMissing}
+          onClick={() => downloadMissingCsv(gaps, set.name)}
+          className="rounded border border-gray-300 px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {t('setEditor.downloadMissing')}
+        </button>
+        {nothingMissing ? (
+          <Link
+            href={`/sets/${id}/missing`}
+            data-testid="set-editor-print-missing"
+            aria-disabled="true"
+            tabIndex={-1}
+            onClick={(e) => e.preventDefault()}
+            className="pointer-events-none rounded border border-gray-300 px-3 py-1 text-sm opacity-50"
+          >
+            {t('setEditor.printMissing')}
+          </Link>
+        ) : (
+          <Link
+            href={`/sets/${id}/missing`}
+            data-testid="set-editor-print-missing"
+            className="rounded border border-gray-300 px-3 py-1 text-sm"
+          >
+            {t('setEditor.printMissing')}
+          </Link>
+        )}
+      </div>
 
       <div className="flex items-center justify-between gap-4 border-t border-gray-200 pt-4">
         <div className="flex items-center gap-2">
