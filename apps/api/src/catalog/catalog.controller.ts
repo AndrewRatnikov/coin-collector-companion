@@ -8,6 +8,7 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { CatalogCoin, PaginatedResponse } from '@coin-collector/shared';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { OptionalCurrentUser } from '../auth/decorators/optional-current-user.decorator';
@@ -44,6 +45,8 @@ export class CatalogController {
     return this.catalogService.findOne(id);
   }
 
+  // Anti-spam: 20 coin submissions per hour per client IP.
+  @Throttle({ default: { limit: 20, ttl: 3_600_000 } })
   @Post()
   @ApiOperation({ summary: 'Submit a new coin to the catalog (created as pending review)' })
   @ApiCreatedResponse({ description: 'The newly submitted coin' })
