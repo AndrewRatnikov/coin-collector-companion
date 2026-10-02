@@ -9,7 +9,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { CatalogCoin, PaginatedResponse } from '@coin-collector/shared';
+import type { CatalogCoin, PaginatedResponse, SubmittedCoin } from '@coin-collector/shared';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { OptionalCurrentUser } from '../auth/decorators/optional-current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -33,7 +33,7 @@ export class CatalogController {
   findAll(
     @Query() query: FindCatalogQueryDto,
     @OptionalCurrentUser() user: AuthenticatedUser | undefined,
-  ): Promise<PaginatedResponse<CatalogCoin>> {
+  ): Promise<PaginatedResponse<CatalogCoin | SubmittedCoin>> {
     return this.catalogService.findAll(query, user?.userId);
   }
 
