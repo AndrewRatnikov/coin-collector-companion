@@ -12,7 +12,7 @@ const ALREADY_REVIEWED_MESSAGE = 'This coin has already been reviewed';
 const NATURAL_KEY_CONFLICT_MESSAGE = 'A coin with this natural key already exists';
 
 // The catalog column set plus what only an admin may see: the rejection reason and the
-// submitter's email (through the relation). Never submittedByUserId.
+// submitter's email (through the relation). Never the submitter id column.
 const ADMIN_COIN_SELECT = {
   ...CATALOG_COIN_SELECT,
   rejectionReason: true,
@@ -92,7 +92,7 @@ export class AdminService {
       throw new ConflictException(ALREADY_REVIEWED_MESSAGE);
     }
 
-    // Built field by field from the DTO, so nothing else (e.g. submittedByUserId) is writable.
+    // Built field by field from the DTO, so nothing else (e.g. the submitter id column) is writable.
     const data: Prisma.CoinUpdateInput = {
       status: dto.status,
       rejectionReason: dto.status === 'rejected' ? dto.rejectionReason || null : null,
