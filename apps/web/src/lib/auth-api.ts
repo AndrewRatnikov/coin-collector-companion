@@ -1,3 +1,4 @@
+import type { Role } from '@coin-collector/shared';
 import { apiFetch } from './api-client';
 import { clearStoredToken, setStoredToken } from './auth-token';
 
@@ -19,6 +20,9 @@ export interface CurrentUser {
   id: string;
   email: string;
   createdAt: string;
+  // Only drives what the UI shows (e.g. the Admin nav link). The API re-checks the role
+  // from the database on every admin request.
+  role: Role;
 }
 
 export async function login(credentials: LoginCredentials): Promise<AuthResponse> {

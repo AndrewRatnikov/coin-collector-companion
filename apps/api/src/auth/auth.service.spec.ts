@@ -4,9 +4,11 @@
  *                   runs/run_20260802_183303/plan.md § Interface Contract → Service: AuthService (MODIFY)
  *                   runs/run_20260802_221803/plan.md § Interface Contract → Module: apps/api/src/auth/auth.service.ts (MODIFY)
  *                   runs/run_20261001_214421/plan.md § Interface Contract → Service: AuthService.deleteAccount (MODIFY)
+ *                   runs/run_20261001_224939/plan.md § Interface Contract → Service: AuthService.me (MODIFY)
  * Covers criteria: #2, #3 (from run_20260802_172836's prd.md), #2, #3, #4 (from run_20260802_183303's prd.md),
  *                  #4, #5, #6, #7, #8 (from run_20260802_221803's prd.md),
- *                  #2, #3, #16 (from run_20261001_214421's prd.md)
+ *                  #2, #3, #16 (from run_20261001_214421's prd.md),
+ *                  #5 (from run_20261001_224939's prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -30,6 +32,10 @@
  * run_20261001_214421: adds `$transaction` to the Prisma mock (interactive form: invokes the
  * callback with `mockTx`, a SEPARATE object from `mockPrismaService`, so the tests prove the
  * deletes run on `tx`) and a new `deleteAccount` describe block. Existing blocks are untouched.
+ *
+ * run_20261001_224939: `me` now also selects `role` (criterion #5). The two `me` tests below are
+ * updated for the new select/shape (an expected change, not a regression) and a role-specific
+ * test is added. Every other block is untouched.
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -111,20 +117,21 @@ describe('AuthService', () => {
     service = module.get(AuthService);
   });
 
-  describe('me (criteria #2, #3 from run_20260802_172836)', () => {
-    it('looks up the user by id and selects only id/email/createdAt (never passwordHash)', async () => {
+  describe('me (criteria #2, #3 from run_20260802_172836; #5 from run_20261001_224939)', () => {
+    it('looks up the user by id and selects only id/email/createdAt/role (never passwordHash)', async () => {
       const userId = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
       mockPrismaService.user.findUniqueOrThrow.mockResolvedValue({
         id: userId,
         email: 'collector@example.com',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        role: 'user',
       });
 
       await service.me(userId);
 
       expect(mockPrismaService.user.findUniqueOrThrow).toHaveBeenCalledWith({
         where: { id: userId },
-        select: { id: true, email: true, createdAt: true },
+        select: { id: true, email: true, createdAt: true, role: true },
       });
       const callArgs = mockPrismaService.user.findUniqueOrThrow.mock.calls[0][0];
       expect(callArgs.select).not.toHaveProperty('passwordHash');
@@ -136,6 +143,7 @@ describe('AuthService', () => {
         id: userId,
         email: 'collector@example.com',
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        role: 'user',
       };
       mockPrismaService.user.findUniqueOrThrow.mockResolvedValue(expected);
 
@@ -143,6 +151,20 @@ describe('AuthService', () => {
 
       expect(result).toEqual(expected);
       expect(result).not.toHaveProperty('passwordHash');
+    });
+
+    it('returns the role as stored: "admin" for an admin and "user" for a plain user', async () => {
+      const userId = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+      const base = { id: userId, email: 'collector@example.com', createdAt: new Date('2026-01-01T00:00:00.000Z') };
+
+      mockPrismaService.user.findUniqueOrThrow.mockResolvedValueOnce({ ...base, role: 'admin' });
+      const admin = await service.me(userId);
+
+      mockPrismaService.user.findUniqueOrThrow.mockResolvedValueOnce({ ...base, role: 'user' });
+      const plain = await service.me(userId);
+
+      expect(admin.role).toBe('admin');
+      expect(plain.role).toBe('user');
     });
   });
 

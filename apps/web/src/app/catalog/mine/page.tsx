@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { formatCoinLabel } from '@coin-collector/shared';
-import type { CatalogCoin, CoinStatus } from '@coin-collector/shared';
+import type { CoinStatus, SubmittedCoin } from '@coin-collector/shared';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { useMySubmissions } from '@/lib/hooks/use-catalog';
@@ -45,7 +45,7 @@ function MySubmissionsList() {
           </p>
         ) : (
           <ul data-testid="my-submissions-list" className="flex flex-col border-t border-[var(--color-divider)]">
-            {data.items.map((coin: CatalogCoin) => (
+            {data.items.map((coin: SubmittedCoin) => (
               <li
                 key={coin.id}
                 data-testid="my-submissions-item"
@@ -57,12 +57,22 @@ function MySubmissionsList() {
                 >
                   {formatCoinLabel(coin)}
                 </Link>
-                <span
-                  data-testid="my-submissions-status-badge"
-                  className="w-fit rounded-[2px] bg-[color:var(--color-accent-100)] px-2 py-1 text-xs font-medium text-[color:var(--color-accent-800)]"
-                >
-                  {t(STATUS_LABEL_KEY[coin.status])}
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  <span
+                    data-testid="my-submissions-status-badge"
+                    className="w-fit rounded-[2px] bg-[color:var(--color-accent-100)] px-2 py-1 text-xs font-medium text-[color:var(--color-accent-800)]"
+                  >
+                    {t(STATUS_LABEL_KEY[coin.status])}
+                  </span>
+                  {coin.status === 'rejected' && coin.rejectionReason && (
+                    <p
+                      data-testid="my-submissions-rejection-reason"
+                      className="max-w-[40ch] text-right text-xs text-[var(--color-neutral-600)]"
+                    >
+                      {t('mySubmissions.rejectionReasonLabel')} {coin.rejectionReason}
+                    </p>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

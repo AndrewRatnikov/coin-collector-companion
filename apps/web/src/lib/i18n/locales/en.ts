@@ -27,6 +27,7 @@ const enShape = {
   'nav.glossary': 'Glossary',
   'nav.account': 'Account',
   'nav.settings': 'Settings',
+  'nav.admin': 'Admin',
 
   // language switcher
   'languageSwitcher.english': 'English',
@@ -213,6 +214,23 @@ const enShape = {
   'mySubmissions.statusPending': 'Pending review',
   'mySubmissions.statusApproved': 'Approved',
   'mySubmissions.statusRejected': 'Not approved',
+  'mySubmissions.rejectionReasonLabel': 'Reason:',
+
+  // admin review
+  'admin.submissionsTitle': 'Review submissions',
+  'admin.errorLoading': 'Something went wrong loading submissions. Please try again.',
+  'admin.forbidden': "You don't have permission to view this page.",
+  'admin.emptyMessage': 'No submissions are waiting for review.',
+  'admin.submittedBy': 'Submitted by',
+  'admin.submitterUnknown': 'Unknown submitter',
+  'admin.duplicateWarning': 'Possible duplicate of an approved coin:',
+  'admin.approve': 'Approve',
+  'admin.reject': 'Reject',
+  'admin.edit': 'Edit',
+  'admin.rejectReasonLabel': 'Reason (optional)',
+  'admin.rejectConfirm': 'Confirm rejection',
+  'admin.saveAndApprove': 'Save and approve',
+  'admin.errorConflict': 'This submission was already reviewed, or another coin already has the same details.',
 
   // footer
   'footer.attributionPrefix': 'Catalog data derived from',

@@ -37,6 +37,41 @@ export interface CatalogCoin {
   updatedAt: Date;
 }
 
+export type Role = 'user' | 'admin';
+
+// GET /catalog?submittedByMe=true items (the caller's own coins only). The rejection reason
+// is never part of CatalogCoin, so it can't leak through public reads.
+export interface SubmittedCoin extends CatalogCoin {
+  rejectionReason: string | null;
+}
+
+// GET /admin/coins item minus duplicate info; also the PATCH /admin/coins/:id response.
+export interface AdminCoin extends CatalogCoin {
+  rejectionReason: string | null;
+  // null when the submitter account was deleted (FK SetNull)
+  submitterEmail: string | null;
+}
+
+export interface AdminCoinDuplicate {
+  id: string;
+  name: string;
+}
+
+export interface AdminCoinListItem extends AdminCoin {
+  possibleDuplicate: AdminCoinDuplicate | null;
+}
+
+export interface ReviewCoinRequest {
+  status: 'approved' | 'rejected';
+  rejectionReason?: string;
+  country?: string;
+  denomination?: string;
+  name?: string;
+  year?: number;
+  mintMark?: string;
+  variety?: string;
+}
+
 export interface CreateCoinRequest {
   country: string;
   denomination: string;

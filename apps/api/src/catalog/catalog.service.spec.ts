@@ -3,9 +3,11 @@
  * Contract source: runs/run_20260719_190933/plan.md § Interface Contract (Service: CatalogService)
  *                   runs/run_20260725_140648/plan.md § Interface Contract → Backend — CatalogService (MODIFY)
  *                   runs/run_20260731_132040/plan.md § Interface Contract → Service: CatalogService.findAll (MODIFY)
+ *                   runs/run_20261001_224939/plan.md § Interface Contract → Service: CatalogService (MODIFY)
  * Covers criteria: #2, #3, #4, #5, #6, #7, #8, #9, #11 (from run_20260719_190933's prd.md),
  *                  #1, #2, #3, #4 (from run_20260725_140648's prd.md),
- *                  #1, #2, #3, #4, #5 (from run_20260731_132040's prd.md)
+ *                  #1, #2, #3, #4, #5 (from run_20260731_132040's prd.md),
+ *                  #13, #14 (from run_20261001_224939's prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -26,12 +28,16 @@
  * call sites below (`service.findAll(makeQuery(...))`) are preserved verbatim — calling with
  * one argument still exercises the pre-existing anonymous/no-submittedByMe behavior, since
  * `userId` is optional and `query.submittedByMe` is undefined on every pre-existing fixture.
+ *
+ * run_20261001_224939: CATALOG_COIN_SELECT is now exported and SUBMITTED_COIN_SELECT is added.
+ * Only the new describe block "findAll — rejectionReason visibility" and the two new imports are
+ * added; every existing block is untouched.
  */
 
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '@prisma/client';
-import { CatalogService } from './catalog.service';
+import { CATALOG_COIN_SELECT, CatalogService, SUBMITTED_COIN_SELECT } from './catalog.service';
 import { FindCatalogQueryDto } from './dto/find-catalog-query.dto';
 import { CreateCoinDto } from './dto/create-coin.dto';
 import { PrismaService } from '../prisma/prisma.service';
@@ -281,6 +287,68 @@ describe('CatalogService', () => {
         limit: 20,
         total: 1,
       });
+    });
+  });
+
+  describe('findAll — rejectionReason visibility (run_20261001_224939 criteria #13, #14)', () => {
+    it('exports CATALOG_COIN_SELECT without submittedByUserId or rejectionReason', () => {
+      expect(CATALOG_COIN_SELECT).not.toHaveProperty('submittedByUserId');
+      expect(CATALOG_COIN_SELECT).not.toHaveProperty('rejectionReason');
+      expect(CATALOG_COIN_SELECT.id).toBe(true);
+    });
+
+    it('exports SUBMITTED_COIN_SELECT as CATALOG_COIN_SELECT plus rejectionReason, still without submittedByUserId', () => {
+      expect(SUBMITTED_COIN_SELECT).toEqual({ ...CATALOG_COIN_SELECT, rejectionReason: true });
+      expect(SUBMITTED_COIN_SELECT).not.toHaveProperty('submittedByUserId');
+    });
+
+    it('selects rejectionReason when submittedByMe is true and a userId is given', async () => {
+      await service.findAll(makeQuery({ submittedByMe: true }), SUBMITTER_USER_ID);
+
+      const { select } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(select.rejectionReason).toBe(true);
+      expect(select.submittedByUserId).toBeUndefined();
+    });
+
+    it('uses exactly SUBMITTED_COIN_SELECT on the submittedByMe branch', async () => {
+      await service.findAll(makeQuery({ submittedByMe: true }), SUBMITTER_USER_ID);
+
+      expect(mockPrismaService.coin.findMany.mock.calls[0][0].select).toEqual(SUBMITTED_COIN_SELECT);
+    });
+
+    it('does not select rejectionReason on the public (anonymous, no submittedByMe) read', async () => {
+      await service.findAll(makeQuery());
+
+      const { select } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(select.rejectionReason).toBeUndefined();
+      expect(select).toEqual(CATALOG_COIN_SELECT);
+    });
+
+    it('does not select rejectionReason when submittedByMe is true but there is no userId (anonymous caller)', async () => {
+      await service.findAll(makeQuery({ submittedByMe: true }));
+
+      expect(mockPrismaService.coin.findMany.mock.calls[0][0].select.rejectionReason).toBeUndefined();
+    });
+
+    it('does not select rejectionReason when submittedByMe is false, even with a userId present', async () => {
+      await service.findAll(makeQuery({ submittedByMe: false }), SUBMITTER_USER_ID);
+
+      expect(mockPrismaService.coin.findMany.mock.calls[0][0].select.rejectionReason).toBeUndefined();
+    });
+
+    it('does not select rejectionReason when a userId is present but submittedByMe is unset', async () => {
+      await service.findAll(makeQuery(), SUBMITTER_USER_ID);
+
+      expect(mockPrismaService.coin.findMany.mock.calls[0][0].select.rejectionReason).toBeUndefined();
+    });
+
+    it('findOne (public GET /catalog/:id) never selects rejectionReason', async () => {
+      mockPrismaService.coin.findUnique.mockResolvedValue({ id: 'x' });
+
+      await service.findOne('x');
+
+      const { select } = mockPrismaService.coin.findUnique.mock.calls[0][0];
+      expect(select.rejectionReason).toBeUndefined();
     });
   });
 

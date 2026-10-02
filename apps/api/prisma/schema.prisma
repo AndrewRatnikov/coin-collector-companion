@@ -12,6 +12,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// In-app admin role. Read from the database on every admin request by RolesGuard (never
+// trusted from the JWT), so a demotion applies immediately. Granted only via
+// apps/api/scripts/set-user-role.ts.
+enum Role {
+  user
+  admin
+}
+
 enum CoinStatus {
   approved
   pending
@@ -22,6 +30,7 @@ model User {
   id           String   @id @default(uuid())
   email        String   @unique
   passwordHash String
+  role         Role     @default(user)
   createdAt    DateTime @default(now())
 
   userSets       UserSet[]
@@ -68,6 +77,9 @@ model Coin {
   status            CoinStatus @default(approved)
   submittedByUserId String?
   submittedAt       DateTime?
+  // Optional admin note on a rejection. Only ever returned to the submitter
+  // (GET /catalog?submittedByMe=true) and to admins, never on public catalog reads.
+  rejectionReason   String?
   imageUrl          String?
   imageSource       String?
   imageLicense      String?

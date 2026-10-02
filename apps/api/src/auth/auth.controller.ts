@@ -11,7 +11,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
-import { AuthService, LoginResponse, RegisteredUser } from './auth.service';
+import { AuthService, CurrentUserResponse, LoginResponse, RegisteredUser } from './auth.service';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -94,7 +94,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Get the current user' })
   @ApiOkResponse({ description: 'Current user' })
   @ApiUnauthorizedResponse({ description: 'No or invalid access token' })
-  me(@CurrentUser() user: AuthenticatedUser): Promise<RegisteredUser> {
+  me(@CurrentUser() user: AuthenticatedUser): Promise<CurrentUserResponse> {
     return this.authService.me(user.userId);
   }
 

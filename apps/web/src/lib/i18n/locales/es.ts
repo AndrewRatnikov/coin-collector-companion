@@ -22,6 +22,7 @@ const esShape: Record<MessageKey, string> = {
   'nav.glossary': 'Glosario',
   'nav.account': 'Cuenta',
   'nav.settings': 'Configuración',
+  'nav.admin': 'Administración',
 
   // language switcher
   'languageSwitcher.english': 'English',
@@ -208,6 +209,23 @@ const esShape: Record<MessageKey, string> = {
   'mySubmissions.statusPending': 'Pendiente de revisión',
   'mySubmissions.statusApproved': 'Aprobada',
   'mySubmissions.statusRejected': 'No aprobada',
+  'mySubmissions.rejectionReasonLabel': 'Motivo:',
+
+  // admin review
+  'admin.submissionsTitle': 'Revisar envíos',
+  'admin.errorLoading': 'Algo salió mal al cargar los envíos. Inténtalo de nuevo.',
+  'admin.forbidden': 'No tienes permiso para ver esta página.',
+  'admin.emptyMessage': 'No hay envíos pendientes de revisión.',
+  'admin.submittedBy': 'Enviado por',
+  'admin.submitterUnknown': 'Remitente desconocido',
+  'admin.duplicateWarning': 'Posible duplicado de una moneda aprobada:',
+  'admin.approve': 'Aprobar',
+  'admin.reject': 'Rechazar',
+  'admin.edit': 'Editar',
+  'admin.rejectReasonLabel': 'Motivo (opcional)',
+  'admin.rejectConfirm': 'Confirmar rechazo',
+  'admin.saveAndApprove': 'Guardar y aprobar',
+  'admin.errorConflict': 'Este envío ya fue revisado, o ya existe otra moneda con los mismos datos.',
 
   // footer
   'footer.attributionPrefix': 'Datos del catálogo obtenidos de',

@@ -9,6 +9,7 @@ import { getStoredToken } from '@/lib/auth-token';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { AccountMenu } from '@/components/layout/account-menu';
+import { AdminNavLink } from '@/components/layout/admin-nav-link';
 
 const navLinkClassName =
   'text-[13px] text-[var(--color-text)] opacity-70 transition-opacity hover:text-[var(--color-accent)] hover:opacity-100';
@@ -57,7 +58,10 @@ export function SiteNav() {
         </Link>
         <div className="flex items-center gap-6 border-l border-[var(--color-divider)] pl-6">
           {isAuthenticated ? (
-            <AccountMenu onLogout={handleLogout} />
+            <>
+              <AdminNavLink />
+              <AccountMenu onLogout={handleLogout} />
+            </>
           ) : (
             <>
               <Link href="/login" data-testid="site-nav-login-link" className={navLinkClassName}>

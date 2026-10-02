@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type { CatalogCoin, PaginatedResponse } from '@coin-collector/shared';
+import type { CatalogCoin, PaginatedResponse, SubmittedCoin } from '@coin-collector/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { FindCatalogQueryDto } from './dto/find-catalog-query.dto';
 import { CreateCoinDto } from './dto/create-coin.dto';
@@ -10,7 +10,9 @@ const MAX_LIMIT = 100;
 // Every read path returns this exact column set — never submittedByUserId. GET /catalog/:id
 // is public and unauthenticated (System Design §4.7), so a raw submitter id here would leak
 // identity the same way an unguarded POST /catalog response would (backlog 1.4).
-const CATALOG_COIN_SELECT = {
+// Exported so AdminService builds on the same column set. It must never include
+// rejectionReason either: GET /catalog/:id returns coins of any status.
+export const CATALOG_COIN_SELECT = {
   id: true,
   country: true,
   denomination: true,
@@ -33,16 +35,24 @@ const CATALOG_COIN_SELECT = {
   updatedAt: true,
 } satisfies Prisma.CoinSelect;
 
+// Used only on the `submittedByMe` branch of findAll, where every row belongs to the caller,
+// so the submitter (and nobody else) sees why their coin was rejected.
+export const SUBMITTED_COIN_SELECT = { ...CATALOG_COIN_SELECT, rejectionReason: true } satisfies Prisma.CoinSelect;
+
 @Injectable()
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(query: FindCatalogQueryDto, userId?: string): Promise<PaginatedResponse<CatalogCoin>> {
+  async findAll(
+    query: FindCatalogQueryDto,
+    userId?: string,
+  ): Promise<PaginatedResponse<CatalogCoin | SubmittedCoin>> {
     const page = query.page;
     const limit = Math.min(query.limit, MAX_LIMIT);
+    const ownSubmissions = Boolean(query.submittedByMe && userId);
 
     const where: Prisma.CoinWhereInput = {
-      ...(query.submittedByMe && userId ? { submittedByUserId: userId } : { status: 'approved' }),
+      ...(ownSubmissions ? { submittedByUserId: userId } : { status: 'approved' }),
       ...(query.country ? { country: { equals: query.country, mode: 'insensitive' as const } } : {}),
       ...(query.denomination ? { denomination: { equals: query.denomination, mode: 'insensitive' as const } } : {}),
       ...(query.name ? { name: { contains: query.name, mode: 'insensitive' as const } } : {}),
@@ -56,16 +66,20 @@ export class CatalogService {
         : {}),
     };
 
-    const [items, total] = await Promise.all([
-      this.prisma.coin.findMany({
-        where,
-        select: CATALOG_COIN_SELECT,
-        skip: (page - 1) * limit,
-        take: limit,
-        orderBy: [{ year: 'asc' }, { id: 'asc' }],
-      }),
-      this.prisma.coin.count({ where }),
-    ]);
+    const listArgs = {
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: [{ year: 'asc' }, { id: 'asc' }],
+    } satisfies Prisma.CoinFindManyArgs;
+
+    // Two explicit calls (rather than one call with a conditional `select`) keep each
+    // branch's Prisma payload type precise.
+    const itemsQuery: Promise<Array<CatalogCoin | SubmittedCoin>> = ownSubmissions
+      ? this.prisma.coin.findMany({ ...listArgs, select: SUBMITTED_COIN_SELECT })
+      : this.prisma.coin.findMany({ ...listArgs, select: CATALOG_COIN_SELECT });
+
+    const [items, total] = await Promise.all([itemsQuery, this.prisma.coin.count({ where })]);
 
     return { items, page, limit, total };
   }
