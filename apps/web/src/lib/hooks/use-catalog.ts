@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import type { CatalogCoin, CreateCoinRequest } from '@coin-collector/shared';
+import type { CatalogCoin, CreateCoinRequest, PaginatedResponse, SubmittedCoin } from '@coin-collector/shared';
 import { getCatalog, getCoin, submitCoin, type CatalogFilters } from '@/lib/catalog-api';
 import { ApiError } from '@/lib/api-client';
 
@@ -28,9 +28,10 @@ export function useSubmitCoin() {
 
 // Own query key (not ['catalog', filters]) so it never collides with the plain browse cache —
 // this is a distinct "my submissions, whatever their status" list, not a filtered browse view.
+// The API adds `rejectionReason` to each item on this branch only, hence SubmittedCoin.
 export function useMySubmissions() {
   return useQuery({
     queryKey: ['catalog', 'mine'],
-    queryFn: () => getCatalog({ submittedByMe: true }),
+    queryFn: () => getCatalog({ submittedByMe: true }) as Promise<PaginatedResponse<SubmittedCoin>>,
   });
 }
