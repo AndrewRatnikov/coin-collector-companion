@@ -37,12 +37,23 @@
  * to resolve the logout call, following the same `vi.stubGlobal('fetch', ...)` pattern
  * `auth-api.test.ts`/`api-client.test.ts` already use, and awaits the click before
  * asserting. Every other describe block in this file is untouched.
+ *
+ * run_20261001_224939: SiteNav renders <AdminNavLink /> (data-testid="site-nav-admin-link")
+ * when authenticated, and AdminNavLink calls `getCurrentUser` from `@/lib/auth-api`
+ * (runs/run_20261001_224939/plan.md § Interface Contract → Component: AdminNavLink, SiteNav).
+ * Per the contract's Tester note, only `getCurrentUser` is mocked (partial vi.mock keeping the
+ * real `logout`), with a default `role: 'user'` resolution in beforeEach so every existing block,
+ * including the logout block's `fetchMock.mock.calls[0]` assertion, behaves as before. Only the
+ * new describe block at the end is added; every existing `it` is unchanged.
+ *
+ * CONTRACT_GAP: none.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SiteNav } from '@/components/layout/site-nav';
+import { getCurrentUser } from '@/lib/auth-api';
 import { getStoredToken, setStoredToken } from '@/lib/auth-token';
 
 const pushMock = vi.fn();
@@ -54,6 +65,17 @@ vi.mock('next/navigation', () => ({
   usePathname: () => usePathnameMock(),
 }));
 
+vi.mock('@/lib/auth-api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/auth-api')>()),
+  getCurrentUser: vi.fn(),
+}));
+
+const getCurrentUserMock = vi.mocked(getCurrentUser);
+
+function currentUser(role: 'user' | 'admin') {
+  return { id: 'user-1', email: 'collector@example.com', createdAt: '2026-01-01T00:00:00.000Z', role };
+}
+
 describe('SiteNav', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -61,6 +83,8 @@ describe('SiteNav', () => {
     replaceMock.mockClear();
     usePathnameMock.mockClear();
     usePathnameMock.mockReturnValue('/dashboard');
+    getCurrentUserMock.mockReset();
+    getCurrentUserMock.mockResolvedValue(currentUser('user'));
   });
 
   describe('criterion 2: always-visible links', () => {
@@ -302,6 +326,81 @@ describe('SiteNav', () => {
       render(<SiteNav />);
 
       expect(screen.queryByTestId('site-nav-settings-link')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('run_20261001_224939 criterion 21: Admin link, only when /auth/me reports role admin', () => {
+    async function settle() {
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+    }
+
+    it('shows site-nav-admin-link pointing at /admin/submissions when the current user is an admin', async () => {
+      setStoredToken('tok-abc');
+      getCurrentUserMock.mockResolvedValue(currentUser('admin'));
+      render(<SiteNav />);
+
+      const link = await screen.findByTestId('site-nav-admin-link');
+      expect(link).toBeInTheDocument();
+      expect(link.getAttribute('href')).toBe('/admin/submissions');
+      expect(link).toHaveTextContent('Admin');
+    });
+
+    it('calls getCurrentUser once on mount for an authenticated visitor', async () => {
+      setStoredToken('tok-abc');
+      getCurrentUserMock.mockResolvedValue(currentUser('admin'));
+      render(<SiteNav />);
+
+      await screen.findByTestId('site-nav-admin-link');
+      expect(getCurrentUserMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('hides site-nav-admin-link when the current user has role user', async () => {
+      setStoredToken('tok-abc');
+      getCurrentUserMock.mockResolvedValue(currentUser('user'));
+      render(<SiteNav />);
+
+      await screen.findByTestId('site-nav-account-trigger');
+      await settle();
+
+      expect(getCurrentUserMock).toHaveBeenCalled();
+      expect(screen.queryByTestId('site-nav-admin-link')).not.toBeInTheDocument();
+    });
+
+    it('hides site-nav-admin-link while the role is still unknown (request pending)', async () => {
+      setStoredToken('tok-abc');
+      getCurrentUserMock.mockReturnValue(new Promise(() => {}));
+      render(<SiteNav />);
+
+      await screen.findByTestId('site-nav-account-trigger');
+      await settle();
+
+      expect(getCurrentUserMock).toHaveBeenCalled();
+      expect(screen.queryByTestId('site-nav-admin-link')).not.toBeInTheDocument();
+    });
+
+    it('hides site-nav-admin-link when the /auth/me request fails', async () => {
+      setStoredToken('tok-abc');
+      getCurrentUserMock.mockRejectedValue(new Error('network down'));
+      render(<SiteNav />);
+
+      await screen.findByTestId('site-nav-account-trigger');
+      await settle();
+
+      expect(getCurrentUserMock).toHaveBeenCalled();
+      expect(screen.queryByTestId('site-nav-admin-link')).not.toBeInTheDocument();
+    });
+
+    it('hides site-nav-admin-link for an anonymous visitor and never calls getCurrentUser', async () => {
+      getCurrentUserMock.mockResolvedValue(currentUser('admin'));
+      render(<SiteNav />);
+
+      await settle();
+
+      expect(screen.getByTestId('site-nav-login-link')).toBeInTheDocument();
+      expect(screen.queryByTestId('site-nav-admin-link')).not.toBeInTheDocument();
+      expect(getCurrentUserMock).not.toHaveBeenCalled();
     });
   });
 });
