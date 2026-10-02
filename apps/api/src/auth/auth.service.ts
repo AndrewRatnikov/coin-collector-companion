@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -15,6 +15,13 @@ export interface RegisteredUser {
   id: string;
   email: string;
   createdAt: Date;
+}
+
+// GET /auth/me shape: the registered user plus their role, so the web app can decide
+// whether to show admin-only navigation. Authorization itself never trusts this value;
+// RolesGuard re-reads the role from the database on every admin request.
+export interface CurrentUserResponse extends RegisteredUser {
+  role: Role;
 }
 
 export interface LoginResponse {
@@ -87,10 +94,10 @@ export class AuthService {
   // passwordHash at the query level — same defense-in-depth reasoning CatalogService's
   // submittedByUserId omission follows — never rely on the controller alone to keep a
   // sensitive field out of the response.
-  async me(userId: string): Promise<RegisteredUser> {
+  async me(userId: string): Promise<CurrentUserResponse> {
     return this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
-      select: { id: true, email: true, createdAt: true },
+      select: { id: true, email: true, createdAt: true, role: true },
     });
   }
 
