@@ -140,6 +140,8 @@ function previewResponse(
 }
 
 const MIXED_ROWS = [ROW_MATCHED, ROW_OWNED, ROW_DUPLICATE, ROW_AMBIGUOUS, ROW_UNMATCHED, ROW_INVALID];
+// Same rows without the duplicate of coin-a, so skipping row 2 really removes coin-a from the import.
+const ROWS_WITHOUT_DUPLICATE = [ROW_MATCHED, ROW_OWNED, ROW_AMBIGUOUS, ROW_UNMATCHED, ROW_INVALID];
 
 function csvFile(name = 'c.csv') {
   return new File(['Year,Country,Denomination,Mint\n1950,USA,Cent,D\n'], name, { type: 'text/csv' });
@@ -440,7 +442,8 @@ describe('CollectionImportPage', () => {
 
     it('skipping a matched row lowers the count, marks the row skipped and hides its coin', async () => {
       const { user } = renderPage();
-      await reachPreview(user);
+      await reachPreview(user, ROWS_WITHOUT_DUPLICATE);
+      expect(textOf('import-summary-to-import')).toBe('1');
 
       await user.click(within(rowEl(2)).getByTestId('import-row-skip'));
 
@@ -466,7 +469,7 @@ describe('CollectionImportPage', () => {
 
     it('Undo returns a skipped row to its original state and restores the count', async () => {
       const { user } = renderPage();
-      await reachPreview(user);
+      await reachPreview(user, ROWS_WITHOUT_DUPLICATE);
 
       await user.click(within(rowEl(2)).getByTestId('import-row-skip'));
       expect(textOf('import-summary-to-import')).toBe('0');

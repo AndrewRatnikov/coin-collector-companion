@@ -166,6 +166,63 @@ describe('messy fixtures combined (criterion #23)', () => {
     expect(good / withCoin).toBeGreaterThanOrEqual(0.8);
   });
 
+  it('has Ukrainian rows with catalog coins in every file (criteria 15, 16, 18, 23)', () => {
+    let ukraineRows = 0;
+    for (const { file } of CASES) {
+      const rows = Object.values(EXPECTED[file]).filter((k) => k !== null && k.startsWith('Ukraine|'));
+      expect(rows.length).toBeGreaterThanOrEqual(10);
+      ukraineRows += rows.length;
+    }
+    expect(ukraineRows).toBeGreaterThanOrEqual(40);
+  });
+
+  it('matches Ukrainian rows whose country, denomination and variety are spelled in different ways', () => {
+    const comma = run('messy-comma.csv').results;
+    const byLine = (line: number) => comma.find((r) => r.line === line);
+    // "Ucrania", "10 гривень": the only 10 Hryvnias coin of 2021.
+    expect(byLine(33)?.status).toBe('matched');
+    expect(byLine(33)?.coin?.id).toBe('Ukraine|10 Hryvnias|2021||');
+    // "Ukraine, 10 Hryvnias, 2022" with no variety resolves to the plain coin, not to the commemorative.
+    expect(byLine(34)?.status).toBe('matched');
+    expect(byLine(34)?.coin?.id).toBe('Ukraine|10 Hryvnias|2022||');
+    // Commemorative named in the Variety column.
+    expect(byLine(35)?.coin?.id).toBe('Ukraine|10 Hryvnias|2023||Antonivskyi Bridge');
+    expect(byLine(36)?.coin?.id).toBe('Ukraine|10 Hryvnias|2023||Air Defense: A Reliable Shield of Ukraine');
+    // Partial subject name.
+    expect(byLine(42)?.coin?.id).toBe('Ukraine|10 Hryvnias|2025||We Are Strong. We Are Together: Donetsk Oblast');
+    // "2 kopecks" is 2 Kopiyky only; "25 копеек" is 25 Kopiyok only.
+    expect(byLine(45)?.coin?.id).toBe('Ukraine|2 Kopiyky|2006||');
+    expect(byLine(46)?.coin?.id).toBe('Ukraine|25 Kopiyok|2008||');
+  });
+
+  it('keeps blank-variety commemorative years and amount-less kopiyka rows ambiguous', () => {
+    const comma = run('messy-comma.csv').results;
+    const byLine = (line: number) => comma.find((r) => r.line === line);
+    // 2026 has only commemoratives, none plain.
+    const blank2026 = byLine(44);
+    expect(blank2026?.status).toBe('ambiguous');
+    expect(blank2026?.reason).toBe('multiple_matches');
+    expect(blank2026?.candidates.length).toBeGreaterThan(5);
+    // "kopiyky" with no amount lists every kopiyka denomination of that year.
+    const kopiyky = byLine(48);
+    expect(kopiyky?.status).toBe('ambiguous');
+    const ids = kopiyky?.candidates.map((c) => c.id) ?? [];
+    expect(ids).toContain('Ukraine|2 Kopiyky|2010||');
+    expect(ids).toContain('Ukraine|50 Kopiyok|2010||');
+    expect(ids.every((id) => id.includes('Kopiy') && id.includes('|2010|'))).toBe(true);
+  });
+
+  it('matches Ukrainian commemoratives given in the combined Coin column of the tab file', () => {
+    const tab = run('messy-tab.csv').results;
+    const byLine = (line: number) => tab.find((r) => r.line === line);
+    expect(byLine(13)?.coin?.id).toBe('Ukraine|10 Hryvnias|2023||Antonivskyi Bridge');
+    expect(byLine(14)?.coin?.id).toBe('Ukraine|10 Hryvnias|2023||Support Forces of the Armed Forces of Ukraine');
+    expect(byLine(18)?.coin?.id).toBe(
+      'Ukraine|10 Hryvnias|2026||In Memory of Those Executed, Tortured or Killed in Captivity',
+    );
+    expect(byLine(20)?.coin?.id).toBe('Ukraine|1 Hryvnia|2012||UEFA Euro 2012 Final Tournament');
+  });
+
   it('resolves duplicate coins in the comma file to the first row (duplicateOfLine)', () => {
     const { results } = run('messy-comma.csv');
     const first = results.find((r) => r.line === 57);

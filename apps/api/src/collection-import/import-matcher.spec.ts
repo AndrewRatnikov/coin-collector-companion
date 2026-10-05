@@ -270,6 +270,11 @@ describe('denominationMatches (criterion #16)', () => {
     expect(denominationMatches('2 kopecks', '5 Kopiyok')).toBe(false);
     expect(denominationMatches('2 копійки', '2 Kopiyky')).toBe(true);
     expect(denominationMatches('25 копеек', '25 Kopiyok')).toBe(true);
+    expect(denominationMatches('kopiyky', '2 Kopiyky')).toBe(true);
+    expect(denominationMatches('kopiyky', '50 Kopiyok')).toBe(true);
+    expect(denominationMatches('kopiyky', '10 Hryvnias')).toBe(false);
+    expect(denominationMatches('10 kopiyky', '10 Kopiyok')).toBe(true);
+    expect(denominationMatches('10 kopiyky', '2 Kopiyky')).toBe(false);
     expect(denominationMatches('twenty five kopiyok', '25 Kopiyok')).toBe(true);
     expect(denominationMatches('10k', '10 Kopiyok')).toBe(true);
     expect(denominationMatches('10k', '50 Kopiyok')).toBe(false);
@@ -639,6 +644,71 @@ describe('matchRows: variety and combined parsing (criterion #18)', () => {
     const row = matchOne(COMBINED, ['1960 Large Date', 'USA', 'Cent'], { catalog });
     expect(row.status).toBe('matched');
     expect(row.coin?.variety).toBe('Large Date');
+  });
+});
+
+describe('matchRows: long commemorative names (criterion #18)', () => {
+  const AIR_DEFENSE = coin('Ukraine', '10 Hryvnias', 2023, '', 'Air Defense: A Reliable Shield of Ukraine');
+  const BRIDGE = coin('Ukraine', '10 Hryvnias', 2023, '', 'Antonivskyi Bridge');
+  const JOINT = coin('Ukraine', '10 Hryvnias', 2023, '', 'Joint Forces Command of the Armed Forces of Ukraine');
+  const SUPPORT = coin('Ukraine', '10 Hryvnias', 2023, '', 'Support Forces of the Armed Forces of Ukraine');
+  const PLAIN_2023 = coin('Ukraine', '10 Hryvnias', 2023, '', '');
+  const COMMEMORATIVES = [AIR_DEFENSE, BRIDGE, JOINT, SUPPORT, PLAIN_2023];
+  const row = (variety: string) =>
+    matchOne(YCDMV, ['2023', 'Ukraine', '10 Hryvnias', '', variety], { catalog: COMMEMORATIVES });
+
+  it.each([
+    'Air Defense: A Reliable Shield of Ukraine',
+    'Air Defense - A Reliable Shield of Ukraine',
+    'air defense: a reliable shield of ukraine',
+    '  Air  Defense ,  A Reliable   Shield of Ukraine  ',
+  ])('explicit variety %j matches the Air Defense commemorative only', (variety) => {
+    const result = row(variety);
+    expect(result.status).toBe('matched');
+    expect(result.coin?.id).toBe(AIR_DEFENSE.id);
+    expect(result.reason).toBeNull();
+  });
+
+  it('a different long name selects a different commemorative of the same year', () => {
+    const result = row('Joint Forces Command of the Armed Forces of Ukraine');
+    expect(result.status).toBe('matched');
+    expect(result.coin?.id).toBe(JOINT.id);
+  });
+
+  it('a partial name that hits two commemoratives is ambiguous and lists only those two', () => {
+    const result = row('Armed Forces of Ukraine');
+    expect(result.status).toBe('ambiguous');
+    expect(result.reason).toBe('multiple_matches');
+    expect(result.coin).toBeNull();
+    expect(result.candidates.map((c) => c.id).sort()).toEqual([JOINT.id, SUPPORT.id].sort());
+  });
+
+  it('a partial name that hits exactly one commemorative is matched', () => {
+    const result = row('Joint Forces Command');
+    expect(result.status).toBe('matched');
+    expect(result.coin?.id).toBe(JOINT.id);
+  });
+
+  it('an unknown subject is ambiguous with variety_not_recognised and offers the whole pool', () => {
+    const result = row('Kyiv Cathedral');
+    expect(result.status).toBe('ambiguous');
+    expect(result.reason).toBe('variety_not_recognised');
+    expect(result.candidates.map((c) => c.id).sort()).toEqual(COMMEMORATIVES.map((c) => c.id).sort());
+  });
+
+  it('the same long names work from the combined column (rest of the cell is the variety)', () => {
+    const matched = matchOne(COMBINED, ['2023 Air Defense - A Reliable Shield of Ukraine', 'Ukraine', '10 Hryvnias'], {
+      catalog: COMMEMORATIVES,
+    });
+    expect(matched.status).toBe('matched');
+    expect(matched.coin?.id).toBe(AIR_DEFENSE.id);
+
+    const ambiguous = matchOne(COMBINED, ['2023 Armed Forces of Ukraine', 'Ukraine', '10 Hryvnias'], {
+      catalog: COMMEMORATIVES,
+    });
+    expect(ambiguous.status).toBe('ambiguous');
+    expect(ambiguous.reason).toBe('multiple_matches');
+    expect(ambiguous.candidates.map((c) => c.id).sort()).toEqual([JOINT.id, SUPPORT.id].sort());
   });
 });
 
