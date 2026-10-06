@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { SetsModule } from './sets/sets.module';
 import { CollectionModule } from './collection/collection.module';
+import { CollectionImportModule } from './collection-import/collection-import.module';
 import { FeedbackModule } from './feedback/feedback.module';
 import { AdminModule } from './admin/admin.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
@@ -25,6 +26,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
     CatalogModule,
     SetsModule,
     CollectionModule,
+    CollectionImportModule,
     FeedbackModule,
     AdminModule,
   ],
