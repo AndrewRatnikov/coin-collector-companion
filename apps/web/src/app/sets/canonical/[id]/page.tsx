@@ -111,7 +111,21 @@ export default function CanonicalSetDetailPage({ params }: { params: Promise<{ i
                   >
                     {item.coin.denomination.charAt(0)}
                   </span>
-                  <span className="text-[15px] text-[color:var(--color-text)]">{formatCoinLabel(item.coin)}</span>
+                  <Link
+                    href={`/catalog/${item.coin.id}`}
+                    data-testid="canonical-set-coin-link"
+                    className="flex flex-col hover:underline"
+                  >
+                    <span className="text-[15px] text-[color:var(--color-text)]">{formatCoinLabel(item.coin)}</span>
+                    {item.coin.variety ? (
+                      <span
+                        data-testid="canonical-set-coin-variety"
+                        className="text-xs text-[color:var(--color-neutral-600)]"
+                      >
+                        {item.coin.variety}
+                      </span>
+                    ) : null}
+                  </Link>
                 </li>
               ))}
           </ul>
