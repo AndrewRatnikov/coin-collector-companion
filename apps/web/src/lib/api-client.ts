@@ -72,8 +72,14 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}, options:
     throw new Error('NEXT_PUBLIC_API_URL is not set');
   }
 
+  // A FormData body (multipart upload) must not get a Content-Type from us: the browser sets
+  // `multipart/form-data` with the boundary itself.
+  const isFormData = typeof FormData !== 'undefined' && init.body instanceof FormData;
+
   const headers = new Headers(init.headers);
-  headers.set('Content-Type', 'application/json');
+  if (!isFormData) {
+    headers.set('Content-Type', 'application/json');
+  }
 
   const token = getStoredToken();
   if (token) {
@@ -109,7 +115,9 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}, options:
       const refreshedToken = await attemptSilentRefresh();
       if (refreshedToken) {
         const retryHeaders = new Headers(init.headers);
-        retryHeaders.set('Content-Type', 'application/json');
+        if (!isFormData) {
+          retryHeaders.set('Content-Type', 'application/json');
+        }
         retryHeaders.set('Authorization', `Bearer ${refreshedToken}`);
         response = await fetchWithTimeout(url, { ...init, headers: retryHeaders });
 

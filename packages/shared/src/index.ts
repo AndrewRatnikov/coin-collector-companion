@@ -199,3 +199,104 @@ export function formatCoinLabel(coin: CatalogCoin): string {
     ? `${coin.country} ${coin.denomination} (${coin.year} ${coin.mintMark})`
     : `${coin.country} ${coin.denomination} (${coin.year})`;
 }
+
+// CSV collection import (POST /collection/import/preview and /confirm). The preview parses and
+// matches an uploaded CSV in memory and writes nothing; only confirm creates Ownership rows.
+export const IMPORT_MAX_FILE_BYTES = 1_048_576;
+export const IMPORT_MAX_ROWS = 2000;
+
+export type ImportField = 'year' | 'country' | 'denomination' | 'mintMark' | 'variety' | 'combined';
+export const IMPORT_FIELDS: readonly ImportField[] = [
+  'year',
+  'country',
+  'denomination',
+  'mintMark',
+  'variety',
+  'combined',
+];
+// Field -> 0-based column index. Unmapped fields are absent.
+export type ImportColumnMapping = Partial<Record<ImportField, number>>;
+
+// Country and Denomination are required, plus either Year or the combined "Coin" column.
+export function isImportMappingComplete(mapping: ImportColumnMapping): boolean {
+  return (
+    mapping.country !== undefined &&
+    mapping.denomination !== undefined &&
+    (mapping.year !== undefined || mapping.combined !== undefined)
+  );
+}
+
+export type ImportDelimiter = ',' | ';' | '\t';
+export type ImportRowStatus = 'matched' | 'ambiguous' | 'unmatched' | 'invalid';
+export type ImportReasonCode =
+  | 'year_missing'
+  | 'year_invalid'
+  | 'country_missing'
+  | 'denomination_missing'
+  | 'country_not_recognised'
+  | 'denomination_not_recognised'
+  | 'mint_mark_not_recognised'
+  | 'no_such_coin'
+  | 'multiple_matches'
+  | 'variety_not_recognised';
+export type ImportErrorCode =
+  | 'IMPORT_FILE_REQUIRED'
+  | 'IMPORT_FILE_TOO_LARGE'
+  | 'IMPORT_TOO_MANY_ROWS'
+  | 'IMPORT_NOT_UTF8'
+  | 'IMPORT_NOT_CSV'
+  | 'IMPORT_EMPTY'
+  | 'IMPORT_NO_DATA_ROWS'
+  | 'IMPORT_INVALID_MAPPING'
+  | 'IMPORT_UNKNOWN_COIN';
+
+export interface ImportCoinSummary {
+  id: string;
+  country: string;
+  denomination: string;
+  year: number;
+  mintMark: string;
+  variety: string;
+  name: string;
+  owned: boolean; // the user already owns it
+}
+
+export interface ImportPreviewRow {
+  line: number; // 1-based physical line where the record starts
+  values: string[]; // trimmed original cells, all columns
+  status: ImportRowStatus;
+  reason: ImportReasonCode | null; // null iff status === 'matched'
+  coin: ImportCoinSummary | null; // non-null iff status === 'matched'
+  candidates: ImportCoinSummary[]; // non-empty only for 'ambiguous'
+  alreadyOwned: boolean; // matched && coin.owned
+  duplicateOfLine: number | null; // matched rows only: line of the first row with the same coin
+}
+
+export interface ImportPreviewSummary {
+  total: number;
+  matched: number;
+  alreadyOwned: number;
+  duplicateInFile: number;
+  ambiguous: number;
+  unmatched: number;
+  invalid: number;
+  toImport: number;
+}
+
+export interface ImportPreviewResponse {
+  headers: string[];
+  delimiter: ImportDelimiter;
+  mapping: ImportColumnMapping; // the mapping actually used
+  rows: ImportPreviewRow[];
+  summary: ImportPreviewSummary;
+}
+
+export interface ImportConfirmRequest {
+  coinIds: string[];
+}
+
+export interface ImportConfirmResponse {
+  requested: number; // unique ids received
+  created: number; // new Ownership rows
+  alreadyOwned: number; // requested - created
+}
