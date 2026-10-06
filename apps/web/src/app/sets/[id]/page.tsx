@@ -293,10 +293,19 @@ function SetEditor({ id }: { id: string }) {
                       data-testid="set-editor-gap-item"
                       className="flex items-center justify-between gap-4 rounded border border-gray-200 p-3"
                     >
-                      <span className="flex flex-col">
+                      <Link
+                        href={`/catalog/${slot.coin.id}`}
+                        data-testid="set-editor-gap-coin-link"
+                        className="flex flex-col hover:underline"
+                      >
                         <span className="text-[15px] font-medium">{slot.coin.name}</span>
                         <span className="text-xs text-gray-500">{formatCoinLabel(slot.coin)}</span>
-                      </span>
+                        {slot.coin.variety ? (
+                          <span data-testid="set-editor-gap-variety" className="text-xs text-gray-500">
+                            {slot.coin.variety}
+                          </span>
+                        ) : null}
+                      </Link>
                       <span data-testid="set-editor-gap-status" className="text-xs text-gray-500">
                         {slot.owned ? t('common.owned') : t('common.missing')}
                       </span>
