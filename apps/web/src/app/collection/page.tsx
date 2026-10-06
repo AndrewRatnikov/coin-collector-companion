@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import Link from 'next/link';
 import { formatCoinLabel } from '@coin-collector/shared';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
@@ -36,7 +37,16 @@ function CollectionList() {
       data-testid="collection-page"
       className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-6 px-[clamp(20px,5vw,48px)] py-10 text-[var(--color-text)]"
     >
-      <h1 className="text-[28px] font-normal [font-family:var(--font-heading)]">{t('collection.title')}</h1>
+      <div className="flex flex-wrap items-baseline justify-between gap-4">
+        <h1 className="text-[28px] font-normal [font-family:var(--font-heading)]">{t('collection.title')}</h1>
+        <Link
+          href="/collection/import"
+          data-testid="collection-import-link"
+          className="text-[13px] text-[var(--color-accent)] underline-offset-4 hover:underline"
+        >
+          {t('collection.importLink')}
+        </Link>
+      </div>
 
       <form
         data-testid="collection-filter-form"
