@@ -103,7 +103,21 @@ export default function PublicSetDetailPage({ params }: { params: Promise<{ id: 
                   data-testid="public-set-detail-coin-item"
                   className="flex items-center justify-between gap-2 border-b border-[var(--color-divider)] px-1 py-3"
                 >
-                  <span>{formatCoinLabel(item.coin)}</span>
+                  <Link
+                    href={`/catalog/${item.coin.id}`}
+                    data-testid="public-set-detail-coin-link"
+                    className="flex flex-col hover:underline"
+                  >
+                    <span>{formatCoinLabel(item.coin)}</span>
+                    {item.coin.variety ? (
+                      <span
+                        data-testid="public-set-detail-coin-variety"
+                        className="text-xs text-[var(--color-neutral-600)]"
+                      >
+                        {item.coin.variety}
+                      </span>
+                    ) : null}
+                  </Link>
                   {gapsQuery.isSuccess && ownedById.has(item.coin.id) && (
                     <span
                       data-testid="public-set-detail-coin-status"
