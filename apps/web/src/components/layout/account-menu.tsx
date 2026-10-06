@@ -79,6 +79,14 @@ export function AccountMenu({ onLogout }: AccountMenuProps) {
             {t('nav.collection')}
           </Link>
           <Link
+            href="/collection/import"
+            data-testid="site-nav-import-link"
+            className={menuLinkClassName}
+            role="menuitem"
+          >
+            {t('nav.importCollection')}
+          </Link>
+          <Link
             href="/catalog/mine"
             data-testid="site-nav-my-submissions-link"
             className={menuLinkClassName}
