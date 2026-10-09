@@ -175,6 +175,8 @@ const esShape: Record<MessageKey, string> = {
   'setAlbum.blankCell': 'Sin moneda en esta colección',
   'setAlbum.viewInCatalog': 'Ver en el catálogo',
   'setAlbum.empty': 'Esta colección aún no tiene monedas.',
+  'setAlbum.emptyOwnerHint': 'Usa «Añadir monedas» para empezar a llenarla.',
+  'setAlbum.toggleError': 'No se pudo actualizar esta moneda. Inténtalo de nuevo.',
 
   // missing list
   'missingList.heading': 'Monedas faltantes',

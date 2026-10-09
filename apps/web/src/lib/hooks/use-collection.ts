@@ -13,16 +13,28 @@ export function useCollection(filters: CollectionFilters = {}, { enabled = true 
   });
 }
 
-export function useSetOwnership() {
+export type SetOwnershipVariables = { coinId: string; owned: boolean };
+
+export interface UseSetOwnershipOptions {
+  // Hook-level, so it fires for every mutate() call with that call's variables.
+  // (Callbacks passed to mutate() itself only fire for the most recent call.)
+  onSettled?: (error: ApiError | null, variables: SetOwnershipVariables) => void;
+}
+
+export function useSetOwnership({ onSettled }: UseSetOwnershipOptions = {}) {
   const queryClient = useQueryClient();
-  return useMutation<SetOwnershipResponse, ApiError, { coinId: string; owned: boolean }>({
+  return useMutation<SetOwnershipResponse, ApiError, SetOwnershipVariables>({
     mutationFn: ({ coinId, owned }) => setOwnership(coinId, owned),
-    onSuccess: () => {
+    // Returning the promise makes the mutation (and onSettled) wait for the refetch,
+    // so a caller that re-enables a control on settle shows the server's new state.
+    onSuccess: () =>
       // Broad prefix invalidation, not scoped to one set: a coin's ownership is
       // global (PRD requirement 13), so every currently-mounted set's gap-view
       // query needs to refetch, not just the one the toggle happened in.
-      queryClient.invalidateQueries({ queryKey: ['user-sets'] });
-      queryClient.invalidateQueries({ queryKey: ['collection'] });
-    },
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['user-sets'] }),
+        queryClient.invalidateQueries({ queryKey: ['collection'] }),
+      ]),
+    onSettled: (_data, error, variables) => onSettled?.(error, variables),
   });
 }

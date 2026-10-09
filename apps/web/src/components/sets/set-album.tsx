@@ -18,6 +18,9 @@ export interface SetAlbumProps {
   gapOnly: boolean;
   onToggle: (coinId: string, currentlyOwned: boolean) => void;
   pendingCoinId?: string | null;
+  // Coins whose ownership request is in flight; their slots are disabled and aria-busy.
+  pendingCoinIds?: ReadonlySet<string>;
+  toggleFailed?: boolean;
 }
 
 const STICKY_YEAR_CLASSNAME =
@@ -27,7 +30,7 @@ const BLANK_CELL_CLASSNAME =
   'min-w-12 border border-transparent bg-[repeating-linear-gradient(45deg,var(--color-neutral-200)_0_4px,transparent_4px_8px)] px-1 py-1';
 
 const SLOT_BASE_CLASSNAME =
-  'inline-flex min-h-8 min-w-8 items-center justify-center gap-1 rounded px-1 text-sm';
+  'inline-flex min-h-8 min-w-8 items-center justify-center gap-1 rounded px-1 text-sm disabled:cursor-progress';
 const SLOT_OWNED_CLASSNAME = 'border border-accent bg-accent text-white';
 const SLOT_MISSING_CLASSNAME = 'border border-dashed border-neutral-500 bg-transparent text-neutral-700';
 
@@ -95,6 +98,7 @@ function AlbumSlot({
         <button
           type="button"
           data-testid="set-album-slot"
+          disabled={pending}
           onClick={() => onToggle(coin.id, slot.owned)}
           {...sharedProps}
         >
@@ -117,7 +121,15 @@ function AlbumSlot({
   );
 }
 
-export function SetAlbum({ slots, isOwner, gapOnly, onToggle, pendingCoinId }: SetAlbumProps) {
+export function SetAlbum({
+  slots,
+  isOwner,
+  gapOnly,
+  onToggle,
+  pendingCoinId,
+  pendingCoinIds,
+  toggleFailed,
+}: SetAlbumProps) {
   const { t } = useTranslation();
   const pages = useMemo(() => buildAlbumLayout(slots), [slots]);
 
@@ -126,6 +138,12 @@ export function SetAlbum({ slots, isOwner, gapOnly, onToggle, pendingCoinId }: S
       <div data-testid="set-album" className="flex flex-col gap-6">
         <p data-testid="set-album-empty" className="text-sm text-neutral-600">
           {t('setAlbum.empty')}
+          {isOwner && (
+            <>
+              {' '}
+              <span data-testid="set-album-empty-owner-hint">{t('setAlbum.emptyOwnerHint')}</span>
+            </>
+          )}
         </p>
       </div>
     );
@@ -141,6 +159,11 @@ export function SetAlbum({ slots, isOwner, gapOnly, onToggle, pendingCoinId }: S
 
   return (
     <div data-testid="set-album" className="flex min-w-0 flex-col gap-6">
+      {toggleFailed && (
+        <p data-testid="set-album-toggle-error" role="alert" className="text-sm text-red-600">
+          {t('setAlbum.toggleError')}
+        </p>
+      )}
       <ul
         data-testid="set-album-legend"
         aria-label={t('setAlbum.legendLabel')}
@@ -242,7 +265,9 @@ export function SetAlbum({ slots, isOwner, gapOnly, onToggle, pendingCoinId }: S
                                   isOwner={isOwner}
                                   gapOnly={gapOnly}
                                   onToggle={onToggle}
-                                  pending={pendingCoinId != null && pendingCoinId === slot.coin.id}
+                                  pending={
+                                    pendingCoinId === slot.coin.id || Boolean(pendingCoinIds?.has(slot.coin.id))
+                                  }
                                   words={words}
                                   viewInCatalog={viewInCatalog}
                                 />

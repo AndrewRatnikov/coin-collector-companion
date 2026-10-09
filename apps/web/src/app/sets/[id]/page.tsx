@@ -73,8 +73,21 @@ function SetEditor({ id }: { id: string }) {
   const { data: userSets } = useUserSets();
   const isOwner = Boolean(userSets?.some((s) => s.id === id));
 
+  // Album slots track their own in-flight requests so each slot can be disabled on its own.
+  // The ref is the source of truth (a second click can land before the state re-renders);
+  // the state copy drives rendering.
+  const albumPendingRef = useRef(new Set<string>());
+  const [albumPendingCoinIds, setAlbumPendingCoinIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [albumToggleFailed, setAlbumToggleFailed] = useState(false);
+
   const patchCoinsMutation = usePatchSetCoins(id);
-  const ownershipMutation = useSetOwnership();
+  const ownershipMutation = useSetOwnership({
+    onSettled: (error, { coinId }) => {
+      if (!albumPendingRef.current.delete(coinId)) return;
+      setAlbumPendingCoinIds(new Set(albumPendingRef.current));
+      if (error) setAlbumToggleFailed(true);
+    },
+  });
   const renameMutation = useRenameSet();
   const deleteMutation = useDeleteSet();
 
@@ -104,6 +117,14 @@ function SetEditor({ id }: { id: string }) {
   }
 
   function handleToggle(coinId: string, currentlyOwned: boolean) {
+    ownershipMutation.mutate({ coinId, owned: !currentlyOwned });
+  }
+
+  function handleAlbumToggle(coinId: string, currentlyOwned: boolean) {
+    if (albumPendingRef.current.has(coinId)) return;
+    albumPendingRef.current.add(coinId);
+    setAlbumPendingCoinIds(new Set(albumPendingRef.current));
+    setAlbumToggleFailed(false);
     ownershipMutation.mutate({ coinId, owned: !currentlyOwned });
   }
 
@@ -280,8 +301,9 @@ function SetEditor({ id }: { id: string }) {
           slots={gaps.slots}
           isOwner={isOwner}
           gapOnly={gapOnly}
-          onToggle={handleToggle}
-          pendingCoinId={ownershipMutation.isPending ? (ownershipMutation.variables?.coinId ?? null) : null}
+          onToggle={handleAlbumToggle}
+          pendingCoinIds={albumPendingCoinIds}
+          toggleFailed={albumToggleFailed}
         />
       ) : (
         <ul data-testid="set-editor-gap-grid" className="flex flex-col gap-4">

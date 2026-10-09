@@ -180,6 +180,8 @@ const enShape = {
   'setAlbum.blankCell': 'No coin in this set',
   'setAlbum.viewInCatalog': 'View in catalog',
   'setAlbum.empty': 'This set has no coins yet.',
+  'setAlbum.emptyOwnerHint': 'Use "Add coins" to start filling it.',
+  'setAlbum.toggleError': "Couldn't update this coin. Please try again.",
 
   // missing list
   'missingList.heading': 'Missing coins',

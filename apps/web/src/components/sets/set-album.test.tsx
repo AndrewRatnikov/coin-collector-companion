@@ -101,6 +101,17 @@ describe('SetAlbum: empty', () => {
     expect(screen.queryByTestId('set-album-table')).not.toBeInTheDocument();
   });
 
+  it('points the owner to Add coins', () => {
+    renderAlbum({ slots: [] });
+    expect(screen.getByTestId('set-album-empty-owner-hint')).toHaveTextContent('Use "Add coins" to start filling it.');
+  });
+
+  it('shows no Add coins hint to a non-owner', () => {
+    renderAlbum({ slots: [], isOwner: false });
+    expect(screen.getByTestId('set-album-empty')).toHaveTextContent('This set has no coins yet.');
+    expect(screen.queryByTestId('set-album-empty-owner-hint')).not.toBeInTheDocument();
+  });
+
   it('does not show the empty message when there are slots', () => {
     renderAlbum();
     expect(screen.queryByTestId('set-album-empty')).not.toBeInTheDocument();
@@ -333,6 +344,30 @@ describe('SetAlbum: owner interaction', () => {
 
     expect(onToggle).toHaveBeenCalledTimes(1);
     expect(onToggle).toHaveBeenCalledWith('coin-plain', true);
+  });
+
+  it('disables only the pending slots, which ignore clicks', async () => {
+    const user = userEvent.setup();
+    const { onToggle } = renderAlbum({ pendingCoinIds: new Set(['coin-vdb', 'coin-1931s']) });
+
+    expect(slotByCoin('coin-vdb')).toBeDisabled();
+    expect(slotByCoin('coin-vdb')).toHaveAttribute('aria-busy', 'true');
+    expect(slotByCoin('coin-1931s')).toBeDisabled();
+    expect(slotByCoin('coin-plain')).toBeEnabled();
+    expect(slotByCoin('coin-plain')).not.toHaveAttribute('aria-busy');
+
+    await user.click(slotByCoin('coin-vdb'));
+    expect(onToggle).not.toHaveBeenCalled();
+    await user.click(slotByCoin('coin-plain'));
+    expect(onToggle).toHaveBeenCalledWith('coin-plain', true);
+  });
+
+  it('shows a toggle error alert only when toggleFailed is set', () => {
+    const { rerender } = renderAlbum();
+    expect(screen.queryByTestId('set-album-toggle-error')).not.toBeInTheDocument();
+
+    rerender(<SetAlbum slots={LINCOLN} isOwner={true} gapOnly={false} onToggle={vi.fn()} toggleFailed />);
+    expect(screen.getByRole('alert')).toHaveTextContent("Couldn't update this coin. Please try again.");
   });
 
   it('does not toggle when the catalog link is clicked', async () => {
