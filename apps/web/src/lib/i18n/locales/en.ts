@@ -162,6 +162,26 @@ const enShape = {
   'setEditor.noCoinsYet': 'No coins yet — add some below.',
   'setEditor.downloadMissing': 'Download missing (CSV)',
   'setEditor.printMissing': 'Print missing list',
+  'setEditor.viewSwitchLabel': 'View',
+  'setEditor.viewList': 'List',
+  'setEditor.viewAlbum': 'Album',
+
+  // set album
+  'setAlbum.legendLabel': 'Legend',
+  'setAlbum.legendOwned': 'Owned',
+  'setAlbum.legendMissing': 'Missing',
+  'setAlbum.legendKeyDate': 'Key date',
+  'setAlbum.legendBlank': 'Not in this set',
+  'setAlbum.yearHeader': 'Year',
+  'setAlbum.noMintMark': 'No mint mark',
+  'setAlbum.ownedOfTotal': '{owned} of {total} owned',
+  'setAlbum.columnTotals': 'Owned',
+  'setAlbum.keyDate': 'key date',
+  'setAlbum.blankCell': 'No coin in this set',
+  'setAlbum.viewInCatalog': 'View in catalog',
+  'setAlbum.empty': 'This set has no coins yet.',
+  'setAlbum.emptyOwnerHint': 'Use "Add coins" to start filling it.',
+  'setAlbum.toggleError': "Couldn't update this coin. Please try again.",
 
   // missing list
   'missingList.heading': 'Missing coins',

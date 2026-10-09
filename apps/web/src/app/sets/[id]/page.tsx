@@ -16,6 +16,9 @@ import type { CatalogFilters } from '@/lib/catalog-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Sheet } from '@/components/ui/sheet';
+import { SetAlbum } from '@/components/sets/set-album';
+import { SetViewSwitch } from '@/components/sets/set-view-switch';
+import { buildSetViewSearch, parseSetView, type SetView } from '@/lib/set-view';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
@@ -70,8 +73,21 @@ function SetEditor({ id }: { id: string }) {
   const { data: userSets } = useUserSets();
   const isOwner = Boolean(userSets?.some((s) => s.id === id));
 
+  // Album slots track their own in-flight requests so each slot can be disabled on its own.
+  // The ref is the source of truth (a second click can land before the state re-renders);
+  // the state copy drives rendering.
+  const albumPendingRef = useRef(new Set<string>());
+  const [albumPendingCoinIds, setAlbumPendingCoinIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [albumToggleFailed, setAlbumToggleFailed] = useState(false);
+
   const patchCoinsMutation = usePatchSetCoins(id);
-  const ownershipMutation = useSetOwnership();
+  const ownershipMutation = useSetOwnership({
+    onSettled: (error, { coinId }) => {
+      if (!albumPendingRef.current.delete(coinId)) return;
+      setAlbumPendingCoinIds(new Set(albumPendingRef.current));
+      if (error) setAlbumToggleFailed(true);
+    },
+  });
   const renameMutation = useRenameSet();
   const deleteMutation = useDeleteSet();
 
@@ -79,6 +95,9 @@ function SetEditor({ id }: { id: string }) {
   const savedNameRef = useRef('');
   const syncedSetRef = useRef<typeof set>(undefined);
   const [gapOnly, setGapOnly] = useState(false);
+  // Reading window here is safe: SetEditor only mounts on the client (after the params
+  // effect sets `id`, inside RequireAuth), and a lazy initializer avoids a List->Album flash.
+  const [view, setView] = useState<SetView>(() => parseSetView(window.location.search));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [collapsedDecades, setCollapsedDecades] = useState<Record<string, boolean>>({});
@@ -99,6 +118,21 @@ function SetEditor({ id }: { id: string }) {
 
   function handleToggle(coinId: string, currentlyOwned: boolean) {
     ownershipMutation.mutate({ coinId, owned: !currentlyOwned });
+  }
+
+  function handleAlbumToggle(coinId: string, currentlyOwned: boolean) {
+    if (albumPendingRef.current.has(coinId)) return;
+    albumPendingRef.current.add(coinId);
+    setAlbumPendingCoinIds(new Set(albumPendingRef.current));
+    setAlbumToggleFailed(false);
+    ownershipMutation.mutate({ coinId, owned: !currentlyOwned });
+  }
+
+  function handleViewChange(next: SetView) {
+    setView(next);
+    // replace, not push: switching views shouldn't add Back-button entries.
+    const { pathname, search, hash } = window.location;
+    window.history.replaceState(null, '', `${pathname}${buildSetViewSearch(search, next)}${hash}`);
   }
 
   function handleRemove(coinId: string) {
@@ -227,8 +261,8 @@ function SetEditor({ id }: { id: string }) {
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-4 border-t border-gray-200 pt-4">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-gray-200 pt-4">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             data-testid="set-editor-show-all-toggle"
@@ -247,6 +281,7 @@ function SetEditor({ id }: { id: string }) {
           >
             {missingCount} {t('setEditor.missing')}
           </button>
+          <SetViewSwitch view={view} onChange={handleViewChange} />
         </div>
 
         {isOwner && (
@@ -261,82 +296,93 @@ function SetEditor({ id }: { id: string }) {
         )}
       </div>
 
-      <ul data-testid="set-editor-gap-grid" className="flex flex-col gap-4">
-        {decadeGroups.map((group) => {
-          const decadeKey = `${id}-${group.label}`;
-          const isCollapsed = Boolean(collapsedDecades[decadeKey]);
-          return (
-            <li
-              key={group.decade}
-              data-testid="set-editor-decade-group"
-              className="flex flex-col gap-2 rounded border border-gray-200 p-3"
-            >
-              <button
-                type="button"
-                data-testid="set-editor-decade-toggle"
-                aria-expanded={!isCollapsed}
-                onClick={() => toggleDecade(decadeKey)}
-                className="flex w-full items-center justify-between text-left text-sm font-semibold"
+      {view === 'album' ? (
+        <SetAlbum
+          slots={gaps.slots}
+          isOwner={isOwner}
+          gapOnly={gapOnly}
+          onToggle={handleAlbumToggle}
+          pendingCoinIds={albumPendingCoinIds}
+          toggleFailed={albumToggleFailed}
+        />
+      ) : (
+        <ul data-testid="set-editor-gap-grid" className="flex flex-col gap-4">
+          {decadeGroups.map((group) => {
+            const decadeKey = `${id}-${group.label}`;
+            const isCollapsed = Boolean(collapsedDecades[decadeKey]);
+            return (
+              <li
+                key={group.decade}
+                data-testid="set-editor-decade-group"
+                className="flex flex-col gap-2 rounded border border-gray-200 p-3"
               >
-                <span>
-                  {isCollapsed ? '+' : '–'} {group.label}
-                </span>
-                <span className="text-xs font-normal text-gray-500">
-                  {group.ownedCount} of {group.totalCount} owned
-                </span>
-              </button>
-              {!isCollapsed && (
-                <ul className="flex flex-col gap-2">
-                  {group.visibleSlots.map((slot) => (
-                    <li
-                      key={slot.id}
-                      data-testid="set-editor-gap-item"
-                      className="flex items-center justify-between gap-4 rounded border border-gray-200 p-3"
-                    >
-                      <Link
-                        href={`/catalog/${slot.coin.id}`}
-                        data-testid="set-editor-gap-coin-link"
-                        className="flex flex-col hover:underline"
+                <button
+                  type="button"
+                  data-testid="set-editor-decade-toggle"
+                  aria-expanded={!isCollapsed}
+                  onClick={() => toggleDecade(decadeKey)}
+                  className="flex w-full items-center justify-between text-left text-sm font-semibold"
+                >
+                  <span>
+                    {isCollapsed ? '+' : '–'} {group.label}
+                  </span>
+                  <span className="text-xs font-normal text-gray-500">
+                    {group.ownedCount} of {group.totalCount} owned
+                  </span>
+                </button>
+                {!isCollapsed && (
+                  <ul className="flex flex-col gap-2">
+                    {group.visibleSlots.map((slot) => (
+                      <li
+                        key={slot.id}
+                        data-testid="set-editor-gap-item"
+                        className="flex items-center justify-between gap-4 rounded border border-gray-200 p-3"
                       >
-                        <span className="text-[15px] font-medium">{slot.coin.name}</span>
-                        <span className="text-xs text-gray-500">{formatCoinLabel(slot.coin)}</span>
-                        {slot.coin.variety ? (
-                          <span data-testid="set-editor-gap-variety" className="text-xs text-gray-500">
-                            {slot.coin.variety}
-                          </span>
-                        ) : null}
-                      </Link>
-                      <span data-testid="set-editor-gap-status" className="text-xs text-gray-500">
-                        {slot.owned ? t('common.owned') : t('common.missing')}
-                      </span>
-                      {isOwner && (
-                        <button
-                          type="button"
-                          data-testid="set-editor-toggle-owned-button"
-                          onClick={() => handleToggle(slot.coin.id, slot.owned)}
-                          className="rounded border border-gray-300 px-2 py-1 text-xs"
+                        <Link
+                          href={`/catalog/${slot.coin.id}`}
+                          data-testid="set-editor-gap-coin-link"
+                          className="flex flex-col hover:underline"
                         >
-                          {slot.owned ? t('setEditor.markNotOwned') : t('setEditor.markOwned')}
-                        </button>
-                      )}
-                      {isOwner && (
-                        <button
-                          type="button"
-                          data-testid="set-editor-remove-button"
-                          onClick={() => handleRemove(slot.coin.id)}
-                          className="rounded border border-gray-300 px-2 py-1 text-xs"
-                        >
-                          {t('setEditor.removeButton')}
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+                          <span className="text-[15px] font-medium">{slot.coin.name}</span>
+                          <span className="text-xs text-gray-500">{formatCoinLabel(slot.coin)}</span>
+                          {slot.coin.variety ? (
+                            <span data-testid="set-editor-gap-variety" className="text-xs text-gray-500">
+                              {slot.coin.variety}
+                            </span>
+                          ) : null}
+                        </Link>
+                        <span data-testid="set-editor-gap-status" className="text-xs text-gray-500">
+                          {slot.owned ? t('common.owned') : t('common.missing')}
+                        </span>
+                        {isOwner && (
+                          <button
+                            type="button"
+                            data-testid="set-editor-toggle-owned-button"
+                            onClick={() => handleToggle(slot.coin.id, slot.owned)}
+                            className="rounded border border-gray-300 px-2 py-1 text-xs"
+                          >
+                            {slot.owned ? t('setEditor.markNotOwned') : t('setEditor.markOwned')}
+                          </button>
+                        )}
+                        {isOwner && (
+                          <button
+                            type="button"
+                            data-testid="set-editor-remove-button"
+                            onClick={() => handleRemove(slot.coin.id)}
+                            className="rounded border border-gray-300 px-2 py-1 text-xs"
+                          >
+                            {t('setEditor.removeButton')}
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
       <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title={t('setEditor.addCoinsHeading')}>
         <div data-testid="set-editor-add-coins-panel" className="flex flex-col gap-3">

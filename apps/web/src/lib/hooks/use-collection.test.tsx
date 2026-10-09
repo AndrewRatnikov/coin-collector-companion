@@ -9,6 +9,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useCollection, useSetOwnership } from '@/lib/hooks/use-collection';
 import { getCollection, setOwnership } from '@/lib/collection-api';
+import { ApiError } from '@/lib/api-client';
 
 vi.mock('@/lib/collection-api', () => ({
   getCollection: vi.fn(),
@@ -131,6 +132,59 @@ describe('use-collection hooks', () => {
         expect(result.current.isSuccess).toBe(true);
       });
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['collection'] });
+    });
+  });
+
+  describe('onSettled option', () => {
+    it('fires for every concurrent mutation with its own variables, not just the latest', async () => {
+      let rejectFirst!: (err: unknown) => void;
+      setOwnershipMock
+        .mockImplementationOnce(() => new Promise((_resolve, reject) => (rejectFirst = reject)))
+        .mockResolvedValueOnce({ coinId: 'coin-2', owned: true, ownedAt: new Date() } as never);
+      const onSettled = vi.fn();
+      const { wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useSetOwnership({ onSettled }), { wrapper });
+      result.current.mutate({ coinId: 'coin-1', owned: true });
+      result.current.mutate({ coinId: 'coin-2', owned: true });
+
+      await waitFor(() => {
+        expect(onSettled).toHaveBeenCalledWith(null, { coinId: 'coin-2', owned: true });
+      });
+      const error = new ApiError(500, 'Internal server error');
+      rejectFirst(error);
+      await waitFor(() => {
+        expect(onSettled).toHaveBeenCalledWith(error, { coinId: 'coin-1', owned: true });
+      });
+      expect(onSettled).toHaveBeenCalledTimes(2);
+    });
+
+    it('fires only after the invalidated queries have refetched', async () => {
+      setOwnershipMock.mockResolvedValue({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+      const { queryClient, wrapper } = makeWrapper();
+      let finishRefetch!: () => void;
+      vi.spyOn(queryClient, 'invalidateQueries').mockImplementation(
+        (filters) =>
+          new Promise<void>((resolve) => {
+            if ((filters as { queryKey: string[] }).queryKey[0] === 'user-sets') finishRefetch = resolve;
+            else resolve();
+          }),
+      );
+      const onSettled = vi.fn();
+
+      const { result } = renderHook(() => useSetOwnership({ onSettled }), { wrapper });
+      result.current.mutate({ coinId: 'coin-1', owned: true });
+
+      await waitFor(() => {
+        expect(finishRefetch).toBeDefined();
+      });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(onSettled).not.toHaveBeenCalled();
+
+      finishRefetch();
+      await waitFor(() => {
+        expect(onSettled).toHaveBeenCalledWith(null, { coinId: 'coin-1', owned: true });
+      });
     });
   });
 });
