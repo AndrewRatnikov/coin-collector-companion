@@ -1,0 +1,90 @@
+{
+  "name": "We Are Strong. We Are Together",
+  "description": "The National Bank of Ukraine's 10 hryvnia series honoring Ukraine's regions: the 12 coins issued in 2025-2026.",
+  "coins": [
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2025,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Autonomous Republic of Crimea"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2025,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Donetsk Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2025,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Luhansk Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Chernihiv Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Dnipropetrovsk Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Kharkiv Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Kherson Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Kirovohrad Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Mykolaiv Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Odesa Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Sumy Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Zaporizhzhia Oblast"
+    }
+  ]
+}
