@@ -1,0 +1,223 @@
+{
+  "name": "Ukrainian Circulating Commemoratives",
+  "description": "Every circulating commemorative coin of Ukraine: the 1 hryvnia coins of 2004-2015 and the 10 hryvnia coins issued since 2022, including the \"We Are Strong. We Are Together\" series.",
+  "coins": [
+    {
+      "country": "Ukraine",
+      "denomination": "1 Hryvnia",
+      "year": 2004,
+      "mintMark": "",
+      "variety": "60th Anniversary of the Liberation of Ukraine"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "1 Hryvnia",
+      "year": 2005,
+      "mintMark": "",
+      "variety": "60th Anniversary of Victory in WWII"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "1 Hryvnia",
+      "year": 2010,
+      "mintMark": "",
+      "variety": "65th Anniversary of Victory in WWII"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "1 Hryvnia",
+      "year": 2012,
+      "mintMark": "",
+      "variety": "UEFA Euro 2012 Final Tournament"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "1 Hryvnia",
+      "year": 2015,
+      "mintMark": "",
+      "variety": "70th Anniversary of Victory in WWII"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2022,
+      "mintMark": "",
+      "variety": "Territorial Defense Forces of the Armed Forces of Ukraine"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2023,
+      "mintMark": "",
+      "variety": "Air Defense: A Reliable Shield of Ukraine"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2023,
+      "mintMark": "",
+      "variety": "Antonivskyi Bridge"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2023,
+      "mintMark": "",
+      "variety": "Joint Forces Command of the Armed Forces of Ukraine"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2023,
+      "mintMark": "",
+      "variety": "Support Forces of the Armed Forces of Ukraine"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2024,
+      "mintMark": "",
+      "variety": "Logistics Forces of the Armed Forces of Ukraine"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2024,
+      "mintMark": "",
+      "variety": "Medical Forces of the Armed Forces of Ukraine"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2024,
+      "mintMark": "",
+      "variety": "Signal and Cyber Security Troops of the Armed Forces of Ukraine"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2024,
+      "mintMark": "",
+      "variety": "State Special Transport Service"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2025,
+      "mintMark": "",
+      "variety": "National Guard of Ukraine"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2025,
+      "mintMark": "",
+      "variety": "National Police of Ukraine"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2025,
+      "mintMark": "",
+      "variety": "State Emergency Service of Ukraine"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2025,
+      "mintMark": "",
+      "variety": "Unmanned Systems Forces of the Armed Forces of Ukraine"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2025,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Autonomous Republic of Crimea"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2025,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Donetsk Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2025,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Luhansk Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "In Memory of Those Executed, Tortured or Killed in Captivity"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Chernihiv Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Dnipropetrovsk Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Kharkiv Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Kherson Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Kirovohrad Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Mykolaiv Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Odesa Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Sumy Oblast"
+    },
+    {
+      "country": "Ukraine",
+      "denomination": "10 Hryvnias",
+      "year": 2026,
+      "mintMark": "",
+      "variety": "We Are Strong. We Are Together: Zaporizhzhia Oblast"
+    }
+  ]
+}
