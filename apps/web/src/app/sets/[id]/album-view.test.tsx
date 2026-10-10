@@ -1,7 +1,8 @@
 /**
  * Tests for: SetEditorPage Album view wiring (view switch, ?view=album, counts after refetch, controls)
- * Contract source: runs/run_20261009_211156/plan.md § Interface Contract → Page: SetEditorPage (MODIFY)
- * Covers criteria: #1, #2, #11, #12, #13, #18, #19
+ * Contract source: runs/run_20261010_083926/plan.md § Interface Contract → Component: SetAlbum
+ * (set-album-slot retargeted to set-album-card / set-album-card-link / set-album-card-check)
+ * Covers criteria: #1, #2, #11, #12, #13, #18, #19 (page-level), #14, #15, #16 (card link, owner check)
  *
  * Mock setup mirrors sets/[id]/coin-variety-link.test.tsx (next/navigation mocked with only useRouter).
  *
@@ -155,6 +156,12 @@ function setUrl(path: string) {
   window.history.replaceState(null, '', path);
 }
 
+function cardByCoin(id: string): HTMLElement {
+  const found = screen.getAllByTestId('set-album-card').find((el) => el.getAttribute('data-coin-id') === id);
+  if (!found) throw new Error(`no card for ${id}`);
+  return found;
+}
+
 describe('SetEditorPage: Album view', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -278,7 +285,7 @@ describe('SetEditorPage: Album view', () => {
       await user.click(screen.getByTestId('set-editor-view-album-toggle'));
 
       expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveAttribute('aria-pressed', 'true');
-      expect(screen.getAllByTestId('set-album-slot')).toHaveLength(4);
+      expect(screen.getAllByTestId('set-album-card')).toHaveLength(4);
 
       await user.click(screen.getByTestId('set-editor-view-list-toggle'));
       expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveAttribute('aria-pressed', 'true');
@@ -303,27 +310,40 @@ describe('SetEditorPage: Album view', () => {
         ['', 'S'],
       );
     });
+
+    it('lays the Ukrainian (no mint mark) page out as a year grid, not a table', async () => {
+      setUrl('/sets/set-1?view=album');
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getAllByTestId('set-album-page')).toHaveLength(2);
+      });
+      const [lincoln, ukraine] = screen.getAllByTestId('set-album-page');
+      expect(within(lincoln).getByTestId('set-album-table')).toBeInTheDocument();
+      expect(within(ukraine).queryByTestId('set-album-table')).not.toBeInTheDocument();
+      expect(within(ukraine).getByTestId('set-album-year-group')).toHaveAttribute('data-year', '2026');
+    });
   });
 
   describe('criterion 11: owner toggles and counts update after refetch', () => {
-    it('clicking an album slot calls the ownership mutation for that coin', async () => {
+    it('clicking an album check button calls the ownership mutation for that coin', async () => {
       const ownershipMutate = vi.fn();
       useSetOwnershipMock.mockReturnValue({ mutate: ownershipMutate, isPending: false } as never);
       setUrl('/sets/set-1?view=album');
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => {
-        expect(screen.getAllByTestId('set-album-slot')).toHaveLength(4);
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(4);
       });
 
-      const vdb = screen.getAllByTestId('set-album-slot').find((el) => el.getAttribute('data-coin-id') === 'coin-2')!;
-      await user.click(vdb);
+      await user.click(within(cardByCoin('coin-2')).getByTestId('set-album-card-check'));
 
       expect(ownershipMutate).toHaveBeenCalledTimes(1);
       expect(ownershipMutate.mock.calls[0][0]).toEqual({ coinId: 'coin-2', owned: true });
+      expect(pushMock).not.toHaveBeenCalled();
     });
 
-    it('slot, page count, column footer and overall % update when the gaps are refetched', async () => {
+    it('card, page count, column footer and overall % update when the gaps are refetched', async () => {
       setUrl('/sets/set-1?view=album');
       const { rerender, params } = renderPage();
       await waitFor(() => {
@@ -342,13 +362,12 @@ describe('SetEditorPage: Album view', () => {
       });
       expect(within(firstPage()).getAllByTestId('set-album-col-footer')[0].textContent).toBe('2/2');
       expect(screen.getByTestId('set-editor-completion')).toHaveTextContent('50%');
-      const vdb = screen.getAllByTestId('set-album-slot').find((el) => el.getAttribute('data-coin-id') === 'coin-2')!;
-      expect(vdb).toHaveAttribute('data-owned', 'true');
+      expect(cardByCoin('coin-2')).toHaveAttribute('data-owned', 'true');
     });
   });
 
   describe('criterion 12: non-owner', () => {
-    it('renders slots as catalog links and does not toggle ownership', async () => {
+    it('renders cards as catalog links, shows no check buttons and does not toggle ownership', async () => {
       const ownershipMutate = vi.fn();
       useSetOwnershipMock.mockReturnValue({ mutate: ownershipMutate, isPending: false } as never);
       useUserSetsMock.mockReturnValue(queryResult({ data: [] }));
@@ -356,16 +375,19 @@ describe('SetEditorPage: Album view', () => {
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => {
-        expect(screen.getAllByTestId('set-album-slot')).toHaveLength(4);
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(4);
       });
 
-      const slots = screen.getAllByTestId('set-album-slot');
-      slots.forEach((s) => {
-        expect(s.tagName).toBe('A');
-        expect(s).toHaveAttribute('href', `/catalog/${s.getAttribute('data-coin-id')}`);
+      expect(screen.queryByTestId('set-album-card-check')).not.toBeInTheDocument();
+      const cards = screen.getAllByTestId('set-album-card');
+      cards.forEach((card) => {
+        const link = within(card).getByTestId('set-album-card-link');
+        expect(link.tagName).toBe('A');
+        expect(link).toHaveAttribute('href', `/catalog/${card.getAttribute('data-coin-id')}`);
       });
-      slots[0].addEventListener('click', (e) => e.preventDefault());
-      await user.click(slots[0]);
+      const firstLink = within(cards[0]).getByTestId('set-album-card-link');
+      firstLink.addEventListener('click', (e) => e.preventDefault());
+      await user.click(firstLink);
       expect(ownershipMutate).not.toHaveBeenCalled();
     });
   });
@@ -385,24 +407,22 @@ describe('SetEditorPage: Album view', () => {
       expect(screen.getByTestId('set-editor-completion')).toHaveTextContent('25%');
     });
 
-    it('Missing keeps the full grid and mutes owned slots; All unmutes them', async () => {
+    it('Missing keeps the full grid and mutes owned cards; All unmutes them', async () => {
       setUrl('/sets/set-1?view=album');
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => {
-        expect(screen.getAllByTestId('set-album-slot')).toHaveLength(4);
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(4);
       });
 
       await user.click(screen.getByTestId('set-editor-show-missing-toggle'));
 
-      expect(screen.getAllByTestId('set-album-slot')).toHaveLength(4);
-      const byCoin = (id: string) =>
-        screen.getAllByTestId('set-album-slot').find((el) => el.getAttribute('data-coin-id') === id)!;
-      expect(byCoin('coin-1')).toHaveAttribute('data-muted', 'true');
-      expect(byCoin('coin-2')).toHaveAttribute('data-muted', 'false');
+      expect(screen.getAllByTestId('set-album-card')).toHaveLength(4);
+      expect(cardByCoin('coin-1')).toHaveAttribute('data-muted', 'true');
+      expect(cardByCoin('coin-2')).toHaveAttribute('data-muted', 'false');
 
       await user.click(screen.getByTestId('set-editor-show-all-toggle'));
-      expect(byCoin('coin-1')).toHaveAttribute('data-muted', 'false');
+      expect(cardByCoin('coin-1')).toHaveAttribute('data-muted', 'false');
     });
   });
 });

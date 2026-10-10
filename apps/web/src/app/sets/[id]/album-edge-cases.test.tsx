@@ -1,5 +1,7 @@
 /**
  * Tests for: SetEditorPage Album view edge cases (empty set, no double toggles)
+ * Contract source: runs/run_20261010_083926/plan.md § Interface Contract → Component: SetAlbum
+ * (set-album-slot retargeted to set-album-card-check for clicks / disabled / aria-busy, set-album-card for state)
  *
  * useSetOwnership is mocked so the test controls when each request settles: the mock
  * captures the hook-level onSettled the page passes in, and `settle()` fires it the way
@@ -7,10 +9,12 @@
  * latest call, which is why the page uses the hook-level option).
  *
  * Mock setup mirrors sets/[id]/album-view.test.tsx.
+ *
+ * CONTRACT_GAPS: none
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SetEditorPage from '@/app/sets/[id]/page';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
@@ -150,10 +154,14 @@ function renderPage(id = 'set-1') {
   return render(<SetEditorPage params={Promise.resolve({ id })} />);
 }
 
-function slotByCoin(coinId: string): HTMLElement {
-  const found = screen.getAllByTestId('set-album-slot').find((el) => el.getAttribute('data-coin-id') === coinId);
-  if (!found) throw new Error(`no slot for ${coinId}`);
+function cardByCoin(coinId: string): HTMLElement {
+  const found = screen.getAllByTestId('set-album-card').find((el) => el.getAttribute('data-coin-id') === coinId);
+  if (!found) throw new Error(`no card for ${coinId}`);
   return found;
+}
+
+function checkByCoin(coinId: string): HTMLElement {
+  return within(cardByCoin(coinId)).getByTestId('set-album-card-check');
 }
 
 describe('SetEditorPage: Album view edge cases', () => {
@@ -197,6 +205,7 @@ describe('SetEditorPage: Album view edge cases', () => {
       expect(screen.getByTestId('set-editor-toggle-add-coins')).toBeInTheDocument();
       expect(screen.queryByTestId('set-album-table')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-album-page')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-album-card')).not.toBeInTheDocument();
     });
 
     it('shows the empty-state message without the Add coins hint to another logged-in user', async () => {
@@ -214,80 +223,80 @@ describe('SetEditorPage: Album view edge cases', () => {
   });
 
   describe('no double toggles', () => {
-    it('a quick double click sends exactly one ownership request and marks the slot busy', async () => {
+    it('a quick double click sends exactly one ownership request and marks the check button busy', async () => {
       const { mutate } = controllableOwnership();
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => {
-        expect(screen.getAllByTestId('set-album-slot')).toHaveLength(3);
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(3);
       });
 
-      await user.dblClick(slotByCoin('coin-2'));
+      await user.dblClick(checkByCoin('coin-2'));
 
       expect(mutate).toHaveBeenCalledTimes(1);
       expect(mutate.mock.calls[0][0]).toEqual({ coinId: 'coin-2', owned: true });
-      expect(slotByCoin('coin-2')).toBeDisabled();
-      expect(slotByCoin('coin-2')).toHaveAttribute('aria-busy', 'true');
+      expect(checkByCoin('coin-2')).toBeDisabled();
+      expect(checkByCoin('coin-2')).toHaveAttribute('aria-busy', 'true');
     });
 
-    it('while one slot is pending, another slot can still be toggled', async () => {
+    it('while one card is pending, another card can still be toggled', async () => {
       const { mutate } = controllableOwnership();
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => {
-        expect(screen.getAllByTestId('set-album-slot')).toHaveLength(3);
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(3);
       });
 
-      await user.click(slotByCoin('coin-2'));
-      expect(slotByCoin('coin-3')).toBeEnabled();
-      expect(slotByCoin('coin-3')).not.toHaveAttribute('aria-busy');
+      await user.click(checkByCoin('coin-2'));
+      expect(checkByCoin('coin-3')).toBeEnabled();
+      expect(checkByCoin('coin-3')).not.toHaveAttribute('aria-busy');
 
-      await user.click(slotByCoin('coin-3'));
+      await user.click(checkByCoin('coin-3'));
 
       expect(mutate).toHaveBeenCalledTimes(2);
       expect(mutate.mock.calls[1][0]).toEqual({ coinId: 'coin-3', owned: true });
-      expect(slotByCoin('coin-2')).toBeDisabled();
-      expect(slotByCoin('coin-3')).toBeDisabled();
+      expect(checkByCoin('coin-2')).toBeDisabled();
+      expect(checkByCoin('coin-3')).toBeDisabled();
     });
 
-    it('settling one request re-enables only that slot', async () => {
+    it('settling one request re-enables only that check button', async () => {
       const { settle } = controllableOwnership();
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => {
-        expect(screen.getAllByTestId('set-album-slot')).toHaveLength(3);
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(3);
       });
 
-      await user.click(slotByCoin('coin-2'));
-      await user.click(slotByCoin('coin-3'));
+      await user.click(checkByCoin('coin-2'));
+      await user.click(checkByCoin('coin-3'));
       settle('coin-2');
 
-      expect(slotByCoin('coin-2')).toBeEnabled();
-      expect(slotByCoin('coin-2')).not.toHaveAttribute('aria-busy');
-      expect(slotByCoin('coin-3')).toBeDisabled();
-      expect(slotByCoin('coin-3')).toHaveAttribute('aria-busy', 'true');
+      expect(checkByCoin('coin-2')).toBeEnabled();
+      expect(checkByCoin('coin-2')).not.toHaveAttribute('aria-busy');
+      expect(checkByCoin('coin-3')).toBeDisabled();
+      expect(checkByCoin('coin-3')).toHaveAttribute('aria-busy', 'true');
     });
 
-    it('a failed toggle re-enables the slot, keeps its previous state and shows an error', async () => {
+    it('a failed toggle re-enables the button, keeps the previous state and shows an error', async () => {
       const { mutate, settle } = controllableOwnership();
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => {
-        expect(screen.getAllByTestId('set-album-slot')).toHaveLength(3);
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(3);
       });
 
-      await user.click(slotByCoin('coin-2'));
+      await user.click(checkByCoin('coin-2'));
       settle('coin-2', new ApiError(500, 'Internal server error'));
 
-      expect(slotByCoin('coin-2')).toBeEnabled();
-      expect(slotByCoin('coin-2')).not.toHaveAttribute('aria-busy');
-      expect(slotByCoin('coin-2')).toHaveAttribute('data-owned', 'false');
+      expect(checkByCoin('coin-2')).toBeEnabled();
+      expect(checkByCoin('coin-2')).not.toHaveAttribute('aria-busy');
+      expect(cardByCoin('coin-2')).toHaveAttribute('data-owned', 'false');
       expect(screen.getByTestId('set-album-toggle-error')).toHaveTextContent(
         "Couldn't update this coin. Please try again.",
       );
 
-      // The slot can be retried, and a new attempt clears the old error.
-      await user.click(slotByCoin('coin-2'));
+      // The card can be retried, and a new attempt clears the old error.
+      await user.click(checkByCoin('coin-2'));
       expect(mutate).toHaveBeenCalledTimes(2);
       expect(screen.queryByTestId('set-album-toggle-error')).not.toBeInTheDocument();
     });
@@ -297,13 +306,13 @@ describe('SetEditorPage: Album view edge cases', () => {
       const user = userEvent.setup();
       renderPage();
       await waitFor(() => {
-        expect(screen.getAllByTestId('set-album-slot')).toHaveLength(3);
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(3);
       });
 
-      await user.click(slotByCoin('coin-2'));
+      await user.click(checkByCoin('coin-2'));
       settle('coin-2');
 
-      expect(slotByCoin('coin-2')).toBeEnabled();
+      expect(checkByCoin('coin-2')).toBeEnabled();
       expect(screen.queryByTestId('set-album-toggle-error')).not.toBeInTheDocument();
     });
   });

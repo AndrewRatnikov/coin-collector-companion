@@ -1,7 +1,7 @@
 /**
- * Tests for: SetAlbum and SetViewSwitch components
- * Contract source: runs/run_20261009_211156/plan.md § Interface Contract → Component: SetAlbum, Component: SetViewSwitch
- * Covers criteria: #1 (switch), #5, #6, #7, #8, #9, #10, #11, #12, #13, #14, #17, #18, #19
+ * Tests for: SetAlbum (coin cards) and SetViewSwitch components
+ * Contract source: runs/run_20261010_083926/plan.md § Interface Contract → Component: SetAlbum
+ * Covers criteria: #4, #5, #7, #8, #9, #13, #14, #15, #16, #17, #18 (class hooks), #19, #20, #22, #23, #24
  *
  * CONTRACT_GAPS: none
  */
@@ -25,6 +25,7 @@ function slot(
     denomination?: string;
     owned?: boolean;
     isKeyDate?: boolean;
+    imageUrl?: string | null;
   },
 ): GapSlot {
   return {
@@ -39,7 +40,7 @@ function slot(
       mintMark: over.mintMark ?? '',
       variety: over.variety ?? '',
       name: over.name ?? 'Lincoln Wheat Cent',
-      imageUrl: null,
+      imageUrl: over.imageUrl ?? null,
       imageSource: null,
       imageLicense: null,
       diameterMm: null,
@@ -58,7 +59,7 @@ function slot(
 
 // Lincoln page, columns '', D, S; rows 1909, 1931
 //   1909: ''  -> plain (owned) + VDB (missing); D -> blank; S -> VDB (owned)
-//   1931: ''  -> blank;                          D -> blank; S -> key date (missing)
+//   1931: ''  -> blank;                          D -> owned; S -> key date (missing)
 const L_PLAIN = slot(0, 'plain', { year: 1909, owned: true });
 const L_VDB = slot(1, 'vdb', { year: 1909, variety: 'VDB', owned: false });
 const L_S_VDB = slot(2, 'svdb', { year: 1909, mintMark: 'S', variety: 'VDB', owned: true });
@@ -70,11 +71,60 @@ const U_ONE = slot(10, 'u1', {
   country: 'Ukraine',
   denomination: '1 Hryvnia',
   name: 'Commemorative',
-  variety: 'A very long commemorative variety name that must be truncated visually',
+  variety: 'A very long commemorative variety name that must wrap and never be cut off',
   owned: false,
 });
 
 const LINCOLN = [L_PLAIN, L_VDB, L_S_VDB, L_1931S, L_1931D];
+
+// "We Are Strong. We Are Together": every card shares one eyebrow
+const WAS_NAME = 'Ukraine Commemorative 10 Hryvnias';
+const WAS_SERIES = 'We Are Strong. We Are Together';
+function wasSlot(position: number, id: string, oblast: string, year: number, owned = false): GapSlot {
+  return slot(position, id, {
+    year,
+    country: 'Ukraine',
+    denomination: '10 Hryvnias',
+    name: WAS_NAME,
+    variety: `${WAS_SERIES}: ${oblast}`,
+    owned,
+  });
+}
+const WAS_DONETSK = wasSlot(20, 'donetsk', 'Donetsk Oblast', 2025);
+const WAS_LUHANSK = wasSlot(21, 'luhansk', 'Luhansk Oblast', 2025, true);
+const WAS_KYIV = wasSlot(22, 'kyiv', 'Kyiv Oblast', 2026);
+const WAS = [WAS_DONETSK, WAS_LUHANSK, WAS_KYIV];
+
+// Ukrainian commemoratives: one coin with an eyebrow, one without -> no shared eyebrow
+const COMM_SERIES = slot(30, 'comm-series', {
+  year: 2023,
+  country: 'Ukraine',
+  denomination: '10 Hryvnias',
+  name: WAS_NAME,
+  variety: `${WAS_SERIES}: Odesa Oblast`,
+});
+const COMM_BRIDGE = slot(31, 'comm-bridge', {
+  year: 2023,
+  country: 'Ukraine',
+  denomination: '10 Hryvnias',
+  name: WAS_NAME,
+  variety: 'Antonivskyi Bridge',
+});
+
+// Plain Ukrainian circulation coins
+const KOP_1 = slot(40, 'kop1', {
+  year: 2014,
+  country: 'Ukraine',
+  denomination: '1 Kopiyka',
+  name: 'Ukraine Circulation 1 Kopiyka',
+});
+const KOP_10 = slot(41, 'kop10', {
+  year: 2014,
+  country: 'Ukraine',
+  denomination: '10 Kopiyok',
+  name: 'Ukraine Circulation 10 Kopiyok',
+  variety: 'Brass-plated steel',
+});
 
 function renderAlbum(over: Partial<React.ComponentProps<typeof SetAlbum>> = {}) {
   const onToggle = vi.fn();
@@ -84,10 +134,14 @@ function renderAlbum(over: Partial<React.ComponentProps<typeof SetAlbum>> = {}) 
   return { onToggle, ...utils };
 }
 
-function slotByCoin(coinId: string): HTMLElement {
-  const found = screen.getAllByTestId('set-album-slot').find((el) => el.getAttribute('data-coin-id') === coinId);
-  if (!found) throw new Error(`no slot for ${coinId}`);
+function cardByCoin(coinId: string): HTMLElement {
+  const found = screen.getAllByTestId('set-album-card').find((el) => el.getAttribute('data-coin-id') === coinId);
+  if (!found) throw new Error(`no card for ${coinId}`);
   return found;
+}
+
+function checkByCoin(coinId: string): HTMLElement {
+  return within(cardByCoin(coinId)).getByTestId('set-album-card-check');
 }
 
 describe('SetAlbum: empty', () => {
@@ -99,6 +153,7 @@ describe('SetAlbum: empty', () => {
     expect(screen.queryByTestId('set-album-legend')).not.toBeInTheDocument();
     expect(screen.queryByTestId('set-album-page')).not.toBeInTheDocument();
     expect(screen.queryByTestId('set-album-table')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-card')).not.toBeInTheDocument();
   });
 
   it('points the owner to Add coins', () => {
@@ -119,7 +174,7 @@ describe('SetAlbum: empty', () => {
 });
 
 describe('SetAlbum: pages, headings, counts', () => {
-  it('renders one page per series, in position order, with heading and count', () => {
+  it('renders one page per series, in position order, with heading (name plus country when missing) and count', () => {
     renderAlbum({ slots: [U_ONE, ...LINCOLN] });
 
     const pages = screen.getAllByTestId('set-album-page');
@@ -130,12 +185,19 @@ describe('SetAlbum: pages, headings, counts', () => {
     expect(within(pages[1]).getByTestId('set-album-page-count').textContent).toBe('0 of 1 owned');
   });
 
+  it('drops the country from the heading when the name already contains it', () => {
+    renderAlbum({ slots: WAS });
+    const heading = screen.getByTestId('set-album-page-heading');
+    expect(heading.textContent).toBe('Ukraine Commemorative 10 Hryvnias');
+    expect(heading.textContent).not.toContain('·');
+  });
+
   it('renders the legend once above all pages', () => {
     renderAlbum({ slots: [U_ONE, ...LINCOLN] });
     expect(screen.getAllByTestId('set-album-legend')).toHaveLength(1);
   });
 
-  it('renders a table per page with scope=col and scope=row headers', () => {
+  it('renders a table per mint-mark page with scope=col and scope=row headers', () => {
     renderAlbum();
     const table = screen.getByTestId('set-album-table');
     expect(table.tagName).toBe('TABLE');
@@ -163,25 +225,14 @@ describe('SetAlbum: pages, headings, counts', () => {
     expect(screen.getAllByTestId('set-album-year-header').map((h) => h.textContent)).toEqual(['1909', '1931']);
   });
 
-  it('renders column headers with the empty mint mark first and as an em dash with a No mint mark label', () => {
+  it('labels the empty mint mark column "No mint mark" instead of an em dash', () => {
     renderAlbum();
     const headers = screen.getAllByTestId('set-album-col-header');
     expect(headers.map((h) => h.getAttribute('data-mint-mark'))).toEqual(['', 'D', 'S']);
-    expect(headers[0].textContent).toBe('—');
-    const labelled = headers[0].matches('[aria-label="No mint mark"]')
-      ? headers[0]
-      : headers[0].querySelector('[aria-label="No mint mark"]');
-    expect(labelled).not.toBeNull();
-    expect(labelled).toHaveAttribute('title', 'No mint mark');
+    expect(headers[0].textContent).toBe('No mint mark');
+    expect(headers[0].textContent).not.toContain('—');
     expect(headers[1].textContent).toBe('D');
     expect(headers[2].textContent).toBe('S');
-  });
-
-  it('renders a single column for an all-empty-mint-mark page', () => {
-    renderAlbum({ slots: [U_ONE] });
-    const headers = screen.getAllByTestId('set-album-col-header');
-    expect(headers).toHaveLength(1);
-    expect(headers[0].textContent).toBe('—');
   });
 
   it('renders column footers with owned/total', () => {
@@ -200,18 +251,88 @@ describe('SetAlbum: pages, headings, counts', () => {
   });
 });
 
-describe('SetAlbum: cells', () => {
-  it('shows several varieties as separate slots in the same cell', () => {
+describe('SetAlbum: no-mint-mark pages use year rows with a wrapping card grid', () => {
+  it('renders no table, scroll container, column headers, footers, rows or cells', () => {
+    renderAlbum({ slots: WAS });
+
+    expect(screen.queryByTestId('set-album-table')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-scroll')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-col-header')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-col-footer')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-row')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-cell')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-blank-cell')).not.toBeInTheDocument();
+    expect(screen.getByTestId('set-album').textContent).not.toContain('—');
+  });
+
+  it('renders one year group per year ascending, with an h3 label and a grid containing auto-fill', () => {
+    renderAlbum({ slots: [WAS_KYIV, ...WAS_SLOTS_2025()] });
+
+    const groups = screen.getAllByTestId('set-album-year-group');
+    expect(groups.map((g) => g.getAttribute('data-year'))).toEqual(['2025', '2026']);
+    const labels = screen.getAllByTestId('set-album-year-label');
+    expect(labels.map((l) => l.textContent)).toEqual(['2025', '2026']);
+    labels.forEach((l) => expect(l.tagName).toBe('H3'));
+    const grids = screen.getAllByTestId('set-album-year-grid');
+    expect(grids).toHaveLength(2);
+    grids.forEach((g) => {
+      expect(g.tagName).toBe('UL');
+      expect(g.className).toContain('auto-fill');
+    });
+  });
+
+  it('puts each year\'s cards into that year\'s grid, in position order', () => {
+    renderAlbum({ slots: [WAS_KYIV, WAS_LUHANSK, WAS_DONETSK] });
+
+    const [g2025, g2026] = screen.getAllByTestId('set-album-year-group');
+    expect(
+      within(g2025)
+        .getAllByTestId('set-album-card')
+        .map((c) => c.getAttribute('data-coin-id')),
+    ).toEqual(['coin-donetsk', 'coin-luhansk']);
+    expect(
+      within(g2026)
+        .getAllByTestId('set-album-card')
+        .map((c) => c.getAttribute('data-coin-id')),
+    ).toEqual(['coin-kyiv']);
+  });
+
+  it('still uses the table on a page with mint marks, next to a grid page', () => {
+    renderAlbum({ slots: [...LINCOLN, ...WAS] });
+
+    const [lincoln, was] = screen.getAllByTestId('set-album-page');
+    expect(within(lincoln).getByTestId('set-album-table')).toBeInTheDocument();
+    expect(within(lincoln).queryByTestId('set-album-year-group')).not.toBeInTheDocument();
+    expect(within(was).queryByTestId('set-album-table')).not.toBeInTheDocument();
+    expect(within(was).getAllByTestId('set-album-year-group').length).toBeGreaterThan(0);
+  });
+
+  it('shows plain Ukrainian circulation coins titled by year with numeral placeholders', () => {
+    renderAlbum({ slots: [KOP_1, KOP_10] });
+
+    const k1 = cardByCoin('coin-kop1');
+    expect(within(k1).getByTestId('set-album-card-title').textContent).toBe('2014');
+    expect(within(k1).getByTestId('set-album-card-secondary').textContent).toBe('1 Kopiyka');
+    expect(within(k1).getByTestId('set-album-card-numeral').textContent).toBe('1');
+
+    const k10 = cardByCoin('coin-kop10');
+    expect(within(k10).getByTestId('set-album-card-title').textContent).toBe('Brass-plated steel');
+    expect(within(k10).getByTestId('set-album-card-secondary').textContent).toBe('2014 · 10 Kopiyok');
+    expect(within(k10).getByTestId('set-album-card-numeral').textContent).toBe('10');
+  });
+});
+
+describe('SetAlbum: cells (mint-mark pages)', () => {
+  it('shows several varieties as separate cards in the same cell', () => {
     renderAlbum();
     const cells = screen.getAllByTestId('set-album-cell');
     const cell1909 = cells.find((c) => c.getAttribute('data-year') === '1909' && c.getAttribute('data-mint-mark') === '');
     expect(cell1909).toBeDefined();
-    const slots = within(cell1909!).getAllByTestId('set-album-slot');
-    expect(slots.map((s) => s.getAttribute('data-coin-id'))).toEqual(['coin-plain', 'coin-vdb']);
-    expect(within(cell1909!).getAllByTestId('set-album-slot-variety').map((v) => v.textContent)).toEqual(['VDB']);
+    const cards = within(cell1909!).getAllByTestId('set-album-card');
+    expect(cards.map((s) => s.getAttribute('data-coin-id'))).toEqual(['coin-plain', 'coin-vdb']);
   });
 
-  it('renders blank cells for years/mint marks with no coin, with no slot or focusable element', () => {
+  it('renders blank cells for years/mint marks with no coin, with no card or focusable element', () => {
     renderAlbum();
     const blanks = screen.getAllByTestId('set-album-blank-cell');
     // 1909 D, 1931 ''
@@ -221,145 +342,363 @@ describe('SetAlbum: cells', () => {
     ).toEqual(['1909|D', '1931|']);
     blanks.forEach((blank) => {
       expect(blank.tagName).toBe('TD');
-      expect(within(blank).queryByTestId('set-album-slot')).not.toBeInTheDocument();
+      expect(within(blank).queryByTestId('set-album-card')).not.toBeInTheDocument();
       expect(blank.querySelector('button, a, input, select, textarea, [tabindex]')).toBeNull();
       expect(blank.textContent).toBe('No coin in this set');
     });
   });
 
-  it('does not count blank cells: slots total equals the coin count', () => {
+  it('does not count blank cells: cards total equals the coin count', () => {
     renderAlbum();
-    expect(screen.getAllByTestId('set-album-slot')).toHaveLength(LINCOLN.length);
+    expect(screen.getAllByTestId('set-album-card')).toHaveLength(LINCOLN.length);
     expect(screen.getAllByTestId('set-album-cell')).toHaveLength(4);
   });
+});
 
-  it('truncates a long variety visually but keeps the full name in title and aria-label', () => {
+describe('SetAlbum: card text', () => {
+  it('shows the Lincoln notation titles and secondary lines', () => {
+    renderAlbum();
+
+    const s1931 = cardByCoin('coin-1931s');
+    expect(within(s1931).getByTestId('set-album-card-title').textContent).toBe('1931-S');
+    expect(within(s1931).getByTestId('set-album-card-secondary').textContent).toBe('Cent');
+
+    const plain = cardByCoin('coin-plain');
+    expect(within(plain).getByTestId('set-album-card-title').textContent).toBe('1909');
+    expect(within(plain).getByTestId('set-album-card-secondary').textContent).toBe('Cent');
+
+    const vdb = cardByCoin('coin-vdb');
+    expect(within(vdb).getByTestId('set-album-card-title').textContent).toBe('VDB');
+    expect(within(vdb).getByTestId('set-album-card-secondary').textContent).toBe('1909 · Cent');
+
+    const svdb = cardByCoin('coin-svdb');
+    expect(within(svdb).getByTestId('set-album-card-title').textContent).toBe('VDB');
+    expect(within(svdb).getByTestId('set-album-card-secondary').textContent).toBe('1909-S · Cent');
+  });
+
+  it('shows the full long variety as the title without any shortening', () => {
     renderAlbum({ slots: [U_ONE] });
-    const s = screen.getByTestId('set-album-slot');
-    expect(s.getAttribute('title')).toContain(U_ONE.coin.variety);
-    expect(s.getAttribute('aria-label')).toContain(U_ONE.coin.variety);
-    expect(screen.getByTestId('set-album-slot-variety').className).toContain('truncate');
+    expect(screen.getByTestId('set-album-card-title').textContent).toBe(U_ONE.coin.variety);
+  });
+
+  it('renders no eyebrow element for coins without an eyebrow', () => {
+    renderAlbum();
+    expect(screen.queryByTestId('set-album-card-eyebrow')).not.toBeInTheDocument();
+  });
+
+  it('sets data-owned, data-key-date and data-coin-id per card', () => {
+    renderAlbum();
+    expect(cardByCoin('coin-plain')).toHaveAttribute('data-owned', 'true');
+    expect(cardByCoin('coin-vdb')).toHaveAttribute('data-owned', 'false');
+    expect(cardByCoin('coin-1931s')).toHaveAttribute('data-key-date', 'true');
+    expect(cardByCoin('coin-plain')).toHaveAttribute('data-key-date', 'false');
+  });
+
+  it('renders each card as a list item', () => {
+    renderAlbum();
+    screen.getAllByTestId('set-album-card').forEach((c) => expect(c.tagName).toBe('LI'));
+  });
+
+  it('shows the "★ Key date" badge only on key-date coins', () => {
+    renderAlbum();
+    const badges = screen.getAllByTestId('set-album-card-key-date');
+    expect(badges).toHaveLength(1);
+    expect(badges[0].textContent).toBe('★ Key date');
+    expect(within(cardByCoin('coin-1931s')).getByTestId('set-album-card-key-date')).toBe(badges[0]);
+    expect(within(cardByCoin('coin-plain')).queryByTestId('set-album-card-key-date')).not.toBeInTheDocument();
   });
 });
 
-describe('SetAlbum: slot appearance and accessible name', () => {
-  it('labels a missing key-date slot "1931 S Lincoln Wheat Cent, missing, key date"', () => {
+describe('SetAlbum: eyebrow hoisting', () => {
+  it('shows a shared eyebrow once under the page heading and omits it from every card', () => {
+    renderAlbum({ slots: WAS });
+
+    const eyebrows = screen.getAllByTestId('set-album-page-eyebrow');
+    expect(eyebrows).toHaveLength(1);
+    expect(eyebrows[0].textContent).toBe(WAS_SERIES);
+    expect(screen.queryByTestId('set-album-card-eyebrow')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('set-album-card-title').map((t) => t.textContent)).toEqual([
+      'Donetsk Oblast',
+      'Luhansk Oblast',
+      'Kyiv Oblast',
+    ]);
+    expect(screen.getAllByTestId('set-album-card-secondary').map((t) => t.textContent)).toEqual([
+      '2025 · 10 Hryvnias',
+      '2025 · 10 Hryvnias',
+      '2026 · 10 Hryvnias',
+    ]);
+  });
+
+  it('shows per-card eyebrows and no page eyebrow when eyebrows are not shared', () => {
+    renderAlbum({ slots: [COMM_SERIES, COMM_BRIDGE] });
+
+    expect(screen.queryByTestId('set-album-page-eyebrow')).not.toBeInTheDocument();
+    const eyebrows = screen.getAllByTestId('set-album-card-eyebrow');
+    expect(eyebrows).toHaveLength(1);
+    expect(eyebrows[0].textContent).toBe(WAS_SERIES);
+    expect(within(cardByCoin('coin-comm-series')).getByTestId('set-album-card-eyebrow')).toBe(eyebrows[0]);
+    expect(within(cardByCoin('coin-comm-bridge')).queryByTestId('set-album-card-eyebrow')).not.toBeInTheDocument();
+    expect(within(cardByCoin('coin-comm-bridge')).getByTestId('set-album-card-title').textContent).toBe(
+      'Antonivskyi Bridge',
+    );
+  });
+
+  it('does not hoist with a single coin on the page', () => {
+    renderAlbum({ slots: [COMM_SERIES] });
+    expect(screen.queryByTestId('set-album-page-eyebrow')).not.toBeInTheDocument();
+    expect(screen.getByTestId('set-album-card-eyebrow').textContent).toBe(WAS_SERIES);
+  });
+
+  it('keeps the series in the link accessible name even when hoisted', () => {
+    renderAlbum({ slots: WAS });
+    expect(within(cardByCoin('coin-donetsk')).getByTestId('set-album-card-link')).toHaveAttribute(
+      'aria-label',
+      'We Are Strong. We Are Together: Donetsk Oblast, 2025, 10 Hryvnias, missing',
+    );
+  });
+});
+
+describe('SetAlbum: coin circle', () => {
+  it('shows the denomination numeral placeholder when there is no image', () => {
+    renderAlbum({ slots: WAS });
+    const card = cardByCoin('coin-donetsk');
+    expect(within(card).getByTestId('set-album-card-numeral').textContent).toBe('10');
+    expect(within(card).queryByTestId('set-album-card-image')).not.toBeInTheDocument();
+  });
+
+  it('uses 1 for the numberless Cent denomination', () => {
     renderAlbum();
-    const s = slotByCoin('coin-1931s');
-    expect(s).toHaveAttribute('aria-label', '1931 S Lincoln Wheat Cent, missing, key date');
-    expect(s).toHaveAttribute('title', '1931 S Lincoln Wheat Cent, missing, key date');
+    expect(within(cardByCoin('coin-vdb')).getByTestId('set-album-card-numeral').textContent).toBe('1');
   });
 
-  it('labels an owned non-key slot without a key date part', () => {
+  it('shows the image instead of the numeral when imageUrl is set', () => {
+    const withImage = slot(0, 'img', { year: 1909, imageUrl: 'https://example.com/coin.jpg' });
+    renderAlbum({ slots: [withImage, L_VDB] });
+
+    const card = cardByCoin('coin-img');
+    const img = within(card).getByTestId('set-album-card-image');
+    expect(img.tagName).toBe('IMG');
+    expect(img).toHaveAttribute('src', 'https://example.com/coin.jpg');
+    expect(img).toHaveAttribute('alt', '');
+    expect(within(card).queryByTestId('set-album-card-numeral')).not.toBeInTheDocument();
+    // a sibling without an image keeps its numeral
+    expect(within(cardByCoin('coin-vdb')).queryByTestId('set-album-card-image')).not.toBeInTheDocument();
+    expect(within(cardByCoin('coin-vdb')).getByTestId('set-album-card-numeral')).toBeInTheDocument();
+  });
+
+  it('hides the circle from assistive tech', () => {
     renderAlbum();
-    expect(slotByCoin('coin-plain')).toHaveAttribute('aria-label', '1909 Lincoln Wheat Cent, owned');
-    expect(slotByCoin('coin-svdb')).toHaveAttribute('aria-label', '1909 S VDB Lincoln Wheat Cent, owned');
+    screen.getAllByTestId('set-album-card-circle').forEach((c) => expect(c).toHaveAttribute('aria-hidden', 'true'));
+    expect(screen.getAllByTestId('set-album-card-circle')).toHaveLength(LINCOLN.length);
   });
 
-  it('sets data-owned and data-key-date per slot', () => {
+  it('shows the ✓ owned mark only on owned coins, so ownership is not colour-only', () => {
     renderAlbum();
-    expect(slotByCoin('coin-plain')).toHaveAttribute('data-owned', 'true');
-    expect(slotByCoin('coin-vdb')).toHaveAttribute('data-owned', 'false');
-    expect(slotByCoin('coin-1931s')).toHaveAttribute('data-key-date', 'true');
-    expect(slotByCoin('coin-plain')).toHaveAttribute('data-key-date', 'false');
+    const marks = screen.getAllByTestId('set-album-card-owned-mark');
+    // plain, svdb, 1931d are owned
+    expect(marks).toHaveLength(3);
+    marks.forEach((m) => expect(m.textContent).toBe('✓'));
+    expect(within(cardByCoin('coin-plain')).getByTestId('set-album-card-owned-mark')).toBeInTheDocument();
+    expect(within(cardByCoin('coin-vdb')).queryByTestId('set-album-card-owned-mark')).not.toBeInTheDocument();
+    expect(within(cardByCoin('coin-1931s')).queryByTestId('set-album-card-owned-mark')).not.toBeInTheDocument();
   });
 
-  it('shows the key-date marker only for key-date coins, hidden from assistive tech', () => {
-    renderAlbum();
-    const markers = screen.getAllByTestId('set-album-key-date-marker');
-    expect(markers).toHaveLength(1);
-    expect(markers[0].textContent).toBe('★');
-    expect(markers[0]).toHaveAttribute('aria-hidden', 'true');
-    expect(within(slotByCoin('coin-1931s')).getByTestId('set-album-key-date-marker')).toBe(markers[0]);
-    expect(within(slotByCoin('coin-plain')).queryByTestId('set-album-key-date-marker')).not.toBeInTheDocument();
+  it('shows the owned mark on an image circle too', () => {
+    const owned = slot(0, 'imgowned', { year: 1909, imageUrl: 'https://example.com/a.jpg', owned: true });
+    const missing = slot(1, 'imgmissing', { year: 1910, imageUrl: 'https://example.com/b.jpg', owned: false });
+    renderAlbum({ slots: [owned, missing] });
+    expect(within(cardByCoin('coin-imgowned')).getByTestId('set-album-card-owned-mark')).toBeInTheDocument();
+    expect(within(cardByCoin('coin-imgmissing')).queryByTestId('set-album-card-owned-mark')).not.toBeInTheDocument();
   });
+});
 
-  it('renders no variety element for an empty variety', () => {
-    renderAlbum({ slots: [L_PLAIN] });
-    expect(screen.queryByTestId('set-album-slot-variety')).not.toBeInTheDocument();
-  });
-
-  it('is not colour-only: owned and missing slots differ in visible glyph text', () => {
-    renderAlbum();
-    const owned = slotByCoin('coin-plain');
-    const missing = slotByCoin('coin-vdb');
-    expect(owned.textContent).toContain('✓');
-    expect(missing.textContent).not.toContain('✓');
-    expect(missing.textContent).toContain('○');
-  });
-
-  it('explains the key-date marker in the legend', () => {
+describe('SetAlbum: legend', () => {
+  it('explains the new visuals', () => {
     renderAlbum();
     const legend = screen.getByTestId('set-album-legend');
-    expect(legend).toHaveTextContent('Key date');
-    expect(legend).toHaveTextContent('★');
     expect(legend).toHaveTextContent('Owned');
     expect(legend).toHaveTextContent('Missing');
-    expect(legend).toHaveTextContent('Not in this set');
+    expect(legend).toHaveTextContent('Key date');
+    expect(legend).toHaveTextContent('★');
   });
 
-  it('marks only the pending coin aria-busy', () => {
-    renderAlbum({ pendingCoinId: 'coin-vdb' });
-    expect(slotByCoin('coin-vdb')).toHaveAttribute('aria-busy', 'true');
-    expect(slotByCoin('coin-plain')).not.toHaveAttribute('aria-busy');
+  it('shows the "Not in this set" item only when some page has blank cells', () => {
+    const { unmount } = renderAlbum();
+    expect(screen.getByTestId('set-album-legend-blank')).toHaveTextContent('Not in this set');
+    unmount();
+
+    renderAlbum({ slots: WAS });
+    expect(screen.queryByTestId('set-album-legend-blank')).not.toBeInTheDocument();
+    expect(screen.getByTestId('set-album-legend')).not.toHaveTextContent('Not in this set');
   });
 });
 
-describe('SetAlbum: catalog link', () => {
-  it('renders a catalog link per slot with href and aria-label for owners', () => {
+describe('SetAlbum: card link', () => {
+  it('links every card to its catalog page with a full accessible name, for the owner', () => {
     renderAlbum();
-    const link = within(slotByCoin('coin-1931s').parentElement!).getByTestId('set-album-slot-catalog-link');
-    expect(link).toHaveAttribute('href', '/catalog/coin-1931s');
-    expect(link).toHaveAttribute('aria-label', 'View in catalog: 1931 S Lincoln Wheat Cent');
-    expect(screen.getAllByTestId('set-album-slot-catalog-link')).toHaveLength(LINCOLN.length);
+    const links = screen.getAllByTestId('set-album-card-link');
+    expect(links).toHaveLength(LINCOLN.length);
+    links.forEach((l) => expect(l.tagName).toBe('A'));
+
+    const key = within(cardByCoin('coin-1931s')).getByTestId('set-album-card-link');
+    expect(key).toHaveAttribute('href', '/catalog/coin-1931s');
+    expect(key).toHaveAttribute('aria-label', '1931-S, Cent, missing, key date');
+
+    const vdb = within(cardByCoin('coin-vdb')).getByTestId('set-album-card-link');
+    expect(vdb).toHaveAttribute('href', '/catalog/coin-vdb');
+    expect(vdb).toHaveAttribute('aria-label', 'VDB, 1909, Cent, missing');
+
+    const owned = within(cardByCoin('coin-svdb')).getByTestId('set-album-card-link');
+    expect(owned).toHaveAttribute('aria-label', 'VDB, 1909-S, Cent, owned');
   });
 
-  it('renders the catalog link for non-owners as well', () => {
+  it('puts the title inside the link', () => {
+    renderAlbum();
+    const link = within(cardByCoin('coin-vdb')).getByTestId('set-album-card-link');
+    expect(within(link).getByTestId('set-album-card-title').textContent).toBe('VDB');
+  });
+
+  it('links every card for a non-owner as well', () => {
     renderAlbum({ isOwner: false });
-    expect(screen.getAllByTestId('set-album-slot-catalog-link')).toHaveLength(LINCOLN.length);
+    const cards = screen.getAllByTestId('set-album-card');
+    expect(cards).toHaveLength(LINCOLN.length);
+    cards.forEach((card) => {
+      const link = within(card).getByTestId('set-album-card-link');
+      expect(link).toHaveAttribute('href', `/catalog/${card.getAttribute('data-coin-id')}`);
+    });
+  });
+
+  it('contains no ↗ anywhere', () => {
+    renderAlbum({ slots: [...LINCOLN, ...WAS, U_ONE] });
+    expect(screen.getByTestId('set-album').textContent).not.toContain('↗');
+    expect(screen.queryByTestId('set-album-slot-catalog-link')).not.toBeInTheDocument();
+  });
+
+  it('renders none of the removed slot elements', () => {
+    renderAlbum();
+    expect(screen.queryByTestId('set-album-slot')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-slot-variety')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-key-date-marker')).not.toBeInTheDocument();
   });
 });
 
-describe('SetAlbum: owner interaction', () => {
-  it('renders slots as buttons for the owner', () => {
+describe('SetAlbum: no truncation', () => {
+  it('uses no truncating classes on the card or its text elements', () => {
+    renderAlbum({ slots: [U_ONE, ...WAS, ...LINCOLN, COMM_SERIES, COMM_BRIDGE] });
+    const forbidden = /(truncate|line-clamp|whitespace-nowrap|overflow-hidden)/;
+
+    const elements = [
+      ...screen.getAllByTestId('set-album-card'),
+      ...screen.getAllByTestId('set-album-card-link'),
+      ...screen.getAllByTestId('set-album-card-title'),
+      ...screen.getAllByTestId('set-album-card-secondary'),
+      ...screen.getAllByTestId('set-album-card-eyebrow'),
+    ];
+    expect(elements.length).toBeGreaterThan(0);
+    elements.forEach((el) => expect(el.className).not.toMatch(forbidden));
+  });
+});
+
+describe('SetAlbum: owner check button', () => {
+  it('renders a round button per card for the owner, at least 32px', () => {
     renderAlbum();
-    screen.getAllByTestId('set-album-slot').forEach((s) => expect(s.tagName).toBe('BUTTON'));
+    const buttons = screen.getAllByTestId('set-album-card-check');
+    expect(buttons).toHaveLength(LINCOLN.length);
+    buttons.forEach((b) => {
+      expect(b.tagName).toBe('BUTTON');
+      expect(b).toHaveAttribute('type', 'button');
+      expect(b.className).toContain('h-8');
+      expect(b.className).toContain('w-8');
+    });
+    expect(checkByCoin('coin-vdb')).toHaveAttribute('data-coin-id', 'coin-vdb');
   });
 
-  it('calls onToggle(coinId, currentlyOwned) exactly once for a missing slot', async () => {
+  it('renders no check button for a non-owner', () => {
+    renderAlbum({ isOwner: false });
+    expect(screen.queryByTestId('set-album-card-check')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('reflects ownership in aria-pressed', () => {
+    renderAlbum();
+    expect(checkByCoin('coin-plain')).toHaveAttribute('aria-pressed', 'true');
+    expect(checkByCoin('coin-vdb')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('has a translated, coin-specific accessible name that flips with ownership', () => {
+    renderAlbum();
+    expect(checkByCoin('coin-1931s')).toHaveAttribute('aria-label', 'Mark 1931-S as owned');
+    expect(checkByCoin('coin-vdb')).toHaveAttribute('aria-label', 'Mark VDB 1909 as owned');
+    expect(checkByCoin('coin-plain')).toHaveAttribute('aria-label', 'Mark 1909 as missing');
+    expect(checkByCoin('coin-svdb')).toHaveAttribute('aria-label', 'Mark VDB 1909-S as missing');
+  });
+
+  it('names a WAS coin by oblast and year', () => {
+    renderAlbum({ slots: WAS });
+    expect(checkByCoin('coin-donetsk')).toHaveAttribute('aria-label', 'Mark Donetsk Oblast 2025 as owned');
+    expect(checkByCoin('coin-luhansk')).toHaveAttribute('aria-label', 'Mark Luhansk Oblast 2025 as missing');
+  });
+
+  it('calls onToggle(coinId, currentlyOwned) exactly once for a missing coin', async () => {
     const user = userEvent.setup();
     const { onToggle } = renderAlbum();
 
-    await user.click(slotByCoin('coin-vdb'));
+    await user.click(checkByCoin('coin-vdb'));
 
     expect(onToggle).toHaveBeenCalledTimes(1);
     expect(onToggle).toHaveBeenCalledWith('coin-vdb', false);
   });
 
-  it('passes currentlyOwned=true for an owned slot', async () => {
+  it('passes currentlyOwned=true for an owned coin', async () => {
     const user = userEvent.setup();
     const { onToggle } = renderAlbum();
 
-    await user.click(slotByCoin('coin-plain'));
+    await user.click(checkByCoin('coin-plain'));
 
     expect(onToggle).toHaveBeenCalledTimes(1);
     expect(onToggle).toHaveBeenCalledWith('coin-plain', true);
   });
 
-  it('disables only the pending slots, which ignore clicks', async () => {
+  it('does not toggle when the card link is clicked, and the toggle does not click through to the link', async () => {
+    const user = userEvent.setup();
+    const { onToggle } = renderAlbum();
+    const link = within(cardByCoin('coin-vdb')).getByTestId('set-album-card-link');
+    const linkClicked = vi.fn((e: Event) => e.preventDefault()); // keep jsdom from navigating
+    link.addEventListener('click', linkClicked);
+
+    await user.click(link);
+    expect(onToggle).not.toHaveBeenCalled();
+    expect(linkClicked).toHaveBeenCalledTimes(1);
+
+    await user.click(checkByCoin('coin-vdb'));
+    expect(onToggle).toHaveBeenCalledTimes(1);
+    expect(linkClicked).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables only the pending coins (pendingCoinIds), which ignore clicks', async () => {
     const user = userEvent.setup();
     const { onToggle } = renderAlbum({ pendingCoinIds: new Set(['coin-vdb', 'coin-1931s']) });
 
-    expect(slotByCoin('coin-vdb')).toBeDisabled();
-    expect(slotByCoin('coin-vdb')).toHaveAttribute('aria-busy', 'true');
-    expect(slotByCoin('coin-1931s')).toBeDisabled();
-    expect(slotByCoin('coin-plain')).toBeEnabled();
-    expect(slotByCoin('coin-plain')).not.toHaveAttribute('aria-busy');
+    expect(checkByCoin('coin-vdb')).toBeDisabled();
+    expect(checkByCoin('coin-vdb')).toHaveAttribute('aria-busy', 'true');
+    expect(checkByCoin('coin-1931s')).toBeDisabled();
+    expect(checkByCoin('coin-plain')).toBeEnabled();
+    expect(checkByCoin('coin-plain')).not.toHaveAttribute('aria-busy');
 
-    await user.click(slotByCoin('coin-vdb'));
+    await user.click(checkByCoin('coin-vdb'));
     expect(onToggle).not.toHaveBeenCalled();
-    await user.click(slotByCoin('coin-plain'));
+    await user.click(checkByCoin('coin-plain'));
     expect(onToggle).toHaveBeenCalledWith('coin-plain', true);
+  });
+
+  it('marks only the single pendingCoinId busy and disabled, leaving the link usable', () => {
+    renderAlbum({ pendingCoinId: 'coin-vdb' });
+    expect(checkByCoin('coin-vdb')).toBeDisabled();
+    expect(checkByCoin('coin-vdb')).toHaveAttribute('aria-busy', 'true');
+    expect(checkByCoin('coin-plain')).toBeEnabled();
+    expect(checkByCoin('coin-plain')).not.toHaveAttribute('aria-busy');
+    const link = within(cardByCoin('coin-vdb')).getByTestId('set-album-card-link');
+    expect(link).toHaveAttribute('href', '/catalog/coin-vdb');
   });
 
   it('shows a toggle error alert only when toggleFailed is set', () => {
@@ -369,77 +708,92 @@ describe('SetAlbum: owner interaction', () => {
     rerender(<SetAlbum slots={LINCOLN} isOwner={true} gapOnly={false} onToggle={vi.fn()} toggleFailed />);
     expect(screen.getByRole('alert')).toHaveTextContent("Couldn't update this coin. Please try again.");
   });
+});
 
-  it('does not toggle when the catalog link is clicked', async () => {
-    const user = userEvent.setup();
-    const { onToggle } = renderAlbum();
-    const link = screen.getAllByTestId('set-album-slot-catalog-link')[0];
-    // keep jsdom from attempting navigation
-    link.addEventListener('click', (e) => e.preventDefault());
-
-    await user.click(link);
-
-    expect(onToggle).not.toHaveBeenCalled();
+describe('SetAlbum: no nested interactive elements and tab order', () => {
+  it('keeps the link and the check button as siblings inside the card, never nested', () => {
+    renderAlbum();
+    screen.getAllByTestId('set-album-card').forEach((card) => {
+      const link = within(card).getByTestId('set-album-card-link');
+      const check = within(card).getByTestId('set-album-card-check');
+      expect(link.querySelector('button, a')).toBeNull();
+      expect(check.querySelector('button, a')).toBeNull();
+      expect(link.contains(check)).toBe(false);
+      expect(check.contains(link)).toBe(false);
+      expect(check.closest('a')).toBeNull();
+      expect(link.closest('button')).toBeNull();
+      expect(card.contains(link)).toBe(true);
+      expect(card.contains(check)).toBe(true);
+    });
   });
 
-  it('makes the slot and the catalog link keyboard reachable (natural tab order)', async () => {
+  it('tabs to the card link first, then the check button', async () => {
     const user = userEvent.setup();
     renderAlbum({ slots: [L_PLAIN] });
 
     await user.tab();
-    expect(document.activeElement).toBe(screen.getByTestId('set-album-slot'));
+    expect(document.activeElement).toBe(screen.getByTestId('set-album-card-link'));
     await user.tab();
-    expect(document.activeElement).toBe(screen.getByTestId('set-album-slot-catalog-link'));
+    expect(document.activeElement).toBe(screen.getByTestId('set-album-card-check'));
+  });
+
+  it('tabs only to the link for a non-owner', async () => {
+    const user = userEvent.setup();
+    renderAlbum({ slots: [L_PLAIN], isOwner: false });
+
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByTestId('set-album-card-link'));
+    await user.tab();
+    expect(document.activeElement).not.toBe(screen.getByTestId('set-album-card-link'));
   });
 });
 
-describe('SetAlbum: non-owner', () => {
-  it('renders slots as links to the catalog page', () => {
-    renderAlbum({ isOwner: false });
-    screen.getAllByTestId('set-album-slot').forEach((s) => {
-      expect(s.tagName).toBe('A');
-      expect(s).toHaveAttribute('href', `/catalog/${s.getAttribute('data-coin-id')}`);
-    });
-    expect(slotByCoin('coin-vdb')).toHaveAttribute('href', '/catalog/coin-vdb');
-  });
-
-  it('never calls onToggle on click', async () => {
-    const user = userEvent.setup();
-    const { onToggle } = renderAlbum({ isOwner: false });
-    const s = slotByCoin('coin-vdb');
-    s.addEventListener('click', (e) => e.preventDefault());
-
-    await user.click(s);
-
-    expect(onToggle).not.toHaveBeenCalled();
+describe('SetAlbum: hover and focus styling hooks', () => {
+  it('gives the card a hover state and the check button hover and focus-visible states', () => {
+    renderAlbum({ slots: [L_PLAIN] });
+    expect(screen.getByTestId('set-album-card').className).toMatch(/hover:/);
+    const check = screen.getByTestId('set-album-card-check');
+    expect(check.className).toMatch(/hover:/);
+    expect(check.className).toMatch(/focus-visible:/);
+    expect(screen.getByTestId('set-album-card-link').className).toMatch(/focus-visible:/);
   });
 });
 
 describe('SetAlbum: Missing filter (gapOnly)', () => {
-  it('keeps every slot, cell and blank cell, and mutes only owned slots', () => {
+  it('keeps every card, cell and blank cell, and mutes only owned cards', () => {
     renderAlbum({ gapOnly: true });
 
-    expect(screen.getAllByTestId('set-album-slot')).toHaveLength(LINCOLN.length);
+    expect(screen.getAllByTestId('set-album-card')).toHaveLength(LINCOLN.length);
     expect(screen.getAllByTestId('set-album-blank-cell')).toHaveLength(2);
     expect(screen.getAllByTestId('set-album-cell')).toHaveLength(4);
-    expect(slotByCoin('coin-plain')).toHaveAttribute('data-muted', 'true');
-    expect(slotByCoin('coin-svdb')).toHaveAttribute('data-muted', 'true');
-    expect(slotByCoin('coin-vdb')).toHaveAttribute('data-muted', 'false');
-    expect(slotByCoin('coin-1931s')).toHaveAttribute('data-muted', 'false');
+    expect(cardByCoin('coin-plain')).toHaveAttribute('data-muted', 'true');
+    expect(cardByCoin('coin-svdb')).toHaveAttribute('data-muted', 'true');
+    expect(cardByCoin('coin-vdb')).toHaveAttribute('data-muted', 'false');
+    expect(cardByCoin('coin-1931s')).toHaveAttribute('data-muted', 'false');
+  });
+
+  it('mutes owned cards on a grid page too', () => {
+    renderAlbum({ slots: WAS, gapOnly: true });
+    expect(cardByCoin('coin-luhansk')).toHaveAttribute('data-muted', 'true');
+    expect(cardByCoin('coin-donetsk')).toHaveAttribute('data-muted', 'false');
   });
 
   it('mutes nothing when gapOnly is false', () => {
     renderAlbum({ gapOnly: false });
-    screen.getAllByTestId('set-album-slot').forEach((s) => expect(s).toHaveAttribute('data-muted', 'false'));
+    screen.getAllByTestId('set-album-card').forEach((s) => expect(s).toHaveAttribute('data-muted', 'false'));
   });
 
-  it('muted slots are still interactive for the owner', async () => {
+  it('muted cards are still interactive for the owner', async () => {
     const user = userEvent.setup();
     const { onToggle } = renderAlbum({ gapOnly: true });
 
-    await user.click(slotByCoin('coin-plain'));
+    await user.click(checkByCoin('coin-plain'));
 
     expect(onToggle).toHaveBeenCalledWith('coin-plain', true);
+    expect(within(cardByCoin('coin-plain')).getByTestId('set-album-card-link')).toHaveAttribute(
+      'href',
+      '/catalog/coin-plain',
+    );
   });
 
   it('keeps counts unchanged by the filter', () => {
@@ -447,6 +801,10 @@ describe('SetAlbum: Missing filter (gapOnly)', () => {
     expect(screen.getByTestId('set-album-page-count').textContent).toBe('3 of 5 owned');
   });
 });
+
+function WAS_SLOTS_2025(): GapSlot[] {
+  return [WAS_DONETSK, WAS_LUHANSK];
+}
 
 describe('SetViewSwitch', () => {
   it('renders a labelled group with List and Album buttons', () => {
