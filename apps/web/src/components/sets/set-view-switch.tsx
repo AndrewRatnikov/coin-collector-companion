@@ -8,7 +8,9 @@ export interface SetViewSwitchProps {
   onChange: (view: SetView) => void;
 }
 
-const BUTTON_CLASSNAME = 'rounded border border-gray-300 px-3 py-1 text-sm aria-pressed:bg-surface';
+export const SEGMENT_BUTTON_CLASSNAME =
+  'min-h-[38px] rounded-[5px] px-4 text-sm text-neutral-800 aria-pressed:bg-white aria-pressed:font-medium aria-pressed:text-text aria-pressed:shadow-sm';
+export const SEGMENT_GROUP_CLASSNAME = 'flex items-center gap-0.5 rounded-[var(--radius-lg)] bg-surface p-[3px]';
 
 export function SetViewSwitch({ view, onChange }: SetViewSwitchProps) {
   const { t } = useTranslation();
@@ -18,14 +20,14 @@ export function SetViewSwitch({ view, onChange }: SetViewSwitchProps) {
       role="group"
       data-testid="set-editor-view-switch"
       aria-label={t('setEditor.viewSwitchLabel')}
-      className="flex items-center gap-1"
+      className={SEGMENT_GROUP_CLASSNAME}
     >
       <button
         type="button"
         data-testid="set-editor-view-list-toggle"
         aria-pressed={view === 'list'}
         onClick={() => onChange('list')}
-        className={BUTTON_CLASSNAME}
+        className={SEGMENT_BUTTON_CLASSNAME}
       >
         {t('setEditor.viewList')}
       </button>
@@ -34,7 +36,7 @@ export function SetViewSwitch({ view, onChange }: SetViewSwitchProps) {
         data-testid="set-editor-view-album-toggle"
         aria-pressed={view === 'album'}
         onClick={() => onChange('album')}
-        className={BUTTON_CLASSNAME}
+        className={SEGMENT_BUTTON_CLASSNAME}
       >
         {t('setEditor.viewAlbum')}
       </button>

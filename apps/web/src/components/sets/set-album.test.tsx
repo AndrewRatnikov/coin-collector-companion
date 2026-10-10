@@ -128,9 +128,7 @@ const KOP_10 = slot(41, 'kop10', {
 
 function renderAlbum(over: Partial<React.ComponentProps<typeof SetAlbum>> = {}) {
   const onToggle = vi.fn();
-  const utils = render(
-    <SetAlbum slots={LINCOLN} isOwner={true} gapOnly={false} onToggle={onToggle} {...over} />,
-  );
+  const utils = render(<SetAlbum slots={LINCOLN} isOwner={true} gapOnly={false} onToggle={onToggle} {...over} />);
   return { onToggle, ...utils };
 }
 
@@ -281,7 +279,7 @@ describe('SetAlbum: no-mint-mark pages use year rows with a wrapping card grid',
     });
   });
 
-  it('puts each year\'s cards into that year\'s grid, in position order', () => {
+  it("puts each year's cards into that year's grid, in position order", () => {
     renderAlbum({ slots: [WAS_KYIV, WAS_LUHANSK, WAS_DONETSK] });
 
     const [g2025, g2026] = screen.getAllByTestId('set-album-year-group');
@@ -326,7 +324,9 @@ describe('SetAlbum: cells (mint-mark pages)', () => {
   it('shows several varieties as separate cards in the same cell', () => {
     renderAlbum();
     const cells = screen.getAllByTestId('set-album-cell');
-    const cell1909 = cells.find((c) => c.getAttribute('data-year') === '1909' && c.getAttribute('data-mint-mark') === '');
+    const cell1909 = cells.find(
+      (c) => c.getAttribute('data-year') === '1909' && c.getAttribute('data-mint-mark') === '',
+    );
     expect(cell1909).toBeDefined();
     const cards = within(cell1909!).getAllByTestId('set-album-card');
     expect(cards.map((s) => s.getAttribute('data-coin-id'))).toEqual(['coin-plain', 'coin-vdb']);
@@ -337,9 +337,10 @@ describe('SetAlbum: cells (mint-mark pages)', () => {
     const blanks = screen.getAllByTestId('set-album-blank-cell');
     // 1909 D, 1931 ''
     expect(blanks).toHaveLength(2);
-    expect(
-      blanks.map((b) => `${b.getAttribute('data-year')}|${b.getAttribute('data-mint-mark')}`).sort(),
-    ).toEqual(['1909|D', '1931|']);
+    expect(blanks.map((b) => `${b.getAttribute('data-year')}|${b.getAttribute('data-mint-mark')}`).sort()).toEqual([
+      '1909|D',
+      '1931|',
+    ]);
     blanks.forEach((blank) => {
       expect(blank.tagName).toBe('TD');
       expect(within(blank).queryByTestId('set-album-card')).not.toBeInTheDocument();
@@ -492,23 +493,47 @@ describe('SetAlbum: coin circle', () => {
     expect(screen.getAllByTestId('set-album-card-circle')).toHaveLength(LINCOLN.length);
   });
 
-  it('shows the ✓ owned mark only on owned coins, so ownership is not colour-only', () => {
+  it('states ownership in words on every card, so it is not colour-only', () => {
     renderAlbum();
-    const marks = screen.getAllByTestId('set-album-card-owned-mark');
+    const status = (id: string) => within(cardByCoin(id)).getByTestId('set-album-card-status');
     // plain, svdb, 1931d are owned
-    expect(marks).toHaveLength(3);
-    marks.forEach((m) => expect(m.textContent).toBe('✓'));
-    expect(within(cardByCoin('coin-plain')).getByTestId('set-album-card-owned-mark')).toBeInTheDocument();
-    expect(within(cardByCoin('coin-vdb')).queryByTestId('set-album-card-owned-mark')).not.toBeInTheDocument();
-    expect(within(cardByCoin('coin-1931s')).queryByTestId('set-album-card-owned-mark')).not.toBeInTheDocument();
+    expect(status('coin-plain').textContent).toBe('In collection');
+    expect(status('coin-svdb').textContent).toBe('In collection');
+    expect(status('coin-vdb').textContent).toBe('Missing');
+    expect(status('coin-1931s').textContent).toBe('Missing');
   });
 
-  it('shows the owned mark on an image circle too', () => {
-    const owned = slot(0, 'imgowned', { year: 1909, imageUrl: 'https://example.com/a.jpg', owned: true });
-    const missing = slot(1, 'imgmissing', { year: 1910, imageUrl: 'https://example.com/b.jpg', owned: false });
+  it('shows the coin year instead of ownership to a visitor, with a neutral full-strength coin', () => {
+    renderAlbum({ isOwner: false });
+    const card = cardByCoin('coin-plain');
+    expect(within(card).getByTestId('set-album-card-status').textContent).toBe('1909');
+    expect(within(card).queryByTestId('set-album-card-check')).not.toBeInTheDocument();
+    expect(within(card).getByTestId('set-album-card-circle').className).not.toMatch(/opacity-50|grayscale/);
+  });
+
+  it('fades only missing coins for the owner, on image circles too', () => {
+    const owned = slot(0, 'imgowned', {
+      year: 1909,
+      imageUrl: 'https://example.com/a.jpg',
+      owned: true,
+    });
+    const missing = slot(1, 'imgmissing', {
+      year: 1910,
+      imageUrl: 'https://example.com/b.jpg',
+      owned: false,
+    });
     renderAlbum({ slots: [owned, missing] });
-    expect(within(cardByCoin('coin-imgowned')).getByTestId('set-album-card-owned-mark')).toBeInTheDocument();
-    expect(within(cardByCoin('coin-imgmissing')).queryByTestId('set-album-card-owned-mark')).not.toBeInTheDocument();
+    const circle = (id: string) => within(cardByCoin(id)).getByTestId('set-album-card-circle');
+    expect(circle('coin-imgowned').className).not.toMatch(/opacity-50|grayscale/);
+    expect(circle('coin-imgmissing').className).toMatch(/opacity-50/);
+    expect(circle('coin-imgmissing').className).toMatch(/grayscale/);
+  });
+
+  it('shows an owned/total summary beside each year on a grid page', () => {
+    renderAlbum({ slots: WAS });
+    const groups = screen.getAllByTestId('set-album-year-group');
+    expect(within(groups[0]).getByTestId('set-album-year-summary').textContent).toBe('1/2');
+    expect(within(groups[1]).getByTestId('set-album-year-summary').textContent).toBe('0/1');
   });
 });
 
@@ -600,15 +625,15 @@ describe('SetAlbum: no truncation', () => {
 });
 
 describe('SetAlbum: owner check button', () => {
-  it('renders a round button per card for the owner, at least 32px', () => {
+  it('renders a round button per card for the owner, with a 44px hit area', () => {
     renderAlbum();
     const buttons = screen.getAllByTestId('set-album-card-check');
     expect(buttons).toHaveLength(LINCOLN.length);
     buttons.forEach((b) => {
       expect(b.tagName).toBe('BUTTON');
       expect(b).toHaveAttribute('type', 'button');
-      expect(b.className).toContain('h-8');
-      expect(b.className).toContain('w-8');
+      expect(b.className).toContain('h-11');
+      expect(b.className).toContain('w-11');
     });
     expect(checkByCoin('coin-vdb')).toHaveAttribute('data-coin-id', 'coin-vdb');
   });

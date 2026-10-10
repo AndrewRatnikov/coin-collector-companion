@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Album card states</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#201f1d;text-decoration:none}a:hover{color:#7d5411}
+</style>
+<div style="width: 1120px; height: 580px; box-sizing: border-box; padding: 40px; background: #f3f2f2; color: #201f1d; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; display: flex; flex-direction: column; gap: 28px">
+<h1 style="margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 30px">Album card states</h1>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px">
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #605d5d">Hover · opens coin page</span>
+<div style="position: relative; display: flex; flex-direction: column; border-radius: 7px; overflow: hidden; background: #f8f4f4; border: 1px solid #b68235; box-shadow: 0 3px 10px rgba(45,43,43,0.16); transform: translateY(-2px)">
+<div style="position: relative; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; background: #eae7e7">
+<span aria-hidden="true" style="position: relative; width: 58%; aspect-ratio: 1; border-radius: 50%; background: #d7d3d3; border: 3px solid #bab6b6; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; opacity: 0.5; transform: scale(1.05)"><span style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 34px; line-height: 1; color: #444141">10</span><span style="font-size: 8px; letter-spacing: 0.14em; color: #605d5d">ГРИВЕНЬ</span></span>
+<button type="button" aria-pressed="false" aria-label="Mark as owned: Kherson Oblast" style="position: absolute; top: 4px; right: 4px; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center"><span style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.85); color: #9b9797; border: 1.5px dashed #9b9797"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 12px 14px 14px">
+<a href="#" style="font-size: 15px; font-weight: 600; line-height: 1.3; color: #7d5411; text-decoration: underline">Kherson Oblast</a>
+<span style="font-size: 13px; color: #605d5d">10 Hryvnias</span>
+<div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px">
+<span style="font-size: 12px; color: #605d5d">Missing</span>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" style="color: #7d5411"><path d="M3 8h9M8.5 4.5L12 8l-3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</div>
+</div>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #444141">The whole card links to the coin page. The card lifts, the title underlines and an arrow appears. The check still only toggles ownership.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #605d5d">Owned</span>
+<div style="position: relative; display: flex; flex-direction: column; border-radius: 7px; overflow: hidden; background: #fff3e4; border: 1px solid #e1ad66; box-shadow: 0 1px 2px rgba(45,43,43,0.14)">
+<div style="position: relative; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; background: #ffe3bf">
+<span aria-hidden="true" style="position: relative; width: 58%; aspect-ratio: 1; border-radius: 50%; background: #d7d3d3; border: 3px solid #bab6b6; box-shadow: 0 3px 10px rgba(45,43,43,0.18); display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box"><span style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 34px; line-height: 1; color: #444141">10</span><span style="font-size: 8px; letter-spacing: 0.14em; color: #605d5d">ГРИВЕНЬ</span></span>
+<button type="button" aria-pressed="true" aria-label="Remove from collection: Odesa Oblast" style="position: absolute; top: 4px; right: 4px; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center"><span style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #b68235; color: #ffffff; border: 2px solid #ffffff"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 12px 14px 14px">
+<a href="#" style="font-size: 15px; font-weight: 600; line-height: 1.3">Odesa Oblast</a>
+<span style="font-size: 13px; color: #605d5d">10 Hryvnias</span>
+<span style="margin-top: 8px; font-size: 12px; font-weight: 500; color: #7d5411">In collection</span>
+</div>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #444141">Warm accent fill and border, photo in full color, filled gold check.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #605d5d">Missing</span>
+<div style="position: relative; display: flex; flex-direction: column; border-radius: 7px; overflow: hidden; background: #f8f4f4; border: 1px solid #d7d3d3">
+<div style="position: relative; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; background: #eae7e7">
+<span aria-hidden="true" style="position: relative; width: 58%; aspect-ratio: 1; border-radius: 50%; background: #d7d3d3; border: 3px solid #bab6b6; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; opacity: 0.5"><span style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 34px; line-height: 1; color: #444141">10</span><span style="font-size: 8px; letter-spacing: 0.14em; color: #605d5d">ГРИВЕНЬ</span></span>
+<button type="button" aria-pressed="false" aria-label="Mark as owned: Sumy Oblast" style="position: absolute; top: 4px; right: 4px; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center"><span style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.85); color: #9b9797; border: 1.5px dashed #9b9797"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 12px 14px 14px">
+<a href="#" style="font-size: 15px; font-weight: 600; line-height: 1.3">Sumy Oblast</a>
+<span style="font-size: 13px; color: #605d5d">10 Hryvnias</span>
+<span style="margin-top: 8px; font-size: 12px; color: #605d5d">Missing</span>
+</div>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #444141">Neutral card, faded greyscale photo, dashed check you tap to mark owned.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #605d5d">Owned · key date</span>
+<div style="position: relative; display: flex; flex-direction: column; border-radius: 7px; overflow: hidden; background: #fff3e4; border: 1px solid #e1ad66; box-shadow: 0 1px 2px rgba(45,43,43,0.14)">
+<div style="position: relative; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; background: #ffe3bf">
+<span style="position: absolute; top: 10px; left: 10px; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: #5a3b0a; color: #fff3e4; font-size: 11px; font-weight: 500">★ Key date</span>
+<span aria-hidden="true" style="position: relative; width: 58%; aspect-ratio: 1; border-radius: 50%; background: #d7d3d3; border: 3px solid #bab6b6; box-shadow: 0 3px 10px rgba(45,43,43,0.18); display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box"><span style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 34px; line-height: 1; color: #444141">10</span><span style="font-size: 8px; letter-spacing: 0.14em; color: #605d5d">ГРИВЕНЬ</span></span>
+<button type="button" aria-pressed="true" aria-label="Remove from collection: Kharkiv Oblast" style="position: absolute; top: 4px; right: 4px; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center"><span style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #b68235; color: #ffffff; border: 2px solid #ffffff"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span></button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 12px 14px 14px">
+<a href="#" style="font-size: 15px; font-weight: 600; line-height: 1.3">Kharkiv Oblast</a>
+<span style="font-size: 13px; color: #605d5d">10 Hryvnias</span>
+<span style="margin-top: 8px; font-size: 12px; font-weight: 500; color: #7d5411">In collection</span>
+</div>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #444141">Key-date pill sits on the photo, top-left, opposite the check.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #605d5d">Visitor (not owner)</span>
+<div style="position: relative; display: flex; flex-direction: column; border-radius: 7px; overflow: hidden; background: #f8f4f4; border: 1px solid #d7d3d3">
+<div style="position: relative; aspect-ratio: 4 / 3; display: flex; align-items: center; justify-content: center; background: #eae7e7">
+<span aria-hidden="true" style="position: relative; width: 58%; aspect-ratio: 1; border-radius: 50%; background: #d7d3d3; border: 3px solid #bab6b6; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box"><span style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 34px; line-height: 1; color: #444141">10</span><span style="font-size: 8px; letter-spacing: 0.14em; color: #605d5d">ГРИВЕНЬ</span></span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 12px 14px 14px">
+<a href="#" style="font-size: 15px; font-weight: 600; line-height: 1.3">Donetsk Oblast</a>
+<span style="font-size: 13px; color: #605d5d">10 Hryvnias</span>
+<span style="margin-top: 8px; font-size: 12px; color: #605d5d">2025</span>
+</div>
+</div>
+<p style="margin: 0; font-size: 13px; line-height: 1.5; color: #444141">Public set viewed by someone else: no check, photo stays full strength.</p>
+</div>
+
+</div>
+</div>
+</body>
+</html>

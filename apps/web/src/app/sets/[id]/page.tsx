@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Sheet } from '@/components/ui/sheet';
 import { SetAlbum } from '@/components/sets/set-album';
-import { SetViewSwitch } from '@/components/sets/set-view-switch';
+import { SEGMENT_BUTTON_CLASSNAME, SEGMENT_GROUP_CLASSNAME, SetViewSwitch } from '@/components/sets/set-view-switch';
 import { buildSetViewSearch, parseSetView, type SetView } from '@/lib/set-view';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
@@ -101,7 +101,10 @@ function SetEditor({ id }: { id: string }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [collapsedDecades, setCollapsedDecades] = useState<Record<string, boolean>>({});
-  const [addCoinsFilters, setAddCoinsFilters] = useState<CatalogFilters>({ page: 1, limit: ADD_COINS_LIMIT });
+  const [addCoinsFilters, setAddCoinsFilters] = useState<CatalogFilters>({
+    page: 1,
+    limit: ADD_COINS_LIMIT,
+  });
   const catalogQuery = useCatalog(addCoinsFilters);
 
   // Adjust nameValue during render (React's endorsed "adjust state" pattern) rather than
@@ -262,25 +265,27 @@ function SetEditor({ id }: { id: string }) {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4 border-t border-gray-200 pt-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            data-testid="set-editor-show-all-toggle"
-            aria-pressed={!gapOnly}
-            onClick={() => setGapOnly(false)}
-            className="rounded border border-gray-300 px-3 py-1 text-sm"
-          >
-            {t('setEditor.allCoins')}
-          </button>
-          <button
-            type="button"
-            data-testid="set-editor-show-missing-toggle"
-            aria-pressed={gapOnly}
-            onClick={() => setGapOnly(true)}
-            className="rounded border border-gray-300 px-3 py-1 text-sm"
-          >
-            {missingCount} {t('setEditor.missing')}
-          </button>
+        <div className="flex flex-wrap items-center gap-4">
+          <div role="group" aria-label={t('setEditor.showLabel')} className={SEGMENT_GROUP_CLASSNAME}>
+            <button
+              type="button"
+              data-testid="set-editor-show-all-toggle"
+              aria-pressed={!gapOnly}
+              onClick={() => setGapOnly(false)}
+              className={SEGMENT_BUTTON_CLASSNAME}
+            >
+              {t('setEditor.allCoins')}
+            </button>
+            <button
+              type="button"
+              data-testid="set-editor-show-missing-toggle"
+              aria-pressed={gapOnly}
+              onClick={() => setGapOnly(true)}
+              className={SEGMENT_BUTTON_CLASSNAME}
+            >
+              {missingCount} {t('setEditor.missing')}
+            </button>
+          </div>
           <SetViewSwitch view={view} onChange={handleViewChange} />
         </div>
 
@@ -289,7 +294,7 @@ function SetEditor({ id }: { id: string }) {
             type="button"
             data-testid="set-editor-toggle-add-coins"
             onClick={() => setPickerOpen(true)}
-            className="rounded border border-gray-300 px-4 py-2 text-sm font-medium"
+            className="min-h-11 rounded-[var(--radius-md)] bg-accent-700 px-5 text-sm font-medium text-white hover:bg-accent-800"
           >
             {t('setEditor.addCoins')}
           </button>
@@ -438,11 +443,7 @@ export default function SetEditorPage({ params }: { params: Promise<{ id: string
 
   return (
     <RequireAuth>
-      {id === null ? (
-        <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME} />
-      ) : (
-        <SetEditor id={id} />
-      )}
+      {id === null ? <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME} /> : <SetEditor id={id} />}
     </RequireAuth>
   );
 }
