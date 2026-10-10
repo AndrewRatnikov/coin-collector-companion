@@ -402,9 +402,10 @@ describe('SetEditorPage: Album view', () => {
       });
       expect(screen.getByTestId('set-editor-show-all-toggle')).toBeInTheDocument();
       expect(screen.getByTestId('set-editor-show-missing-toggle')).toBeInTheDocument();
+      expect(screen.getByTestId('set-editor-completion')).toHaveTextContent('25%');
+      await userEvent.setup().click(screen.getByTestId('set-editor-actions-trigger'));
       expect(screen.getByTestId('set-editor-download-missing')).toBeInTheDocument();
       expect(screen.getByTestId('set-editor-print-missing')).toBeInTheDocument();
-      expect(screen.getByTestId('set-editor-completion')).toHaveTextContent('25%');
     });
 
     it('Missing keeps the full grid and mutes owned cards; All unmutes them', async () => {

@@ -14,6 +14,7 @@ import {
   getSharedEyebrow,
   hasBlankCells,
   isNoMintMarkPage,
+  type AlbumRow,
   type AlbumSlotLabelWords,
 } from '@/lib/album-layout';
 import { useTranslation } from '@/lib/i18n/i18n-context';
@@ -40,54 +41,107 @@ const HEADING_FONT_CLASSNAME = 'font-[family-name:var(--font-heading)]';
 const CIRCLE_BASE_CLASSNAME = 'relative inline-flex shrink-0 items-center justify-center rounded-full';
 const CIRCLE_OWNED_CLASSNAME = 'border border-solid border-accent bg-accent text-white';
 const CIRCLE_MISSING_CLASSNAME = 'border-2 border-dashed border-neutral-500 bg-transparent text-neutral-600';
-const CIRCLE_IMAGE_OWNED_CLASSNAME = 'border-2 border-solid border-accent bg-surface';
-const CIRCLE_IMAGE_MISSING_CLASSNAME = 'border-2 border-dashed border-neutral-500 bg-surface opacity-70';
-
-const OWNED_MARK_CLASSNAME =
-  'absolute -bottom-1 -right-1 inline-flex h-4 w-4 items-center justify-center rounded-full border border-bg bg-accent text-[0.625rem] leading-none text-white';
 
 const KEY_DATE_BADGE_CLASSNAME =
   'inline-flex w-fit items-center rounded-full bg-accent-100 px-1.5 text-xs text-accent-800';
+const KEY_DATE_PILL_CLASSNAME =
+  'absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-accent-800 px-2 py-0.5 text-[11px] font-medium text-accent-100';
+
+const CARD_BASE_CLASSNAME = [
+  'group relative flex flex-col rounded-[var(--radius-lg)] border',
+  'transition-[transform,box-shadow,border-color] duration-150',
+  'hover:-translate-y-0.5 hover:border-accent hover:shadow-md',
+].join(' ');
+const CARD_OWNED_CLASSNAME = 'border-accent-400 bg-accent-100 shadow-sm';
+const CARD_MISSING_CLASSNAME = 'border-neutral-300 bg-neutral-100';
+
+// The well rounds its own top corners (no overflow-hidden on the card, which must never clip text).
+const WELL_BASE_CLASSNAME =
+  'relative flex aspect-[4/3] items-center justify-center rounded-t-[calc(var(--radius-lg)-1px)]';
 
 const CARD_LINK_CLASSNAME = [
-  'font-semibold text-sm leading-snug text-inherit hover:underline',
+  'font-semibold text-[15px] leading-snug text-inherit',
+  'group-hover:text-accent-700 group-hover:underline',
   "after:absolute after:inset-0 after:rounded-[var(--radius-lg)] after:content-['']",
   'focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-2',
   'focus-visible:after:outline-[var(--color-accent-700)]',
 ].join(' ');
 
 const CHECK_BASE_CLASSNAME = [
-  'absolute right-1 top-1 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border text-sm',
-  'hover:bg-accent-100 hover:border-accent',
+  'absolute right-1 top-1 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full',
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent-700)]',
   'disabled:cursor-progress',
 ].join(' ');
-const CHECK_PRESSED_CLASSNAME = 'border-accent bg-accent text-white hover:text-accent-800';
-const CHECK_UNPRESSED_CLASSNAME = 'border-neutral-500 bg-bg text-neutral-400 hover:text-accent-800';
+const CHECK_FACE_BASE_CLASSNAME = 'inline-flex h-8 w-8 items-center justify-center rounded-full';
+const CHECK_PRESSED_CLASSNAME = 'text-white hover:text-accent-100';
+const CHECK_UNPRESSED_CLASSNAME = 'text-neutral-500 hover:text-accent-800';
+const CHECK_FACE_PRESSED_CLASSNAME = 'border-2 border-solid border-white bg-accent shadow-sm';
+const CHECK_FACE_UNPRESSED_CLASSNAME = 'border-[1.5px] border-dashed border-neutral-500 bg-white/85';
+
+function rowSlots(row: AlbumRow): GapSlot[] {
+  return row.cells.flatMap((cell) => cell.slots);
+}
+
+function rowOwnedCount(row: AlbumRow): number {
+  return rowSlots(row).filter((slot) => slot.owned).length;
+}
+
+function rowTotalCount(row: AlbumRow): number {
+  return rowSlots(row).length;
+}
+
+function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ArrowIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden="true"
+      className="text-accent-700 opacity-0 transition-[opacity,transform] duration-150 group-hover:translate-x-0.5 group-hover:opacity-100 group-focus-within:translate-x-0.5 group-focus-within:opacity-100"
+    >
+      <path
+        d="M3 8h9M8.5 4.5L12 8l-3.5 3.5"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
 function CoinCircle({
   denomination,
   imageUrl,
-  owned,
-  sizeClassName,
+  faded,
+  lifted,
 }: {
   denomination: string;
   imageUrl: string | null;
-  owned: boolean;
-  sizeClassName: string;
+  faded: boolean;
+  lifted: boolean;
 }) {
-  const stateClassName = imageUrl
-    ? owned
-      ? CIRCLE_IMAGE_OWNED_CLASSNAME
-      : CIRCLE_IMAGE_MISSING_CLASSNAME
-    : owned
-      ? CIRCLE_OWNED_CLASSNAME
-      : CIRCLE_MISSING_CLASSNAME;
   return (
     <span
       data-testid="set-album-card-circle"
       aria-hidden="true"
-      className={`${CIRCLE_BASE_CLASSNAME} ${sizeClassName} ${stateClassName}`}
+      className={[
+        'relative flex aspect-square w-[58%] items-center justify-center rounded-full border-[3px] border-solid border-neutral-400 bg-neutral-300',
+        'transition-transform duration-200 group-hover:scale-105',
+        lifted ? 'shadow-md' : '',
+        faded ? 'opacity-50 grayscale' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       {imageUrl ? (
         <img
@@ -98,14 +152,15 @@ function CoinCircle({
           className="h-full w-full rounded-full object-cover"
         />
       ) : (
-        <span data-testid="set-album-card-numeral" className={`${HEADING_FONT_CLASSNAME} text-base font-semibold`}>
-          {getDenominationNumeral(denomination)}
-        </span>
-      )}
-      {owned && (
-        <span data-testid="set-album-card-owned-mark" className={OWNED_MARK_CLASSNAME}>
-          ✓
-        </span>
+        <>
+          <span className="absolute inset-[7%] rounded-full border border-neutral-800/35" />
+          <span
+            data-testid="set-album-card-numeral"
+            className={`${HEADING_FONT_CLASSNAME} text-[34px] font-semibold leading-none text-neutral-800`}
+          >
+            {getDenominationNumeral(denomination)}
+          </span>
+        </>
       )}
     </span>
   );
@@ -122,6 +177,8 @@ function AlbumCard({
   keyDateBadge,
   markOwned,
   markMissing,
+  statusOwned,
+  statusMissing,
 }: {
   slot: GapSlot;
   isOwner: boolean;
@@ -133,15 +190,19 @@ function AlbumCard({
   keyDateBadge: string;
   markOwned: string;
   markMissing: string;
+  statusOwned: string;
+  statusMissing: string;
 }) {
   const { coin, owned } = slot;
   const text = getAlbumCardText(coin);
   const muted = gapOnly && owned;
+  // A visitor sees someone else's set: ownership isn't theirs to show, so the card stays neutral.
+  const showOwned = isOwner && owned;
+  const showMissing = isOwner && !owned;
   const className = [
-    'relative flex gap-3 rounded-[var(--radius-lg)] border border-divider bg-surface p-2',
-    'transition-shadow hover:border-accent hover:shadow-md',
+    CARD_BASE_CLASSNAME,
+    showOwned ? CARD_OWNED_CLASSNAME : CARD_MISSING_CLASSNAME,
     muted ? 'opacity-40' : '',
-    isOwner ? 'pr-11' : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -155,10 +216,17 @@ function AlbumCard({
       data-muted={muted ? 'true' : 'false'}
       className={className}
     >
-      <CoinCircle denomination={coin.denomination} imageUrl={coin.imageUrl} owned={owned} sizeClassName="h-10 w-10" />
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5 break-words">
+      <div className={`${WELL_BASE_CLASSNAME} ${showOwned ? 'bg-accent-200' : 'bg-neutral-200'}`}>
+        {coin.isKeyDate && (
+          <span data-testid="set-album-card-key-date" className={KEY_DATE_PILL_CLASSNAME}>
+            {keyDateBadge}
+          </span>
+        )}
+        <CoinCircle denomination={coin.denomination} imageUrl={coin.imageUrl} faded={showMissing} lifted={showOwned} />
+      </div>
+      <div className="flex min-w-0 flex-col gap-0.5 break-words px-3 pb-3 pt-3">
         {text.eyebrow && !hoistedEyebrow && (
-          <p data-testid="set-album-card-eyebrow" className="text-xs text-neutral-600">
+          <p data-testid="set-album-card-eyebrow" className="text-xs text-neutral-700">
             {text.eyebrow}
           </p>
         )}
@@ -170,14 +238,18 @@ function AlbumCard({
         >
           <span data-testid="set-album-card-title">{text.title}</span>
         </Link>
-        <p data-testid="set-album-card-secondary" className="text-xs text-neutral-700">
+        <p data-testid="set-album-card-secondary" className="text-[13px] text-neutral-700">
           {text.secondary}
         </p>
-        {coin.isKeyDate && (
-          <span data-testid="set-album-card-key-date" className={KEY_DATE_BADGE_CLASSNAME}>
-            {keyDateBadge}
+        <div className="mt-2 flex items-center justify-between">
+          <span
+            data-testid="set-album-card-status"
+            className={`text-xs tracking-[0.02em] ${showOwned ? 'font-medium text-accent-700' : 'text-neutral-700'}`}
+          >
+            {isOwner ? (owned ? statusOwned : statusMissing) : coin.year}
           </span>
-        )}
+          <ArrowIcon />
+        </div>
       </div>
       {isOwner && (
         <button
@@ -191,7 +263,12 @@ function AlbumCard({
           onClick={() => onToggle(coin.id, owned)}
           className={`${CHECK_BASE_CLASSNAME} ${owned ? CHECK_PRESSED_CLASSNAME : CHECK_UNPRESSED_CLASSNAME}`}
         >
-          <span aria-hidden="true">✓</span>
+          <span
+            aria-hidden="true"
+            className={`${CHECK_FACE_BASE_CLASSNAME} ${owned ? CHECK_FACE_PRESSED_CLASSNAME : CHECK_FACE_UNPRESSED_CLASSNAME}`}
+          >
+            <CheckIcon />
+          </span>
         </button>
       )}
     </li>
@@ -234,6 +311,8 @@ export function SetAlbum({
   const keyDateBadge = t('setAlbum.keyDateBadge');
   const markOwned = t('setAlbum.markOwned');
   const markMissing = t('setAlbum.markMissing');
+  const statusOwned = t('setAlbum.statusOwned');
+  const statusMissing = t('setAlbum.statusMissing');
   const noMintMark = t('setAlbum.noMintMark');
   const showBlankLegend = pages.some(hasBlankCells);
 
@@ -253,6 +332,8 @@ export function SetAlbum({
         keyDateBadge={keyDateBadge}
         markOwned={markOwned}
         markMissing={markMissing}
+        statusOwned={statusOwned}
+        statusMissing={statusMissing}
       />
     ));
 
@@ -269,10 +350,7 @@ export function SetAlbum({
         className="flex flex-wrap items-center gap-4 text-sm text-neutral-700"
       >
         <li className="flex items-center gap-1.5">
-          <span
-            aria-hidden="true"
-            className={`${CIRCLE_BASE_CLASSNAME} h-5 w-5 text-xs ${CIRCLE_OWNED_CLASSNAME}`}
-          >
+          <span aria-hidden="true" className={`${CIRCLE_BASE_CLASSNAME} h-5 w-5 text-xs ${CIRCLE_OWNED_CLASSNAME}`}>
             ✓
           </span>
           {t('setAlbum.legendOwned')}
@@ -330,20 +408,23 @@ export function SetAlbum({
                     data-year={row.year}
                     className="flex min-w-0 flex-col gap-2"
                   >
-                    <h3
-                      data-testid="set-album-year-label"
-                      className={`${HEADING_FONT_CLASSNAME} border-b border-divider pb-1 text-base font-semibold`}
-                    >
-                      {row.year}
-                    </h3>
+                    <div className="flex items-baseline gap-3">
+                      <h3
+                        data-testid="set-album-year-label"
+                        className={`${HEADING_FONT_CLASSNAME} text-[26px] font-semibold leading-none`}
+                      >
+                        {row.year}
+                      </h3>
+                      <span data-testid="set-album-year-summary" className="font-mono text-[13px] text-neutral-700">
+                        {rowOwnedCount(row)}/{rowTotalCount(row)}
+                      </span>
+                      <span aria-hidden="true" className="h-px flex-1 self-center bg-divider" />
+                    </div>
                     <ul
                       data-testid="set-album-year-grid"
-                      className="grid list-none grid-cols-[repeat(auto-fill,minmax(min(170px,100%),1fr))] gap-2 p-0"
+                      className="grid list-none grid-cols-[repeat(auto-fill,minmax(min(172px,100%),1fr))] gap-3 p-0"
                     >
-                      {renderCards(
-                        row.cells.flatMap((cell) => cell.slots),
-                        hoisted,
-                      )}
+                      {renderCards(rowSlots(row), hoisted)}
                     </ul>
                   </div>
                 ))}
@@ -394,9 +475,7 @@ export function SetAlbum({
                               data-mint-mark={cell.mintMark}
                               className="min-w-[10rem] border-b border-divider px-1 py-1 align-top"
                             >
-                              <ul className="flex list-none flex-col gap-1 p-0">
-                                {renderCards(cell.slots, hoisted)}
-                              </ul>
+                              <ul className="flex list-none flex-col gap-1 p-0">{renderCards(cell.slots, hoisted)}</ul>
                             </td>
                           ),
                         )}
