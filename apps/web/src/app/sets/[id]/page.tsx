@@ -16,8 +16,10 @@ import type { CatalogFilters } from '@/lib/catalog-api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Sheet } from '@/components/ui/sheet';
+import { SetActionsMenu } from '@/components/sets/set-actions-menu';
 import { SetAlbum } from '@/components/sets/set-album';
 import { SEGMENT_BUTTON_CLASSNAME, SEGMENT_GROUP_CLASSNAME, SetViewSwitch } from '@/components/sets/set-view-switch';
+import { formatOwnedOfTotal } from '@/lib/album-layout';
 import { buildSetViewSearch, parseSetView, type SetView } from '@/lib/set-view';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
@@ -93,6 +95,7 @@ function SetEditor({ id }: { id: string }) {
 
   const [nameValue, setNameValue] = useState('');
   const savedNameRef = useRef('');
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const syncedSetRef = useRef<typeof set>(undefined);
   const [gapOnly, setGapOnly] = useState(false);
   // Reading window here is safe: SetEditor only mounts on the client (after the params
@@ -200,71 +203,61 @@ function SetEditor({ id }: { id: string }) {
 
   return (
     <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME}>
-      <div className="flex items-start justify-between gap-4">
-        {isOwner ? (
-          <input
-            data-testid="set-editor-name-input"
-            type="text"
-            value={nameValue}
-            onChange={(e) => setNameValue(e.target.value)}
-            onBlur={handleNameBlur}
-            className="w-full border-b border-transparent bg-transparent text-lg font-semibold hover:border-gray-300 focus:border-blue-600 focus:outline-none"
-          />
-        ) : (
-          <h1 data-testid="set-editor-name" className="text-lg font-semibold">
-            {resolveLocalizedText(set.name, locale)}
-          </h1>
-        )}
+      <section className="flex flex-wrap items-end justify-between gap-6">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <p className="text-[13px] text-neutral-700">
+            <Link
+              href={isOwner ? '/sets' : '/sets/public'}
+              data-testid="set-editor-breadcrumb"
+              className="hover:text-accent-700 hover:underline"
+            >
+              {isOwner ? t('setEditor.breadcrumbMySets') : t('setEditor.breadcrumbPublicSets')}
+            </Link>
+          </p>
+          {isOwner ? (
+            <input
+              ref={nameInputRef}
+              data-testid="set-editor-name-input"
+              type="text"
+              aria-label={t('setEditor.renameSet')}
+              value={nameValue}
+              onChange={(e) => setNameValue(e.target.value)}
+              onBlur={handleNameBlur}
+              className="w-full border-b border-transparent bg-transparent font-[family-name:var(--font-heading)] text-[40px] font-semibold leading-[1.1] hover:border-neutral-400 focus:border-accent-700 focus:outline-none"
+            />
+          ) : (
+            <h1 data-testid="set-editor-name" className="text-[40px] font-semibold leading-[1.1]">
+              {resolveLocalizedText(set.name, locale)}
+            </h1>
+          )}
+        </div>
 
-        {isOwner && (
-          <button
-            type="button"
-            data-testid="set-editor-delete-button"
-            onClick={() => setDeleteConfirmOpen(true)}
-            className="w-fit shrink-0 rounded border border-red-600 px-4 py-2 text-sm font-medium text-red-600"
+        <div className="flex w-[280px] max-w-full flex-col gap-2">
+          <div className="flex items-baseline justify-between">
+            <span data-testid="set-editor-owned-count" className="text-sm text-neutral-800">
+              {formatOwnedOfTotal(t('setEditor.ownedOfTotal'), gaps.ownedCount, gaps.totalCount)}
+            </span>
+            <span data-testid="set-editor-completion" className="font-mono text-sm text-accent-700">
+              {gaps.completionPercent}%
+            </span>
+          </div>
+          <div
+            role="progressbar"
+            aria-label={t('setEditor.completionLabel')}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={gaps.completionPercent}
+            className="h-2 overflow-hidden rounded-[var(--radius-md)] bg-neutral-300"
           >
-            {t('setEditor.deleteButton')}
-          </button>
-        )}
-      </div>
+            <div
+              className="h-full rounded-[var(--radius-md)] bg-accent"
+              style={{ width: `${gaps.completionPercent}%` }}
+            />
+          </div>
+        </div>
+      </section>
 
-      <span data-testid="set-editor-completion" className="text-sm text-gray-600">
-        {gaps.completionPercent}%
-      </span>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          data-testid="set-editor-download-missing"
-          disabled={nothingMissing}
-          onClick={() => downloadMissingCsv(gaps, set.name)}
-          className="rounded border border-gray-300 px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {t('setEditor.downloadMissing')}
-        </button>
-        {nothingMissing ? (
-          <Link
-            href={`/sets/${id}/missing`}
-            data-testid="set-editor-print-missing"
-            aria-disabled="true"
-            tabIndex={-1}
-            onClick={(e) => e.preventDefault()}
-            className="pointer-events-none rounded border border-gray-300 px-3 py-1 text-sm opacity-50"
-          >
-            {t('setEditor.printMissing')}
-          </Link>
-        ) : (
-          <Link
-            href={`/sets/${id}/missing`}
-            data-testid="set-editor-print-missing"
-            className="rounded border border-gray-300 px-3 py-1 text-sm"
-          >
-            {t('setEditor.printMissing')}
-          </Link>
-        )}
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-gray-200 pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-divider pb-5">
         <div className="flex flex-wrap items-center gap-4">
           <div role="group" aria-label={t('setEditor.showLabel')} className={SEGMENT_GROUP_CLASSNAME}>
             <button
@@ -274,7 +267,7 @@ function SetEditor({ id }: { id: string }) {
               onClick={() => setGapOnly(false)}
               className={SEGMENT_BUTTON_CLASSNAME}
             >
-              {t('setEditor.allCoins')}
+              {t('setEditor.allCoins')} · {gaps.totalCount}
             </button>
             <button
               type="button"
@@ -289,16 +282,25 @@ function SetEditor({ id }: { id: string }) {
           <SetViewSwitch view={view} onChange={handleViewChange} />
         </div>
 
-        {isOwner && (
-          <button
-            type="button"
-            data-testid="set-editor-toggle-add-coins"
-            onClick={() => setPickerOpen(true)}
-            className="min-h-11 rounded-[var(--radius-md)] bg-accent-700 px-5 text-sm font-medium text-white hover:bg-accent-800"
-          >
-            {t('setEditor.addCoins')}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {isOwner && (
+            <button
+              type="button"
+              data-testid="set-editor-toggle-add-coins"
+              onClick={() => setPickerOpen(true)}
+              className="min-h-11 rounded-[var(--radius-md)] bg-accent-700 px-5 text-sm font-medium text-white hover:bg-accent-800"
+            >
+              + {t('setEditor.addCoins')}
+            </button>
+          )}
+          <SetActionsMenu
+            onRename={isOwner ? () => nameInputRef.current?.focus() : undefined}
+            onDelete={isOwner ? () => setDeleteConfirmOpen(true) : undefined}
+            onDownloadMissing={() => downloadMissingCsv(gaps, set.name)}
+            printMissingHref={`/sets/${id}/missing`}
+            nothingMissing={nothingMissing}
+          />
+        </div>
       </div>
 
       {view === 'album' ? (
@@ -416,8 +418,15 @@ function SetEditor({ id }: { id: string }) {
 
       <ConfirmDialog
         open={deleteConfirmOpen}
-        title={t('setEditor.deleteConfirmTitle')}
-        description={t('setEditor.deleteConfirmMessage')}
+        title={t('setEditor.deleteConfirmTitle').split('{name}').join(set.name)}
+        description={
+          <>
+            {formatOwnedOfTotal(t('setEditor.deleteConfirmMessage'), 0, gaps.totalCount)}
+            <span className="mt-3 block rounded-[var(--radius-md)] bg-accent-100 px-3.5 py-3 text-accent-800">
+              {formatOwnedOfTotal(t('setEditor.deleteConfirmSafe'), gaps.ownedCount, gaps.totalCount)}
+            </span>
+          </>
+        }
         confirmLabel={t('setEditor.deleteButton')}
         cancelLabel={t('common.cancel')}
         onConfirm={handleDelete}

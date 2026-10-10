@@ -400,8 +400,12 @@ describe('SetEditorPage', () => {
       expect(screen.queryByTestId('set-editor-name-input')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-toggle-owned-button')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-remove-button')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('set-editor-delete-button')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-toggle-add-coins')).not.toBeInTheDocument();
+      // Visitors still get the actions menu, but only the read-only items.
+      await userEvent.setup().click(screen.getByTestId('set-editor-actions-trigger'));
+      expect(screen.getByTestId('set-editor-download-missing')).toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-delete-button')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-rename-item')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-add-coins-panel')).not.toBeInTheDocument();
     });
   });
@@ -469,8 +473,10 @@ describe('SetEditorPage', () => {
         expect(screen.getAllByTestId('set-editor-toggle-owned-button')).toHaveLength(4);
       });
       expect(screen.getAllByTestId('set-editor-remove-button')).toHaveLength(4);
-      expect(screen.getByTestId('set-editor-delete-button')).toBeInTheDocument();
       expect(screen.getByTestId('set-editor-toggle-add-coins')).toBeInTheDocument();
+      await userEvent.setup().click(screen.getByTestId('set-editor-actions-trigger'));
+      expect(screen.getByTestId('set-editor-delete-button')).toBeInTheDocument();
+      expect(screen.getByTestId('set-editor-rename-item')).toBeInTheDocument();
       // The add-coins panel is gated behind the toggle now — not shown until clicked.
       expect(screen.queryByTestId('set-editor-add-coins-panel')).not.toBeInTheDocument();
     });
@@ -535,14 +541,75 @@ describe('SetEditorPage', () => {
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('set-editor-delete-button')).toBeInTheDocument();
+        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
       });
       expect(screen.queryByTestId('set-editor-delete-confirm')).not.toBeInTheDocument();
 
+      await user.click(screen.getByTestId('set-editor-actions-trigger'));
       await user.click(screen.getByTestId('set-editor-delete-button'));
 
       expect(screen.getByTestId('set-editor-delete-confirm')).toBeInTheDocument();
       expect(deleteMutate).not.toHaveBeenCalled();
+    });
+
+    it('shows the set name, the safe-collection note and the coin counts in the delete dialog', async () => {
+      setStoredToken('tok-abc');
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
+      });
+      await user.click(screen.getByTestId('set-editor-actions-trigger'));
+      await user.click(screen.getByTestId('set-editor-delete-button'));
+
+      const dialog = screen.getByTestId('set-editor-delete-confirm');
+      expect(dialog).toHaveTextContent('Delete “My Wheat Cents”?');
+      expect(dialog).toHaveTextContent('Your collection is safe');
+    });
+
+    it('closes the actions menu on Escape and returns focus to its trigger', async () => {
+      setStoredToken('tok-abc');
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
+      });
+      const trigger = screen.getByTestId('set-editor-actions-trigger');
+      await user.click(trigger);
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+      await user.keyboard('{Escape}');
+
+      expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
+    });
+
+    it('Rename set in the menu focuses the name input', async () => {
+      setStoredToken('tok-abc');
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
+      });
+      await user.click(screen.getByTestId('set-editor-actions-trigger'));
+      await user.click(screen.getByTestId('set-editor-rename-item'));
+
+      expect(screen.getByTestId('set-editor-name-input')).toHaveFocus();
+      expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
+    });
+
+    it('shows an owned-of-total line and a progressbar for completion', async () => {
+      setStoredToken('tok-abc');
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-completion')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('set-editor-owned-count')).toHaveTextContent(/^\d+ of \d+ owned$/);
+      const bar = screen.getByRole('progressbar', { name: 'Set completion' });
+      expect(bar).toHaveAttribute('aria-valuenow', '25');
     });
 
     it('clicking cancel in the confirmation dialog closes it without deleting', async () => {
@@ -553,8 +620,9 @@ describe('SetEditorPage', () => {
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('set-editor-delete-button')).toBeInTheDocument();
+        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
       });
+      await user.click(screen.getByTestId('set-editor-actions-trigger'));
       await user.click(screen.getByTestId('set-editor-delete-button'));
       await user.click(screen.getByTestId('set-editor-delete-confirm-cancel'));
 
@@ -569,8 +637,9 @@ describe('SetEditorPage', () => {
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getByTestId('set-editor-delete-button')).toBeInTheDocument();
+        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
       });
+      await user.click(screen.getByTestId('set-editor-actions-trigger'));
       await user.click(screen.getByTestId('set-editor-delete-button'));
       await user.click(screen.getByTestId('set-editor-delete-confirm-confirm'));
 

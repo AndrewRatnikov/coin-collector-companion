@@ -158,6 +158,13 @@ function readBytes(blob: Blob): Promise<Uint8Array> {
   });
 }
 
+// Download / Print live in the ⋯ actions menu; open it (once) and return the requested item.
+async function findMenuItem(testId: string): Promise<HTMLElement> {
+  const trigger = await screen.findByTestId('set-editor-actions-trigger');
+  if (!screen.queryByTestId('set-editor-actions-menu')) fireEvent.click(trigger);
+  return screen.findByTestId(testId);
+}
+
 describe('SetEditorPage missing-list controls', () => {
   const createObjectURL = vi.fn();
   const revokeObjectURL = vi.fn();
@@ -209,7 +216,7 @@ describe('SetEditorPage missing-list controls', () => {
     it('renders the download button, enabled, with its English label', async () => {
       renderPage();
 
-      const button = await screen.findByTestId('set-editor-download-missing');
+      const button = await findMenuItem('set-editor-download-missing');
       expect(button).toHaveTextContent('Download missing (CSV)');
       expect(button).toBeEnabled();
       expect(button.tagName).toBe('BUTTON');
@@ -218,7 +225,7 @@ describe('SetEditorPage missing-list controls', () => {
     it('renders the print link to /sets/{id}/missing without aria-disabled', async () => {
       renderPage('set-1');
 
-      const link = await screen.findByTestId('set-editor-print-missing');
+      const link = await findMenuItem('set-editor-print-missing');
       expect(link).toHaveTextContent('Print missing list');
       expect(link).toHaveAttribute('href', '/sets/set-1/missing');
       expect(link).not.toHaveAttribute('aria-disabled');
@@ -227,7 +234,7 @@ describe('SetEditorPage missing-list controls', () => {
     it('builds the link href from the route id', async () => {
       renderPage('set-77');
 
-      const link = await screen.findByTestId('set-editor-print-missing');
+      const link = await findMenuItem('set-editor-print-missing');
       expect(link).toHaveAttribute('href', '/sets/set-77/missing');
     });
   });
@@ -237,7 +244,7 @@ describe('SetEditorPage missing-list controls', () => {
       setDefaultMocks(GAPS_ALL_OWNED);
       renderPage();
 
-      const button = await screen.findByTestId('set-editor-download-missing');
+      const button = await findMenuItem('set-editor-download-missing');
       const link = screen.getByTestId('set-editor-print-missing');
       expect(button).toBeDisabled();
       expect(link).toHaveAttribute('aria-disabled', 'true');
@@ -249,7 +256,7 @@ describe('SetEditorPage missing-list controls', () => {
       setDefaultMocks(GAPS_EMPTY_SET);
       renderPage();
 
-      expect(await screen.findByTestId('set-editor-download-missing')).toBeDisabled();
+      expect(await findMenuItem('set-editor-download-missing')).toBeDisabled();
       expect(screen.getByTestId('set-editor-print-missing')).toHaveAttribute('aria-disabled', 'true');
     });
 
@@ -257,7 +264,7 @@ describe('SetEditorPage missing-list controls', () => {
       setDefaultMocks(GAPS_ALL_OWNED);
       renderPage();
 
-      fireEvent.click(await screen.findByTestId('set-editor-download-missing'));
+      fireEvent.click(await findMenuItem('set-editor-download-missing'));
 
       expect(createObjectURL).not.toHaveBeenCalled();
       expect(clicked).toHaveLength(0);
@@ -267,7 +274,7 @@ describe('SetEditorPage missing-list controls', () => {
       setDefaultMocks(GAPS_ALL_OWNED);
       renderPage();
 
-      const link = await screen.findByTestId('set-editor-print-missing');
+      const link = await findMenuItem('set-editor-print-missing');
       // fireEvent returns false when preventDefault was called
       expect(fireEvent.click(link)).toBe(false);
       expect(pushMock).not.toHaveBeenCalled();
@@ -278,7 +285,7 @@ describe('SetEditorPage missing-list controls', () => {
     it('creates a text/csv Blob with the real buildMissingCsv bytes and downloads with the dated filename', async () => {
       renderPage();
 
-      fireEvent.click(await screen.findByTestId('set-editor-download-missing'));
+      fireEvent.click(await findMenuItem('set-editor-download-missing'));
 
       expect(createObjectURL).toHaveBeenCalledTimes(1);
       const blob = createObjectURL.mock.calls[0][0] as Blob;
@@ -302,7 +309,7 @@ describe('SetEditorPage missing-list controls', () => {
     it('revokes the object URL after the download', async () => {
       renderPage();
 
-      fireEvent.click(await screen.findByTestId('set-editor-download-missing'));
+      fireEvent.click(await findMenuItem('set-editor-download-missing'));
 
       await waitFor(() => {
         expect(revokeObjectURL).toHaveBeenCalledWith('blob:editor-url');
@@ -317,7 +324,7 @@ describe('SetEditorPage missing-list controls', () => {
       setDefaultMocks(onlyOneMissing);
       renderPage();
 
-      fireEvent.click(await screen.findByTestId('set-editor-download-missing'));
+      fireEvent.click(await findMenuItem('set-editor-download-missing'));
 
       const blob = createObjectURL.mock.calls[0][0] as Blob;
       const text = new TextDecoder('utf-8', { ignoreBOM: true }).decode(await readBytes(blob));
