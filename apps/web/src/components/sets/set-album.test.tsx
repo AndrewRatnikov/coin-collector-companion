@@ -584,7 +584,7 @@ describe('SetAlbum: card link', () => {
 
 describe('SetAlbum: no truncation', () => {
   it('uses no truncating classes on the card or its text elements', () => {
-    renderAlbum({ slots: [U_ONE, ...WAS, ...LINCOLN, COMM_SERIES] });
+    renderAlbum({ slots: [U_ONE, ...WAS, ...LINCOLN, COMM_SERIES, COMM_BRIDGE] });
     const forbidden = /(truncate|line-clamp|whitespace-nowrap|overflow-hidden)/;
 
     const elements = [
