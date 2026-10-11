@@ -15,6 +15,8 @@
   --color-accent: #b68235;
   --color-accent-2: #ac803e;
   --color-divider: color-mix(in srgb, #201f1d 16%, transparent);
+  /* Destructive actions only (delete confirm button, Delete menu item). */
+  --color-danger: #a3271f;
 
   --color-neutral-100: #f8f4f4;
   --color-neutral-200: #eae7e7;
