@@ -649,7 +649,7 @@ describe('CatalogPage', () => {
 
   describe('run_20260728_071525 criterion 4 (numbered pagination, adapted)', () => {
     it('renders one catalog-pagination-page element per page, numbered in order', () => {
-      useCatalogMock.mockReturnValue(pageOf(COINS, 3, 2, 1));
+      useCatalogMock.mockReturnValue(pageOf(COINS, 45, 1, 20));
       render(<CatalogPage />);
 
       const pages = screen.getAllByTestId('catalog-pagination-page');
@@ -664,7 +664,8 @@ describe('CatalogPage', () => {
     });
 
     it('marks the active page with aria-current="page" and leaves the others without it', () => {
-      useCatalogMock.mockReturnValue(pageOf(COINS, 3, 2, 1));
+      searchParamsValue = new URLSearchParams('page=2');
+      useCatalogMock.mockReturnValue(pageOf(COINS, 45, 2, 20));
       render(<CatalogPage />);
 
       const pages = screen.getAllByTestId('catalog-pagination-page');
@@ -674,7 +675,7 @@ describe('CatalogPage', () => {
     });
 
     it('clicking an inactive page number calls useCatalog with that page and writes page to the URL', async () => {
-      useCatalogMock.mockReturnValue(pageOf(COINS, 3, 1, 1));
+      useCatalogMock.mockReturnValue(pageOf(COINS, 45, 1, 20));
       const user = userEvent.setup();
       render(<CatalogPage />);
 
@@ -687,7 +688,7 @@ describe('CatalogPage', () => {
 
     it('next moves forward one page, keeping the other filters', async () => {
       searchParamsValue = new URLSearchParams('country=Ukraine');
-      useCatalogMock.mockReturnValue(pageOf(COINS, 3, 1, 1));
+      useCatalogMock.mockReturnValue(pageOf(COINS, 45, 1, 20));
       const user = userEvent.setup();
       render(<CatalogPage />);
 
@@ -697,7 +698,7 @@ describe('CatalogPage', () => {
     });
 
     it('the active page is not clickable — clicking it triggers no URL write', async () => {
-      useCatalogMock.mockReturnValue(pageOf(COINS, 3, 1, 1));
+      useCatalogMock.mockReturnValue(pageOf(COINS, 45, 1, 20));
       const user = userEvent.setup();
       render(<CatalogPage />);
 
