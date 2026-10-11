@@ -202,14 +202,8 @@ export function getAlbumCardText(
   return { eyebrow, title, secondary };
 }
 
-/** The number shown in a coin placeholder: "10 Hryvnias" -> "10", "Cent" -> "1". */
-export function getDenominationNumeral(denomination: string): string {
-  const leading = /^\s*(\d+(?:[.,]\d+)?)/.exec(denomination);
-  if (leading) return leading[1];
-  const anywhere = /(\d+(?:[.,]\d+)?)/.exec(denomination);
-  if (anywhere) return anywhere[1];
-  return '1';
-}
+// Lives in shared so the API orders denomination facets by the same rule.
+export { getDenominationNumeral } from '@coin-collector/shared';
 
 /** The eyebrow shared by every coin on the page (at least two coins), else ''. */
 export function getSharedEyebrow(page: AlbumPage): string {
