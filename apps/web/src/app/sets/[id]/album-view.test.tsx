@@ -418,6 +418,12 @@ describe('SetEditorPage: Album view', () => {
         /opacity-50|grayscale/,
       );
       expect(within(cardByCoin('coin-1')).getByTestId('set-album-card-status').textContent).toBe('1909');
+      // missing coins are not faded for a visitor
+      ['coin-2', 'coin-3'].forEach((id) => {
+        expect(within(cardByCoin(id)).getByTestId('set-album-card-circle').className).not.toMatch(
+          /opacity-50|grayscale/,
+        );
+      });
       // coin-4 sits on the Ukrainian year-grid page
       expect(within(cardByCoin('coin-4')).queryByTestId('set-album-card-status')).not.toBeInTheDocument();
     });

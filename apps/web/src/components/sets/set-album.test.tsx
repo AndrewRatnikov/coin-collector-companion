@@ -570,6 +570,25 @@ describe('SetAlbum: coin circle', () => {
 
     // a different year gives a different status, so it is not a constant
     expect(within(cardByCoin('coin-1931s')).getByTestId('set-album-card-status').textContent).toBe('1931');
+
+    // missing coins are not faded for a visitor either
+    ['coin-vdb', 'coin-1931s'].forEach((id) => {
+      expect(within(cardByCoin(id)).getByTestId('set-album-card-circle').className).not.toMatch(
+        /opacity-50|grayscale/,
+      );
+    });
+  });
+
+  it('does not fade a missing coin with a photo for a visitor', () => {
+    const missing = slot(0, 'imgmissingvisitor', {
+      year: 1910,
+      imageUrl: 'https://example.com/b.jpg',
+      owned: false,
+    });
+    renderAlbum({ slots: [missing], isOwner: false });
+    expect(
+      within(cardByCoin('coin-imgmissingvisitor')).getByTestId('set-album-card-circle').className,
+    ).not.toMatch(/opacity-50|grayscale/);
   });
 
   it('shows no status line to a visitor on a year-grid page, but keeps the card link', () => {
