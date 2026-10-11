@@ -1,7 +1,8 @@
 /**
  * Tests for: apps/web/src/app/globals.css + apps/web/src/app/layout.tsx
  * Contract source: runs/run_20260728_071525/plan.md § Interface Contract
- * Covers criteria: #1 (from prd.md) — global design tokens applied app-wide
+ *                   runs/run_20261011_095624/plan.md § Interface Contract → Token: --color-danger
+ * Covers criteria: #1 (from prd.md) — global design tokens applied app-wide; #12 (run_20261011_095624) --color-danger
  *
  * These two files carry no exports/props/testids (pure CSS + a font-loader swap in a
  * root layout), so there is nothing to render/mount here. Instead this reads both files'
@@ -43,6 +44,17 @@ describe('Classical design tokens (globals.css)', () => {
       expect(globalsCss).toMatch(/--font-heading:/);
       expect(globalsCss).toMatch(/--font-body:/);
       expect(globalsCss).toMatch(/--font-mono:/);
+    });
+  });
+
+  describe('run_20261011_095624 criterion 12: danger token', () => {
+    it('defines --color-danger with its exact value inside the @theme block', () => {
+      expect(globalsCss).toMatch(/--color-danger:\s*#a3271f/);
+
+      const themeStart = globalsCss.indexOf('@theme');
+      expect(themeStart).toBeGreaterThanOrEqual(0);
+      const dangerIndex = globalsCss.search(/--color-danger:\s*#a3271f/);
+      expect(dangerIndex).toBeGreaterThan(themeStart);
     });
   });
 });

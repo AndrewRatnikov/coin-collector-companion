@@ -2,7 +2,13 @@
  * Tests for: SetEditorPage Album view wiring (view switch, ?view=album, counts after refetch, controls)
  * Contract source: runs/run_20261010_083926/plan.md § Interface Contract → Component: SetAlbum
  * (set-album-slot retargeted to set-album-card / set-album-card-link / set-album-card-check)
+ *                   runs/run_20261011_095624/plan.md § Interface Contract → Component: SetAlbum, Page: SetEditorPage
  * Covers criteria: #1, #2, #11, #12, #13, #18, #19 (page-level), #14, #15, #16 (card link, owner check)
+ *                  run_20261011_095624: #7 (Missing hides owned cards, all-owned message), #10 (owner-only menu)
+ *
+ * run_20261011_095624 intentionally rewrites "Missing keeps the full grid and mutes owned cards"
+ * (now: Missing hides owned cards) and the card count in "keeps the Missing filter and the data
+ * when switching views" (owned coin-1 is hidden while Missing is on).
  *
  * Mock setup mirrors sets/[id]/coin-variety-link.test.tsx (next/navigation mocked with only useRouter).
  *
@@ -132,6 +138,13 @@ const GAPS_AFTER = {
   ownedCount: 2,
   completionPercent: 50,
   slots: GAPS.slots.map((s) => (s.id === 'usc-2' ? { ...s, owned: true } : s)),
+};
+
+const GAPS_ALL_OWNED = {
+  ...GAPS,
+  ownedCount: 4,
+  completionPercent: 100,
+  slots: GAPS.slots.map((s) => ({ ...s, owned: true })),
 };
 
 const MY_SETS = [
@@ -285,7 +298,8 @@ describe('SetEditorPage: Album view', () => {
       await user.click(screen.getByTestId('set-editor-view-album-toggle'));
 
       expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveAttribute('aria-pressed', 'true');
-      expect(screen.getAllByTestId('set-album-card')).toHaveLength(4);
+      // Missing hides the one owned coin (coin-1): 3 of the 4 cards remain
+      expect(screen.getAllByTestId('set-album-card')).toHaveLength(3);
 
       await user.click(screen.getByTestId('set-editor-view-list-toggle'));
       expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveAttribute('aria-pressed', 'true');
@@ -390,6 +404,23 @@ describe('SetEditorPage: Album view', () => {
       await user.click(firstLink);
       expect(ownershipMutate).not.toHaveBeenCalled();
     });
+
+    it('gives a visitor neutral cards, no status line on the year-grid page, and the year on the table page', async () => {
+      useUserSetsMock.mockReturnValue(queryResult({ data: [] }));
+      setUrl('/sets/set-1?view=album');
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(4);
+      });
+
+      // coin-1 is owned by the set's owner but looks like any other card to a visitor
+      expect(within(cardByCoin('coin-1')).getByTestId('set-album-card-circle').className).not.toMatch(
+        /opacity-50|grayscale/,
+      );
+      expect(within(cardByCoin('coin-1')).getByTestId('set-album-card-status').textContent).toBe('1909');
+      // coin-4 sits on the Ukrainian year-grid page
+      expect(within(cardByCoin('coin-4')).queryByTestId('set-album-card-status')).not.toBeInTheDocument();
+    });
   });
 
   describe('criterion 13: controls keep working in album view', () => {
@@ -408,7 +439,7 @@ describe('SetEditorPage: Album view', () => {
       expect(screen.getByTestId('set-editor-print-missing')).toBeInTheDocument();
     });
 
-    it('Missing keeps the full grid and mutes owned cards; All unmutes them', async () => {
+    it('Missing hides owned cards (no dimming); All brings them back', async () => {
       setUrl('/sets/set-1?view=album');
       const user = userEvent.setup();
       renderPage();
@@ -418,12 +449,58 @@ describe('SetEditorPage: Album view', () => {
 
       await user.click(screen.getByTestId('set-editor-show-missing-toggle'));
 
-      expect(screen.getAllByTestId('set-album-card')).toHaveLength(4);
-      expect(cardByCoin('coin-1')).toHaveAttribute('data-muted', 'true');
-      expect(cardByCoin('coin-2')).toHaveAttribute('data-muted', 'false');
+      expect(screen.getAllByTestId('set-album-card')).toHaveLength(3);
+      expect(screen.getAllByTestId('set-album-card').map((c) => c.getAttribute('data-coin-id')).sort()).toEqual([
+        'coin-2',
+        'coin-3',
+        'coin-4',
+      ]);
+      screen.getAllByTestId('set-album-card').forEach((card) => {
+        expect(card).not.toHaveAttribute('data-muted');
+        expect(card).toHaveAttribute('data-owned', 'false');
+      });
+      // page counts and completion keep the full numbers
+      expect(within(screen.getAllByTestId('set-album-page')[0]).getByTestId('set-album-page-count').textContent).toBe(
+        '1 of 3 owned',
+      );
+      expect(screen.getByTestId('set-editor-completion')).toHaveTextContent('25%');
 
       await user.click(screen.getByTestId('set-editor-show-all-toggle'));
-      expect(cardByCoin('coin-1')).toHaveAttribute('data-muted', 'false');
+      expect(screen.getAllByTestId('set-album-card')).toHaveLength(4);
+      expect(cardByCoin('coin-1')).toHaveAttribute('data-owned', 'true');
+    });
+
+    it('Missing shows a "nothing missing" message when every coin is owned, and All shows the cards again', async () => {
+      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_ALL_OWNED }));
+      setUrl('/sets/set-1?view=album');
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(4);
+      });
+      expect(screen.queryByTestId('set-album-all-owned')).not.toBeInTheDocument();
+
+      await user.click(screen.getByTestId('set-editor-show-missing-toggle'));
+
+      expect(screen.getByTestId('set-album-all-owned')).toHaveTextContent('Nothing missing — this set is complete.');
+      expect(screen.queryByTestId('set-album-card')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-album-page')).not.toBeInTheDocument();
+
+      await user.click(screen.getByTestId('set-editor-show-all-toggle'));
+      expect(screen.queryByTestId('set-album-all-owned')).not.toBeInTheDocument();
+      expect(screen.getAllByTestId('set-album-card')).toHaveLength(4);
+    });
+
+    it('does not show the "nothing missing" message for a set with missing coins', async () => {
+      setUrl('/sets/set-1?view=album');
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(4);
+      });
+
+      await user.click(screen.getByTestId('set-editor-show-missing-toggle'));
+      expect(screen.queryByTestId('set-album-all-owned')).not.toBeInTheDocument();
     });
   });
 });

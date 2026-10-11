@@ -2,6 +2,11 @@
  * Tests for: SetEditorPage Album view edge cases (empty set, no double toggles)
  * Contract source: runs/run_20261010_083926/plan.md § Interface Contract → Component: SetAlbum
  * (set-album-slot retargeted to set-album-card-check for clicks / disabled / aria-busy, set-album-card for state)
+ *                   runs/run_20261011_095624/plan.md § Interface Contract → Component: SetAlbum
+ *
+ * run_20261011_095624 adds: the all-owned message under Missing (including after a refetch makes the
+ * last missing coin owned), year groups that vanish when all their coins are owned, and a check that
+ * toggling ownership never follows the card link.
  *
  * useSetOwnership is mocked so the test controls when each request settles: the mock
  * captures the hook-level onSettled the page passes in, and `settle()` fires it the way
@@ -118,6 +123,41 @@ const GAPS = {
   ],
 };
 
+const GAPS_ALL_OWNED = {
+  ...GAPS,
+  ownedCount: 3,
+  completionPercent: 100,
+  slots: GAPS.slots.map((s) => ({ ...s, owned: true })),
+};
+
+// Ukrainian year-grid series: 2025 fully owned, 2026 missing
+const UA_2025 = {
+  ...BASE_COIN,
+  id: 'coin-ua-2025',
+  country: 'Ukraine',
+  denomination: '1 Hryvnia',
+  name: 'Commemorative',
+  year: 2025,
+};
+const UA_2026 = { ...UA_2025, id: 'coin-ua-2026', year: 2026 };
+const UA_SET_DETAIL = {
+  ...SET_DETAIL,
+  coins: [
+    { id: 'usc-ua-1', position: 0, coin: UA_2025 },
+    { id: 'usc-ua-2', position: 1, coin: UA_2026 },
+  ],
+};
+const UA_GAPS = {
+  setId: 'set-1',
+  ownedCount: 1,
+  totalCount: 2,
+  completionPercent: 50,
+  slots: [
+    { id: 'usc-ua-1', position: 0, coin: UA_2025, owned: true },
+    { id: 'usc-ua-2', position: 1, coin: UA_2026, owned: false },
+  ],
+};
+
 const EMPTY_SET_DETAIL = { ...SET_DETAIL, coins: [] };
 const EMPTY_GAPS = { setId: 'set-1', ownedCount: 0, totalCount: 0, completionPercent: 0, slots: [] };
 
@@ -151,7 +191,9 @@ function controllableOwnership() {
 }
 
 function renderPage(id = 'set-1') {
-  return render(<SetEditorPage params={Promise.resolve({ id })} />);
+  const params = Promise.resolve({ id });
+  const utils = render(<SetEditorPage params={params} />);
+  return { ...utils, params };
 }
 
 function cardByCoin(coinId: string): HTMLElement {
@@ -219,6 +261,97 @@ describe('SetEditorPage: Album view edge cases', () => {
       expect(screen.queryByTestId('set-album-empty-owner-hint')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-toggle-add-coins')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-album-table')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Missing filter edge cases', () => {
+    it('shows the all-owned message when the refetch makes the last missing coin owned while Missing is on', async () => {
+      const user = userEvent.setup();
+      const { rerender, params } = renderPage();
+      await waitFor(() => {
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(3);
+      });
+
+      await user.click(screen.getByTestId('set-editor-show-missing-toggle'));
+      expect(screen.getAllByTestId('set-album-card')).toHaveLength(2);
+      expect(screen.queryByTestId('set-album-all-owned')).not.toBeInTheDocument();
+
+      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_ALL_OWNED }));
+      rerender(<SetEditorPage params={params} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-album-all-owned')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('set-album-card')).not.toBeInTheDocument();
+    });
+
+    it('a card disappears under Missing once its coin is owned after the refetch', async () => {
+      const user = userEvent.setup();
+      const { rerender, params } = renderPage();
+      await waitFor(() => {
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(3);
+      });
+      await user.click(screen.getByTestId('set-editor-show-missing-toggle'));
+      expect(cardByCoin('coin-2')).toBeInTheDocument();
+
+      useSetGapsMock.mockReturnValue(
+        queryResult({
+          data: {
+            ...GAPS,
+            ownedCount: 2,
+            slots: GAPS.slots.map((s) => (s.id === 'usc-2' ? { ...s, owned: true } : s)),
+          },
+        }),
+      );
+      rerender(<SetEditorPage params={params} />);
+
+      await waitFor(() => {
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(1);
+      });
+      expect(cardByCoin('coin-3')).toBeInTheDocument();
+    });
+
+    it('drops a year group whose coins are all owned under Missing, and brings it back under All', async () => {
+      usePublicSetMock.mockReturnValue(queryResult({ data: UA_SET_DETAIL }));
+      useSetGapsMock.mockReturnValue(queryResult({ data: UA_GAPS }));
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getAllByTestId('set-album-year-group')).toHaveLength(2);
+      });
+
+      await user.click(screen.getByTestId('set-editor-show-missing-toggle'));
+
+      const groups = screen.getAllByTestId('set-album-year-group');
+      expect(groups.map((g) => g.getAttribute('data-year'))).toEqual(['2026']);
+      expect(within(groups[0]).getByTestId('set-album-year-summary').textContent).toBe('0/1');
+
+      await user.click(screen.getByTestId('set-editor-show-all-toggle'));
+      expect(screen.getAllByTestId('set-album-year-group').map((g) => g.getAttribute('data-year'))).toEqual([
+        '2025',
+        '2026',
+      ]);
+    });
+  });
+
+  describe('check does not navigate', () => {
+    it('clicking the check toggles ownership and never clicks through to the card link', async () => {
+      const { mutate } = controllableOwnership();
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getAllByTestId('set-album-card')).toHaveLength(3);
+      });
+      const link = within(cardByCoin('coin-2')).getByTestId('set-album-card-link');
+      const linkClicked = vi.fn((e: Event) => e.preventDefault()); // keep jsdom from navigating
+      link.addEventListener('click', linkClicked);
+
+      await user.click(checkByCoin('coin-2'));
+
+      expect(mutate).toHaveBeenCalledTimes(1);
+      expect(mutate.mock.calls[0][0]).toEqual({ coinId: 'coin-2', owned: true });
+      expect(linkClicked).not.toHaveBeenCalled();
+      expect(link).toHaveAttribute('href', '/catalog/coin-2');
     });
   });
 

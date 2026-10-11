@@ -1,7 +1,13 @@
 /**
  * Tests for: SetAlbum (coin cards) and SetViewSwitch components
  * Contract source: runs/run_20261010_083926/plan.md § Interface Contract → Component: SetAlbum
+ *                   runs/run_20261011_095624/plan.md § Interface Contract → Component: SetAlbum
  * Covers criteria: #4, #5, #7, #8, #9, #13, #14, #15, #16, #17, #18 (class hooks), #19, #20, #22, #23, #24
+ *                  (run_20261010_083926); #3, #4, #6, #7, #8 (run_20261011_095624: hide-not-dim,
+ *                  all-owned message, trimmed legend, visitor status line, image well, focus-within)
+ *
+ * run_20261011_095624 intentionally rewrites: the "explains the new visuals" legend test, the
+ * Missing-filter (gapOnly) muting tests (now hide-not-dim), and the visitor year-on-grid expectation.
  *
  * CONTRACT_GAPS: none
  */
@@ -169,6 +175,12 @@ describe('SetAlbum: empty', () => {
     renderAlbum();
     expect(screen.queryByTestId('set-album-empty')).not.toBeInTheDocument();
   });
+
+  it('the empty message wins over the all-owned message when gapOnly is on', () => {
+    renderAlbum({ slots: [], gapOnly: true });
+    expect(screen.getByTestId('set-album-empty')).toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-all-owned')).not.toBeInTheDocument();
+  });
 });
 
 describe('SetAlbum: pages, headings, counts', () => {
@@ -247,6 +259,13 @@ describe('SetAlbum: pages, headings, counts', () => {
     expect(screen.getByTestId('set-album-page-count').textContent).toBe('5 of 5 owned');
     expect(screen.getAllByTestId('set-album-col-footer').map((f) => f.textContent)).toEqual(['2/2', '1/1', '2/2']);
   });
+
+  it('uses the readable neutral-700 text for the page count', () => {
+    renderAlbum();
+    const count = screen.getByTestId('set-album-page-count');
+    expect(count.className).toContain('text-neutral-700');
+    expect(count.className).not.toContain('text-neutral-600');
+  });
 });
 
 describe('SetAlbum: no-mint-mark pages use year rows with a wrapping card grid', () => {
@@ -276,6 +295,14 @@ describe('SetAlbum: no-mint-mark pages use year rows with a wrapping card grid',
     grids.forEach((g) => {
       expect(g.tagName).toBe('UL');
       expect(g.className).toContain('auto-fill');
+    });
+  });
+
+  it('sizes the year grid with a 170px minimum column', () => {
+    renderAlbum({ slots: WAS });
+    screen.getAllByTestId('set-album-year-grid').forEach((g) => {
+      expect(g.className).toContain('minmax(min(170px,100%),1fr)');
+      expect(g.className).not.toContain('172px');
     });
   });
 
@@ -353,6 +380,14 @@ describe('SetAlbum: cells (mint-mark pages)', () => {
     renderAlbum();
     expect(screen.getAllByTestId('set-album-card')).toHaveLength(LINCOLN.length);
     expect(screen.getAllByTestId('set-album-cell')).toHaveLength(4);
+  });
+
+  it('gives table card cells a 172px minimum width', () => {
+    renderAlbum();
+    screen.getAllByTestId('set-album-cell').forEach((cell) => {
+      expect(cell.className).toContain('min-w-[172px]');
+      expect(cell.className).not.toContain('min-w-[10rem]');
+    });
   });
 });
 
@@ -487,6 +522,29 @@ describe('SetAlbum: coin circle', () => {
     expect(within(cardByCoin('coin-vdb')).getByTestId('set-album-card-numeral')).toBeInTheDocument();
   });
 
+  it('renders the photo lazily, round and contained (never cropped)', () => {
+    const withImage = slot(0, 'img', { year: 1909, imageUrl: 'https://example.com/coin.jpg' });
+    renderAlbum({ slots: [withImage] });
+
+    const img = screen.getByTestId('set-album-card-image');
+    expect(img).toHaveAttribute('loading', 'lazy');
+    expect(img.className).toContain('object-contain');
+    expect(img.className).not.toContain('object-cover');
+    expect(img.className).toContain('rounded-full');
+  });
+
+  it('applies the placeholder disc look only when there is no image', () => {
+    const withImage = slot(0, 'img', { year: 1909, imageUrl: 'https://example.com/coin.jpg' });
+    renderAlbum({ slots: [withImage, L_VDB] });
+
+    const photoCircle = within(cardByCoin('coin-img')).getByTestId('set-album-card-circle');
+    const placeholderCircle = within(cardByCoin('coin-vdb')).getByTestId('set-album-card-circle');
+    expect(photoCircle.className).not.toContain('bg-neutral-300');
+    expect(photoCircle.className).not.toContain('border-neutral-400');
+    expect(placeholderCircle.className).toContain('bg-neutral-300');
+    expect(placeholderCircle.className).toContain('border-neutral-400');
+  });
+
   it('hides the circle from assistive tech', () => {
     renderAlbum();
     screen.getAllByTestId('set-album-card-circle').forEach((c) => expect(c).toHaveAttribute('aria-hidden', 'true'));
@@ -503,12 +561,41 @@ describe('SetAlbum: coin circle', () => {
     expect(status('coin-1931s').textContent).toBe('Missing');
   });
 
-  it('shows the coin year instead of ownership to a visitor, with a neutral full-strength coin', () => {
+  it('shows the coin year instead of ownership to a visitor on a table page, with a neutral full-strength coin', () => {
     renderAlbum({ isOwner: false });
     const card = cardByCoin('coin-plain');
     expect(within(card).getByTestId('set-album-card-status').textContent).toBe('1909');
     expect(within(card).queryByTestId('set-album-card-check')).not.toBeInTheDocument();
     expect(within(card).getByTestId('set-album-card-circle').className).not.toMatch(/opacity-50|grayscale/);
+
+    // a different year gives a different status, so it is not a constant
+    expect(within(cardByCoin('coin-1931s')).getByTestId('set-album-card-status').textContent).toBe('1931');
+  });
+
+  it('shows no status line to a visitor on a year-grid page, but keeps the card link', () => {
+    renderAlbum({ slots: WAS, isOwner: false });
+    expect(screen.queryByTestId('set-album-card-status')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('set-album-card')).toHaveLength(WAS.length);
+    screen.getAllByTestId('set-album-card').forEach((card) => {
+      expect(within(card).getByTestId('set-album-card-link')).toBeInTheDocument();
+      expect(within(card).queryByTestId('set-album-card-check')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows the status line to the owner on a year-grid page', () => {
+    renderAlbum({ slots: WAS, isOwner: true });
+    const status = (id: string) => within(cardByCoin(id)).getByTestId('set-album-card-status');
+    expect(status('coin-donetsk').textContent).toBe('Missing');
+    expect(status('coin-luhansk').textContent).toBe('In collection');
+  });
+
+  it('keeps every visitor card neutral regardless of ownership', () => {
+    renderAlbum({ slots: WAS, isOwner: false });
+    const owned = cardByCoin('coin-luhansk');
+    const missing = cardByCoin('coin-donetsk');
+    expect(owned.className).toContain('bg-neutral-100');
+    expect(owned.className).not.toContain('bg-accent-100');
+    expect(missing.className).toContain('bg-neutral-100');
   });
 
   it('fades only missing coins for the owner, on image circles too', () => {
@@ -538,13 +625,15 @@ describe('SetAlbum: coin circle', () => {
 });
 
 describe('SetAlbum: legend', () => {
-  it('explains the new visuals', () => {
+  it('no longer explains Owned / Missing / Key date, only the blank cell', () => {
     renderAlbum();
     const legend = screen.getByTestId('set-album-legend');
-    expect(legend).toHaveTextContent('Owned');
-    expect(legend).toHaveTextContent('Missing');
-    expect(legend).toHaveTextContent('Key date');
-    expect(legend).toHaveTextContent('★');
+    expect(legend).toHaveTextContent('Not in this set');
+    expect(legend).not.toHaveTextContent('Owned');
+    expect(legend).not.toHaveTextContent('Missing');
+    expect(legend).not.toHaveTextContent('Key date');
+    expect(legend).not.toHaveTextContent('★');
+    expect(within(legend).getAllByRole('listitem')).toHaveLength(1);
   });
 
   it('shows the "Not in this set" item only when some page has blank cells', () => {
@@ -554,7 +643,23 @@ describe('SetAlbum: legend', () => {
 
     renderAlbum({ slots: WAS });
     expect(screen.queryByTestId('set-album-legend-blank')).not.toBeInTheDocument();
-    expect(screen.getByTestId('set-album-legend')).not.toHaveTextContent('Not in this set');
+  });
+
+  it('renders no legend at all when no page has blank cells', () => {
+    renderAlbum({ slots: WAS });
+    expect(screen.queryByTestId('set-album-legend')).not.toBeInTheDocument();
+  });
+
+  it('keeps the legend when a table page with blanks is rendered, even next to a grid page', () => {
+    renderAlbum({ slots: [...LINCOLN, ...WAS] });
+    expect(screen.getByTestId('set-album-legend-blank')).toBeInTheDocument();
+  });
+
+  it('drops the legend when the only page with blank cells is not rendered under the Missing filter', () => {
+    const lincolnAllOwned = LINCOLN.map((s) => ({ ...s, owned: true }));
+    renderAlbum({ slots: [...lincolnAllOwned, U_ONE], gapOnly: true });
+    expect(screen.getAllByTestId('set-album-page')).toHaveLength(1);
+    expect(screen.queryByTestId('set-album-legend')).not.toBeInTheDocument();
   });
 });
 
@@ -782,48 +887,186 @@ describe('SetAlbum: hover and focus styling hooks', () => {
     expect(check.className).toMatch(/focus-visible:/);
     expect(screen.getByTestId('set-album-card-link').className).toMatch(/focus-visible:/);
   });
+
+  it('mirrors the card hover on focus-within, and gates the lift behind motion-safe', () => {
+    renderAlbum({ slots: [L_PLAIN] });
+    const card = screen.getByTestId('set-album-card');
+    expect(card.className).toContain('focus-within:border-accent');
+    expect(card.className).toContain('focus-within:shadow-md');
+    expect(card.className).toContain('motion-safe:hover:-translate-y-0.5');
+    expect(card.className).toContain('motion-safe:focus-within:-translate-y-0.5');
+    // the lift is never applied without motion-safe
+    expect(card.className).not.toMatch(/(^|\s)hover:-translate-y-0\.5/);
+    expect(card.className).not.toMatch(/(^|\s)focus-within:-translate-y-0\.5/);
+  });
+
+  it('underlines the title on focus-within as well as hover, and scales the photo only under motion-safe', () => {
+    renderAlbum({ slots: [L_PLAIN] });
+    const link = screen.getByTestId('set-album-card-link');
+    expect(link.className).toContain('group-hover:text-accent-700');
+    expect(link.className).toContain('group-focus-within:text-accent-700');
+    expect(link.className).toContain('group-focus-within:underline');
+
+    const circle = screen.getByTestId('set-album-card-circle');
+    expect(circle.className).toContain('motion-safe:group-hover:scale-105');
+    expect(circle.className).toContain('motion-safe:group-focus-within:scale-105');
+    expect(circle.className).not.toMatch(/(^|\s)group-hover:scale-105/);
+  });
 });
 
-describe('SetAlbum: Missing filter (gapOnly)', () => {
-  it('keeps every card, cell and blank cell, and mutes only owned cards', () => {
+describe('SetAlbum: Missing filter (gapOnly) hides owned cards', () => {
+  it('renders only the missing cards, never muting or dimming anything', () => {
     renderAlbum({ gapOnly: true });
 
+    const cards = screen.getAllByTestId('set-album-card');
+    expect(cards.map((c) => c.getAttribute('data-coin-id')).sort()).toEqual(['coin-1931s', 'coin-vdb']);
+    expect(screen.queryByText('In collection')).not.toBeInTheDocument();
+    cards.forEach((card) => {
+      expect(card).not.toHaveAttribute('data-muted');
+      expect(card.className).not.toContain('opacity-40');
+      expect(card).toHaveAttribute('data-owned', 'false');
+    });
+  });
+
+  it('does not render owned cards on a grid page either', () => {
+    renderAlbum({ slots: WAS, gapOnly: true });
+    expect(screen.getAllByTestId('set-album-card').map((c) => c.getAttribute('data-coin-id'))).toEqual([
+      'coin-donetsk',
+      'coin-kyiv',
+    ]);
+    expect(screen.getAllByTestId('set-album-card-check').map((b) => b.getAttribute('data-coin-id'))).toEqual([
+      'coin-donetsk',
+      'coin-kyiv',
+    ]);
+  });
+
+  it('shows every card, owned and missing, when gapOnly is false', () => {
+    renderAlbum({ gapOnly: false });
     expect(screen.getAllByTestId('set-album-card')).toHaveLength(LINCOLN.length);
+    screen.getAllByTestId('set-album-card').forEach((c) => expect(c).not.toHaveAttribute('data-muted'));
+  });
+
+  it('keeps blank cells and cells in the full table layout, but without cards in cells whose slots are all owned', () => {
+    renderAlbum({ gapOnly: true });
+
     expect(screen.getAllByTestId('set-album-blank-cell')).toHaveLength(2);
     expect(screen.getAllByTestId('set-album-cell')).toHaveLength(4);
-    expect(cardByCoin('coin-plain')).toHaveAttribute('data-muted', 'true');
-    expect(cardByCoin('coin-svdb')).toHaveAttribute('data-muted', 'true');
-    expect(cardByCoin('coin-vdb')).toHaveAttribute('data-muted', 'false');
-    expect(cardByCoin('coin-1931s')).toHaveAttribute('data-muted', 'false');
+    const svdbCell = screen
+      .getAllByTestId('set-album-cell')
+      .find((c) => c.getAttribute('data-year') === '1909' && c.getAttribute('data-mint-mark') === 'S');
+    expect(svdbCell).toBeDefined();
+    expect(within(svdbCell!).queryByTestId('set-album-card')).not.toBeInTheDocument();
+
+    const mixedCell = screen
+      .getAllByTestId('set-album-cell')
+      .find((c) => c.getAttribute('data-year') === '1909' && c.getAttribute('data-mint-mark') === '');
+    expect(within(mixedCell!).getAllByTestId('set-album-card').map((c) => c.getAttribute('data-coin-id'))).toEqual([
+      'coin-vdb',
+    ]);
   });
 
-  it('mutes owned cards on a grid page too', () => {
+  it('removes a table row that has no visible card', () => {
+    // 1909 is fully owned, 1931 has a missing coin
+    const { unmount } = renderAlbum({ slots: [L_PLAIN, L_1931S], gapOnly: true });
+    expect(screen.getAllByTestId('set-album-row').map((r) => r.getAttribute('data-year'))).toEqual(['1931']);
+    expect(screen.getAllByTestId('set-album-year-header').map((h) => h.textContent)).toEqual(['1931']);
+    unmount();
+
+    // without the filter both rows are there
+    renderAlbum({ slots: [L_PLAIN, L_1931S], gapOnly: false });
+    expect(screen.getAllByTestId('set-album-row').map((r) => r.getAttribute('data-year'))).toEqual(['1909', '1931']);
+  });
+
+  it('removes a year group on a grid page that has no visible card, but keeps full year summaries', () => {
+    // 2025: only Luhansk (owned) -> group vanishes; 2026: Kyiv (missing)
+    renderAlbum({ slots: [WAS_LUHANSK, WAS_KYIV], gapOnly: true });
+    const groups = screen.getAllByTestId('set-album-year-group');
+    expect(groups.map((g) => g.getAttribute('data-year'))).toEqual(['2026']);
+    expect(within(groups[0]).getByTestId('set-album-year-summary').textContent).toBe('0/1');
+  });
+
+  it('keeps the year summary at the full owned/total while hiding the owned card', () => {
     renderAlbum({ slots: WAS, gapOnly: true });
-    expect(cardByCoin('coin-luhansk')).toHaveAttribute('data-muted', 'true');
-    expect(cardByCoin('coin-donetsk')).toHaveAttribute('data-muted', 'false');
+    const g2025 = screen.getAllByTestId('set-album-year-group')[0];
+    expect(within(g2025).getByTestId('set-album-year-summary').textContent).toBe('1/2');
+    expect(within(g2025).getAllByTestId('set-album-card')).toHaveLength(1);
   });
 
-  it('mutes nothing when gapOnly is false', () => {
-    renderAlbum({ gapOnly: false });
-    screen.getAllByTestId('set-album-card').forEach((s) => expect(s).toHaveAttribute('data-muted', 'false'));
+  it('does not render a page that has no visible card', () => {
+    const lincolnAllOwned = LINCOLN.map((s) => ({ ...s, owned: true }));
+    renderAlbum({ slots: [...lincolnAllOwned, U_ONE], gapOnly: true });
+
+    const pages = screen.getAllByTestId('set-album-page');
+    expect(pages).toHaveLength(1);
+    expect(within(pages[0]).getByTestId('set-album-page-heading').textContent).toBe('Commemorative · Ukraine');
+    expect(screen.queryByTestId('set-album-table')).not.toBeInTheDocument();
   });
 
-  it('muted cards are still interactive for the owner', async () => {
+  it('keeps counts and column footers unchanged by the filter', () => {
+    renderAlbum({ gapOnly: true });
+    expect(screen.getByTestId('set-album-page-count').textContent).toBe('3 of 5 owned');
+    expect(screen.getAllByTestId('set-album-col-footer').map((f) => f.textContent)).toEqual(['1/2', '1/1', '1/2']);
+  });
+
+  it('remaining cards stay interactive for the owner', async () => {
     const user = userEvent.setup();
     const { onToggle } = renderAlbum({ gapOnly: true });
 
-    await user.click(checkByCoin('coin-plain'));
+    await user.click(checkByCoin('coin-vdb'));
 
-    expect(onToggle).toHaveBeenCalledWith('coin-plain', true);
-    expect(within(cardByCoin('coin-plain')).getByTestId('set-album-card-link')).toHaveAttribute(
+    expect(onToggle).toHaveBeenCalledWith('coin-vdb', false);
+    expect(within(cardByCoin('coin-vdb')).getByTestId('set-album-card-link')).toHaveAttribute(
       'href',
-      '/catalog/coin-plain',
+      '/catalog/coin-vdb',
     );
   });
+});
 
-  it('keeps counts unchanged by the filter', () => {
-    renderAlbum({ gapOnly: true });
-    expect(screen.getByTestId('set-album-page-count').textContent).toBe('3 of 5 owned');
+describe('SetAlbum: all owned under the Missing filter', () => {
+  const lincolnAllOwned = LINCOLN.map((s) => ({ ...s, owned: true }));
+
+  it('shows a centered "nothing missing" message instead of the pages', () => {
+    renderAlbum({ slots: lincolnAllOwned, gapOnly: true });
+
+    const message = screen.getByTestId('set-album-all-owned');
+    expect(message).toHaveTextContent('Nothing missing — this set is complete.');
+    expect(message.className).toContain('text-center');
+    expect(message.className).toContain('bg-surface');
+    expect(screen.getByTestId('set-album')).toContainElement(message);
+    expect(screen.queryByTestId('set-album-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-card')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-legend')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-empty')).not.toBeInTheDocument();
+  });
+
+  it('does not show the message with the All coins view, which renders every owned card', () => {
+    renderAlbum({ slots: lincolnAllOwned, gapOnly: false });
+    expect(screen.queryByTestId('set-album-all-owned')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('set-album-card')).toHaveLength(LINCOLN.length);
+  });
+
+  it('does not show the message while at least one coin is missing', () => {
+    const oneMissing = lincolnAllOwned.map((s) => (s.coin.id === 'coin-vdb' ? { ...s, owned: false } : s));
+    renderAlbum({ slots: oneMissing, gapOnly: true });
+    expect(screen.queryByTestId('set-album-all-owned')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('set-album-card')).toHaveLength(1);
+  });
+
+  it('shows the message on a grid-only set too', () => {
+    renderAlbum({ slots: WAS.map((s) => ({ ...s, owned: true })), gapOnly: true });
+    expect(screen.getByTestId('set-album-all-owned')).toBeInTheDocument();
+    expect(screen.queryByTestId('set-album-year-group')).not.toBeInTheDocument();
+  });
+
+  it('shows the message for a visitor as well', () => {
+    renderAlbum({ slots: lincolnAllOwned, gapOnly: true, isOwner: false });
+    expect(screen.getByTestId('set-album-all-owned')).toBeInTheDocument();
+  });
+
+  it('still shows the toggle error next to the message', () => {
+    renderAlbum({ slots: lincolnAllOwned, gapOnly: true, toggleFailed: true });
+    expect(screen.getByTestId('set-album-toggle-error')).toBeInTheDocument();
+    expect(screen.getByTestId('set-album-all-owned')).toBeInTheDocument();
   });
 });
 
