@@ -151,6 +151,7 @@ const enShape = {
   'setEditor.deleteConfirmMessage': 'The set and its list of {total} coins will be removed. This can’t be undone.',
   'setEditor.deleteConfirmSafe': 'Your collection is safe: the {owned} coins you own from this set stay marked as owned.',
   'setEditor.deleteMenuItem': 'Delete set…',
+  'setEditor.deletedNotice': '“{name}” was deleted. The coins you own from it are still in your collection.',
   'setEditor.renameSet': 'Rename set',
   'setEditor.actionsLabel': 'Set actions',
   'setEditor.breadcrumbMySets': 'My sets',
@@ -164,7 +165,7 @@ const enShape = {
   'setEditor.addButton': 'Add',
   'setEditor.errorLoading': 'Something went wrong loading this set. Please try again.',
   'setEditor.allCoins': 'All coins',
-  'setEditor.missing': 'missing',
+  'setEditor.missing': 'Missing',
   'setEditor.addCoins': 'Add coins',
   'setEditor.undo': 'Undo',
   'setEditor.noCoinsYet': 'No coins yet — add some below.',
@@ -177,9 +178,6 @@ const enShape = {
 
   // set album
   'setAlbum.legendLabel': 'Legend',
-  'setAlbum.legendOwned': 'Owned',
-  'setAlbum.legendMissing': 'Missing',
-  'setAlbum.legendKeyDate': 'Key date',
   'setAlbum.legendBlank': 'Not in this set',
   'setAlbum.yearHeader': 'Year',
   'setAlbum.noMintMark': 'No mint mark',
@@ -194,6 +192,7 @@ const enShape = {
   'setAlbum.markMissing': 'Mark {coin} as missing',
   'setAlbum.empty': 'This set has no coins yet.',
   'setAlbum.emptyOwnerHint': 'Use "Add coins" to start filling it.',
+  'setAlbum.allOwned': 'Nothing missing — this set is complete.',
   'setAlbum.toggleError': "Couldn't update this coin. Please try again.",
 
   // missing list
