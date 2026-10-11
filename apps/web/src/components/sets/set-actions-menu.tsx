@@ -2,19 +2,21 @@
 
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 
 export interface SetActionsMenuProps {
-  /** Owner-only items (rename, delete) are omitted when the handler is absent. */
-  onRename?: () => void;
-  onDelete?: () => void;
+  onRename: () => void;
+  onDelete: () => void;
   onDownloadMissing: () => void;
   printMissingHref: string;
   nothingMissing: boolean;
 }
 
-const ITEM_CLASSNAME =
-  'flex min-h-10 w-full items-center gap-2.5 rounded-[var(--radius-md)] px-3 text-left text-sm text-text hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50';
+// Text colour is kept out of the base so the Delete item's `text-danger` never competes with `text-text`.
+const ITEM_BASE_CLASSNAME =
+  'flex min-h-10 w-full items-center gap-2.5 rounded-[var(--radius-md)] px-3 text-left text-sm hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50';
+const ITEM_CLASSNAME = `${ITEM_BASE_CLASSNAME} text-text`;
 
 function RenameIcon() {
   return (
@@ -65,7 +67,17 @@ function TrashIcon() {
   );
 }
 
-// The ⋯ menu on the set page: rename / download / print / delete behind one trigger.
+// Enabled menu items in DOM order (disabled buttons and aria-disabled links are skipped).
+function enabledItems(menu: HTMLElement | null): HTMLElement[] {
+  if (!menu) return [];
+  return Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"]')).filter(
+    (item) => !item.hasAttribute('disabled') && item.getAttribute('aria-disabled') !== 'true',
+  );
+}
+
+// The owner-only ⋯ menu on the set page: rename / download / print / delete behind one
+// trigger. Keyboard: focus lands on the first enabled item when it opens, arrows / Home /
+// End move between enabled items (wrapping), Escape closes and refocuses the trigger, Tab closes.
 export function SetActionsMenu({
   onRename,
   onDelete,
@@ -77,6 +89,12 @@ export function SetActionsMenu({
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    enabledItems(menuRef.current)[0]?.focus();
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -90,6 +108,9 @@ export function SetActionsMenu({
       if (event.key === 'Escape') {
         setIsOpen(false);
         triggerRef.current?.focus();
+      } else if (event.key === 'Tab') {
+        // No preventDefault: focus moves on naturally, the menu just closes.
+        setIsOpen(false);
       }
     }
 
@@ -100,6 +121,31 @@ export function SetActionsMenu({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen]);
+
+  function handleMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    const items = enabledItems(menuRef.current);
+    if (items.length === 0) return;
+    const current = items.indexOf(document.activeElement as HTMLElement);
+    let next: number;
+    switch (event.key) {
+      case 'ArrowDown':
+        next = current < 0 ? 0 : (current + 1) % items.length;
+        break;
+      case 'ArrowUp':
+        next = current < 0 ? items.length - 1 : (current - 1 + items.length) % items.length;
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = items.length - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    items[next].focus();
+  }
 
   function run(action: () => void) {
     setIsOpen(false);
@@ -127,26 +173,28 @@ export function SetActionsMenu({
 
       {isOpen && (
         <div
+          ref={menuRef}
           role="menu"
           aria-label={t('setEditor.actionsLabel')}
           data-testid="set-editor-actions-menu"
+          onKeyDown={handleMenuKeyDown}
           className="absolute right-0 top-[52px] z-10 flex w-60 flex-col rounded-[var(--radius-lg)] border border-neutral-300 bg-white p-1.5 shadow-lg"
         >
-          {onRename && (
-            <button
-              type="button"
-              role="menuitem"
-              data-testid="set-editor-rename-item"
-              onClick={() => run(onRename)}
-              className={ITEM_CLASSNAME}
-            >
-              <RenameIcon />
-              {t('setEditor.renameSet')}
-            </button>
-          )}
           <button
             type="button"
             role="menuitem"
+            tabIndex={-1}
+            data-testid="set-editor-rename-item"
+            onClick={() => run(onRename)}
+            className={ITEM_CLASSNAME}
+          >
+            <RenameIcon />
+            {t('setEditor.renameSet')}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            tabIndex={-1}
             data-testid="set-editor-download-missing"
             disabled={nothingMissing}
             onClick={() => run(onDownloadMissing)}
@@ -172,6 +220,7 @@ export function SetActionsMenu({
             <Link
               href={printMissingHref}
               role="menuitem"
+              tabIndex={-1}
               data-testid="set-editor-print-missing"
               onClick={() => setIsOpen(false)}
               className={ITEM_CLASSNAME}
@@ -180,21 +229,18 @@ export function SetActionsMenu({
               {t('setEditor.printMissing')}
             </Link>
           )}
-          {onDelete && (
-            <>
-              <span aria-hidden="true" className="mx-1 my-1.5 h-px bg-neutral-200" />
-              <button
-                type="button"
-                role="menuitem"
-                data-testid="set-editor-delete-button"
-                onClick={() => run(onDelete)}
-                className={`${ITEM_CLASSNAME} font-medium text-red-700`}
-              >
-                <TrashIcon />
-                {t('setEditor.deleteMenuItem')}
-              </button>
-            </>
-          )}
+          <span aria-hidden="true" className="mx-1 my-1.5 h-px bg-neutral-200" />
+          <button
+            type="button"
+            role="menuitem"
+            tabIndex={-1}
+            data-testid="set-editor-delete-button"
+            onClick={() => run(onDelete)}
+            className={`${ITEM_BASE_CLASSNAME} font-medium text-danger`}
+          >
+            <TrashIcon />
+            {t('setEditor.deleteMenuItem')}
+          </button>
         </div>
       )}
     </div>
