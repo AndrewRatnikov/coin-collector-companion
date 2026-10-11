@@ -20,6 +20,7 @@ import { SetActionsMenu } from '@/components/sets/set-actions-menu';
 import { SetAlbum } from '@/components/sets/set-album';
 import { SEGMENT_BUTTON_CLASSNAME, SEGMENT_GROUP_CLASSNAME, SetViewSwitch } from '@/components/sets/set-view-switch';
 import { formatOwnedOfTotal } from '@/lib/album-layout';
+import { markSetDeleted } from '@/lib/set-deleted-notice';
 import { buildSetViewSearch, parseSetView, type SetView } from '@/lib/set-view';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
@@ -164,9 +165,15 @@ function SetEditor({ id }: { id: string }) {
     setDeleteConfirmOpen(false);
     deleteMutation.mutate(id, {
       onSuccess: () => {
+        markSetDeleted(set?.name ?? '');
         router.push('/dashboard');
       },
     });
+  }
+
+  function handleRenameItem() {
+    nameInputRef.current?.focus();
+    nameInputRef.current?.select();
   }
 
   function toggleDecade(key: string) {
@@ -200,6 +207,12 @@ function SetEditor({ id }: { id: string }) {
   const missingCount = gaps.slots.filter((slot) => !slot.owned).length;
   const nothingMissing = missingCount === 0;
   const decadeGroups = buildDecadeGroups(gaps.slots, gapOnly);
+  // "{owned} of {total} owned" with the owned number set in mono; the text content stays the plain sentence.
+  const ownedOfTotalTemplate = t('setEditor.ownedOfTotal');
+  const ownedSplitAt = ownedOfTotalTemplate.indexOf('{owned}');
+  const ownedBefore = ownedSplitAt >= 0 ? ownedOfTotalTemplate.slice(0, ownedSplitAt) : '';
+  const ownedAfter =
+    ownedSplitAt >= 0 ? ownedOfTotalTemplate.slice(ownedSplitAt + '{owned}'.length) : ownedOfTotalTemplate;
 
   return (
     <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME}>
@@ -215,18 +228,23 @@ function SetEditor({ id }: { id: string }) {
             </Link>
           </p>
           {isOwner ? (
-            <input
-              ref={nameInputRef}
-              data-testid="set-editor-name-input"
-              type="text"
-              aria-label={t('setEditor.renameSet')}
-              value={nameValue}
-              onChange={(e) => setNameValue(e.target.value)}
-              onBlur={handleNameBlur}
-              className="w-full border-b border-transparent bg-transparent font-[family-name:var(--font-heading)] text-[40px] font-semibold leading-[1.1] hover:border-neutral-400 focus:border-accent-700 focus:outline-none"
-            />
+            <h1 className="m-0 min-w-0">
+              <input
+                ref={nameInputRef}
+                data-testid="set-editor-name-input"
+                type="text"
+                aria-label={t('setEditor.renameSet')}
+                value={nameValue}
+                onChange={(e) => setNameValue(e.target.value)}
+                onBlur={handleNameBlur}
+                className="w-full border-b border-transparent bg-transparent font-[family-name:var(--font-heading)] text-[40px] font-semibold leading-[1.1] hover:border-neutral-400 focus:border-accent-700 focus:outline-none"
+              />
+            </h1>
           ) : (
-            <h1 data-testid="set-editor-name" className="text-[40px] font-semibold leading-[1.1]">
+            <h1
+              data-testid="set-editor-name"
+              className="font-[family-name:var(--font-heading)] text-[40px] font-semibold leading-[1.1]"
+            >
               {resolveLocalizedText(set.name, locale)}
             </h1>
           )}
@@ -235,7 +253,15 @@ function SetEditor({ id }: { id: string }) {
         <div className="flex w-[280px] max-w-full flex-col gap-2">
           <div className="flex items-baseline justify-between">
             <span data-testid="set-editor-owned-count" className="text-sm text-neutral-800">
-              {formatOwnedOfTotal(t('setEditor.ownedOfTotal'), gaps.ownedCount, gaps.totalCount)}
+              {ownedSplitAt >= 0 ? (
+                <>
+                  {ownedBefore && formatOwnedOfTotal(ownedBefore, gaps.ownedCount, gaps.totalCount)}
+                  <span className="font-mono text-xl font-semibold text-text">{gaps.ownedCount}</span>
+                  {formatOwnedOfTotal(ownedAfter, gaps.ownedCount, gaps.totalCount)}
+                </>
+              ) : (
+                formatOwnedOfTotal(ownedOfTotalTemplate, gaps.ownedCount, gaps.totalCount)
+              )}
             </span>
             <span data-testid="set-editor-completion" className="font-mono text-sm text-accent-700">
               {gaps.completionPercent}%
@@ -276,7 +302,7 @@ function SetEditor({ id }: { id: string }) {
               onClick={() => setGapOnly(true)}
               className={SEGMENT_BUTTON_CLASSNAME}
             >
-              {missingCount} {t('setEditor.missing')}
+              {t('setEditor.missing')} · {missingCount}
             </button>
           </div>
           <SetViewSwitch view={view} onChange={handleViewChange} />
@@ -293,13 +319,15 @@ function SetEditor({ id }: { id: string }) {
               + {t('setEditor.addCoins')}
             </button>
           )}
-          <SetActionsMenu
-            onRename={isOwner ? () => nameInputRef.current?.focus() : undefined}
-            onDelete={isOwner ? () => setDeleteConfirmOpen(true) : undefined}
-            onDownloadMissing={() => downloadMissingCsv(gaps, set.name)}
-            printMissingHref={`/sets/${id}/missing`}
-            nothingMissing={nothingMissing}
-          />
+          {isOwner && (
+            <SetActionsMenu
+              onRename={handleRenameItem}
+              onDelete={() => setDeleteConfirmOpen(true)}
+              onDownloadMissing={() => downloadMissingCsv(gaps, set.name)}
+              printMissingHref={`/sets/${id}/missing`}
+              nothingMissing={nothingMissing}
+            />
+          )}
         </div>
       </div>
 
@@ -422,11 +450,17 @@ function SetEditor({ id }: { id: string }) {
         description={
           <>
             {formatOwnedOfTotal(t('setEditor.deleteConfirmMessage'), 0, gaps.totalCount)}
-            <span className="mt-3 block rounded-[var(--radius-md)] bg-accent-100 px-3.5 py-3 text-accent-800">
-              {formatOwnedOfTotal(t('setEditor.deleteConfirmSafe'), gaps.ownedCount, gaps.totalCount)}
-            </span>
+            {gaps.ownedCount > 0 && (
+              <p
+                data-testid="set-editor-delete-confirm-safe"
+                className="mt-3 rounded-[var(--radius-md)] bg-accent-100 px-3.5 py-3 text-accent-800"
+              >
+                {formatOwnedOfTotal(t('setEditor.deleteConfirmSafe'), gaps.ownedCount, gaps.totalCount)}
+              </p>
+            )}
           </>
         }
+        variant="danger"
         confirmLabel={t('setEditor.deleteButton')}
         cancelLabel={t('common.cancel')}
         onConfirm={handleDelete}
