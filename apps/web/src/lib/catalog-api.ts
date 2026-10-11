@@ -1,25 +1,46 @@
-import type { CatalogCoin, CreateCoinRequest, PaginatedResponse } from '@coin-collector/shared';
+import type {
+  CatalogCoin,
+  CatalogFacets,
+  CatalogSort,
+  CreateCoinRequest,
+  PaginatedResponse,
+} from '@coin-collector/shared';
 import { apiFetch } from './api-client';
 
 export interface CatalogFilters {
   country?: string;
-  denomination?: string;
+  // An array is sent as a repeated param (?denomination=a&denomination=b), OR-ed by the API.
+  denomination?: string | string[];
   name?: string;
   yearMin?: number;
   yearMax?: number;
   page?: number;
   limit?: number;
   submittedByMe?: boolean;
+  keyDateOnly?: boolean;
+  hideOwned?: boolean;
+  sort?: CatalogSort;
 }
 
 export async function getCatalog(filters: CatalogFilters = {}): Promise<PaginatedResponse<CatalogCoin>> {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(filters)) {
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        if (entry !== undefined && entry !== '') params.append(key, String(entry));
+      }
+      continue;
+    }
     if (value === undefined || value === '') continue;
     params.set(key, String(value));
   }
   const query = params.toString();
   return apiFetch<PaginatedResponse<CatalogCoin>>(`/catalog${query ? `?${query}` : ''}`);
+}
+
+export async function getCatalogFacets(country?: string): Promise<CatalogFacets> {
+  const query = country ? `?${new URLSearchParams({ country }).toString()}` : '';
+  return apiFetch<CatalogFacets>(`/catalog/facets${query}`);
 }
 
 export async function getCoin(id: string): Promise<CatalogCoin> {
