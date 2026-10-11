@@ -233,6 +233,8 @@ describe('SetEditorPage missing-list controls', () => {
     });
 
     it('builds the link href from the route id', async () => {
+      useUserSetsMock.mockReturnValue(queryResult({ data: [{ ...MY_SETS[0], id: 'set-77' }] }));
+      usePublicSetMock.mockReturnValue(queryResult({ data: { ...SET_DETAIL, id: 'set-77' } }));
       renderPage('set-77');
 
       const link = await findMenuItem('set-editor-print-missing');
