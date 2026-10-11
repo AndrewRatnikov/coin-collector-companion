@@ -20,9 +20,7 @@ function renderMenu(over: Partial<React.ComponentProps<typeof SetActionsMenu>> =
   const utils = render(
     <div>
       <SetActionsMenu printMissingHref="/sets/set-1/missing" nothingMissing={false} {...handlers} {...over} />
-      <button type="button" data-testid="outside-target">
-        outside
-      </button>
+      <button type="button">outside</button>
     </div>,
   );
   return { ...utils, ...handlers };
@@ -157,7 +155,7 @@ describe('SetActionsMenu: actions and closing', () => {
     const { onRename, onDelete, onDownloadMissing } = renderMenu();
     const user = await openMenu();
 
-    await user.click(screen.getByTestId('outside-target'));
+    await user.click(screen.getByRole('button', { name: 'outside' }));
 
     expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
     expect(onRename).not.toHaveBeenCalled();
