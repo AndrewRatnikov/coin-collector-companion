@@ -14,6 +14,7 @@ import {
   getSharedEyebrow,
   hasBlankCells,
   isNoMintMarkPage,
+  type AlbumPage,
   type AlbumRow,
   type AlbumSlotLabelWords,
 } from '@/lib/album-layout';
@@ -38,19 +39,14 @@ const BLANK_CELL_CLASSNAME =
 
 const HEADING_FONT_CLASSNAME = 'font-[family-name:var(--font-heading)]';
 
-const CIRCLE_BASE_CLASSNAME = 'relative inline-flex shrink-0 items-center justify-center rounded-full';
-const CIRCLE_OWNED_CLASSNAME = 'border border-solid border-accent bg-accent text-white';
-const CIRCLE_MISSING_CLASSNAME = 'border-2 border-dashed border-neutral-500 bg-transparent text-neutral-600';
-
-const KEY_DATE_BADGE_CLASSNAME =
-  'inline-flex w-fit items-center rounded-full bg-accent-100 px-1.5 text-xs text-accent-800';
 const KEY_DATE_PILL_CLASSNAME =
   'absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-accent-800 px-2 py-0.5 text-[11px] font-medium text-accent-100';
 
 const CARD_BASE_CLASSNAME = [
   'group relative flex flex-col rounded-[var(--radius-lg)] border',
   'transition-[transform,box-shadow,border-color] duration-150',
-  'hover:-translate-y-0.5 hover:border-accent hover:shadow-md',
+  'hover:border-accent hover:shadow-md focus-within:border-accent focus-within:shadow-md',
+  'motion-safe:hover:-translate-y-0.5 motion-safe:focus-within:-translate-y-0.5',
 ].join(' ');
 const CARD_OWNED_CLASSNAME = 'border-accent-400 bg-accent-100 shadow-sm';
 const CARD_MISSING_CLASSNAME = 'border-neutral-300 bg-neutral-100';
@@ -61,7 +57,7 @@ const WELL_BASE_CLASSNAME =
 
 const CARD_LINK_CLASSNAME = [
   'font-semibold text-[15px] leading-snug text-inherit',
-  'group-hover:text-accent-700 group-hover:underline',
+  'group-hover:text-accent-700 group-hover:underline group-focus-within:text-accent-700 group-focus-within:underline',
   "after:absolute after:inset-0 after:rounded-[var(--radius-lg)] after:content-['']",
   'focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-offset-2',
   'focus-visible:after:outline-[var(--color-accent-700)]',
@@ -80,6 +76,20 @@ const CHECK_FACE_UNPRESSED_CLASSNAME = 'border-[1.5px] border-dashed border-neut
 
 function rowSlots(row: AlbumRow): GapSlot[] {
   return row.cells.flatMap((cell) => cell.slots);
+}
+
+// Under the Missing filter owned cards are hidden (not dimmed); the layout itself is
+// always built from every slot so counts and summaries keep the full owned/total.
+function isVisible(slot: GapSlot, gapOnly: boolean): boolean {
+  return !(gapOnly && slot.owned);
+}
+
+function rowHasVisible(row: AlbumRow, gapOnly: boolean): boolean {
+  return rowSlots(row).some((slot) => isVisible(slot, gapOnly));
+}
+
+function pageHasVisible(page: AlbumPage, gapOnly: boolean): boolean {
+  return page.rows.some((row) => rowHasVisible(row, gapOnly));
 }
 
 function rowOwnedCount(row: AlbumRow): number {
@@ -135,8 +145,10 @@ function CoinCircle({
       data-testid="set-album-card-circle"
       aria-hidden="true"
       className={[
-        'relative flex aspect-square w-[58%] items-center justify-center rounded-full border-[3px] border-solid border-neutral-400 bg-neutral-300',
-        'transition-transform duration-200 group-hover:scale-105',
+        'relative flex aspect-square w-[58%] items-center justify-center rounded-full',
+        // The placeholder disc look applies only when there is no photo.
+        imageUrl ? '' : 'border-[3px] border-solid border-neutral-400 bg-neutral-300',
+        'transition-transform duration-200 motion-safe:group-hover:scale-105 motion-safe:group-focus-within:scale-105',
         lifted ? 'shadow-md' : '',
         faded ? 'opacity-50 grayscale' : '',
       ]
@@ -149,7 +161,7 @@ function CoinCircle({
           src={imageUrl}
           alt=""
           loading="lazy"
-          className="h-full w-full rounded-full object-cover"
+          className="h-full w-full rounded-full object-contain"
         />
       ) : (
         <>
@@ -169,7 +181,7 @@ function CoinCircle({
 function AlbumCard({
   slot,
   isOwner,
-  gapOnly,
+  inTable,
   onToggle,
   pending,
   words,
@@ -182,7 +194,7 @@ function AlbumCard({
 }: {
   slot: GapSlot;
   isOwner: boolean;
-  gapOnly: boolean;
+  inTable: boolean;
   onToggle: (coinId: string, currentlyOwned: boolean) => void;
   pending: boolean;
   words: AlbumSlotLabelWords;
@@ -195,17 +207,13 @@ function AlbumCard({
 }) {
   const { coin, owned } = slot;
   const text = getAlbumCardText(coin);
-  const muted = gapOnly && owned;
   // A visitor sees someone else's set: ownership isn't theirs to show, so the card stays neutral.
   const showOwned = isOwner && owned;
   const showMissing = isOwner && !owned;
-  const className = [
-    CARD_BASE_CLASSNAME,
-    showOwned ? CARD_OWNED_CLASSNAME : CARD_MISSING_CLASSNAME,
-    muted ? 'opacity-40' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const className = `${CARD_BASE_CLASSNAME} ${showOwned ? CARD_OWNED_CLASSNAME : CARD_MISSING_CLASSNAME}`;
+  // Owners see ownership in words; visitors see the year on table pages (the row header is far
+  // away) and no status line on year-grid pages (the year heading sits right above the card).
+  const showStatus = isOwner || inTable;
 
   return (
     <li
@@ -213,7 +221,6 @@ function AlbumCard({
       data-coin-id={coin.id}
       data-owned={owned ? 'true' : 'false'}
       data-key-date={coin.isKeyDate ? 'true' : 'false'}
-      data-muted={muted ? 'true' : 'false'}
       className={className}
     >
       <div className={`${WELL_BASE_CLASSNAME} ${showOwned ? 'bg-accent-200' : 'bg-neutral-200'}`}>
@@ -224,7 +231,7 @@ function AlbumCard({
         )}
         <CoinCircle denomination={coin.denomination} imageUrl={coin.imageUrl} faded={showMissing} lifted={showOwned} />
       </div>
-      <div className="flex min-w-0 flex-col gap-0.5 break-words px-3 pb-3 pt-3">
+      <div className="flex min-w-0 flex-col gap-0.5 break-words px-3.5 pb-3.5 pt-3">
         {text.eyebrow && !hoistedEyebrow && (
           <p data-testid="set-album-card-eyebrow" className="text-xs text-neutral-700">
             {text.eyebrow}
@@ -241,13 +248,15 @@ function AlbumCard({
         <p data-testid="set-album-card-secondary" className="text-[13px] text-neutral-700">
           {text.secondary}
         </p>
-        <div className="mt-2 flex items-center justify-between">
-          <span
-            data-testid="set-album-card-status"
-            className={`text-xs tracking-[0.02em] ${showOwned ? 'font-medium text-accent-700' : 'text-neutral-700'}`}
-          >
-            {isOwner ? (owned ? statusOwned : statusMissing) : coin.year}
-          </span>
+        <div className={`mt-2 flex items-center ${showStatus ? 'justify-between' : 'justify-end'}`}>
+          {showStatus && (
+            <span
+              data-testid="set-album-card-status"
+              className={`text-xs tracking-[0.02em] ${showOwned ? 'font-medium text-accent-700' : 'text-neutral-700'}`}
+            >
+              {isOwner ? (owned ? statusOwned : statusMissing) : coin.year}
+            </span>
+          )}
           <ArrowIcon />
         </div>
       </div>
@@ -314,17 +323,18 @@ export function SetAlbum({
   const statusOwned = t('setAlbum.statusOwned');
   const statusMissing = t('setAlbum.statusMissing');
   const noMintMark = t('setAlbum.noMintMark');
-  const showBlankLegend = pages.some(hasBlankCells);
+  const visiblePages = pages.filter((page) => pageHasVisible(page, gapOnly));
+  const showBlankLegend = visiblePages.some(hasBlankCells);
 
   const isPending = (coinId: string) => pendingCoinId === coinId || Boolean(pendingCoinIds?.has(coinId));
 
-  const renderCards = (cardSlots: GapSlot[], hoistedEyebrow: boolean) =>
-    cardSlots.map((slot) => (
+  const renderCards = (cardSlots: GapSlot[], hoistedEyebrow: boolean, inTable: boolean) =>
+    cardSlots.filter((slot) => isVisible(slot, gapOnly)).map((slot) => (
       <AlbumCard
         key={slot.id}
         slot={slot}
         isOwner={isOwner}
-        gapOnly={gapOnly}
+        inTable={inTable}
         onToggle={onToggle}
         pending={isPending(slot.coin.id)}
         words={words}
@@ -337,43 +347,43 @@ export function SetAlbum({
       />
     ));
 
+  const toggleError = toggleFailed && (
+    <p data-testid="set-album-toggle-error" role="alert" className="text-sm text-red-600">
+      {t('setAlbum.toggleError')}
+    </p>
+  );
+
+  if (gapOnly && slots.every((slot) => slot.owned)) {
+    return (
+      <div data-testid="set-album" className="flex min-w-0 flex-col gap-6">
+        {toggleError}
+        <p
+          data-testid="set-album-all-owned"
+          className="rounded-[var(--radius-lg)] bg-surface px-6 py-10 text-center text-[15px] text-neutral-700"
+        >
+          {t('setAlbum.allOwned')}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div data-testid="set-album" className="flex min-w-0 flex-col gap-6">
-      {toggleFailed && (
-        <p data-testid="set-album-toggle-error" role="alert" className="text-sm text-red-600">
-          {t('setAlbum.toggleError')}
-        </p>
-      )}
-      <ul
-        data-testid="set-album-legend"
-        aria-label={t('setAlbum.legendLabel')}
-        className="flex flex-wrap items-center gap-4 text-sm text-neutral-700"
-      >
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className={`${CIRCLE_BASE_CLASSNAME} h-5 w-5 text-xs ${CIRCLE_OWNED_CLASSNAME}`}>
-            ✓
-          </span>
-          {t('setAlbum.legendOwned')}
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className={`${CIRCLE_BASE_CLASSNAME} h-5 w-5 ${CIRCLE_MISSING_CLASSNAME}`} />
-          {t('setAlbum.legendMissing')}
-        </li>
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className={KEY_DATE_BADGE_CLASSNAME}>
-            ★
-          </span>
-          {t('setAlbum.legendKeyDate')}
-        </li>
-        {showBlankLegend && (
+      {toggleError}
+      {showBlankLegend && (
+        <ul
+          data-testid="set-album-legend"
+          aria-label={t('setAlbum.legendLabel')}
+          className="flex flex-wrap items-center gap-4 text-sm text-neutral-700"
+        >
           <li data-testid="set-album-legend-blank" className="flex items-center gap-1.5">
             <span aria-hidden="true" className={`inline-block h-5 w-5 ${BLANK_CELL_CLASSNAME}`} />
             {t('setAlbum.legendBlank')}
           </li>
-        )}
-      </ul>
+        </ul>
+      )}
 
-      {pages.map((page, pageIndex) => {
+      {visiblePages.map((page, pageIndex) => {
         const headingId = `set-album-page-heading-${pageIndex}`;
         const sharedEyebrow = getSharedEyebrow(page);
         const hoisted = sharedEyebrow !== '';
@@ -396,12 +406,12 @@ export function SetAlbum({
                 {sharedEyebrow}
               </p>
             )}
-            <p data-testid="set-album-page-count" className="text-sm text-neutral-600">
+            <p data-testid="set-album-page-count" className="text-sm text-neutral-700">
               {formatOwnedOfTotal(t('setAlbum.ownedOfTotal'), page.ownedCount, page.totalCount)}
             </p>
             {isNoMintMarkPage(page) ? (
               <div className="flex min-w-0 flex-col gap-4">
-                {page.rows.map((row) => (
+                {page.rows.filter((row) => rowHasVisible(row, gapOnly)).map((row) => (
                   <div
                     key={row.year}
                     data-testid="set-album-year-group"
@@ -422,9 +432,9 @@ export function SetAlbum({
                     </div>
                     <ul
                       data-testid="set-album-year-grid"
-                      className="grid list-none grid-cols-[repeat(auto-fill,minmax(min(172px,100%),1fr))] gap-3 p-0"
+                      className="grid list-none grid-cols-[repeat(auto-fill,minmax(min(170px,100%),1fr))] gap-3.5 p-0"
                     >
-                      {renderCards(rowSlots(row), hoisted)}
+                      {renderCards(rowSlots(row), hoisted, false)}
                     </ul>
                   </div>
                 ))}
@@ -451,7 +461,7 @@ export function SetAlbum({
                     </tr>
                   </thead>
                   <tbody>
-                    {page.rows.map((row) => (
+                    {page.rows.filter((row) => rowHasVisible(row, gapOnly)).map((row) => (
                       <tr key={row.year} data-testid="set-album-row" data-year={row.year}>
                         <th scope="row" data-testid="set-album-year-header" className={STICKY_YEAR_CLASSNAME}>
                           {row.year}
@@ -473,9 +483,13 @@ export function SetAlbum({
                               data-testid="set-album-cell"
                               data-year={cell.year}
                               data-mint-mark={cell.mintMark}
-                              className="min-w-[10rem] border-b border-divider px-1 py-1 align-top"
+                              className="min-w-[172px] border-b border-divider px-1 py-1 align-top"
                             >
-                              <ul className="flex list-none flex-col gap-1 p-0">{renderCards(cell.slots, hoisted)}</ul>
+                              {cell.slots.some((cellSlot) => isVisible(cellSlot, gapOnly)) && (
+                                <ul className="flex list-none flex-col gap-1 p-0">
+                                  {renderCards(cell.slots, hoisted, true)}
+                                </ul>
+                              )}
                             </td>
                           ),
                         )}

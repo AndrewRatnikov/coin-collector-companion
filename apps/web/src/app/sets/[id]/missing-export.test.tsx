@@ -1,7 +1,8 @@
 /**
  * Tests for: SetEditorPage (modified) - download missing CSV button and print missing link
  * Contract source: runs/run_20261001_205959/plan.md § Interface Contract → Page (modified): SetEditorPage
- * Covers criteria: #7, #8, #9 (from prd.md)
+ *                   runs/run_20261011_095624/plan.md § Interface Contract → Page: SetEditorPage (MODIFY)
+ * Covers criteria: #7, #8, #9 (from prd.md); #10, #11 (run_20261011_095624: visitor gets no download/print controls)
  *
  * CONTRACT_GAPs: none
  */
@@ -232,6 +233,8 @@ describe('SetEditorPage missing-list controls', () => {
     });
 
     it('builds the link href from the route id', async () => {
+      useUserSetsMock.mockReturnValue(queryResult({ data: [{ ...MY_SETS[0], id: 'set-77' }] }));
+      usePublicSetMock.mockReturnValue(queryResult({ data: { ...SET_DETAIL, id: 'set-77' } }));
       renderPage('set-77');
 
       const link = await findMenuItem('set-editor-print-missing');
@@ -331,6 +334,28 @@ describe('SetEditorPage missing-list controls', () => {
       expect(text).toBe(buildMissingCsv(onlyOneMissing as never, SET_DETAIL.name));
       expect(text.slice(1).split('\r\n')).toHaveLength(2);
       expect(text).toContain('Steel Cent');
+    });
+  });
+
+  describe('run_20261011_095624: owner-only controls', () => {
+    it('gives a visitor no actions menu, so no download or print control', async () => {
+      useUserSetsMock.mockReturnValue(queryResult({ data: [] }));
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-name')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('set-editor-actions-trigger')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-download-missing')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-print-missing')).not.toBeInTheDocument();
+    });
+
+    it('still gives the owner the menu with both controls for the same set', async () => {
+      renderPage();
+
+      expect(await findMenuItem('set-editor-download-missing')).toBeInTheDocument();
+      expect(screen.getByTestId('set-editor-print-missing')).toBeInTheDocument();
     });
   });
 });

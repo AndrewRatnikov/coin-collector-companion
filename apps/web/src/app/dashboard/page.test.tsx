@@ -2,7 +2,9 @@
  * Tests for: DashboardPage
  * Contract source: runs/run_20260721_161448/plan.md § Interface Contract → Component: DashboardPage (MODIFY)
  *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/dashboard/page.tsx
- * Covers criteria: #8, #9 (from run_20260721_161448's prd.md), #9 (from run_20260728_071525's prd.md)
+ *                   runs/run_20261011_095624/plan.md § Interface Contract → Page: DashboardPage (MODIFY)
+ * Covers criteria: #8, #9 (from run_20260721_161448's prd.md), #9 (from run_20260728_071525's prd.md),
+ *                  #14 (from run_20261011_095624's prd.md)
  *
  * This replaces run_20260721_094026's placeholder dashboard test entirely — that run
  * only verified the Day 1 RequireAuth-gated placeholder; this run builds the real
@@ -255,6 +257,65 @@ describe('DashboardPage', () => {
       expect(screen.queryByTestId('dashboard-stat-sets')).not.toBeInTheDocument();
       expect(screen.queryByTestId('dashboard-stat-coins-owned')).not.toBeInTheDocument();
       expect(screen.queryByTestId('dashboard-stat-average-completion')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('run_20261011_095624 criterion 14: one-time set-deleted notice', () => {
+    beforeEach(() => {
+      sessionStorage.clear();
+      setStoredToken('tok-abc');
+      useUserSetsMock.mockReturnValue(userSetsResult({ data: SETS }));
+      getSetGapsMock.mockImplementation(async (id: string) => ({
+        setId: id,
+        ownedCount: 3,
+        totalCount: 10,
+        completionPercent: 30,
+        slots: [],
+      }));
+    });
+
+    it('shows no notice when the flag is not set', async () => {
+      renderDashboard();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('dashboard-page')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('set-deleted-notice')).not.toBeInTheDocument();
+    });
+
+    it('shows a status notice naming the deleted set inside the dashboard, and removes the flag', async () => {
+      sessionStorage.setItem('ccc-set-deleted', 'My Wheat Cents');
+      renderDashboard();
+
+      const notice = await screen.findByTestId('set-deleted-notice');
+      expect(notice).toHaveAttribute('role', 'status');
+      expect(notice).toHaveTextContent(
+        '“My Wheat Cents” was deleted. The coins you own from it are still in your collection.',
+      );
+      expect(within(screen.getByTestId('dashboard-page')).getByTestId('set-deleted-notice')).toBe(notice);
+      expect(sessionStorage.getItem('ccc-set-deleted')).toBeNull();
+    });
+
+    it('prints the stored name, not a fixed one', async () => {
+      sessionStorage.setItem('ccc-set-deleted', 'Some Other Set');
+      renderDashboard();
+
+      const notice = await screen.findByTestId('set-deleted-notice');
+      expect(notice).toHaveTextContent('“Some Other Set” was deleted.');
+      expect(notice).not.toHaveTextContent('My Wheat Cents');
+    });
+
+    it('does not show the notice again after unmount and a fresh render', async () => {
+      sessionStorage.setItem('ccc-set-deleted', 'My Wheat Cents');
+      const first = renderDashboard();
+      await screen.findByTestId('set-deleted-notice');
+      first.unmount();
+
+      renderDashboard();
+      await waitFor(() => {
+        expect(screen.getByTestId('dashboard-page')).toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('set-deleted-notice')).not.toBeInTheDocument();
     });
   });
 });

@@ -3,8 +3,14 @@
  * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Page: SetEditorPage (CREATE)
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
  *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/sets/[id]/page.tsx — Set Editor
+ *                   runs/run_20261011_095624/plan.md § Interface Contract → Page: SetEditorPage (MODIFY)
  * Covers criteria: #1, #3, #4, #5, #9 (from run_20260721_171115's prd.md), #1 (from
- *                  run_20260722_121303's prd.md), #12, #13 (from run_20260728_071525's prd.md)
+ *                  run_20260722_121303's prd.md), #12, #13 (from run_20260728_071525's prd.md),
+ *                  #9, #10, #11, #13, #14 (from run_20261011_095624's prd.md)
+ *
+ * run_20261011_095624 intentionally changes three older assertions: the visitor no longer gets the
+ * ⋯ actions menu (owner-only), the Missing toggle text is now "Missing · {n}", and the Rename item
+ * now selects the name input text as well as focusing it.
  *
  * Unwraps `params` via the useEffect/useState pattern already used by
  * sets/canonical/[id]/page.tsx and sets/public/[id]/page.tsx (documented gotcha:
@@ -167,6 +173,22 @@ const GAPS = {
   ],
 };
 
+// Nothing owned yet: the delete dialog must not claim the collection is safe
+const GAPS_NONE_OWNED = {
+  ...GAPS,
+  ownedCount: 0,
+  completionPercent: 0,
+  slots: GAPS.slots.map((s) => ({ ...s, owned: false })),
+};
+
+// Two owned (coin-1 and coin-2): the count in the safe note must follow the data
+const GAPS_TWO_OWNED = {
+  ...GAPS,
+  ownedCount: 2,
+  completionPercent: 50,
+  slots: GAPS.slots.map((s) => ({ ...s, owned: s.id === 'usc-1' || s.id === 'usc-2' })),
+};
+
 const MY_SETS = [
   {
     id: 'set-1',
@@ -193,6 +215,7 @@ function setDefaultMocks() {
 describe('SetEditorPage', () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
     pushMock.mockClear();
     replaceMock.mockClear();
     usePublicSetMock.mockReset();
@@ -358,7 +381,19 @@ describe('SetEditorPage', () => {
       expect(screen.getByTestId('set-editor-show-all-toggle')).toHaveTextContent('All coins');
       // 3 of the 4 slots are missing in the default fixture.
       expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveTextContent('3');
-      expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveTextContent('missing');
+      expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveTextContent('Missing · 3');
+    });
+
+    it('the Missing toggle count follows the data', async () => {
+      setStoredToken('tok-abc');
+      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_TWO_OWNED }));
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-show-missing-toggle')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveTextContent('Missing · 2');
+      expect(screen.getByTestId('set-editor-show-missing-toggle')).not.toHaveTextContent('Missing · 3');
     });
 
     it('clicking "missing" hides owned slots and any decade group left with zero slots', async () => {
@@ -389,7 +424,7 @@ describe('SetEditorPage', () => {
   });
 
   describe('criterion 5: non-owner (logged in, set not in useUserSets) sees a read-only view', () => {
-    it('renders the read-only heading and gap grid but no edit controls', async () => {
+    it('renders the read-only heading and gap grid but no edit controls and no actions menu', async () => {
       setStoredToken('tok-abc');
       useUserSetsMock.mockReturnValue(queryResult({ data: [] }));
       renderPage();
@@ -401,12 +436,25 @@ describe('SetEditorPage', () => {
       expect(screen.queryByTestId('set-editor-toggle-owned-button')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-remove-button')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-toggle-add-coins')).not.toBeInTheDocument();
-      // Visitors still get the actions menu, but only the read-only items.
-      await userEvent.setup().click(screen.getByTestId('set-editor-actions-trigger'));
-      expect(screen.getByTestId('set-editor-download-missing')).toBeInTheDocument();
+      // The ⋯ actions menu is owner-only now: a visitor gets no trigger, hence no
+      // download / print / rename / delete either.
+      expect(screen.queryByTestId('set-editor-actions-trigger')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-download-missing')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-print-missing')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-delete-button')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-rename-item')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-add-coins-panel')).not.toBeInTheDocument();
+    });
+
+    it('gives the visitor an h1 with the set name', async () => {
+      setStoredToken('tok-abc');
+      useUserSetsMock.mockReturnValue(queryResult({ data: [] }));
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-name')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('set-editor-name').tagName).toBe('H1');
     });
   });
 
@@ -423,6 +471,16 @@ describe('SetEditorPage', () => {
       expect(screen.queryByTestId('set-editor-rename-form')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-rename-input')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-rename-submit')).not.toBeInTheDocument();
+    });
+
+    it('puts the owner\'s name input inside an h1 so the page has a top-level heading', async () => {
+      setStoredToken('tok-abc');
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-name-input')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('set-editor-name-input').closest('h1')).not.toBeNull();
     });
 
     it('calls useRenameSet().mutate({ id, name }) on blur when the value has changed', async () => {
@@ -600,6 +658,23 @@ describe('SetEditorPage', () => {
       expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
     });
 
+    it('Rename set in the menu also selects the whole name so typing replaces it', async () => {
+      setStoredToken('tok-abc');
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
+      });
+      await user.click(screen.getByTestId('set-editor-actions-trigger'));
+      await user.click(screen.getByTestId('set-editor-rename-item'));
+
+      const input = screen.getByTestId<HTMLInputElement>('set-editor-name-input');
+      expect(input).toHaveFocus();
+      expect(input.selectionStart).toBe(0);
+      expect(input.selectionEnd).toBe('My Wheat Cents'.length);
+    });
+
     it('shows an owned-of-total line and a progressbar for completion', async () => {
       setStoredToken('tok-abc');
       renderPage();
@@ -610,6 +685,25 @@ describe('SetEditorPage', () => {
       expect(screen.getByTestId('set-editor-owned-count')).toHaveTextContent(/^\d+ of \d+ owned$/);
       const bar = screen.getByRole('progressbar', { name: 'Set completion' });
       expect(bar).toHaveAttribute('aria-valuenow', '25');
+    });
+
+    it('the owned-of-total text follows the data and keeps the exact wording', async () => {
+      setStoredToken('tok-abc');
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-owned-count')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('set-editor-owned-count').textContent).toBe('1 of 4 owned');
+    });
+
+    it('shows the owned-of-total text for two owned coins', async () => {
+      setStoredToken('tok-abc');
+      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_TWO_OWNED }));
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-owned-count')).toBeInTheDocument();
+      });
+      expect(screen.getByTestId('set-editor-owned-count').textContent).toBe('2 of 4 owned');
     });
 
     it('clicking cancel in the confirmation dialog closes it without deleting', async () => {
@@ -647,6 +741,112 @@ describe('SetEditorPage', () => {
       await waitFor(() => {
         expect(pushMock).toHaveBeenCalledWith('/dashboard');
       });
+    });
+  });
+
+  describe('run_20261011_095624 criterion 13: danger delete dialog and reassurance note', () => {
+    async function openDeleteDialog() {
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
+      });
+      await user.click(screen.getByTestId('set-editor-actions-trigger'));
+      await user.click(screen.getByTestId('set-editor-delete-button'));
+      return user;
+    }
+
+    it('renders the delete dialog in the danger variant with a danger confirm button', async () => {
+      setStoredToken('tok-abc');
+      await openDeleteDialog();
+
+      expect(screen.getByTestId('set-editor-delete-confirm-panel')).toHaveAttribute('data-variant', 'danger');
+      expect(screen.getByTestId('set-editor-delete-confirm-panel')).toHaveAttribute('role', 'alertdialog');
+      expect(screen.getByTestId('set-editor-delete-confirm-confirm').className).toContain('bg-danger');
+    });
+
+    it('shows the coin count in the body', async () => {
+      setStoredToken('tok-abc');
+      await openDeleteDialog();
+
+      expect(screen.getByTestId('set-editor-delete-confirm')).toHaveTextContent('list of 4 coins');
+    });
+
+    it('shows the reassurance note when the owner owns coins from the set, with the owned count', async () => {
+      setStoredToken('tok-abc');
+      await openDeleteDialog();
+
+      const note = screen.getByTestId('set-editor-delete-confirm-safe');
+      expect(note).toHaveTextContent(/^Your collection is safe: the 1 coins/);
+    });
+
+    it('the reassurance note follows the owned count', async () => {
+      setStoredToken('tok-abc');
+      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_TWO_OWNED }));
+      await openDeleteDialog();
+
+      expect(screen.getByTestId('set-editor-delete-confirm-safe')).toHaveTextContent(
+        /^Your collection is safe: the 2 coins/,
+      );
+    });
+
+    it('omits the reassurance note when the owner owns nothing from the set', async () => {
+      setStoredToken('tok-abc');
+      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_NONE_OWNED }));
+      await openDeleteDialog();
+
+      expect(screen.getByTestId('set-editor-delete-confirm')).toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-delete-confirm-safe')).not.toBeInTheDocument();
+      expect(screen.getByTestId('set-editor-delete-confirm')).not.toHaveTextContent('Your collection is safe');
+    });
+  });
+
+  describe('run_20261011_095624 criterion 14: after a successful delete', () => {
+    async function confirmDelete() {
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
+      });
+      await user.click(screen.getByTestId('set-editor-actions-trigger'));
+      await user.click(screen.getByTestId('set-editor-delete-button'));
+      await user.click(screen.getByTestId('set-editor-delete-confirm-confirm'));
+    }
+
+    it('stores the set name for the dashboard notice and goes to /dashboard', async () => {
+      setStoredToken('tok-abc');
+      useDeleteSetMock.mockReturnValue(mutationMock({ resolvedValue: undefined }));
+      await confirmDelete();
+
+      await waitFor(() => {
+        expect(pushMock).toHaveBeenCalledWith('/dashboard');
+      });
+      expect(sessionStorage.getItem('ccc-set-deleted')).toBe('My Wheat Cents');
+    });
+
+    it('does not set the notice flag or navigate when the delete fails', async () => {
+      setStoredToken('tok-abc');
+      useDeleteSetMock.mockReturnValue(mutationMock({ rejectedValue: new Error('boom') }));
+      await confirmDelete();
+
+      expect(sessionStorage.getItem('ccc-set-deleted')).toBeNull();
+      expect(pushMock).not.toHaveBeenCalled();
+    });
+
+    it('does not set the flag before the delete is confirmed', async () => {
+      setStoredToken('tok-abc');
+      useDeleteSetMock.mockReturnValue(mutationMock({ resolvedValue: undefined }));
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
+      });
+      await user.click(screen.getByTestId('set-editor-actions-trigger'));
+      await user.click(screen.getByTestId('set-editor-delete-button'));
+      await user.click(screen.getByTestId('set-editor-delete-confirm-cancel'));
+
+      expect(sessionStorage.getItem('ccc-set-deleted')).toBeNull();
+      expect(pushMock).not.toHaveBeenCalled();
     });
   });
 

@@ -3,6 +3,7 @@
 import { useQueries } from '@tanstack/react-query';
 import Link from 'next/link';
 import { RequireAuth } from '@/components/auth/require-auth';
+import { SetDeletedNotice } from '@/components/sets/set-deleted-notice';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { useUserSets } from '@/lib/hooks/use-user-sets';
 import { getSetGaps } from '@/lib/user-sets-api';
@@ -39,6 +40,8 @@ export default function DashboardPage() {
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <h1 className="text-[28px] font-normal [font-family:var(--font-heading)]">{t('dashboard.title')}</h1>
         </div>
+
+        <SetDeletedNotice />
 
         {isLoading && (
           <div data-testid="dashboard-loading">
