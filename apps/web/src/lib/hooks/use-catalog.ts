@@ -1,12 +1,27 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import type { CatalogCoin, CreateCoinRequest, PaginatedResponse, SubmittedCoin } from '@coin-collector/shared';
-import { getCatalog, getCoin, submitCoin, type CatalogFilters } from '@/lib/catalog-api';
+import { getCatalog, getCatalogFacets, getCoin, submitCoin, type CatalogFilters } from '@/lib/catalog-api';
 import { ApiError } from '@/lib/api-client';
 
+/** Facets change only when the catalog import runs, so cache them for 5 minutes. */
+export const CATALOG_FACETS_STALE_TIME = 300_000;
+
+// keepPreviousData: while the next filters load, the previous total and list stay on screen
+// instead of flickering back to a skeleton.
 export function useCatalog(filters: CatalogFilters) {
   return useQuery({
     queryKey: ['catalog', filters],
     queryFn: () => getCatalog(filters),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useCatalogFacets(country?: string) {
+  return useQuery({
+    queryKey: ['catalog', 'facets', country ?? ''],
+    queryFn: () => getCatalogFacets(country),
+    staleTime: CATALOG_FACETS_STALE_TIME,
+    placeholderData: keepPreviousData,
   });
 }
 
