@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type { CatalogCoin, PaginatedResponse, SubmittedCoin } from '@coin-collector/shared';
+import { compareDenominations } from '@coin-collector/shared';
+import type { CatalogCoin, CatalogFacets, CatalogSort, PaginatedResponse, SubmittedCoin } from '@coin-collector/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { FindCatalogQueryDto } from './dto/find-catalog-query.dto';
 import { CreateCoinDto } from './dto/create-coin.dto';
@@ -39,6 +40,30 @@ export const CATALOG_COIN_SELECT = {
 // so the submitter (and nobody else) sees why their coin was rejected.
 export const SUBMITTED_COIN_SELECT = { ...CATALOG_COIN_SELECT, rejectionReason: true } satisfies Prisma.CoinSelect;
 
+// Every sort ends on id so pagination is stable.
+const SORT_ORDER: Record<CatalogSort, Prisma.CoinOrderByWithRelationInput[]> = {
+  year_asc: [{ year: 'asc' }, { id: 'asc' }],
+  year_desc: [{ year: 'desc' }, { id: 'asc' }],
+  name_asc: [{ name: 'asc' }, { year: 'asc' }, { id: 'asc' }],
+};
+
+function normaliseDenominations(value: string | string[] | undefined): string[] {
+  const list = Array.isArray(value) ? value : value !== undefined ? [value] : [];
+  return list.map((entry) => entry.trim()).filter((entry) => entry !== '');
+}
+
+function denominationClause(denominations: string[]): Prisma.CoinWhereInput {
+  if (denominations.length === 0) return {};
+  if (denominations.length === 1) {
+    return { denomination: { equals: denominations[0], mode: 'insensitive' as const } };
+  }
+  return {
+    OR: denominations.map((denomination) => ({
+      denomination: { equals: denomination, mode: 'insensitive' as const },
+    })),
+  };
+}
+
 @Injectable()
 export class CatalogService {
   constructor(private readonly prisma: PrismaService) {}
@@ -54,7 +79,7 @@ export class CatalogService {
     const where: Prisma.CoinWhereInput = {
       ...(ownSubmissions ? { submittedByUserId: userId } : { status: 'approved' }),
       ...(query.country ? { country: { equals: query.country, mode: 'insensitive' as const } } : {}),
-      ...(query.denomination ? { denomination: { equals: query.denomination, mode: 'insensitive' as const } } : {}),
+      ...denominationClause(normaliseDenominations(query.denomination)),
       ...(query.name ? { name: { contains: query.name, mode: 'insensitive' as const } } : {}),
       ...(query.yearMin !== undefined || query.yearMax !== undefined
         ? {
@@ -64,13 +89,16 @@ export class CatalogService {
             },
           }
         : {}),
+      ...(query.keyDateOnly === true ? { isKeyDate: true } : {}),
+      // Like submittedByMe, only honoured for an authenticated caller.
+      ...(query.hideOwned === true && userId ? { ownerships: { none: { userId } } } : {}),
     };
 
     const listArgs = {
       where,
       skip: (page - 1) * limit,
       take: limit,
-      orderBy: [{ year: 'asc' }, { id: 'asc' }],
+      orderBy: SORT_ORDER[query.sort ?? 'year_asc'],
     } satisfies Prisma.CoinFindManyArgs;
 
     // Two explicit calls (rather than one call with a conditional `select`) keep each
@@ -82,6 +110,32 @@ export class CatalogService {
     const [items, total] = await Promise.all([itemsQuery, this.prisma.coin.count({ where })]);
 
     return { items, page, limit, total };
+  }
+
+  // Option lists for the catalog sidebar. These selects return a single column each, never a
+  // coin row, so CATALOG_COIN_SELECT doesn't apply.
+  async findFacets(country?: string): Promise<CatalogFacets> {
+    const scopedCountry = country?.trim();
+    const [countryRows, denominationRows] = await Promise.all([
+      this.prisma.coin.findMany({
+        where: { status: 'approved' },
+        distinct: ['country'],
+        select: { country: true },
+      }),
+      this.prisma.coin.findMany({
+        where: {
+          status: 'approved',
+          ...(scopedCountry ? { country: { equals: scopedCountry, mode: 'insensitive' as const } } : {}),
+        },
+        distinct: ['denomination'],
+        select: { denomination: true },
+      }),
+    ]);
+
+    return {
+      countries: countryRows.map((row) => row.country).sort((a, b) => a.localeCompare(b, 'en')),
+      denominations: denominationRows.map((row) => row.denomination).sort(compareDenominations),
+    };
   }
 
   async findOne(id: string): Promise<CatalogCoin> {

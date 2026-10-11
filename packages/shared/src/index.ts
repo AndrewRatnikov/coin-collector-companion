@@ -88,6 +88,38 @@ export interface PaginatedResponse<T> {
   total: number;
 }
 
+// GET /catalog?sort=. The default keeps the historical order (year, then id).
+export type CatalogSort = 'year_asc' | 'year_desc' | 'name_asc';
+export const CATALOG_SORTS: readonly CatalogSort[] = ['year_asc', 'year_desc', 'name_asc'];
+export const DEFAULT_CATALOG_SORT: CatalogSort = 'year_asc';
+
+// GET /catalog/facets?country= — the option lists for the catalog filter sidebar.
+export interface CatalogFacets {
+  countries: string[]; // distinct country of approved coins, A–Z
+  denominations: string[]; // distinct denomination of approved coins, scoped to ?country= when given
+}
+
+/** The number shown in a coin placeholder: "10 Hryvnias" -> "10", "Cent" -> "1". */
+export function getDenominationNumeral(denomination: string): string {
+  const leading = /^\s*(\d+(?:[.,]\d+)?)/.exec(denomination);
+  if (leading) return leading[1];
+  const anywhere = /(\d+(?:[.,]\d+)?)/.exec(denomination);
+  if (anywhere) return anywhere[1];
+  return '1';
+}
+
+function denominationValue(denomination: string): number {
+  const value = parseFloat(getDenominationNumeral(denomination).replace(',', '.'));
+  return Number.isNaN(value) ? 0 : value;
+}
+
+/** Facet order: numeral numerically (',' read as '.'), then by name. */
+export function compareDenominations(a: string, b: string): number {
+  const diff = denominationValue(a) - denominationValue(b);
+  if (diff !== 0) return diff;
+  return a.localeCompare(b, 'en');
+}
+
 export interface UserSetSummary {
   id: string;
   userId: string;

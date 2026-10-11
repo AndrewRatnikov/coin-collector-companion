@@ -3,13 +3,14 @@
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Module: catalog-api
  *                   runs/run_20260725_140648/plan.md § Interface Contract → Frontend — apps/web/src/lib/catalog-api.ts (MODIFY)
  *                   runs/run_20260731_132040/plan.md § Interface Contract → Type: CatalogFilters.submittedByMe (MODIFY)
+ *                   runs/run_20261011_105146/plan.md § Interface Contract → Web API client: catalog-api.ts (MODIFY)
  * Covers criteria: #1 (from run_20260721_131640's prd.md), #3 (from run_20260725_140648's prd.md),
- *                  #1 (from run_20260731_132040's prd.md)
+ *                  #1 (from run_20260731_132040's prd.md), #6 (from run_20261011_105146's prd.md)
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // fetch is mocked via vi.stubGlobal, not vi.mock(), see vitest.setup.ts
-import { getCatalog, getCoin, submitCoin } from '@/lib/catalog-api';
+import { getCatalog, getCatalogFacets, getCoin, submitCoin } from '@/lib/catalog-api';
 
 function stubFetchResolving(status: number, body: unknown) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -92,6 +93,105 @@ describe('catalog-api', () => {
       await getCatalog({ country: 'USA' });
       const [url] = fetchMock.mock.calls[0] as [string];
       expect(url).not.toContain('submittedByMe');
+    });
+  });
+
+  describe('run_20261011_105146 criterion 6: getCatalog repeated denomination and new filters', () => {
+    it('sends an array denomination as repeated params, in order', async () => {
+      const fetchMock = stubFetchResolving(200, PAGE);
+      await getCatalog({ denomination: ['5 Kopiyok', '10 Hryvnias'] });
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(new URL(url, 'http://x').searchParams.getAll('denomination')).toEqual(['5 Kopiyok', '10 Hryvnias']);
+    });
+
+    it('sends a three-entry array as three params (not hard-coded to two)', async () => {
+      const fetchMock = stubFetchResolving(200, PAGE);
+      await getCatalog({ denomination: ['a', 'b', 'c'] });
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(new URL(url, 'http://x').searchParams.getAll('denomination')).toEqual(['a', 'b', 'c']);
+    });
+
+    it('adds nothing for an empty denomination array', async () => {
+      const fetchMock = stubFetchResolving(200, PAGE);
+      await getCatalog({ denomination: [], name: 'Lincoln' });
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url).not.toContain('denomination');
+      expect(url).toContain('name=Lincoln');
+    });
+
+    it('skips empty strings inside a denomination array', async () => {
+      const fetchMock = stubFetchResolving(200, PAGE);
+      await getCatalog({ denomination: ['Cent', ''] });
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(new URL(url, 'http://x').searchParams.getAll('denomination')).toEqual(['Cent']);
+    });
+
+    it('still sends a scalar denomination as a single param', async () => {
+      const fetchMock = stubFetchResolving(200, PAGE);
+      await getCatalog({ denomination: 'Cent' });
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(new URL(url, 'http://x').searchParams.getAll('denomination')).toEqual(['Cent']);
+    });
+
+    it('sends keyDateOnly, hideOwned and sort when set', async () => {
+      const fetchMock = stubFetchResolving(200, PAGE);
+      await getCatalog({ keyDateOnly: true, hideOwned: true, sort: 'year_desc' });
+      const [url] = fetchMock.mock.calls[0] as [string];
+      const params = new URL(url, 'http://x').searchParams;
+      expect(params.get('keyDateOnly')).toBe('true');
+      expect(params.get('hideOwned')).toBe('true');
+      expect(params.get('sort')).toBe('year_desc');
+    });
+
+    it('omits keyDateOnly, hideOwned and sort when not provided', async () => {
+      const fetchMock = stubFetchResolving(200, PAGE);
+      await getCatalog({ country: 'USA' });
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url).not.toContain('keyDateOnly');
+      expect(url).not.toContain('hideOwned');
+      expect(url).not.toContain('sort');
+    });
+  });
+
+  describe('run_20261011_105146 criterion 6: getCatalogFacets calls GET /catalog/facets', () => {
+    const FACETS = { countries: ['Ukraine', 'USA'], denominations: ['5 Kopiyok'] };
+
+    it('requests /catalog/facets with no query string when no country is given', async () => {
+      const fetchMock = stubFetchResolving(200, FACETS);
+      await getCatalogFacets();
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url.endsWith('/catalog/facets')).toBe(true);
+    });
+
+    it('requests /catalog/facets?country=Ukraine when a country is given', async () => {
+      const fetchMock = stubFetchResolving(200, FACETS);
+      await getCatalogFacets('Ukraine');
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url.endsWith('/catalog/facets?country=Ukraine')).toBe(true);
+    });
+
+    it('URL-encodes the country', async () => {
+      const fetchMock = stubFetchResolving(200, FACETS);
+      await getCatalogFacets('Sri Lanka & Co');
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(new URL(url, 'http://x').searchParams.get('country')).toBe('Sri Lanka & Co');
+    });
+
+    it('treats an empty-string country as absent', async () => {
+      const fetchMock = stubFetchResolving(200, FACETS);
+      await getCatalogFacets('');
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url.endsWith('/catalog/facets')).toBe(true);
+    });
+
+    it('returns the CatalogFacets body as-is', async () => {
+      stubFetchResolving(200, FACETS);
+      await expect(getCatalogFacets()).resolves.toEqual(FACETS);
+    });
+
+    it('propagates a rejection on a server error', async () => {
+      stubFetchResolving(500, { message: 'boom' });
+      await expect(getCatalogFacets()).rejects.toThrow();
     });
   });
 

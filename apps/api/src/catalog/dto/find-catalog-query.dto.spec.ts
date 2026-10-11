@@ -4,6 +4,10 @@
  *                   DTO test file: find-catalog-query.dto.spec.ts (CREATE)
  * Covers criteria: #1, #2, #3 (from prd.md)
  *
+ * run_20261011_105146: adds denomination (single or repeated), keyDateOnly, hideOwned and sort.
+ * Contract source: runs/run_20261011_105146/plan.md § Interface Contract → DTO: FindCatalogQueryDto
+ * Covers criteria: #1, #2, #3, #4 (from run_20261011_105146's prd.md)
+ *
  * CONTRACT_GAP: none.
  *
  * Exercises the real class-validator/class-transformer decorators declared on
@@ -55,5 +59,103 @@ describe('FindCatalogQueryDto.submittedByMe (criteria #1, #2, #3)', () => {
     expect(instance.country).toBe('USA');
     expect(instance.yearMin).toBe(1909);
     expect(errors).toHaveLength(0);
+  });
+});
+
+describe('FindCatalogQueryDto.denomination (run_20261011_105146 criterion #1)', () => {
+  it('normalises a single value into a one-element array', async () => {
+    const { instance, errors } = await validateQuery({ denomination: 'Cent' });
+    expect(instance.denomination).toEqual(['Cent']);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('keeps a repeated value (already an array) as the same two entries in order', async () => {
+    const { instance, errors } = await validateQuery({ denomination: ['5 Kopiyok', '10 Hryvnias'] });
+    expect(instance.denomination).toEqual(['5 Kopiyok', '10 Hryvnias']);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('leaves denomination undefined when the key is absent, with no validation errors', async () => {
+    const { instance, errors } = await validateQuery({});
+    expect(instance.denomination).toBeUndefined();
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects an array that contains a non-string entry', async () => {
+    const { errors } = await validateQuery({ denomination: ['Cent', 5] });
+    expect(errors).toHaveLength(1);
+    expect(errors[0].property).toBe('denomination');
+  });
+});
+
+describe('FindCatalogQueryDto.keyDateOnly (run_20261011_105146 criterion #2)', () => {
+  it('transforms "true" into the boolean true', async () => {
+    const { instance, errors } = await validateQuery({ keyDateOnly: 'true' });
+    expect(instance.keyDateOnly).toBe(true);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('transforms "false" into the boolean false', async () => {
+    const { instance, errors } = await validateQuery({ keyDateOnly: 'false' });
+    expect(instance.keyDateOnly).toBe(false);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('transforms any other string (e.g. "yes") into false', async () => {
+    const { instance, errors } = await validateQuery({ keyDateOnly: 'yes' });
+    expect(instance.keyDateOnly).toBe(false);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('leaves keyDateOnly undefined when absent', async () => {
+    const { instance, errors } = await validateQuery({});
+    expect(instance.keyDateOnly).toBeUndefined();
+    expect(errors).toHaveLength(0);
+  });
+});
+
+describe('FindCatalogQueryDto.hideOwned (run_20261011_105146 criterion #3)', () => {
+  it('transforms "true" into the boolean true', async () => {
+    const { instance, errors } = await validateQuery({ hideOwned: 'true' });
+    expect(instance.hideOwned).toBe(true);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('transforms "false" into the boolean false', async () => {
+    const { instance, errors } = await validateQuery({ hideOwned: 'false' });
+    expect(instance.hideOwned).toBe(false);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('transforms any other string (e.g. "1") into false', async () => {
+    const { instance, errors } = await validateQuery({ hideOwned: '1' });
+    expect(instance.hideOwned).toBe(false);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('leaves hideOwned undefined when absent', async () => {
+    const { instance, errors } = await validateQuery({});
+    expect(instance.hideOwned).toBeUndefined();
+    expect(errors).toHaveLength(0);
+  });
+});
+
+describe('FindCatalogQueryDto.sort (run_20261011_105146 criterion #4)', () => {
+  it('defaults to year_asc when absent', async () => {
+    const { instance, errors } = await validateQuery({});
+    expect(instance.sort).toBe('year_asc');
+    expect(errors).toHaveLength(0);
+  });
+
+  it.each(['year_asc', 'year_desc', 'name_asc'])('accepts %s and keeps its value', async (sort) => {
+    const { instance, errors } = await validateQuery({ sort });
+    expect(instance.sort).toBe(sort);
+    expect(errors).toHaveLength(0);
+  });
+
+  it('rejects an unknown value with exactly one error on the sort property', async () => {
+    const { errors } = await validateQuery({ sort: 'bogus' });
+    expect(errors).toHaveLength(1);
+    expect(errors[0].property).toBe('sort');
   });
 });

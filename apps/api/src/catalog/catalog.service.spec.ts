@@ -4,10 +4,12 @@
  *                   runs/run_20260725_140648/plan.md § Interface Contract → Backend — CatalogService (MODIFY)
  *                   runs/run_20260731_132040/plan.md § Interface Contract → Service: CatalogService.findAll (MODIFY)
  *                   runs/run_20261001_224939/plan.md § Interface Contract → Service: CatalogService (MODIFY)
+ *                   runs/run_20261011_105146/plan.md § Interface Contract → Service: CatalogService (MODIFY)
  * Covers criteria: #2, #3, #4, #5, #6, #7, #8, #9, #11 (from run_20260719_190933's prd.md),
  *                  #1, #2, #3, #4 (from run_20260725_140648's prd.md),
  *                  #1, #2, #3, #4, #5 (from run_20260731_132040's prd.md),
- *                  #13, #14 (from run_20261001_224939's prd.md)
+ *                  #13, #14 (from run_20261001_224939's prd.md),
+ *                  #1, #2, #3, #4, #5 (from run_20261011_105146's prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -32,6 +34,10 @@
  * run_20261001_224939: CATALOG_COIN_SELECT is now exported and SUBMITTED_COIN_SELECT is added.
  * Only the new describe block "findAll — rejectionReason visibility" and the two new imports are
  * added; every existing block is untouched.
+ *
+ * run_20261011_105146: new describe blocks for multi-value denomination, keyDateOnly, hideOwned,
+ * sort, and findFacets (distinct countries/denominations, scoping, ordering). The facets mock
+ * tells the two findMany calls apart by `args.distinct[0]` ('country' vs 'denomination').
  */
 
 import { ConflictException, NotFoundException } from '@nestjs/common';
@@ -409,6 +415,313 @@ describe('CatalogService', () => {
       const findManyWhere = mockPrismaService.coin.findMany.mock.calls[0][0].where;
       const countWhere = mockPrismaService.coin.count.mock.calls[0][0].where;
       expect(findManyWhere).toEqual(countWhere);
+    });
+  });
+
+  describe('findAll — multi-value denomination (run_20261011_105146 criterion #1)', () => {
+    it('two or more values become a case-insensitive OR in input order, with no where.denomination key', async () => {
+      await service.findAll(makeQuery({ denomination: ['5 Kopiyok', '10 Hryvnias'] }));
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.OR).toEqual([
+        { denomination: { equals: '5 Kopiyok', mode: 'insensitive' } },
+        { denomination: { equals: '10 Hryvnias', mode: 'insensitive' } },
+      ]);
+      expect(where.denomination).toBeUndefined();
+    });
+
+    it('a different pair of values yields a different OR (not hard-coded)', async () => {
+      await service.findAll(makeQuery({ denomination: ['1 Cent', '5 Cents', '10 Cents'] }));
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.OR).toHaveLength(3);
+      expect(where.OR[2]).toEqual({ denomination: { equals: '10 Cents', mode: 'insensitive' } });
+    });
+
+    it('a one-element array behaves like the single string: where.denomination and no where.OR', async () => {
+      await service.findAll(makeQuery({ denomination: ['Cent'] }));
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.denomination).toEqual({ equals: 'Cent', mode: 'insensitive' });
+      expect(where.OR).toBeUndefined();
+    });
+
+    it('a single plain string produces no where.OR', async () => {
+      await service.findAll(makeQuery({ denomination: 'Cent' }));
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.OR).toBeUndefined();
+    });
+
+    it('trims entries and drops blank ones before deciding single versus OR', async () => {
+      await service.findAll(makeQuery({ denomination: ['  Cent  ', '   ', ''] }));
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.denomination).toEqual({ equals: 'Cent', mode: 'insensitive' });
+      expect(where.OR).toBeUndefined();
+    });
+
+    it('an array of only blank entries adds no denomination clause at all', async () => {
+      await service.findAll(makeQuery({ denomination: ['', '  '] }));
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.denomination).toBeUndefined();
+      expect(where.OR).toBeUndefined();
+    });
+
+    it('passes the same OR where clause to the count query', async () => {
+      await service.findAll(makeQuery({ denomination: ['5 Kopiyok', '10 Hryvnias'] }));
+
+      const findManyWhere = mockPrismaService.coin.findMany.mock.calls[0][0].where;
+      const countWhere = mockPrismaService.coin.count.mock.calls[0][0].where;
+      expect(countWhere).toEqual(findManyWhere);
+      expect(countWhere.OR).toHaveLength(2);
+    });
+
+    it('still applies status approved alongside the OR', async () => {
+      await service.findAll(makeQuery({ denomination: ['5 Kopiyok', '10 Hryvnias'], country: 'Ukraine' }));
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.status).toBe('approved');
+      expect(where.country).toEqual({ equals: 'Ukraine', mode: 'insensitive' });
+    });
+  });
+
+  describe('findAll — keyDateOnly (run_20261011_105146 criterion #2)', () => {
+    it('adds isKeyDate: true when keyDateOnly is true', async () => {
+      await service.findAll(makeQuery({ keyDateOnly: true }));
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.isKeyDate).toBe(true);
+    });
+
+    it('omits isKeyDate when keyDateOnly is false', async () => {
+      await service.findAll(makeQuery({ keyDateOnly: false }));
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.isKeyDate).toBeUndefined();
+    });
+
+    it('omits isKeyDate when keyDateOnly is unset', async () => {
+      await service.findAll(makeQuery());
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.isKeyDate).toBeUndefined();
+    });
+
+    it('applies isKeyDate to the count query too', async () => {
+      await service.findAll(makeQuery({ keyDateOnly: true }));
+
+      const countWhere = mockPrismaService.coin.count.mock.calls[0][0].where;
+      expect(countWhere.isKeyDate).toBe(true);
+    });
+  });
+
+  describe('findAll — hideOwned (run_20261011_105146 criterion #3)', () => {
+    it('adds ownerships: { none: { userId } } when hideOwned is true and a userId is given', async () => {
+      await service.findAll(makeQuery({ hideOwned: true }), SUBMITTER_USER_ID);
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.ownerships).toEqual({ none: { userId: SUBMITTER_USER_ID } });
+    });
+
+    it('uses the calling user id, not a constant', async () => {
+      await service.findAll(makeQuery({ hideOwned: true }), OTHER_USER_ID);
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.ownerships).toEqual({ none: { userId: OTHER_USER_ID } });
+    });
+
+    it('is silently ignored for an anonymous caller (no userId)', async () => {
+      await service.findAll(makeQuery({ hideOwned: true }));
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.ownerships).toBeUndefined();
+      expect(where.status).toBe('approved');
+    });
+
+    it('is not applied when hideOwned is false, even with a userId', async () => {
+      await service.findAll(makeQuery({ hideOwned: false }), SUBMITTER_USER_ID);
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.ownerships).toBeUndefined();
+    });
+
+    it('is not applied when hideOwned is unset, even with a userId', async () => {
+      await service.findAll(makeQuery(), SUBMITTER_USER_ID);
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.ownerships).toBeUndefined();
+    });
+
+    it('combines with submittedByMe when both are set', async () => {
+      await service.findAll(makeQuery({ hideOwned: true, submittedByMe: true }), SUBMITTER_USER_ID);
+
+      const { where } = mockPrismaService.coin.findMany.mock.calls[0][0];
+      expect(where.submittedByUserId).toBe(SUBMITTER_USER_ID);
+      expect(where.ownerships).toEqual({ none: { userId: SUBMITTER_USER_ID } });
+    });
+
+    it('applies the same ownerships clause to the count query', async () => {
+      await service.findAll(makeQuery({ hideOwned: true }), SUBMITTER_USER_ID);
+
+      const findManyWhere = mockPrismaService.coin.findMany.mock.calls[0][0].where;
+      const countWhere = mockPrismaService.coin.count.mock.calls[0][0].where;
+      expect(countWhere).toEqual(findManyWhere);
+    });
+  });
+
+  describe('findAll — sort (run_20261011_105146 criterion #4)', () => {
+    it('year_asc orders by year then id ascending', async () => {
+      await service.findAll(makeQuery({ sort: 'year_asc' }));
+
+      expect(mockPrismaService.coin.findMany.mock.calls[0][0].orderBy).toEqual([{ year: 'asc' }, { id: 'asc' }]);
+    });
+
+    it('year_desc orders by year descending then id ascending', async () => {
+      await service.findAll(makeQuery({ sort: 'year_desc' }));
+
+      expect(mockPrismaService.coin.findMany.mock.calls[0][0].orderBy).toEqual([{ year: 'desc' }, { id: 'asc' }]);
+    });
+
+    it('name_asc orders by name, then year, then id ascending', async () => {
+      await service.findAll(makeQuery({ sort: 'name_asc' }));
+
+      expect(mockPrismaService.coin.findMany.mock.calls[0][0].orderBy).toEqual([
+        { name: 'asc' },
+        { year: 'asc' },
+        { id: 'asc' },
+      ]);
+    });
+
+    it('defaults to year_asc when the DTO is unmodified', async () => {
+      await service.findAll(makeQuery());
+
+      expect(mockPrismaService.coin.findMany.mock.calls[0][0].orderBy).toEqual([{ year: 'asc' }, { id: 'asc' }]);
+    });
+
+    it('falls back to year_asc when sort is explicitly undefined', async () => {
+      await service.findAll(makeQuery({ sort: undefined }));
+
+      expect(mockPrismaService.coin.findMany.mock.calls[0][0].orderBy).toEqual([{ year: 'asc' }, { id: 'asc' }]);
+    });
+
+    it('still uses exactly CATALOG_COIN_SELECT on the public read', async () => {
+      await service.findAll(makeQuery({ sort: 'name_asc', keyDateOnly: true, denomination: ['a', 'b'] }));
+
+      expect(mockPrismaService.coin.findMany.mock.calls[0][0].select).toEqual(CATALOG_COIN_SELECT);
+    });
+  });
+
+  describe('findFacets (run_20261011_105146 criterion #5)', () => {
+    function mockFacetRows(countries: string[], denominations: string[]) {
+      mockPrismaService.coin.findMany.mockImplementation((args: { distinct: string[] }) => {
+        if (args.distinct[0] === 'country') {
+          return Promise.resolve(countries.map((country) => ({ country })));
+        }
+        return Promise.resolve(denominations.map((denomination) => ({ denomination })));
+      });
+    }
+
+    function callFor(distinct: 'country' | 'denomination') {
+      const call = mockPrismaService.coin.findMany.mock.calls.find(
+        (args: unknown[]) => (args[0] as { distinct: string[] }).distinct[0] === distinct,
+      );
+      return call?.[0];
+    }
+
+    it('makes exactly two findMany calls, with the exact args, when no country is given', async () => {
+      mockFacetRows([], []);
+
+      await service.findFacets();
+
+      expect(mockPrismaService.coin.findMany).toHaveBeenCalledTimes(2);
+      expect(callFor('country')).toEqual({
+        where: { status: 'approved' },
+        distinct: ['country'],
+        select: { country: true },
+      });
+      expect(callFor('denomination')).toEqual({
+        where: { status: 'approved' },
+        distinct: ['denomination'],
+        select: { denomination: true },
+      });
+    });
+
+    it('scopes only the denomination query to the given country, case-insensitively', async () => {
+      mockFacetRows([], []);
+
+      await service.findFacets('Ukraine');
+
+      expect(callFor('denomination').where).toEqual({
+        status: 'approved',
+        country: { equals: 'Ukraine', mode: 'insensitive' },
+      });
+      expect(callFor('country').where).toEqual({ status: 'approved' });
+    });
+
+    it('treats a blank or whitespace-only country as absent', async () => {
+      mockFacetRows([], []);
+
+      await service.findFacets('   ');
+
+      expect(callFor('denomination').where).toEqual({ status: 'approved' });
+    });
+
+    it('treats an empty-string country as absent', async () => {
+      mockFacetRows([], []);
+
+      await service.findFacets('');
+
+      expect(callFor('denomination').where).toEqual({ status: 'approved' });
+    });
+
+    it('returns countries sorted A-Z', async () => {
+      mockFacetRows(['Ukraine', 'Canada', 'USA'], []);
+
+      const result = await service.findFacets();
+
+      expect(result.countries).toEqual(['Canada', 'Ukraine', 'USA']);
+    });
+
+    it('sorts a different country set differently (not hard-coded)', async () => {
+      mockFacetRows(['Zimbabwe', 'Albania'], []);
+
+      const result = await service.findFacets();
+
+      expect(result.countries).toEqual(['Albania', 'Zimbabwe']);
+    });
+
+    it('sorts denominations by numeral numerically, then by name', async () => {
+      mockFacetRows([], ['50 Kopiyok', '10 Hryvnias', 'Cent', '1 Hryvnia', '10 Kopiyok']);
+
+      const result = await service.findFacets();
+
+      expect(result.denominations).toEqual(['1 Hryvnia', 'Cent', '10 Hryvnias', '10 Kopiyok', '50 Kopiyok']);
+    });
+
+    it('reads a comma as a decimal point when ordering numerals', async () => {
+      mockFacetRows([], ['10 Kopiyok', '2,5 Kopiyok', '2 Kopiyok']);
+
+      const result = await service.findFacets();
+
+      expect(result.denominations).toEqual(['2 Kopiyok', '2,5 Kopiyok', '10 Kopiyok']);
+    });
+
+    it('returns empty lists when the catalog has no approved coins', async () => {
+      mockFacetRows([], []);
+
+      await expect(service.findFacets()).resolves.toEqual({ countries: [], denominations: [] });
+    });
+
+    it('never calls count/findFirst/findUnique', async () => {
+      mockFacetRows(['USA'], ['1 Cent']);
+
+      await service.findFacets();
+
+      expect(mockPrismaService.coin.count).not.toHaveBeenCalled();
+      expect(mockPrismaService.coin.findFirst).not.toHaveBeenCalled();
+      expect(mockPrismaService.coin.findUnique).not.toHaveBeenCalled();
     });
   });
 

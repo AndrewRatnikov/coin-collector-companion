@@ -9,7 +9,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
-import type { CatalogCoin, PaginatedResponse, SubmittedCoin } from '@coin-collector/shared';
+import type { CatalogCoin, CatalogFacets, PaginatedResponse, SubmittedCoin } from '@coin-collector/shared';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { OptionalCurrentUser } from '../auth/decorators/optional-current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -17,6 +17,7 @@ import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CatalogService } from './catalog.service';
 import { FindCatalogQueryDto } from './dto/find-catalog-query.dto';
+import { CatalogFacetsQueryDto } from './dto/catalog-facets-query.dto';
 import { CreateCoinDto } from './dto/create-coin.dto';
 
 @ApiTags('catalog')
@@ -35,6 +36,16 @@ export class CatalogController {
     @OptionalCurrentUser() user: AuthenticatedUser | undefined,
   ): Promise<PaginatedResponse<CatalogCoin | SubmittedCoin>> {
     return this.catalogService.findAll(query, user?.userId);
+  }
+
+  // Must stay declared before findOne: Nest registers routes in declaration order, and
+  // `:id` with ParseUUIDPipe would otherwise turn /catalog/facets into a 400.
+  @Public()
+  @Get('facets')
+  @ApiOperation({ summary: 'Distinct countries and denominations for the catalog filter sidebar' })
+  @ApiOkResponse({ description: 'Facet lists: countries A–Z, denominations (scoped to ?country=) by numeral' })
+  findFacets(@Query() query: CatalogFacetsQueryDto): Promise<CatalogFacets> {
+    return this.catalogService.findFacets(query.country);
   }
 
   @Public()

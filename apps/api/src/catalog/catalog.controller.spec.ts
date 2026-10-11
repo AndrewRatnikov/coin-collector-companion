@@ -4,8 +4,9 @@
  *                   runs/run_20260725_140648/plan.md § Interface Contract → Backend — CatalogController (MODIFY)
  *                   runs/run_20260731_132040/plan.md § Interface Contract → Controller: CatalogController.findAll (MODIFY),
  *                     Guard: OptionalJwtAuthGuard, Decorator: OptionalCurrentUser
+ *                   runs/run_20261011_105146/plan.md § Interface Contract → Controller: CatalogController (MODIFY)
  * Covers criteria: #1, #9 (from run_20260719_190933's prd.md), #3, #5 (from run_20260725_140648's prd.md),
- *                  #1, #2, #3 (from run_20260731_132040's prd.md)
+ *                  #1, #2, #3 (from run_20260731_132040's prd.md), #5 (from run_20261011_105146's prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -25,14 +26,19 @@
  * returns undefined instead) is unit-tested directly below per plan.md's Interface Contract —
  * OptionalJwtAuthGuard is imported from its exact contract path
  * (apps/api/src/auth/guards/optional-jwt-auth.guard.ts), no new file/name is invented.
+ *
+ * run_20261011_105146: GET /catalog/facets. Nest registers routes in prototype declaration order,
+ * so findFacets must be declared before findOne (`:id` + ParseUUIDPipe would 400 "facets").
  */
 
 import { ConflictException } from '@nestjs/common';
+import { PATH_METADATA } from '@nestjs/common/constants';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { CatalogController } from './catalog.controller';
 import { CatalogService } from './catalog.service';
 import { FindCatalogQueryDto } from './dto/find-catalog-query.dto';
+import { CatalogFacetsQueryDto } from './dto/catalog-facets-query.dto';
 import { CreateCoinDto } from './dto/create-coin.dto';
 import { IS_PUBLIC_KEY } from '../auth/decorators/public.decorator';
 import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
@@ -44,6 +50,7 @@ describe('CatalogController', () => {
   let controller: CatalogController;
   let mockCatalogService: {
     findAll: jest.Mock;
+    findFacets: jest.Mock;
     findOne: jest.Mock;
     create: jest.Mock;
   };
@@ -51,6 +58,7 @@ describe('CatalogController', () => {
   beforeEach(async () => {
     mockCatalogService = {
       findAll: jest.fn(),
+      findFacets: jest.fn(),
       findOne: jest.fn(),
       create: jest.fn(),
     };
@@ -72,6 +80,10 @@ describe('CatalogController', () => {
 
     it('marks findOne as public (GET /catalog/:id requires no auth)', () => {
       expect(reflector.get<boolean>(IS_PUBLIC_KEY, controller.findOne)).toBe(true);
+    });
+
+    it('marks findFacets as public (GET /catalog/facets requires no auth)', () => {
+      expect(reflector.get<boolean>(IS_PUBLIC_KEY, controller.findFacets)).toBe(true);
     });
 
     it('does NOT mark create as public — POST /catalog requires auth (criterion #5)', () => {
@@ -100,6 +112,47 @@ describe('CatalogController', () => {
 
       expect(mockCatalogService.findAll).toHaveBeenCalledWith(query, AUTH_USER.userId);
       expect(result).toBe(serviceResult);
+    });
+  });
+
+  describe('findFacets (run_20261011_105146 criterion #5)', () => {
+    it('is routed at GET path "facets"', () => {
+      expect(Reflect.getMetadata(PATH_METADATA, controller.findFacets)).toBe('facets');
+    });
+
+    it('is declared before findOne so Nest registers /catalog/facets ahead of /catalog/:id', () => {
+      const names = Object.getOwnPropertyNames(CatalogController.prototype);
+      expect(names).toContain('findFacets');
+      expect(names).toContain('findOne');
+      expect(names.indexOf('findFacets')).toBeLessThan(names.indexOf('findOne'));
+    });
+
+    it('delegates query.country to catalogService.findFacets and returns its result unchanged', async () => {
+      const query = Object.assign(new CatalogFacetsQueryDto(), { country: 'Ukraine' });
+      const serviceResult = { countries: ['Ukraine', 'USA'], denominations: ['5 Kopiyok'] };
+      mockCatalogService.findFacets.mockResolvedValue(serviceResult);
+
+      const result = await controller.findFacets(query);
+
+      expect(mockCatalogService.findFacets).toHaveBeenCalledWith('Ukraine');
+      expect(result).toBe(serviceResult);
+    });
+
+    it('passes undefined when no country is given', async () => {
+      mockCatalogService.findFacets.mockResolvedValue({ countries: [], denominations: [] });
+
+      await controller.findFacets(new CatalogFacetsQueryDto());
+
+      expect(mockCatalogService.findFacets).toHaveBeenCalledWith(undefined);
+    });
+
+    it('does not touch findAll or findOne', async () => {
+      mockCatalogService.findFacets.mockResolvedValue({ countries: [], denominations: [] });
+
+      await controller.findFacets(new CatalogFacetsQueryDto());
+
+      expect(mockCatalogService.findAll).not.toHaveBeenCalled();
+      expect(mockCatalogService.findOne).not.toHaveBeenCalled();
     });
   });
 

@@ -3,23 +3,33 @@
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Module: use-catalog hooks
  *                   runs/run_20260725_140648/plan.md § Interface Contract → Frontend — apps/web/src/lib/hooks/use-catalog.ts (MODIFY)
  *                   runs/run_20260731_132040/plan.md § Interface Contract → Hook: useMySubmissions (CREATE)
+ *                   runs/run_20261011_105146/plan.md § Interface Contract → Hooks: use-catalog.ts (MODIFY)
  * Covers criteria: #2 (from run_20260721_131640's prd.md), #3 (from run_20260725_140648's prd.md),
- *                  #6 (from run_20260731_132040's prd.md)
+ *                  #6 (from run_20260731_132040's prd.md), #15, #18 (from run_20261011_105146's prd.md)
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCatalog, useCoin, useMySubmissions, useSubmitCoin } from '@/lib/hooks/use-catalog';
-import { getCatalog, getCoin, submitCoin } from '@/lib/catalog-api';
+import {
+  CATALOG_FACETS_STALE_TIME,
+  useCatalog,
+  useCatalogFacets,
+  useCoin,
+  useMySubmissions,
+  useSubmitCoin,
+} from '@/lib/hooks/use-catalog';
+import { getCatalog, getCatalogFacets, getCoin, submitCoin } from '@/lib/catalog-api';
 
 vi.mock('@/lib/catalog-api', () => ({
   getCatalog: vi.fn(),
+  getCatalogFacets: vi.fn(),
   getCoin: vi.fn(),
   submitCoin: vi.fn(),
 }));
 
 const getCatalogMock = vi.mocked(getCatalog);
+const getCatalogFacetsMock = vi.mocked(getCatalogFacets);
 const getCoinMock = vi.mocked(getCoin);
 const submitCoinMock = vi.mocked(submitCoin);
 
@@ -31,6 +41,7 @@ function wrapper({ children }: { children: React.ReactNode }) {
 describe('use-catalog hooks', () => {
   beforeEach(() => {
     getCatalogMock.mockReset();
+    getCatalogFacetsMock.mockReset();
     getCoinMock.mockReset();
     submitCoinMock.mockReset();
   });
@@ -72,6 +83,142 @@ describe('use-catalog hooks', () => {
       await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
+    });
+  });
+
+  describe('run_20261011_105146 criterion 15: useCatalog keeps the previous data while the next filters load', () => {
+    it('keeps the old page as data (flagged as placeholder) while the new filters are still fetching', async () => {
+      const first = { items: [{ id: 'usa-1' }], page: 1, limit: 20, total: 1 };
+      let resolveSecond: (value: never) => void = () => {};
+      getCatalogMock.mockResolvedValueOnce(first as never);
+      getCatalogMock.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveSecond = resolve as (value: never) => void;
+          }),
+      );
+
+      const { result, rerender } = renderHook(({ filters }) => useCatalog(filters), {
+        wrapper,
+        initialProps: { filters: { country: 'USA' } },
+      });
+
+      await waitFor(() => expect(result.current.data).toEqual(first));
+
+      rerender({ filters: { country: 'Canada' } });
+
+      await waitFor(() => expect(getCatalogMock).toHaveBeenCalledTimes(2));
+      expect(result.current.data).toEqual(first);
+      expect(result.current.isPlaceholderData).toBe(true);
+
+      const second = { items: [{ id: 'can-1' }], page: 1, limit: 20, total: 1 };
+      resolveSecond(second as never);
+
+      await waitFor(() => expect(result.current.data).toEqual(second));
+      expect(result.current.isPlaceholderData).toBe(false);
+    });
+  });
+
+  describe('run_20261011_105146 criterion 18: useCatalogFacets', () => {
+    it('exports a 5 minute stale time', () => {
+      expect(CATALOG_FACETS_STALE_TIME).toBe(300000);
+    });
+
+    it('calls getCatalogFacets with the country and exposes the resolved facets', async () => {
+      const facets = { countries: ['Ukraine', 'USA'], denominations: ['5 Kopiyok'] };
+      getCatalogFacetsMock.mockResolvedValue(facets);
+
+      const { result } = renderHook(() => useCatalogFacets('Ukraine'), { wrapper });
+
+      await waitFor(() => expect(result.current.data).toEqual(facets));
+      expect(getCatalogFacetsMock).toHaveBeenCalledWith('Ukraine');
+    });
+
+    it('calls getCatalogFacets with undefined when no country is given', async () => {
+      getCatalogFacetsMock.mockResolvedValue({ countries: [], denominations: [] });
+
+      renderHook(() => useCatalogFacets(), { wrapper });
+
+      await waitFor(() => expect(getCatalogFacetsMock).toHaveBeenCalledTimes(1));
+      expect(getCatalogFacetsMock).toHaveBeenCalledWith(undefined);
+    });
+
+    it('stores results under ["catalog", "facets", country] and uses "" for no country', async () => {
+      getCatalogFacetsMock.mockImplementation((country) =>
+        Promise.resolve({ countries: ['Ukraine'], denominations: [country ?? 'all'] }),
+      );
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      function localWrapper({ children }: { children: React.ReactNode }) {
+        return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+      }
+
+      renderHook(() => useCatalogFacets(), { wrapper: localWrapper });
+      renderHook(() => useCatalogFacets('Ukraine'), { wrapper: localWrapper });
+
+      await waitFor(() => expect(getCatalogFacetsMock).toHaveBeenCalledTimes(2));
+      await waitFor(() => {
+        expect(queryClient.getQueryData(['catalog', 'facets', ''])).toEqual({
+          countries: ['Ukraine'],
+          denominations: ['all'],
+        });
+        expect(queryClient.getQueryData(['catalog', 'facets', 'Ukraine'])).toEqual({
+          countries: ['Ukraine'],
+          denominations: ['Ukraine'],
+        });
+      });
+    });
+
+    it('does not refetch on a second mount within the stale time (cached for 5 minutes)', async () => {
+      getCatalogFacetsMock.mockResolvedValue({ countries: ['USA'], denominations: [] });
+      const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+      function localWrapper({ children }: { children: React.ReactNode }) {
+        return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+      }
+
+      const first = renderHook(() => useCatalogFacets('USA'), { wrapper: localWrapper });
+      await waitFor(() => expect(first.result.current.data).toBeDefined());
+      first.unmount();
+
+      const second = renderHook(() => useCatalogFacets('USA'), { wrapper: localWrapper });
+      expect(second.result.current.data).toEqual({ countries: ['USA'], denominations: [] });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(getCatalogFacetsMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the previous country facets as data while the next country loads', async () => {
+      const ukraine = { countries: ['Ukraine', 'USA'], denominations: ['5 Kopiyok'] };
+      let resolveUsa: (value: never) => void = () => {};
+      getCatalogFacetsMock.mockResolvedValueOnce(ukraine);
+      getCatalogFacetsMock.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveUsa = resolve as (value: never) => void;
+          }),
+      );
+
+      const { result, rerender } = renderHook(({ country }) => useCatalogFacets(country), {
+        wrapper,
+        initialProps: { country: 'Ukraine' },
+      });
+      await waitFor(() => expect(result.current.data).toEqual(ukraine));
+
+      rerender({ country: 'USA' });
+
+      await waitFor(() => expect(getCatalogFacetsMock).toHaveBeenCalledTimes(2));
+      expect(result.current.data).toEqual(ukraine);
+
+      const usa = { countries: ['Ukraine', 'USA'], denominations: ['1 Cent'] };
+      resolveUsa(usa as never);
+      await waitFor(() => expect(result.current.data).toEqual(usa));
+    });
+
+    it('surfaces an error state when getCatalogFacets rejects', async () => {
+      getCatalogFacetsMock.mockRejectedValue(new Error('network down'));
+
+      const { result } = renderHook(() => useCatalogFacets(), { wrapper });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
     });
   });
 
