@@ -71,5 +71,21 @@
     "provider": "neon",
     "workdir": "apps/api",
     "schema": "prisma/schema.prisma"
+  },
+  "sizing": {
+    "max_files": 3,
+    "sensitive_paths": [
+      "apps/api/prisma/**",
+      "apps/api/src/prisma/**",
+      "apps/api/src/auth/**",
+      "apps/api/src/admin/**",
+      "apps/api/src/main.ts",
+      "apps/api/src/configure-app.ts",
+      "apps/api/src/app.module.ts",
+      "apps/web/src/lib/api-client.ts",
+      "packages/shared/**",
+      "seed/**",
+      "scripts/import-catalog/**"
+    ]
   }
 }
