@@ -4,12 +4,15 @@
  *                   runs/run_20260720_070901/plan.md § Interface Contract (Service: SetsService)
  *                   runs/run_20260720_142942/plan.md § Interface Contract (Service: SetsService — new method)
  *                   runs/run_20260720_171320/plan.md § Interface Contract (Test addition: getGaps — no-coins-owned case)
+ *                   runs/run_20261013_062900/plan.md § Interface Contract (API: SetsService — coinCount on list methods)
  * Covers criteria: #1, #3, #4, #5, #6, #7, #8, #9, #10 (from runs/run_20260719_200109/prd.md)
  *                   #1, #2 [validated in dto spec, not here], #3, #4, #5, #6, #7, #8, #9, #10,
  *                   #11, #12, #17 (from runs/run_20260720_070901/prd.md)
  *                   #9, #10, #11 (from runs/run_20260720_142942/prd.md)
  *                   #10 (from runs/run_20260720_171320/prd.md — pins the nonzero-total/zero-owned
  *                   gap-computation case, distinct from the pre-existing zero-*coin*-set case)
+ *                   #18, #19, #20 (from runs/run_20261013_062900/prd.md — coinCount from Prisma _count
+ *                   on findAllCanonical and findAllPublic, with no _count key leaking out)
  *
  * CONTRACT_GAP: none.
  *
@@ -481,16 +484,74 @@ describe('SetsService', () => {
     });
   });
 
-  describe('findAllCanonical (criterion #8 from run_20260720_070901/prd.md)', () => {
-    it('returns whatever prisma.canonicalSet.findMany resolves', async () => {
-      const rows = [
-        { id: 'cs-1', name: 'Lincoln Cents', description: null, source: 'admin', templateVersion: '1' },
-      ];
-      mockPrismaService.canonicalSet.findMany.mockResolvedValue(rows);
+  describe('findAllCanonical (criterion #8 from run_20260720_070901/prd.md; criterion #18 from run_20261013_062900/prd.md)', () => {
+    it('maps each row to a flat coinCount taken from _count.coins and drops the _count key', async () => {
+      mockPrismaService.canonicalSet.findMany.mockResolvedValue([
+        {
+          id: 'cs-1',
+          name: 'Lincoln Cents',
+          description: null,
+          source: 'admin',
+          templateVersion: '1',
+          _count: { coins: 12 },
+        },
+      ]);
 
       const result = await service.findAllCanonical();
 
-      expect(result).toBe(rows);
+      expect(result).toEqual([
+        {
+          id: 'cs-1',
+          name: 'Lincoln Cents',
+          description: null,
+          source: 'admin',
+          templateVersion: '1',
+          coinCount: 12,
+        },
+      ]);
+      expect(result[0]).not.toHaveProperty('_count');
+    });
+
+    it('gives every row its own count (two rows with different _count.coins)', async () => {
+      mockPrismaService.canonicalSet.findMany.mockResolvedValue([
+        {
+          id: 'cs-1',
+          name: 'A',
+          description: 'first',
+          source: 'admin',
+          templateVersion: '1',
+          _count: { coins: 187 },
+        },
+        {
+          id: 'cs-2',
+          name: 'B',
+          description: null,
+          source: 'seed-template',
+          templateVersion: '2',
+          _count: { coins: 0 },
+        },
+      ]);
+
+      const result = await service.findAllCanonical();
+
+      expect(result.map((row) => row.coinCount)).toEqual([187, 0]);
+      expect(result.map((row) => row.id)).toEqual(['cs-1', 'cs-2']);
+      result.forEach((row) => expect(row).not.toHaveProperty('_count'));
+    });
+
+    it('asks Prisma for the coins count, ordered by name ascending', async () => {
+      await service.findAllCanonical();
+
+      expect(mockPrismaService.canonicalSet.findMany).toHaveBeenCalledWith({
+        orderBy: { name: 'asc' },
+        include: { _count: { select: { coins: true } } },
+      });
+    });
+
+    it('returns an empty array when there are no canonical sets', async () => {
+      mockPrismaService.canonicalSet.findMany.mockResolvedValue([]);
+
+      await expect(service.findAllCanonical()).resolves.toEqual([]);
     });
   });
 
@@ -557,7 +618,10 @@ describe('SetsService', () => {
     });
 
     it('returns total from the separate count query, not items.length', async () => {
-      mockPrismaService.userSet.findMany.mockResolvedValue([{ id: 'a' }, { id: 'b' }]);
+      mockPrismaService.userSet.findMany.mockResolvedValue([
+        { id: 'a', _count: { coins: 1 } },
+        { id: 'b', _count: { coins: 2 } },
+      ]);
       mockPrismaService.userSet.count.mockResolvedValue(50);
 
       const result = await service.findAllPublic(makePublicQuery());
@@ -567,17 +631,46 @@ describe('SetsService', () => {
     });
 
     it('returns the { items, page, limit, total } shape', async () => {
-      mockPrismaService.userSet.findMany.mockResolvedValue([{ id: 'x' }]);
+      mockPrismaService.userSet.findMany.mockResolvedValue([{ id: 'x', _count: { coins: 3 } }]);
       mockPrismaService.userSet.count.mockResolvedValue(1);
 
       const result = await service.findAllPublic(makePublicQuery({ page: 2, limit: 5 }));
 
       expect(result).toEqual({
-        items: [{ id: 'x' }],
+        items: [{ id: 'x', coinCount: 3 }],
         page: 2,
         limit: 5,
         total: 1,
       });
+    });
+  });
+
+  describe('findAllPublic — coinCount (criterion #19 from run_20261013_062900/prd.md)', () => {
+    it('asks Prisma for the coins count alongside skip, take and createdAt ordering', async () => {
+      await service.findAllPublic(makePublicQuery({ page: 2, limit: 10 }));
+
+      expect(mockPrismaService.userSet.findMany).toHaveBeenCalledWith({
+        skip: 10,
+        take: 10,
+        orderBy: { createdAt: 'asc' },
+        include: { _count: { select: { coins: true } } },
+      });
+    });
+
+    it('maps each item to a flat coinCount from its own _count.coins and drops the _count key', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([
+        { id: 'u1', userId: 'user-2', name: "Bob's Set", _count: { coins: 42 } },
+        { id: 'u2', userId: 'user-3', name: 'Empty Set', _count: { coins: 0 } },
+      ]);
+      mockPrismaService.userSet.count.mockResolvedValue(2);
+
+      const result = await service.findAllPublic(makePublicQuery());
+
+      expect(result.items).toEqual([
+        { id: 'u1', userId: 'user-2', name: "Bob's Set", coinCount: 42 },
+        { id: 'u2', userId: 'user-3', name: 'Empty Set', coinCount: 0 },
+      ]);
+      result.items.forEach((item) => expect(item).not.toHaveProperty('_count'));
     });
   });
 

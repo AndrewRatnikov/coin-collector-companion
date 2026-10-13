@@ -2,13 +2,15 @@
  * Tests for: shared package types (UserSetSummary, CloneFromRequest, CreateSetRequestBody,
  * CanonicalSetSummary, CanonicalSetCoinItem, CanonicalSetDetail, UserSetCoinItem, UserSetDetail,
  * UserSetCoinSummary, PatchSetCoinsRequest, OwnershipItem, SetOwnershipRequest,
- * SetOwnershipResponse, GapSlot, GapViewResponse)
+ * SetOwnershipResponse, GapSlot, GapViewResponse, PublicSetSummary)
  * Contract source: runs/run_20260719_200109/plan.md § Interface Contract (Shared types)
  *                   runs/run_20260720_070901/plan.md § Interface Contract (Shared types)
  *                   runs/run_20260720_142942/plan.md § Interface Contract (Shared types)
+ *                   runs/run_20261013_062900/plan.md § Interface Contract (Shared types)
  * Covers criteria: #11 (from runs/run_20260719_200109/prd.md)
  *                   #17 (from runs/run_20260720_070901/prd.md)
  *                   #12 (from runs/run_20260720_142942/prd.md)
+ *                   #18, #19 (from runs/run_20261013_062900/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -20,6 +22,11 @@
  * (run_20260720_142942) a real, falsifiable signal from `pnpm --filter api test` rather than
  * deferring it entirely to the separate typecheck/build steps (pattern established Week 2
  * Day 1 per test-reviewer feedback, retry 1/2, and reused for every shared-type addition since).
+ *
+ * For run_20261013_062900 the `@ts-expect-error` lines pin the type shape: a CanonicalSetDetail
+ * literal must NOT accept `coinCount` (it is `Omit<CanonicalSetSummary, 'coinCount'>`-based), and
+ * a PublicSetSummary literal must require it. If the types drift, the directive becomes unused
+ * and ts-jest fails the file.
  */
 
 import type {
@@ -29,6 +36,7 @@ import type {
   CanonicalSetSummary,
   CanonicalSetCoinItem,
   CanonicalSetDetail,
+  PublicSetSummary,
   UserSetCoinItem,
   UserSetDetail,
   UserSetCoinSummary,
@@ -107,8 +115,24 @@ describe('shared package: Sets types (criterion #11 from run_20260719_200109/prd
 });
 
 describe('shared package: new Day 2 types (criterion #17 from run_20260720_070901/prd.md)', () => {
-  it('CanonicalSetSummary has the expected flat CanonicalSet shape', () => {
+  it('CanonicalSetSummary has the expected flat CanonicalSet shape plus a numeric coinCount', () => {
     const summary: CanonicalSetSummary = {
+      id: '66666666-6666-6666-6666-666666666666',
+      name: 'Lincoln Wheat Cents',
+      description: null,
+      source: 'admin',
+      templateVersion: '1',
+      coinCount: 187,
+    };
+
+    expect(summary.name).toBe('Lincoln Wheat Cents');
+    expect(summary.description).toBeNull();
+    expect(summary.coinCount).toBe(187);
+  });
+
+  it('CanonicalSetSummary requires coinCount (criterion #18 from run_20261013_062900/prd.md)', () => {
+    // @ts-expect-error coinCount is required on the list summary
+    const missing: CanonicalSetSummary = {
       id: '66666666-6666-6666-6666-666666666666',
       name: 'Lincoln Wheat Cents',
       description: null,
@@ -116,8 +140,7 @@ describe('shared package: new Day 2 types (criterion #17 from run_20260720_07090
       templateVersion: '1',
     };
 
-    expect(summary.name).toBe('Lincoln Wheat Cents');
-    expect(summary.description).toBeNull();
+    expect(missing.name).toBe('Lincoln Wheat Cents');
   });
 
   it('CanonicalSetDetail extends CanonicalSetSummary with an ordered coins array of CanonicalSetCoinItem', () => {
@@ -137,6 +160,21 @@ describe('shared package: new Day 2 types (criterion #17 from run_20260720_07090
 
     expect(detail.coins).toHaveLength(1);
     expect(detail.coins[0].coin.name).toBe('Lincoln Wheat Cent');
+  });
+
+  it('CanonicalSetDetail carries no coinCount (criterion #18 from run_20261013_062900/prd.md)', () => {
+    const detail: CanonicalSetDetail = {
+      id: '66666666-6666-6666-6666-666666666666',
+      name: 'Lincoln Wheat Cents',
+      description: null,
+      source: 'admin',
+      templateVersion: '1',
+      // @ts-expect-error the detail type omits coinCount (clients count `coins`)
+      coinCount: 1,
+      coins: [],
+    };
+
+    expect(detail.coins).toHaveLength(0);
   });
 
   it('UserSetDetail extends UserSetSummary with an ordered coins array of UserSetCoinItem', () => {
@@ -183,6 +221,56 @@ describe('shared package: new Day 2 types (criterion #17 from run_20260720_07090
     expect(addOnly.remove).toBeUndefined();
     expect(both.add).toHaveLength(1);
     expect(both.remove).toHaveLength(1);
+  });
+});
+
+describe('shared package: PublicSetSummary (criterion #19 from run_20261013_062900/prd.md)', () => {
+  it('extends UserSetSummary with a numeric coinCount', () => {
+    const summary: PublicSetSummary = {
+      id: '11111111-1111-1111-1111-111111111111',
+      userId: '22222222-2222-2222-2222-222222222222',
+      name: "Bob's Set",
+      clonedFromCanonicalId: null,
+      clonedFromUserSetId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      coinCount: 42,
+    };
+    const asUserSummary: UserSetSummary = summary;
+
+    expect(summary.coinCount).toBe(42);
+    expect(asUserSummary.name).toBe("Bob's Set");
+  });
+
+  it('requires coinCount', () => {
+    // @ts-expect-error coinCount is required on the public list summary
+    const missing: PublicSetSummary = {
+      id: '11111111-1111-1111-1111-111111111111',
+      userId: '22222222-2222-2222-2222-222222222222',
+      name: "Bob's Set",
+      clonedFromCanonicalId: null,
+      clonedFromUserSetId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    expect(missing.name).toBe("Bob's Set");
+  });
+
+  it('leaves UserSetSummary without a coinCount', () => {
+    const summary: UserSetSummary = {
+      id: '11111111-1111-1111-1111-111111111111',
+      userId: '22222222-2222-2222-2222-222222222222',
+      name: 'Own set',
+      clonedFromCanonicalId: null,
+      clonedFromUserSetId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      // @ts-expect-error UserSetSummary itself is unchanged and has no coinCount
+      coinCount: 1,
+    };
+
+    expect(summary.name).toBe('Own set');
   });
 });
 
