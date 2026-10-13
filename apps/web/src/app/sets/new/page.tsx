@@ -1,32 +1,69 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import type { FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { CatalogCoin, CreateSetRequestBody } from '@coin-collector/shared';
-import { formatCoinLabel } from '@coin-collector/shared';
+import type { CreateSetRequestBody } from '@coin-collector/shared';
 import { RequireAuth } from '@/components/auth/require-auth';
-import CatalogFilterForm, { type CatalogFilterFormValues } from '@/components/catalog/catalog-filter-form';
+import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { useCanonicalSet, useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
 import { usePublicSet, usePublicSets } from '@/lib/hooks/use-public-sets';
-import { useCreateSet, usePatchSetCoins } from '@/lib/hooks/use-user-sets';
-import { useCatalog } from '@/lib/hooks/use-catalog';
-import type { CatalogFilters } from '@/lib/catalog-api';
+import { useCreateSet } from '@/lib/hooks/use-user-sets';
+import { getAlbumCardText, getDenominationNumeral } from '@/lib/album-layout';
+import {
+  buildCoinPreview,
+  formatYearRange,
+  summarizeSourceCoins,
+  type SourceCoinItem,
+} from '@/lib/new-set-preview';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
-type Mode = 'blank' | 'canonical' | 'public';
+type Step = 1 | 2;
+type StartOption = 'canonical' | 'public' | 'blank';
 
-const PICKER_LIMIT = 20;
+const OPTIONS: StartOption[] = ['canonical', 'public', 'blank'];
 
-// Captures the outcome of the create-mutation's onSuccess (the new set's id, plus the
-// add/remove diff computed against whatever baseline the picked source provided) so the
-// follow-up usePatchSetCoins(newSetId) — which only becomes correctly bound to that id on
-// the render triggered by this state update — can fire from an effect, not inline.
-interface CreatedSetPending {
-  id: string;
-  addedIds: string[];
-  removedIds: string[];
+const OPTION_TEXT_KEYS = {
+  canonical: {
+    title: 'setNew.optionCanonicalTitle',
+    description: 'setNew.optionCanonicalDescription',
+  },
+  public: { title: 'setNew.optionPublicTitle', description: 'setNew.optionPublicDescription' },
+  blank: { title: 'setNew.optionBlankTitle', description: 'setNew.optionBlankDescription' },
+} as const;
+
+const PUBLIC_LIST_FILTERS = { page: 1, limit: 100 };
+
+const HEADING_FONT = 'font-[family-name:var(--font-heading)]';
+const INPUT_CLASS =
+  'rounded-[var(--radius-md)] border border-neutral-400 bg-white px-3 text-sm focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent-200';
+const CHIP_CLASS = 'rounded-[var(--radius-md)] bg-surface px-2 py-0.5 font-mono text-xs';
+const SUBHEADING_CLASS = 'text-xs font-semibold uppercase tracking-[0.06em] text-neutral-800';
+const PRIMARY_BUTTON_CLASS =
+  'rounded-[var(--radius-md)] bg-accent-700 px-5 text-sm font-semibold text-white hover:bg-accent-800 disabled:cursor-not-allowed disabled:opacity-70';
+
+function fillCount(template: string, count: number): string {
+  return template.split('{count}').join(String(count));
+}
+
+interface EntryParams {
+  cloneFrom: 'canonical' | 'user' | null;
+  cloneFromId: string;
+}
+
+function readEntry(searchParams: { get(name: string): string | null }): EntryParams {
+  const raw = searchParams.get('cloneFrom');
+  const cloneFrom = raw === 'canonical' || raw === 'user' ? raw : null;
+  return { cloneFrom, cloneFromId: cloneFrom ? (searchParams.get('cloneFromId') ?? '') : '' };
+}
+
+/** The step-2 source detail, normalised over the canonical and public shapes. */
+interface SourceDetail {
+  name: string;
+  description: string | null;
+  coins: SourceCoinItem[];
 }
 
 function NewSetForm() {
@@ -34,304 +71,595 @@ function NewSetForm() {
   const searchParams = useSearchParams();
   const { t, locale } = useTranslation();
 
-  const initialCloneFrom = searchParams.get('cloneFrom');
-  const initialCloneFromId = searchParams.get('cloneFromId') ?? '';
-  const initialMode: Mode =
-    initialCloneFrom === 'canonical' ? 'canonical' : initialCloneFrom === 'user' ? 'public' : 'blank';
+  // The entry URL is read once: it decides the starting step and where Cancel goes.
+  const [entry] = useState<EntryParams>(() => readEntry(searchParams));
+  const entryHasId = entry.cloneFrom !== null && entry.cloneFromId !== '';
+  const entryOption: StartOption = entry.cloneFrom === 'user' ? 'public' : 'canonical';
 
-  const [mode, setMode] = useState<Mode>(initialMode);
+  const [step, setStep] = useState<Step>(entryHasId ? 2 : 1);
+  const [option, setOption] = useState<StartOption>(entryOption);
+  const [sourceId, setSourceId] = useState<string | null>(entryHasId ? entry.cloneFromId : null);
+  // The option `sourceId` was picked under, so switching option cards on step 1 never asks
+  // the other kind's detail endpoint for an id that belongs to a different table.
+  const [sourceOption, setSourceOption] = useState<StartOption>(entryOption);
   const [name, setName] = useState('');
-  const [canonicalId, setCanonicalId] = useState(initialMode === 'canonical' ? initialCloneFromId : '');
-  const [publicId, setPublicId] = useState(initialMode === 'public' ? initialCloneFromId : '');
+  const [nameTouched, setNameTouched] = useState(false);
+  const [prefilledKey, setPrefilledKey] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(entry.cloneFrom !== null && !entryHasId);
+  const [entryFailed, setEntryFailed] = useState(entry.cloneFrom !== null && !entryHasId);
+  const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // The coin-by-coin composition for the set-to-be-created: seeded from a clone source's
-  // full coin list once picked, then freely edited via the catalogue picker's Add and this
-  // list's Remove before the set is actually created.
-  const [pendingCoins, setPendingCoins] = useState<CatalogCoin[]>([]);
-  const [baselineIds, setBaselineIds] = useState<string[]>([]);
-  const seededSourceRef = useRef<string | null>(null);
+  const activeSourceId = sourceOption === option && sourceId ? sourceId : '';
 
-  const [pickerFilters, setPickerFilters] = useState<CatalogFilters>({ page: 1, limit: PICKER_LIMIT });
-  const [createdSet, setCreatedSet] = useState<CreatedSetPending | null>(null);
+  const canonicalSetsQuery = useCanonicalSets();
+  const publicSetsQuery = usePublicSets(PUBLIC_LIST_FILTERS);
+  const canonicalDetailQuery = useCanonicalSet(option === 'canonical' ? activeSourceId : '');
+  const publicDetailQuery = usePublicSet(option === 'public' ? activeSourceId : '');
+  const createSet = useCreateSet();
 
-  const { data: canonicalSets } = useCanonicalSets();
-  const { data: publicSetsPage } = usePublicSets({ page: 1, limit: 50 });
-  const selectedSourceId = mode === 'canonical' ? canonicalId : mode === 'public' ? publicId : '';
-  const { data: canonicalSetDetail } = useCanonicalSet(mode === 'canonical' ? canonicalId : '');
-  const { data: publicSetDetail } = usePublicSet(mode === 'public' ? publicId : '');
-  const { data: catalogPage } = useCatalog(pickerFilters);
+  const canonicalSets = canonicalSetsQuery.data ?? [];
+  const publicSets = publicSetsQuery.data?.items ?? [];
 
-  const createSetMutation = useCreateSet();
-  const patchCoinsMutation = usePatchSetCoins(createdSet?.id ?? '');
+  const canonicalSummary =
+    option === 'canonical' && activeSourceId
+      ? canonicalSets.find((set) => set.id === activeSourceId)
+      : undefined;
+  const publicSummary =
+    option === 'public' && activeSourceId
+      ? publicSets.find((set) => set.id === activeSourceId)
+      : undefined;
+  const summary = canonicalSummary ?? publicSummary;
 
-  // Pre-fill the pending coin list from the picked source's full coin set, once per
-  // distinct source selection — re-fires if the user later picks a *different* source,
-  // but not on every unrelated re-render of the same one (guarded by seededSourceRef).
-  useEffect(() => {
-    if (mode === 'blank' || !selectedSourceId) return;
-    const detailCoins = mode === 'canonical' ? canonicalSetDetail?.coins : publicSetDetail?.coins;
-    if (!detailCoins) return;
-    if (seededSourceRef.current === selectedSourceId) return;
+  const detailQuery =
+    option === 'canonical'
+      ? canonicalDetailQuery
+      : option === 'public'
+        ? publicDetailQuery
+        : undefined;
+  let detail: SourceDetail | undefined;
+  if (option === 'canonical' && canonicalDetailQuery.data) {
+    const data = canonicalDetailQuery.data;
+    detail = { name: data.name, description: data.description, coins: data.coins };
+  } else if (option === 'public' && publicDetailQuery.data) {
+    const data = publicDetailQuery.data;
+    detail = { name: data.name, description: null, coins: data.coins };
+  }
+  const detailLoading = Boolean(detailQuery?.isLoading);
+  const detailError = Boolean(detailQuery?.isError);
 
-    const sorted = [...detailCoins].sort((a, b) => a.position - b.position);
-    const coins = sorted.map((item) => item.coin);
-    setPendingCoins(coins);
-    setBaselineIds(coins.map((c) => c.id));
-    seededSourceRef.current = selectedSourceId;
-  }, [mode, selectedSourceId, canonicalSetDetail, publicSetDetail]);
+  // Not found: the detail request for the picked source failed (404 for an unknown id,
+  // 400 for a malformed one). Adjusted during render rather than in an effect, so step 2
+  // never commits with a broken source.
+  const sourceFailed = step === 2 && option !== 'blank' && activeSourceId !== '' && detailError;
+  if (sourceFailed) {
+    if (activeSourceId === entry.cloneFromId) setEntryFailed(true);
+    setStep(1);
+    setSourceId(null);
+    setNotFound(true);
+  }
 
-  // Once the set has been created, patch the net coin diff (if any) before navigating.
-  // usePatchSetCoins(createdSet.id) only closes over the right id starting on the render
-  // triggered by setCreatedSet below, so the actual mutate() call has to happen here
-  // rather than inline inside the create-mutation's onSuccess.
-  useEffect(() => {
-    if (!createdSet) return;
-    if (createdSet.addedIds.length === 0 && createdSet.removedIds.length === 0) {
-      router.push(`/sets/${createdSet.id}`);
-      return;
+  const sourceName = summary
+    ? resolveLocalizedText(summary.name, locale)
+    : detail
+      ? resolveLocalizedText(detail.name, locale)
+      : '';
+
+  // Pre-fill the name once per source as soon as its name is known (covers the URL entry,
+  // where the name arrives with the list or the detail), unless the user has typed.
+  const sourceKey = `${option}:${activeSourceId}`;
+  if (
+    !sourceFailed &&
+    step === 2 &&
+    option !== 'blank' &&
+    activeSourceId !== '' &&
+    !nameTouched &&
+    sourceName !== '' &&
+    prefilledKey !== sourceKey
+  ) {
+    setPrefilledKey(sourceKey);
+    setName(sourceName);
+  }
+
+  function selectOption(next: StartOption) {
+    setOption(next);
+  }
+
+  function pickSource(id: string | null, pickedName: string) {
+    setSourceId(id);
+    setSourceOption(option);
+    setStep(2);
+    setNotFound(false);
+    if (!nameTouched) {
+      setName(pickedName);
+      setPrefilledKey(`${option}:${id ?? ''}`);
     }
-    patchCoinsMutation.mutate(
-      { add: createdSet.addedIds, remove: createdSet.removedIds },
-      {
-        onSuccess: () => router.push(`/sets/${createdSet.id}`),
-        onError: () => router.push(`/sets/${createdSet.id}`),
-      },
-    );
-    // Intentionally keyed only on createdSet: it is set exactly once per submission, and
-    // patchCoinsMutation for this render is already bound to createdSet.id by then.
-  }, [createdSet]);
-
-  function handleSelectSource(id: string) {
-    if (mode === 'canonical') setCanonicalId(id);
-    else if (mode === 'public') setPublicId(id);
-  }
-
-  function handleAddPickerCoin(coin: CatalogCoin) {
-    setPendingCoins((prev) => (prev.some((c) => c.id === coin.id) ? prev : [...prev, coin]));
-  }
-
-  function handleRemovePendingCoin(coinId: string) {
-    setPendingCoins((prev) => prev.filter((c) => c.id !== coinId));
-  }
-
-  function handlePickerFilterSubmit(values: CatalogFilterFormValues) {
-    setPickerFilters({ ...values, page: 1, limit: PICKER_LIMIT });
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    if (name === '') return;
 
     const body: CreateSetRequestBody =
-      mode === 'blank'
+      option === 'blank'
         ? { name }
-        : { name, cloneFrom: { type: mode === 'canonical' ? 'canonical' : 'user', id: selectedSourceId } };
+        : {
+            name,
+            cloneFrom: { type: option === 'canonical' ? 'canonical' : 'user', id: activeSourceId },
+          };
 
-    createSetMutation.mutate(body, {
-      onSuccess: (result) => {
-        const pickedIds = pendingCoins.map((c) => c.id);
-        const addedIds = pickedIds.filter((id) => !baselineIds.includes(id));
-        const removedIds = baselineIds.filter((id) => !pickedIds.includes(id));
-        setCreatedSet({ id: result.id, addedIds, removedIds });
-      },
+    createSet.mutate(body, {
+      onSuccess: (set) => router.push(`/sets/${set.id}`),
       onError: (err: unknown) => {
-        setError(err instanceof Error ? err.message : t('setNew.defaultError'));
+        setError(err instanceof Error && err.message ? err.message : t('setNew.defaultError'));
       },
     });
   }
 
-  const sourceItems: Array<{ id: string; name: string }> =
-    mode === 'canonical' ? (canonicalSets ?? []) : mode === 'public' ? (publicSetsPage?.items ?? []) : [];
-  const pickerResults = (catalogPage?.items ?? []).filter(
-    (coin) => !pendingCoins.some((pending) => pending.id === coin.id),
-  );
+  const cancelHref =
+    entry.cloneFrom === null || entryFailed
+      ? '/dashboard'
+      : entry.cloneFrom === 'canonical'
+        ? `/sets/canonical/${encodeURIComponent(entry.cloneFromId)}`
+        : `/sets/public/${encodeURIComponent(entry.cloneFromId)}`;
+
+  const coinCount = detail ? detail.coins.length : summary?.coinCount;
+  const submitLabel = createSet.isPending
+    ? t('setNew.submitting')
+    : option === 'blank' || typeof coinCount !== 'number'
+      ? t('setNew.submit')
+      : fillCount(t('setNew.submitWithCount'), coinCount);
+
+  const searchTerm = search.trim().toLowerCase();
+  const filteredPublicSets = searchTerm
+    ? publicSets.filter((set) =>
+        resolveLocalizedText(set.name, locale).toLowerCase().includes(searchTerm),
+      )
+    : publicSets;
+
+  function renderSourcesState(isLoading: boolean, isError: boolean) {
+    if (isLoading) {
+      return (
+        <div data-testid="set-new-sources-loading">
+          <ListSkeleton />
+        </div>
+      );
+    }
+    if (isError) {
+      return (
+        <p data-testid="set-new-sources-error" className="text-sm text-danger">
+          {t('common.somethingWentWrong')}
+        </p>
+      );
+    }
+    return null;
+  }
+
+  const sourceCardClass =
+    'flex h-full w-full flex-col items-start gap-2 rounded-[var(--radius-lg)] border border-neutral-300 bg-white p-[18px] text-left transition hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-accent-200';
+  const sourceGridClass =
+    'grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr))]';
+
+  const coinSummary = detail ? summarizeSourceCoins(detail.coins) : null;
+  const yearRange = coinSummary ? formatYearRange(coinSummary.minYear, coinSummary.maxYear) : '';
+  const preview = detail ? buildCoinPreview(detail.coins) : null;
+  const sourceDescription =
+    option === 'canonical'
+      ? summary && 'description' in summary
+        ? summary.description
+        : (detail?.description ?? null)
+      : option === 'public'
+        ? t('setNew.publicSourceDescription')
+        : t('setNew.blankSourceDescription');
 
   return (
-    <main data-testid="set-new-page" className="flex flex-1 flex-col gap-6 p-8">
-      <h1 className="text-lg font-semibold">{t('setNew.title')}</h1>
+    <main
+      data-testid="set-new-page"
+      className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col gap-6 px-[clamp(20px,5vw,40px)] py-7"
+    >
+      <div className="flex flex-col gap-2">
+        <p data-testid="set-new-breadcrumb" className="text-[13px] text-neutral-700">
+          <Link href="/dashboard" className="hover:text-accent-700 hover:underline">
+            {t('setNew.breadcrumbMySets')}
+          </Link>{' '}
+          / {t('setNew.title')}
+        </p>
+        <h1 className={`${HEADING_FONT} text-[40px] font-semibold leading-[1.1]`}>
+          {t('setNew.title')}
+        </h1>
+      </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="set-new-name" className="text-sm font-medium">
-            {t('common.name')}
-          </label>
-          <input
-            id="set-new-name"
-            data-testid="set-new-name-input"
-            type="text"
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-2 text-sm"
-          />
-        </div>
-
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-medium">{t('setNew.startFromLegend')}</legend>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="set-new-mode"
-              data-testid="set-new-mode-blank"
-              checked={mode === 'blank'}
-              onChange={() => setMode('blank')}
-              className="peer sr-only"
-            />
+      <ol
+        data-testid="set-new-stepper"
+        aria-label={t('setNew.stepsLabel')}
+        className="flex items-center gap-3"
+      >
+        <li>
+          <button
+            type="button"
+            data-testid="set-new-stepper-1"
+            aria-current={step === 1 ? 'step' : undefined}
+            onClick={() => setStep(1)}
+            className="flex items-center gap-2 text-sm font-medium text-neutral-800 hover:text-accent-700"
+          >
             <span
-              aria-hidden
-              className="h-4 w-4 rounded-full border border-gray-400 peer-checked:border-blue-600 peer-checked:bg-blue-600"
-            />
-            {t('setNew.modeBlank')}
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="set-new-mode"
-              data-testid="set-new-mode-canonical"
-              checked={mode === 'canonical'}
-              onChange={() => setMode('canonical')}
-              className="peer sr-only"
-            />
-            <span
-              aria-hidden
-              className="h-4 w-4 rounded-full border border-gray-400 peer-checked:border-blue-600 peer-checked:bg-blue-600"
-            />
-            {t('setNew.modeCanonical')}
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="set-new-mode"
-              data-testid="set-new-mode-public"
-              checked={mode === 'public'}
-              onChange={() => setMode('public')}
-              className="peer sr-only"
-            />
-            <span
-              aria-hidden
-              className="h-4 w-4 rounded-full border border-gray-400 peer-checked:border-blue-600 peer-checked:bg-blue-600"
-            />
-            {t('setNew.modePublic')}
-          </label>
-        </fieldset>
-
-        {mode !== 'blank' && (
-          <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium">
-              {mode === 'canonical' ? t('setNew.chooseCanonical') : t('setNew.choosePublic')}
-            </p>
-            <ul data-testid="set-new-source-list" className="flex flex-col gap-1">
-              {sourceItems.map((set) => {
-                const isSelected = selectedSourceId === set.id;
-                return (
-                  <li key={set.id}>
-                    <button
-                      type="button"
-                      data-testid="set-new-source-item"
-                      aria-pressed={isSelected}
-                      onClick={() => handleSelectSource(set.id)}
-                      className={`w-full rounded border px-3 py-2 text-left text-sm ${
-                        isSelected ? 'border-blue-600 bg-blue-50' : 'border-gray-300'
-                      }`}
-                    >
-                      {resolveLocalizedText(set.name, locale)}
-                      {isSelected && <span className="ml-2 text-xs text-blue-600">Selected</span>}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-
-        {error && (
-          <p data-testid="set-new-error" className="text-sm text-red-600">
-            {error}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          data-testid="set-new-submit"
-          className="w-fit rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white"
+              aria-hidden="true"
+              className={`flex h-7 w-7 items-center justify-center rounded-full text-sm ${
+                step === 1 ? 'bg-accent-700 font-mono text-white' : 'bg-accent text-white'
+              }`}
+            >
+              {step === 1 ? '1' : '✓'}
+            </span>
+            {t('setNew.stepStart')}
+          </button>
+        </li>
+        <li aria-hidden="true" className="h-px w-10 bg-neutral-400" />
+        <li
+          data-testid="set-new-stepper-2"
+          aria-current={step === 2 ? 'step' : undefined}
+          className="flex items-center gap-2 text-sm font-medium text-neutral-800"
         >
-          {t('setNew.createSet')}
-        </button>
-      </form>
+          <span
+            aria-hidden="true"
+            className={`flex h-7 w-7 items-center justify-center rounded-full font-mono text-sm ${
+              step === 2
+                ? 'bg-accent-700 text-white'
+                : 'border-[1.5px] border-neutral-500 text-neutral-700'
+            }`}
+          >
+            2
+          </span>
+          {t('setNew.stepCreate')}
+        </li>
+      </ol>
 
-      {/*
-        Deliberately rendered as a sibling of the <form> above, not nested inside it:
-        CatalogFilterForm renders its own <form> element, and HTML forbids nesting
-        <form> elements (invalid markup / hydration error). Reading pendingCoins via
-        React state (not native FormData) means the picker/pending-list controls don't
-        need to live inside the name/mode/source <form> to work correctly.
-      */}
-      <div className="grid grid-cols-1 gap-6 border-t border-gray-200 pt-6 md:grid-cols-2">
-        <div data-testid="set-new-picker-panel" className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold">{t('setNew.addFromCatalogue')}</h2>
-          <CatalogFilterForm testIdPrefix="set-new-picker" onSubmit={handlePickerFilterSubmit} />
-          <ul data-testid="set-new-picker-results" className="flex max-h-80 flex-col gap-2 overflow-y-auto">
-            {pickerResults.map((coin) => (
-              <li
-                key={coin.id}
-                data-testid="set-new-picker-item"
-                className="flex items-center justify-between gap-4 rounded border border-gray-200 p-2"
+      {step === 1 ? (
+        <section data-testid="set-new-step-1" className="flex flex-col gap-5">
+          {notFound && (
+            <p
+              data-testid="set-new-not-found"
+              className="rounded-[var(--radius-md)] border border-neutral-300 bg-surface px-4 py-3 text-sm text-neutral-800"
+            >
+              {t('setNew.notFound')}
+            </p>
+          )}
+
+          <h2 className={`${HEADING_FONT} text-[26px] font-semibold`}>
+            {t('setNew.startHeading')}
+          </h2>
+
+          <div
+            role="radiogroup"
+            aria-label={t('setNew.stepStart')}
+            className="grid gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]"
+          >
+            {OPTIONS.map((id) => {
+              const selected = option === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  data-testid={`set-new-option-${id}`}
+                  onClick={() => selectOption(id)}
+                  className={`flex flex-col items-start gap-1.5 rounded-[var(--radius-lg)] text-left transition hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-accent-200 ${
+                    selected
+                      ? 'border-2 border-accent bg-accent-100 p-[18px]'
+                      : 'border border-neutral-300 bg-white p-[19px]'
+                  }`}
+                >
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="text-base font-semibold">{t(OPTION_TEXT_KEYS[id].title)}</span>
+                    {id === 'canonical' && (
+                      <span
+                        data-testid="set-new-recommended"
+                        className="rounded-full bg-accent-800 px-2 py-0.5 text-[11px] font-semibold text-accent-100"
+                      >
+                        {t('setNew.recommended')}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-sm text-neutral-800">
+                    {t(OPTION_TEXT_KEYS[id].description)}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {option === 'canonical' && (
+            <div className="flex flex-col gap-3">
+              <h3 className={SUBHEADING_CLASS}>{t('setNew.chooseChecklist')}</h3>
+              {renderSourcesState(canonicalSetsQuery.isLoading, canonicalSetsQuery.isError) ?? (
+                <ul data-testid="set-new-canonical-list" className={sourceGridClass}>
+                  {canonicalSets.map((set) => {
+                    const resolvedName = resolveLocalizedText(set.name, locale);
+                    return (
+                      <li key={set.id}>
+                        <button
+                          type="button"
+                          data-testid="set-new-canonical-card"
+                          onClick={() => pickSource(set.id, resolvedName)}
+                          className={sourceCardClass}
+                        >
+                          <span
+                            className={`${HEADING_FONT} text-[22px] font-semibold leading-tight`}
+                          >
+                            {resolvedName}
+                          </span>
+                          {set.description !== null && (
+                            <span className="line-clamp-2 text-[13px] text-neutral-800">
+                              {set.description}
+                            </span>
+                          )}
+                          {typeof set.coinCount === 'number' && (
+                            <span className={CHIP_CLASS}>
+                              {fillCount(t('setNew.coinsChip'), set.coinCount)}
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {option === 'public' && (
+            <div className="flex flex-col gap-3">
+              <h3 className={SUBHEADING_CLASS}>{t('setNew.chooseCollectorSet')}</h3>
+              <input
+                type="search"
+                data-testid="set-new-public-search"
+                aria-label={t('setNew.searchPublicLabel')}
+                placeholder={t('setNew.searchPublicPlaceholder')}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className={`h-[42px] w-full max-w-[480px] ${INPUT_CLASS}`}
+              />
+              {renderSourcesState(publicSetsQuery.isLoading, publicSetsQuery.isError) ?? (
+                <ul data-testid="set-new-public-list" className={sourceGridClass}>
+                  {filteredPublicSets.map((set) => {
+                    const resolvedName = resolveLocalizedText(set.name, locale);
+                    return (
+                      <li key={set.id}>
+                        <button
+                          type="button"
+                          data-testid="set-new-public-card"
+                          onClick={() => pickSource(set.id, resolvedName)}
+                          className={sourceCardClass}
+                        >
+                          <span
+                            className={`${HEADING_FONT} text-[22px] font-semibold leading-tight`}
+                          >
+                            {resolvedName}
+                          </span>
+                          {typeof set.coinCount === 'number' && (
+                            <span className={CHIP_CLASS}>
+                              {fillCount(t('setNew.coinsChip'), set.coinCount)}
+                            </span>
+                          )}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {option === 'blank' && (
+            <div
+              data-testid="set-new-blank-panel"
+              className="flex flex-col items-start gap-4 rounded-[var(--radius-lg)] bg-surface p-5"
+            >
+              <p className="text-sm text-neutral-800">{t('setNew.blankExplanation')}</p>
+              <button
+                type="button"
+                data-testid="set-new-continue"
+                onClick={() => pickSource(null, '')}
+                className={`min-h-11 ${PRIMARY_BUTTON_CLASS}`}
               >
-                <span>{formatCoinLabel(coin)}</span>
+                {t('setNew.continue')}
+              </button>
+            </div>
+          )}
+        </section>
+      ) : (
+        <div
+          data-testid="set-new-step-2"
+          className="flex flex-col gap-8 min-[720px]:flex-row min-[720px]:flex-wrap min-[720px]:items-start"
+        >
+          <section className="flex min-w-0 flex-col gap-5 min-[720px]:[flex:999_1_560px]">
+            <div
+              data-testid="set-new-source-card"
+              className="flex flex-col gap-2 rounded-[var(--radius-lg)] border border-neutral-300 bg-white p-[22px]"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <span
+                  data-testid="set-new-source-eyebrow"
+                  className="text-xs font-semibold uppercase tracking-[0.06em] text-neutral-700"
+                >
+                  {option === 'canonical'
+                    ? t('setNew.eyebrowCanonical')
+                    : option === 'public'
+                      ? t('setNew.eyebrowPublic')
+                      : t('setNew.eyebrowBlank')}
+                </span>
                 <button
                   type="button"
-                  data-testid="set-new-picker-add-button"
-                  onClick={() => handleAddPickerCoin(coin)}
-                  className="rounded border border-gray-300 px-2 py-1 text-xs"
+                  data-testid="set-new-change"
+                  onClick={() => setStep(1)}
+                  className="text-sm text-accent-700 underline hover:text-accent-800"
                 >
-                  {t('setNew.add')}
+                  {t('setNew.change')}
                 </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold">
-            {t('setNew.inThisSet')} — {pendingCoins.length}
-          </h2>
-          {pendingCoins.length === 0 ? (
-            <p data-testid="set-new-in-set-empty" className="text-sm text-gray-500">
-              {t('setNew.nothingAdded')}
-            </p>
-          ) : (
-            <ul data-testid="set-new-in-set-list" className="flex max-h-80 flex-col gap-2 overflow-y-auto">
-              {pendingCoins.map((coin, index) => (
-                <li
-                  key={coin.id}
-                  data-testid="set-new-in-set-item"
-                  className="flex items-center justify-between gap-4 rounded border border-gray-200 p-2"
-                >
-                  {/*
-                    Prefixed with its position rather than rendering the bare label in
-                    its own text node: once a coin moves from the picker into this list,
-                    its label must no longer be findable as an exact-text match anywhere
-                    in the document (only as a substring of this numbered row) — this is
-                    what the picker's "already-picked coins are excluded" test asserts.
-                  */}
-                  <span>
-                    {index + 1}. {formatCoinLabel(coin)}
+              </div>
+              <h2
+                data-testid="set-new-source-name"
+                className={`${HEADING_FONT} text-[28px] font-semibold leading-tight`}
+              >
+                {option === 'blank' ? t('setNew.blankSourceName') : sourceName}
+              </h2>
+              {sourceDescription !== null && (
+                <p data-testid="set-new-source-description" className="text-sm text-neutral-800">
+                  {sourceDescription}
+                </p>
+              )}
+              {option !== 'blank' && coinSummary && (
+                <div data-testid="set-new-source-chips" className="flex flex-wrap gap-2 pt-1">
+                  <span className={CHIP_CLASS}>
+                    {fillCount(t('setNew.coinsChip'), coinSummary.count)}
                   </span>
-                  <button
-                    type="button"
-                    data-testid="set-new-in-set-remove-button"
-                    onClick={() => handleRemovePendingCoin(coin.id)}
-                    className="rounded border border-gray-300 px-2 py-1 text-xs"
-                  >
-                    {t('setNew.remove')}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+                  {yearRange !== '' && <span className={CHIP_CLASS}>{yearRange}</span>}
+                  {coinSummary.countries.length === 1 && (
+                    <span className="rounded-[var(--radius-md)] bg-surface px-2 py-0.5 text-xs">
+                      {coinSummary.countries[0]}
+                    </span>
+                  )}
+                  {coinSummary.countries.length > 1 && (
+                    <span className="rounded-[var(--radius-md)] bg-surface px-2 py-0.5 text-xs">
+                      {fillCount(t('setNew.countriesChip'), coinSummary.countries.length)}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {option !== 'blank' && (
+              <div data-testid="set-new-preview" className="flex flex-col gap-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h3 className={SUBHEADING_CLASS}>{t('setNew.previewHeading')}</h3>
+                  <p className="text-[13px] text-neutral-700">{t('setNew.previewNote')}</p>
+                </div>
+                {detailLoading && !detail ? (
+                  <div data-testid="set-new-preview-loading">
+                    <ListSkeleton />
+                  </div>
+                ) : (
+                  preview && (
+                    <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-neutral-300 bg-neutral-100 p-4">
+                      {preview.groups.map((group) => (
+                        <div key={group.year} className="flex flex-col gap-2">
+                          <div
+                            data-testid="set-new-preview-year"
+                            className={`${HEADING_FONT} text-lg font-semibold`}
+                          >
+                            {group.year}
+                          </div>
+                          <ul className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr))]">
+                            {group.coins.map((coin) => (
+                              <li
+                                key={coin.id}
+                                data-testid="set-new-preview-item"
+                                className="flex min-w-0 items-center gap-3"
+                              >
+                                <span
+                                  aria-hidden="true"
+                                  className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-neutral-400 bg-neutral-300 font-mono text-xs text-neutral-800"
+                                >
+                                  {coin.imageUrl ? (
+                                    <img
+                                      src={coin.imageUrl}
+                                      alt=""
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : (
+                                    getDenominationNumeral(coin.denomination)
+                                  )}
+                                </span>
+                                <span className="flex min-w-0 flex-col">
+                                  <span className="truncate text-sm font-medium">
+                                    {getAlbumCardText(coin).title}
+                                  </span>
+                                  <span className="text-xs text-neutral-700">
+                                    {coin.denomination}
+                                  </span>
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                      {preview.rest > 0 && (
+                        <p data-testid="set-new-preview-more" className="text-sm text-neutral-700">
+                          {fillCount(t('setNew.previewMore'), preview.rest)}
+                        </p>
+                      )}
+                    </div>
+                  )
+                )}
+              </div>
+            )}
+          </section>
+
+          <aside
+            data-testid="set-new-aside"
+            className="order-first flex flex-col gap-4 rounded-[var(--radius-lg)] border border-neutral-300 bg-white p-[22px] min-[720px]:order-none min-[720px]:max-w-[400px] min-[720px]:[flex:1_1_320px]"
+          >
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <h2 className={`${HEADING_FONT} text-2xl font-semibold`}>
+                {t('setNew.nameHeading')}
+              </h2>
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="set-new-name" className="text-sm font-medium">
+                  {t('setNew.nameLabel')}
+                </label>
+                <input
+                  id="set-new-name"
+                  data-testid="set-new-name-input"
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => {
+                    setNameTouched(true);
+                    setName(e.target.value);
+                  }}
+                  className={`h-11 w-full ${INPUT_CLASS}`}
+                />
+              </div>
+              <p className="text-[13px] text-neutral-700">{t('setNew.publicHelper')}</p>
+
+              {error && (
+                <p data-testid="set-new-error" role="alert" className="text-sm text-danger">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                data-testid="set-new-submit"
+                disabled={createSet.isPending}
+                className={`min-h-12 w-full ${PRIMARY_BUTTON_CLASS}`}
+              >
+                {submitLabel}
+              </button>
+              <Link
+                data-testid="set-new-cancel"
+                href={cancelHref}
+                className="self-center text-sm text-accent-700 underline hover:text-accent-800"
+              >
+                {t('setNew.cancel')}
+              </Link>
+            </form>
+
+            <div className="flex flex-col gap-2 border-t border-divider pt-4">
+              <h3 className={SUBHEADING_CLASS}>{t('setNew.nextHeading')}</h3>
+              <ol
+                data-testid="set-new-next-steps"
+                className="list-decimal space-y-1 pl-5 text-[13px] text-neutral-800"
+              >
+                <li>{option === 'blank' ? t('setNew.nextOpensBlank') : t('setNew.nextOpens')}</li>
+                <li>{t('setNew.nextTick')}</li>
+                <li>{t('setNew.nextEdit')}</li>
+              </ol>
+            </div>
+          </aside>
         </div>
-      </div>
+      )}
     </main>
   );
 }

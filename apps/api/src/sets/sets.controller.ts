@@ -5,6 +5,7 @@ import type {
   CanonicalSetSummary,
   GapViewResponse,
   PaginatedResponse,
+  PublicSetSummary,
   UserSetCoinSummary,
   UserSetDetail,
   UserSetSummary,
@@ -63,7 +64,7 @@ export class SetsController {
   @ApiOkResponse({ description: 'Paginated list of UserSet rows' })
   findAllPublic(
     @Query() query: FindPublicSetsQueryDto,
-  ): Promise<PaginatedResponse<UserSetSummary>> {
+  ): Promise<PaginatedResponse<PublicSetSummary>> {
     return this.setsService.findAllPublic(query);
   }
 

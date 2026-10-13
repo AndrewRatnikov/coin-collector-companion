@@ -146,6 +146,8 @@ export interface CanonicalSetSummary {
   description: string | null;
   source: string;
   templateVersion: string;
+  // GET /sets/canonical list only: the number of coins in the checklist (Prisma _count).
+  coinCount: number;
 }
 
 export interface CanonicalSetCoinItem {
@@ -154,8 +156,15 @@ export interface CanonicalSetCoinItem {
   coin: CatalogCoin;
 }
 
-export interface CanonicalSetDetail extends CanonicalSetSummary {
+// The detail endpoint carries no coinCount; clients count `coins`.
+export interface CanonicalSetDetail extends Omit<CanonicalSetSummary, 'coinCount'> {
   coins: CanonicalSetCoinItem[];
+}
+
+// GET /sets/public list item. UserSetSummary itself stays count-free (own-sets list,
+// create and rename responses don't carry it).
+export interface PublicSetSummary extends UserSetSummary {
+  coinCount: number;
 }
 
 export interface UserSetCoinItem {
