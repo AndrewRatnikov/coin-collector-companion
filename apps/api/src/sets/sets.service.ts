@@ -5,6 +5,7 @@ import type {
   CanonicalSetSummary,
   GapViewResponse,
   PaginatedResponse,
+  PublicSetSummary,
   UserSetCoinSummary,
   UserSetDetail,
   UserSetSummary,
@@ -123,7 +124,11 @@ export class SetsService {
   }
 
   async findAllCanonical(): Promise<CanonicalSetSummary[]> {
-    return this.prisma.canonicalSet.findMany({ orderBy: { name: 'asc' } });
+    const rows = await this.prisma.canonicalSet.findMany({
+      orderBy: { name: 'asc' },
+      include: { _count: { select: { coins: true } } },
+    });
+    return rows.map(({ _count, ...set }) => ({ ...set, coinCount: _count.coins }));
   }
 
   async findCanonicalById(id: string): Promise<CanonicalSetDetail> {
@@ -137,19 +142,21 @@ export class SetsService {
     return set;
   }
 
-  async findAllPublic(query: FindPublicSetsQueryDto): Promise<PaginatedResponse<UserSetSummary>> {
+  async findAllPublic(query: FindPublicSetsQueryDto): Promise<PaginatedResponse<PublicSetSummary>> {
     const page = query.page;
     const limit = Math.min(query.limit, MAX_LIMIT);
 
-    const [items, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       this.prisma.userSet.findMany({
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { createdAt: 'asc' },
+        include: { _count: { select: { coins: true } } },
       }),
       this.prisma.userSet.count(),
     ]);
 
+    const items = rows.map(({ _count, ...set }) => ({ ...set, coinCount: _count.coins }));
     return { items, page, limit, total };
   }
 
