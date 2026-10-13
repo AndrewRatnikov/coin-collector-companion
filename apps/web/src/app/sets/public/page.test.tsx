@@ -40,6 +40,7 @@ const SETS = [
     clonedFromUserSetId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    coinCount: 3,
   },
   {
     id: 'u2',
@@ -49,6 +50,7 @@ const SETS = [
     clonedFromUserSetId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    coinCount: 3,
   },
 ];
 
