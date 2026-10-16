@@ -25,6 +25,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-10-09](2026-10-09-album-view-client-side-projection.md) | The set Album view is a client-side projection of the gap data, with the view mode kept in the URL | Accepted |
 | [2026-10-13](2026-10-13-new-set-created-in-one-request.md) | Creating a set is one request; coins are picked afterwards in the set editor | Accepted |
 | [2026-10-13](2026-10-13-set-list-endpoints-return-flat-coin-count.md) | Set list endpoints return a flat coinCount from Prisma _count | Accepted |
+| [2026-10-16](2026-10-16-security-floors-enforced-by-lockfile-test.md) | Security version floors are enforced by a unit test that parses pnpm-lock.yaml | Accepted |
 
 ## Where else decisions live
 
