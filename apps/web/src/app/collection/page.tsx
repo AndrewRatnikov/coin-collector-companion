@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import Link from 'next/link';
-import { formatCoinLabel } from '@coin-collector/shared';
+import { getCoinName } from '@coin-collector/shared';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { useCollection } from '@/lib/hooks/use-collection';
@@ -115,18 +115,31 @@ function CollectionList() {
           </p>
         ) : (
           <ul data-testid="collection-list" className="flex flex-col border-t border-[var(--color-divider)]">
-            {data.map((item) => (
-              <li
-                key={item.coinId}
-                data-testid="collection-item"
-                className="flex items-center justify-between gap-4 border-b border-[var(--color-divider)] px-1 py-4"
-              >
-                <span>{formatCoinLabel(item.coin)}</span>
-                <span className="[font-family:var(--font-mono)] text-[13px] tabular-nums text-[var(--color-neutral-600)]">
-                  {item.coin.year} {item.coin.mintMark}
-                </span>
-              </li>
-            ))}
+            {data.map((item) => {
+              const name = getCoinName(item.coin);
+              return (
+                <li
+                  key={item.coinId}
+                  data-testid="collection-item"
+                  className="flex items-center justify-between gap-4 border-b border-[var(--color-divider)] px-1 py-4"
+                >
+                  <div className="flex min-w-0 flex-col">
+                    {name.eyebrow !== '' && (
+                      <span data-testid="collection-item-eyebrow" className="text-[11px] font-medium text-neutral-700">
+                        {name.eyebrow}
+                      </span>
+                    )}
+                    <span data-testid="collection-item-title">{name.title}</span>
+                    <span data-testid="collection-item-subtitle" className="text-xs text-neutral-700">
+                      {name.subtitle}
+                    </span>
+                  </div>
+                  <span className="[font-family:var(--font-mono)] text-[13px] lining-nums tabular-nums text-[var(--color-neutral-600)]">
+                    {item.coin.year} {item.coin.mintMark}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
         ))}
     </main>
