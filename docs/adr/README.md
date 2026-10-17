@@ -22,12 +22,14 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-10-02](2026-10-02-in-app-admin-role.md) | Catalog submissions are reviewed in-app by an admin role that is read from the database | Accepted |
 | [2026-10-02](2026-10-02-submission-review-rules.md) | Review decisions are final, rejection reasons are visible only to the submitter, and duplicate warnings are advisory | Accepted |
 | [2026-10-05](2026-10-05-collection-import-preview-then-confirm.md) | Collection import is a stateless preview-then-confirm flow that only adds ownership | Accepted |
-| [2026-10-09](2026-10-09-album-view-client-side-projection.md) | The set Album view is a client-side projection of the gap data, with the view mode kept in the URL | Accepted |
+| [2026-10-09](2026-10-09-album-view-client-side-projection.md) | The set Album view is a client-side projection of the gap data, with the view mode kept in the URL | Superseded by 2026-10-17 |
 | [2026-10-13](2026-10-13-new-set-created-in-one-request.md) | Creating a set is one request; coins are picked afterwards in the set editor | Accepted |
 | [2026-10-13](2026-10-13-set-list-endpoints-return-flat-coin-count.md) | Set list endpoints return a flat coinCount from Prisma _count | Accepted |
 | [2026-10-16](2026-10-16-security-floors-enforced-by-lockfile-test.md) | Security version floors are enforced by a unit test that parses pnpm-lock.yaml | Accepted |
 | [2026-10-17](2026-10-17-coin-name-from-one-shared-function.md) | Coin names are built by one shared function, `getCoinName`, returning eyebrow, title and subtitle | Accepted |
 | [2026-10-17](2026-10-17-optimistic-ownership-toggle.md) | Ownership toggles are optimistic through the existing `useSetOwnership` mutation, with snapshot rollback | Accepted |
+| [2026-10-17](2026-10-17-bulk-ownership-endpoint.md) | Bulk ownership changes go through one idempotent `PATCH /collection` request and a hook that shares the single-coin cache patching | Accepted |
+| [2026-10-17](2026-10-17-set-page-album-default-year-groups.md) | The set page defaults to Album and shows both views as year groups, replacing the country/mint-mark album pages | Accepted |
 
 ## Where else decisions live
 
