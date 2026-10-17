@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { formatCoinLabel } from '@coin-collector/shared';
+import { getCoinName } from '@coin-collector/shared';
 import { getStoredToken } from '@/lib/auth-token';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -99,35 +99,40 @@ export default function CanonicalSetDetailPage({ params }: { params: Promise<{ i
           <ul data-testid="canonical-set-coin-list" className="flex flex-col">
             {[...set.coins]
               .sort((a, b) => a.position - b.position)
-              .map((item) => (
-                <li
-                  key={item.id}
-                  data-testid="canonical-set-coin-item"
-                  className="flex items-center gap-4 border-b border-[color:var(--color-divider)] py-3 transition-colors hover:bg-[color-mix(in_srgb,var(--color-text)_3%,transparent)]"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-surface)] font-[family-name:var(--font-heading)] text-xs text-[color:var(--color-neutral-700)] outline outline-1 outline-[color:var(--color-divider)]"
+              .map((item) => {
+                const name = getCoinName(item.coin);
+                return (
+                  <li
+                    key={item.id}
+                    data-testid="canonical-set-coin-item"
+                    className="flex items-center gap-4 border-b border-[color:var(--color-divider)] py-3 transition-colors hover:bg-[color-mix(in_srgb,var(--color-text)_3%,transparent)]"
                   >
-                    {item.coin.denomination.charAt(0)}
-                  </span>
-                  <Link
-                    href={`/catalog/${item.coin.id}`}
-                    data-testid="canonical-set-coin-link"
-                    className="flex flex-col hover:underline"
-                  >
-                    <span className="text-[15px] text-[color:var(--color-text)]">{formatCoinLabel(item.coin)}</span>
-                    {item.coin.variety ? (
-                      <span
-                        data-testid="canonical-set-coin-variety"
-                        className="text-xs text-[color:var(--color-neutral-600)]"
-                      >
-                        {item.coin.variety}
+                    <span
+                      aria-hidden="true"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[color:var(--color-surface)] font-[family-name:var(--font-heading)] text-xs text-[color:var(--color-neutral-700)] outline outline-1 outline-[color:var(--color-divider)]"
+                    >
+                      {item.coin.denomination.charAt(0)}
+                    </span>
+                    <Link
+                      href={`/catalog/${item.coin.id}`}
+                      data-testid="canonical-set-coin-link"
+                      className="flex flex-col hover:underline"
+                    >
+                      {name.eyebrow !== '' && (
+                        <span data-testid="canonical-set-coin-eyebrow" className="text-[11px] font-medium text-neutral-700">
+                          {name.eyebrow}
+                        </span>
+                      )}
+                      <span data-testid="canonical-set-coin-title" className="text-[15px] text-[color:var(--color-text)]">
+                        {name.title}
                       </span>
-                    ) : null}
-                  </Link>
-                </li>
-              ))}
+                      <span data-testid="canonical-set-coin-subtitle" className="text-xs text-neutral-700">
+                        {name.subtitle}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
           </ul>
         </>
       )}
