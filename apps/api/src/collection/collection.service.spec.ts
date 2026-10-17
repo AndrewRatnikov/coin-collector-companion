@@ -1,15 +1,16 @@
 /**
  * Tests for: CollectionService
  * Contract source: runs/run_20260720_142942/plan.md § Interface Contract (Service: CollectionService)
- * Covers criteria: #3, #4, #5, #6, #8 (from runs/run_20260720_142942/prd.md)
+ * Extended by: runs/run_20261017_210503/plan.md § Interface Contract (API: PATCH /collection)
+ * Covers criteria: #3, #4, #5, #6, #8 (run_20260720_142942); #10 (run_20261017_210503)
  *
  * CONTRACT_GAP: none.
  *
- * PrismaService is mocked entirely (ownership.upsert, ownership.deleteMany, ownership.findMany)
- * — no real DB or network call. The P2003 branch is exercised by throwing a real
- * Prisma.PrismaClientKnownRequestError instance (constructed with the real class from
- * @prisma/client, which is a dependency of apps/api) rather than a plain object, so the
- * `err instanceof Prisma.PrismaClientKnownRequestError` check in the implementation is
+ * PrismaService is mocked entirely (ownership.upsert, ownership.deleteMany, ownership.findMany,
+ * ownership.createMany, coin.count) — no real DB or network call. The P2003 branch is exercised
+ * by throwing a real Prisma.PrismaClientKnownRequestError instance (constructed with the real
+ * class from @prisma/client, which is a dependency of apps/api) rather than a plain object, so
+ * the `err instanceof Prisma.PrismaClientKnownRequestError` check in the implementation is
  * exercised faithfully, not bypassed by a shape-alike mock.
  */
 
@@ -38,11 +39,17 @@ describe('CollectionService', () => {
       upsert: jest.Mock;
       deleteMany: jest.Mock;
       findMany: jest.Mock;
+      createMany: jest.Mock;
+    };
+    coin: {
+      count: jest.Mock;
     };
   };
 
   const userId = 'user-1';
   const coinId = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+  const coinIdB = '9b2e4f1c-8d3a-4c5b-a6e7-1f2d3c4b5a69';
+  const coinIdC = '7c9e6679-7425-40de-944b-e07fc1f90ae7';
 
   beforeEach(async () => {
     mockPrismaService = {
@@ -50,6 +57,10 @@ describe('CollectionService', () => {
         upsert: jest.fn(),
         deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
         findMany: jest.fn().mockResolvedValue([]),
+        createMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
+      coin: {
+        count: jest.fn().mockResolvedValue(0),
       },
     };
 
@@ -144,6 +155,133 @@ describe('CollectionService', () => {
         coinId,
         owned: false,
         ownedAt: null,
+      });
+    });
+  });
+
+  describe('setOwnershipBulk — owned: true (criterion #10)', () => {
+    it('checks the coins exist, then createMany with skipDuplicates scoped to the user', async () => {
+      mockPrismaService.coin.count.mockResolvedValue(2);
+
+      await service.setOwnershipBulk(userId, [coinId, coinIdB], true);
+
+      expect(mockPrismaService.coin.count).toHaveBeenCalledWith({
+        where: { id: { in: [coinId, coinIdB] } },
+      });
+      expect(mockPrismaService.ownership.createMany).toHaveBeenCalledTimes(1);
+      expect(mockPrismaService.ownership.createMany).toHaveBeenCalledWith({
+        data: [
+          { userId, coinId },
+          { userId, coinId: coinIdB },
+        ],
+        skipDuplicates: true,
+      });
+      expect(mockPrismaService.ownership.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('returns { coinIds, owned: true }', async () => {
+      mockPrismaService.coin.count.mockResolvedValue(2);
+
+      const result = await service.setOwnershipBulk(userId, [coinId, coinIdB], true);
+
+      expect(result).toEqual({ coinIds: [coinId, coinIdB], owned: true });
+    });
+
+    it('de-duplicates ids keeping first-seen order, for the count check, the insert and the result', async () => {
+      mockPrismaService.coin.count.mockResolvedValue(3);
+
+      const result = await service.setOwnershipBulk(
+        userId,
+        [coinIdB, coinId, coinIdB, coinIdC, coinId],
+        true,
+      );
+
+      expect(mockPrismaService.coin.count).toHaveBeenCalledWith({
+        where: { id: { in: [coinIdB, coinId, coinIdC] } },
+      });
+      expect(mockPrismaService.ownership.createMany).toHaveBeenCalledWith({
+        data: [
+          { userId, coinId: coinIdB },
+          { userId, coinId },
+          { userId, coinId: coinIdC },
+        ],
+        skipDuplicates: true,
+      });
+      expect(result.coinIds).toEqual([coinIdB, coinId, coinIdC]);
+    });
+
+    it('throws NotFoundException and writes nothing when a coin does not exist', async () => {
+      mockPrismaService.coin.count.mockResolvedValue(1);
+
+      await expect(service.setOwnershipBulk(userId, [coinId, coinIdB], true)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockPrismaService.ownership.createMany).not.toHaveBeenCalled();
+    });
+
+    it('does not 404 when duplicates in the input would exceed the count but every distinct coin exists', async () => {
+      mockPrismaService.coin.count.mockResolvedValue(1);
+
+      await expect(service.setOwnershipBulk(userId, [coinId, coinId], true)).resolves.toEqual({
+        coinIds: [coinId],
+        owned: true,
+      });
+    });
+
+    it('maps a P2003 from the insert to NotFoundException', async () => {
+      mockPrismaService.coin.count.mockResolvedValue(1);
+      mockPrismaService.ownership.createMany.mockRejectedValue(makeP2003Error());
+
+      await expect(service.setOwnershipBulk(userId, [coinId], true)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('rethrows any other insert error unchanged', async () => {
+      mockPrismaService.coin.count.mockResolvedValue(1);
+      mockPrismaService.ownership.createMany.mockRejectedValue(new Error('db down'));
+
+      await expect(service.setOwnershipBulk(userId, [coinId], true)).rejects.toThrow('db down');
+    });
+
+    it('is idempotent: owning already-owned coins (createMany count 0) still succeeds', async () => {
+      mockPrismaService.coin.count.mockResolvedValue(1);
+      mockPrismaService.ownership.createMany.mockResolvedValue({ count: 0 });
+
+      await expect(service.setOwnershipBulk(userId, [coinId], true)).resolves.toEqual({
+        coinIds: [coinId],
+        owned: true,
+      });
+    });
+  });
+
+  describe('setOwnershipBulk — owned: false (criterion #10)', () => {
+    it('deleteMany scoped to the user and the ids, never createMany or a coin lookup', async () => {
+      await service.setOwnershipBulk(userId, [coinId, coinIdB], false);
+
+      expect(mockPrismaService.ownership.deleteMany).toHaveBeenCalledTimes(1);
+      expect(mockPrismaService.ownership.deleteMany).toHaveBeenCalledWith({
+        where: { userId, coinId: { in: [coinId, coinIdB] } },
+      });
+      expect(mockPrismaService.ownership.createMany).not.toHaveBeenCalled();
+      expect(mockPrismaService.coin.count).not.toHaveBeenCalled();
+    });
+
+    it('returns { coinIds, owned: false } with de-duplicated ids', async () => {
+      const result = await service.setOwnershipBulk(userId, [coinIdB, coinId, coinIdB], false);
+
+      expect(result).toEqual({ coinIds: [coinIdB, coinId], owned: false });
+      expect(mockPrismaService.ownership.deleteMany).toHaveBeenCalledWith({
+        where: { userId, coinId: { in: [coinIdB, coinId] } },
+      });
+    });
+
+    it('is idempotent: un-owning coins that were never owned does not throw', async () => {
+      mockPrismaService.ownership.deleteMany.mockResolvedValue({ count: 0 });
+
+      await expect(service.setOwnershipBulk(userId, [coinId], false)).resolves.toEqual({
+        coinIds: [coinId],
+        owned: false,
       });
     });
   });

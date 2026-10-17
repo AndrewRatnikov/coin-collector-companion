@@ -1,7 +1,8 @@
 /**
  * Tests for: StatusToggle and useDelayedPending
  * Contract source: runs/run_20261017_142658/plan.md § Interface Contract → Component: StatusToggle
- * Covers criteria: #9, #16 (from prd.md)
+ * Extended by: runs/run_20261017_210503/plan.md § Interface Contract → Component: StatusToggle (MODIFY)
+ * Covers criteria: #9, #16 (run_20261017_142658); #14 (run_20261017_210503, collapseLabelOnMobile)
  *
  * Fake timers drive the 150ms spinner delay. Events use fireEvent because userEvent and fake
  * timers do not mix well.
@@ -249,6 +250,38 @@ describe('StatusToggle', () => {
     it('shows "Retry" when failed', () => {
       renderToggle({ variant: 'pill', state: 'failed' });
       expect(screen.getByTestId('status-toggle')).toHaveTextContent('Retry');
+    });
+  });
+
+  describe('pill variant: collapseLabelOnMobile (criterion 14)', () => {
+    it('adds max-[899px]:sr-only to the visible label text when the prop is true', () => {
+      renderToggle({ variant: 'pill', owned: false, collapseLabelOnMobile: true });
+      const label = screen.getByText('Missing');
+
+      expect(label.className).toContain('max-[899px]:sr-only');
+    });
+
+    it('keeps the same text and accessible name when collapsed', () => {
+      renderToggle({ variant: 'pill', owned: false, collapseLabelOnMobile: true });
+      const button = screen.getByTestId('status-toggle');
+
+      expect(button).toHaveTextContent('Missing');
+      expect(button).toHaveAttribute('aria-label', 'Mark Odesa Oblast as owned');
+    });
+
+    it('collapses the owned label too', () => {
+      renderToggle({ variant: 'pill', owned: true, collapseLabelOnMobile: true });
+      expect(screen.getByText('Owned').className).toContain('max-[899px]:sr-only');
+    });
+
+    it('has no such class on the label without the prop', () => {
+      renderToggle({ variant: 'pill', owned: false });
+      expect(screen.getByText('Missing').className).not.toContain('max-[899px]:sr-only');
+    });
+
+    it('has no such class on the label when the prop is false', () => {
+      renderToggle({ variant: 'pill', owned: false, collapseLabelOnMobile: false });
+      expect(screen.getByText('Missing').className).not.toContain('max-[899px]:sr-only');
     });
   });
 });
