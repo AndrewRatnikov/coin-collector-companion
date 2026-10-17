@@ -11,6 +11,11 @@ export interface SetActionsMenuProps {
   onDownloadMissing: () => void;
   printMissingHref: string;
   nothingMissing: boolean;
+  /** Mobile only (hidden from 900px): enters select mode. The item renders only when given. */
+  onSelectCoins?: () => void;
+  /** Mobile only (hidden from 900px): marks every idle missing coin owned. Renders only when given. */
+  onMarkAllOwned?: () => void;
+  markAllCount?: number;
 }
 
 // Text colour is kept out of the base so the Delete item's `text-danger` never competes with `text-text`.
@@ -67,11 +72,32 @@ function TrashIcon() {
   );
 }
 
-// Enabled menu items in DOM order (disabled buttons and aria-disabled links are skipped).
+function SelectIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <rect x="2.5" y="2.5" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M5.5 8.25l1.75 1.75 3.25-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function MarkAllIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M2 8.5l2.5 2.5L9.5 5M7.5 10.5l.5.5 6-6.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// Enabled, visible menu items in DOM order (disabled buttons, aria-disabled links and items
+// hidden by CSS at this breakpoint, such as the mobile-only ones on desktop, are skipped).
 function enabledItems(menu: HTMLElement | null): HTMLElement[] {
   if (!menu) return [];
   return Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"]')).filter(
-    (item) => !item.hasAttribute('disabled') && item.getAttribute('aria-disabled') !== 'true',
+    (item) =>
+      !item.hasAttribute('disabled') &&
+      item.getAttribute('aria-disabled') !== 'true' &&
+      window.getComputedStyle(item).display !== 'none',
   );
 }
 
@@ -84,6 +110,9 @@ export function SetActionsMenu({
   onDownloadMissing,
   printMissingHref,
   nothingMissing,
+  onSelectCoins,
+  onMarkAllOwned,
+  markAllCount = 0,
 }: SetActionsMenuProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -180,6 +209,38 @@ export function SetActionsMenu({
           onKeyDown={handleMenuKeyDown}
           className="absolute right-0 top-[52px] z-10 flex w-60 flex-col rounded-[var(--radius-lg)] border border-neutral-300 bg-white p-1.5 shadow-lg"
         >
+          {onSelectCoins && (
+            <button
+              type="button"
+              role="menuitem"
+              tabIndex={-1}
+              data-testid="set-editor-select-item"
+              onClick={() => run(onSelectCoins)}
+              className={`${ITEM_CLASSNAME} min-[900px]:hidden`}
+            >
+              <SelectIcon />
+              {t('setPage.selectCoinsItem')}
+            </button>
+          )}
+          {onMarkAllOwned && (
+            <button
+              type="button"
+              role="menuitem"
+              tabIndex={-1}
+              data-testid="set-editor-mark-all-item"
+              disabled={markAllCount === 0}
+              onClick={() => run(onMarkAllOwned)}
+              className={`${ITEM_CLASSNAME} min-[900px]:hidden`}
+            >
+              <MarkAllIcon />
+              {markAllCount === 1
+                ? t('setPage.markOneOwned')
+                : t('setPage.markAllOwned').split('{n}').join(String(markAllCount))}
+            </button>
+          )}
+          {(onSelectCoins || onMarkAllOwned) && (
+            <span aria-hidden="true" className="mx-1 my-1.5 h-px bg-neutral-200 min-[900px]:hidden" />
+          )}
           <button
             type="button"
             role="menuitem"
