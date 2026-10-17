@@ -14,7 +14,7 @@ import { SetYearGroup } from '@/components/sets/set-year-group';
 function renderGroup(over: Partial<React.ComponentProps<typeof SetYearGroup>> = {}) {
   return render(
     <SetYearGroup year={2025} ownedCount={2} totalCount={5} markAllCount={3} {...over}>
-      <div data-testid="group-child">child content</div>
+      <div>child content</div>
     </SetYearGroup>,
   );
 }
@@ -50,7 +50,7 @@ describe('SetYearGroup: header', () => {
 
   it('renders its children inside the section', () => {
     renderGroup();
-    expect(within(screen.getByTestId('set-year-group')).getByTestId('group-child')).toBeInTheDocument();
+    expect(within(screen.getByTestId('set-year-group')).getByText('child content')).toBeInTheDocument();
   });
 });
 
