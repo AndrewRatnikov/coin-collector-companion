@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Set page</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/9289bb8d20793fdaa54f2a398d1afa04">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cc">
+<header class="nav">
+<div class="nav-in">
+<a href="#" class="brand"><span class="brand-mark" aria-hidden="true"></span>Coin Collector Companion</a>
+<nav class="nav-links" aria-label="Main"><a href="#" aria-current="page">My sets</a><a href="#">Collection</a><a href="#">Catalog</a></nav>
+<div class="nav-end">
+<div class="lang" role="group" aria-label="Language"><button type="button" aria-pressed="true">EN</button><button type="button" aria-pressed="false">ES</button></div>
+<button type="button" class="acct" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu"><span class="avatar" aria-hidden="true">A</span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+</div>
+</header>
+
+<main class="wrap" style="padding-top: 24px; display: flex; flex-direction: column; gap: 22px">
+
+<nav class="crumb" aria-label="Breadcrumb"><a href="#">‹ My sets</a></nav>
+
+<sc-if value="{{isLoading}}" hint-placeholder-val="{{ false }}">
+<div aria-busy="true" aria-label="Loading set" style="display: flex; flex-direction: column; gap: 22px">
+<span class="sk" style="height: 44px; width: 60%"></span>
+<span class="sk" style="height: 14px; width: 30%"></span>
+<span class="sk" style="height: 44px; width: 100%"></span>
+<ul class="cgrid">
+<li class="ccard"><div class="ccard-well"><span class="sk" style="width: 54%; aspect-ratio: 1; border-radius: 50%"></span></div><div class="ccard-body" style="gap: 6px"><span class="sk" style="height: 14px; width: 80%"></span><span class="sk" style="height: 10px; width: 60%"></span></div></li>
+<li class="ccard"><div class="ccard-well"><span class="sk" style="width: 54%; aspect-ratio: 1; border-radius: 50%"></span></div><div class="ccard-body" style="gap: 6px"><span class="sk" style="height: 14px; width: 70%"></span><span class="sk" style="height: 10px; width: 60%"></span></div></li>
+<li class="ccard"><div class="ccard-well"><span class="sk" style="width: 54%; aspect-ratio: 1; border-radius: 50%"></span></div><div class="ccard-body" style="gap: 6px"><span class="sk" style="height: 14px; width: 85%"></span><span class="sk" style="height: 10px; width: 60%"></span></div></li>
+<li class="ccard"><div class="ccard-well"><span class="sk" style="width: 54%; aspect-ratio: 1; border-radius: 50%"></span></div><div class="ccard-body" style="gap: 6px"><span class="sk" style="height: 14px; width: 75%"></span><span class="sk" style="height: 10px; width: 60%"></span></div></li>
+<li class="ccard"><div class="ccard-well"><span class="sk" style="width: 54%; aspect-ratio: 1; border-radius: 50%"></span></div><div class="ccard-body" style="gap: 6px"><span class="sk" style="height: 14px; width: 65%"></span><span class="sk" style="height: 10px; width: 60%"></span></div></li>
+</ul>
+</div>
+</sc-if>
+
+<sc-if value="{{isError}}" hint-placeholder-val="{{ false }}">
+<div class="alert" role="alert">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"></circle><path d="M10 6v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><circle cx="10" cy="13.8" r="1.1" fill="currentColor"></circle></svg>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><b style="font-weight: 600">We couldn’t load this set.</b><span style="font-size: 14px">Check your connection and try again.</span></div>
+<button type="button" class="btn btn-secondary btn-sm">Try again</button>
+</div>
+</sc-if>
+
+<sc-if value="{{isReady}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 22px">
+
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 20px 40px">
+<div style="flex: 1 1 520px; min-width: 0; display: flex; flex-direction: column; gap: 6px">
+<h1 class="h1">We Are Strong. We Are Together</h1>
+<p class="muted">Curated checklist · Ukraine · 10 Hryvnias · <span class="mono">2025–2026</span></p>
+</div>
+<div style="flex: 0 1 300px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px">
+<span style="font-size: 14px; color: #444141"><b class="mono" style="font-size: 22px; font-weight: 500; color: #201f1d">{{ownedCount}}</b> of <span class="mono">{{total}}</span> owned</span>
+<span class="mono" style="font-size: 16px; color: #7d5411">{{pct}}%</span>
+</div>
+<div class="progress" role="progressbar" aria-label="Set completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{pct}}"><span style="{{bar}}"></span></div>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 18px; border-bottom: 1px solid rgba(32,31,29,0.16)">
+<div style="display: flex; flex-wrap: wrap; gap: 12px">
+<div class="seg" role="group" aria-label="Show">
+<button type="button" aria-pressed="{{fAll}}" onClick="{{showAll}}">All <span class="mono">{{total}}</span></button>
+<button type="button" aria-pressed="{{fMissing}}" onClick="{{showMissing}}">Missing <span class="mono">{{missingCount}}</span></button>
+</div>
+<div class="seg" role="group" aria-label="View">
+<button type="button" aria-pressed="{{vAlbum}}" onClick="{{toAlbum}}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.4"></rect><rect x="9" y="2.5" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.4"></rect><rect x="2.5" y="9" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.4"></rect><rect x="9" y="9" width="4.5" height="4.5" rx="1" stroke="currentColor" stroke-width="1.4"></rect></svg>Album</button>
+<button type="button" aria-pressed="{{vList}}" onClick="{{toList}}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg>List</button>
+</div>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<sc-if value="{{vAlbum}}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-secondary" aria-pressed="{{selecting}}" onClick="{{toggleSelect}}">{{selectLabel}}</button></sc-if>
+<a href="#" class="btn btn-primary"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>Add coins</a>
+<button type="button" class="icon-btn" aria-label="Set actions" aria-haspopup="menu" style="border: 1px solid #bab6b6; background: #ffffff"><svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true"><circle cx="4" cy="9" r="1.6"></circle><circle cx="9" cy="9" r="1.6"></circle><circle cx="14" cy="9" r="1.6"></circle></svg></button>
+</div>
+</div>
+
+<sc-if value="{{showSelectHint}}" hint-placeholder-val="{{ false }}">
+<p style="font-size: 14px; color: #444141">Tap coins to select them, then mark them all at once.</p>
+</sc-if>
+
+<sc-if value="{{showAlbum}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 28px">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+<section aria-label="{{g.year}}" style="display: flex; flex-direction: column; gap: 14px">
+<div class="gh">
+<h2 class="gh-y">{{g.year}}</h2>
+<span class="gh-c">{{g.summary}}</span>
+<span class="gh-rule" aria-hidden="true"></span>
+<sc-if value="{{g.canMarkAll}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn btn-ghost btn-sm" onClick="{{g.markAll}}">{{g.markAllLabel}}</button></sc-if>
+</div>
+<ul class="{{gridCls}}">
+<sc-for list="{{g.coins}}" as="c" hint-placeholder-count="5">
+<li class="{{c.cls}}">
+<div class="ccard-well"><span class="coin gold" aria-hidden="true"><span class="n">10</span><span class="u">Hryvnias</span></span>
+<button type="button" class="{{c.checkCls}}" aria-pressed="{{c.owned}}" aria-busy="{{c.busy}}" aria-label="{{c.checkLabel}}" onClick="{{c.toggle}}"><i><sc-if value="{{c.failed}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 4v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><circle cx="8" cy="11.8" r="1.1" fill="currentColor"></circle></svg></sc-if><sc-if value="{{c.notFailed}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if></i></button>
+</div>
+<sc-if value="{{selecting}}" hint-placeholder-val="{{ false }}"><button type="button" class="sel" aria-pressed="{{c.selected}}" aria-label="{{c.selLabel}}" onClick="{{c.select}}"><i><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></i></button></sc-if>
+<div class="ccard-body">
+<a href="#" class="ccard-title">{{c.name}}</a>
+<span class="ccard-sub">Ukraine · 10 Hryvnias · {{c.year}}</span>
+<div class="ccard-foot"><span class="{{c.stCls}}">{{c.stText}}</span><sc-if value="{{c.failed}}" hint-placeholder-val="{{ false }}"><button type="button" class="retry" onClick="{{c.toggle}}">Retry</button></sc-if></div>
+</div>
+</li>
+</sc-for>
+</ul>
+</section>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{showList}}" hint-placeholder-val="{{ false }}">
+<div class="ltable">
+<div class="lhead" aria-hidden="true"><span></span><span>Coin</span><span>Year</span><span>Status</span><span></span></div>
+<sc-for list="{{flat}}" as="c" hint-placeholder-count="8">
+<div class="{{c.rowCls}}">
+<span class="{{c.coinSm}}" aria-hidden="true"><span class="n">10</span></span>
+<div class="lname"><a href="#">{{c.name}}</a><small style="{{c.rowSubStyle}}">{{c.rowSub}}</small></div>
+<span class="lyear mono">{{c.year}}</span>
+<button type="button" class="{{c.togCls}}" aria-pressed="{{c.owned}}" aria-busy="{{c.busy}}" aria-label="{{c.checkLabel}}" onClick="{{c.toggle}}"><i><sc-if value="{{c.failed}}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 4v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path><circle cx="8" cy="11.8" r="1.1" fill="currentColor"></circle></svg></sc-if><sc-if value="{{c.notFailed}}" hint-placeholder-val="{{ true }}"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if></i><span class="tl">{{c.togText}}</span></button>
+<button type="button" class="icon-btn" aria-label="{{c.menuLabel}}" aria-haspopup="menu" aria-expanded="{{c.menuOpen}}" onClick="{{c.openMenu}}"><svg width="18" height="18" viewBox="0 0 18 18" fill="currentColor" aria-hidden="true"><circle cx="4" cy="9" r="1.6"></circle><circle cx="9" cy="9" r="1.6"></circle><circle cx="14" cy="9" r="1.6"></circle></svg></button>
+<sc-if value="{{c.menuOpen}}" hint-placeholder-val="{{ false }}">
+<div class="menu" role="menu" aria-label="{{c.menuLabel}}" style="z-index: 40">
+<a href="#" class="mi" role="menuitem">Open coin page</a>
+<button type="button" class="mi" role="menuitem" onClick="{{closeMenu}}">Add to another set…</button>
+<hr>
+<button type="button" class="mi mi-danger" role="menuitem" onClick="{{c.remove}}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>Remove from set</button>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{allOwnedEmpty}}" hint-placeholder-val="{{ false }}">
+<div class="empty"><span class="badge b-done">✓ Complete</span><p style="font-size: 16px; font-weight: 600">Nothing missing. This set is complete.</p><button type="button" class="link" style="border: 0; background: transparent; cursor: pointer; font-size: 14px" onClick="{{showAll}}">Show all coins</button></div>
+</sc-if>
+
+<sc-if value="{{selecting}}" hint-placeholder-val="{{ false }}">
+<div class="actionbar" role="region" aria-label="Selection">
+<span style="flex: 1 1 160px; font-size: 14px"><b class="mono" style="font-weight: 500">{{selCount}}</b> selected</span>
+<button type="button" class="btn btn-primary btn-sm" onClick="{{applyOwned}}" disabled="{{noSel}}">Mark owned</button>
+<button type="button" class="btn btn-secondary btn-sm" onClick="{{applyMissing}}" disabled="{{noSel}}">Mark missing</button>
+<button type="button" class="btn btn-ghost btn-sm" onClick="{{toggleSelect}}">Cancel</button>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+</main>
+
+<footer class="foot">
+<div class="foot-in">
+<nav aria-label="Footer"><a href="#">Glossary</a><a href="#">Help</a><a href="#">Send feedback</a></nav>
+<span>Catalog data derived from <a href="#">Wikipedia</a>, used under CC BY-SA 4.0.</span>
+</div>
+</footer>
+
+<p class="sr" role="status" aria-live="polite">{{live}}</p>
+<sc-if value="{{hasToast}}" hint-placeholder-val="{{ false }}">
+<div class="toast" role="status"><span>{{toastText}}</span><button type="button" class="tb" onClick="{{undo}}">Undo</button><button type="button" class="tx" aria-label="Dismiss" onClick="{{dismiss}}"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></button></div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["ready","loading","error"],"default":"ready"},"failSaves":{"editor":"boolean","default":false},"$preview":{"width":1280,"height":1320}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    var list = [
+      ['crimea', 'Autonomous Republic of Crimea', '2025'], ['donetsk', 'Donetsk Oblast', '2025'], ['luhansk', 'Luhansk Oblast', '2025'],
+      ['chernihiv', 'Chernihiv Oblast', '2026'], ['dnipro', 'Dnipropetrovsk Oblast', '2026'], ['kharkiv', 'Kharkiv Oblast', '2026'],
+      ['kherson', 'Kherson Oblast', '2026'], ['kirovohrad', 'Kirovohrad Oblast', '2026'], ['mykolaiv', 'Mykolaiv Oblast', '2026'],
+      ['odesa', 'Odesa Oblast', '2026'], ['sumy', 'Sumy Oblast', '2026'], ['zaporizhzhia', 'Zaporizhzhia Oblast', '2026']
+    ];
+    this.state = {
+      coins: list.map(function (r) { return { id: r[0], name: r[1], year: r[2], owned: r[0] !== 'zaporizhzhia', status: 'idle', removed: false }; }),
+      view: 'album', filter: 'all', selecting: false, selected: {}, menuFor: null, toast: null, live: ''
+    };
+    this.toastSeq = 0;
+  }
+  patch(ids, fields) {
+    this.setState(function (s) {
+      return { coins: s.coins.map(function (c) { return ids.indexOf(c.id) !== -1 ? Object.assign({}, c, fields) : c; }) };
+    });
+  }
+  showToast(text, undoFn) {
+    var self = this;
+    var id = ++this.toastSeq;
+    this.setState({ toast: { id: id, text: text, undo: undoFn } });
+    setTimeout(function () { if (self.state.toast && self.state.toast.id === id) self.setState({ toast: null }); }, 8000);
+  }
+  toggleCoin(c) {
+    var self = this;
+    if (c.status === 'pending') return;
+    this.patch([c.id], { status: 'pending' });
+    setTimeout(function () {
+      if (self.props.failSaves) {
+        self.patch([c.id], { status: 'failed' });
+        self.setState({ live: 'Couldn’t save ' + c.name + '. Try again.' });
+      } else {
+        self.patch([c.id], { owned: !c.owned, status: 'idle' });
+        self.setState({ live: c.name + (c.owned ? ' marked as missing.' : ' marked as owned.') });
+      }
+    }, 900);
+  }
+  setOwnedBulk(ids, owned, label) {
+    var self = this;
+    var prev = {};
+    this.state.coins.forEach(function (c) { if (ids.indexOf(c.id) !== -1) prev[c.id] = c.owned; });
+    this.patch(ids, { status: 'pending' });
+    setTimeout(function () {
+      if (self.props.failSaves) { self.patch(ids, { status: 'failed' }); self.setState({ live: 'Couldn’t save ' + ids.length + ' coins.' }); return; }
+      self.patch(ids, { owned: owned, status: 'idle' });
+      self.showToast(label, function () {
+        self.setState(function (s) { return { coins: s.coins.map(function (c) { return prev.hasOwnProperty(c.id) ? Object.assign({}, c, { owned: prev[c.id] }) : c; }), toast: null }; });
+      });
+    }, 900);
+  }
+  renderVals() {
+    var self = this, st = this.state;
+    var mode = this.props.state || 'ready';
+    var vis = st.coins.filter(function (c) { return !c.removed; });
+    var total = vis.length;
+    var ownedCount = vis.filter(function (c) { return c.owned; }).length;
+    var pct = total ? Math.round(ownedCount / total * 100) : 0;
+    var shown = st.filter === 'missing' ? vis.filter(function (c) { return !c.owned || c.status !== 'idle'; }) : vis;
+    function decorate(c) {
+      var pending = c.status === 'pending', failed = c.status === 'failed';
+      var selected = !!st.selected[c.id];
+      var cls = 'ccard ' + (c.owned ? 'owned' : 'missing') + (failed ? ' failed' : '') + (selected ? ' selected' : '');
+      return {
+        id: c.id, name: c.name, year: c.year, owned: c.owned, busy: pending, failed: failed, notFailed: !failed,
+        cls: cls,
+        checkCls: 'check' + (c.owned ? ' on' : '') + (pending ? ' pending' : '') + (failed ? ' failed' : ''),
+        checkLabel: failed ? 'Couldn’t save ' + c.name + '. Try again' : (c.owned ? 'Mark ' + c.name + ' as missing' : 'Mark ' + c.name + ' as owned'),
+        stCls: pending ? 'st-pending' : failed ? 'st-failed' : c.owned ? 'st-owned' : 'st-missing',
+        stText: pending ? 'Saving…' : failed ? 'Couldn’t save' : c.owned ? 'In collection' : 'Missing',
+        toggle: function () { self.toggleCoin(c); },
+        selected: selected,
+        selLabel: 'Select ' + c.name,
+        select: function () { var n = Object.assign({}, self.state.selected); if (n[c.id]) delete n[c.id]; else n[c.id] = true; self.setState({ selected: n }); },
+        rowCls: 'lrow' + (failed ? ' failed' : ''),
+        coinSm: 'coin gold sm' + (c.owned ? '' : ' missing'),
+        rowSub: failed ? 'Couldn’t save. Check your connection.' : 'Ukraine · 10 Hryvnias',
+        rowSubStyle: failed ? 'color: #a3271f' : '',
+        togCls: 'tog' + (pending ? ' pending' : '') + (failed ? ' failed' : ''),
+        togText: pending ? 'Saving…' : failed ? 'Retry' : c.owned ? 'Owned' : 'Missing',
+        menuLabel: 'More actions for ' + c.name,
+        menuOpen: st.menuFor === c.id,
+        openMenu: function () { self.setState({ menuFor: self.state.menuFor === c.id ? null : c.id }); },
+        remove: function () {
+          self.patch([c.id], { removed: true });
+          self.setState({ menuFor: null });
+          self.showToast('Removed ' + c.name + ' from this set.', function () { self.patch([c.id], { removed: false }); self.setState({ toast: null }); });
+        }
+      };
+    }
+    var years = ['2025', '2026'];
+    var groups = [];
+    years.forEach(function (y) {
+      var all = vis.filter(function (c) { return c.year === y; });
+      var inGroup = shown.filter(function (c) { return c.year === y; });
+      if (!inGroup.length) return;
+      var gOwned = all.filter(function (c) { return c.owned; }).length;
+      var missingIds = all.filter(function (c) { return !c.owned && c.status === 'idle'; }).map(function (c) { return c.id; });
+      groups.push({
+        year: y,
+        summary: gOwned + ' of ' + all.length + ' owned',
+        canMarkAll: missingIds.length > 0 && !st.selecting,
+        markAllLabel: missingIds.length === 1 ? 'Mark 1 as owned' : 'Mark all ' + missingIds.length + ' as owned',
+        markAll: function () { self.setOwnedBulk(missingIds, true, 'Marked ' + missingIds.length + (missingIds.length === 1 ? ' coin' : ' coins') + ' from ' + y + ' as owned.'); },
+        coins: inGroup.map(decorate)
+      });
+    });
+    var selIds = Object.keys(st.selected);
+    var isAlbum = st.view === 'album';
+    var ready = mode === 'ready';
+    return {
+      isLoading: mode === 'loading', isError: mode === 'error', isReady: ready,
+      ownedCount: ownedCount, total: total, pct: pct, missingCount: total - ownedCount,
+      bar: 'width: ' + pct + '%',
+      fAll: st.filter === 'all', fMissing: st.filter === 'missing',
+      showAll: function () { self.setState({ filter: 'all' }); },
+      showMissing: function () { self.setState({ filter: 'missing' }); },
+      vAlbum: isAlbum, vList: !isAlbum,
+      toAlbum: function () { self.setState({ view: 'album', menuFor: null }); },
+      toList: function () { self.setState({ view: 'list', selecting: false, selected: {} }); },
+      selecting: st.selecting && isAlbum,
+      selectLabel: st.selecting ? 'Done selecting' : 'Select',
+      toggleSelect: function () { self.setState({ selecting: !self.state.selecting, selected: {} }); },
+      showSelectHint: st.selecting && isAlbum,
+      gridCls: 'cgrid' + (st.selecting ? ' selecting' : ''),
+      groups: groups,
+      flat: shown.map(decorate),
+      showAlbum: isAlbum && shown.length > 0,
+      showList: !isAlbum && shown.length > 0,
+      allOwnedEmpty: shown.length === 0,
+      selCount: selIds.length,
+      noSel: selIds.length === 0,
+      applyOwned: function () { var ids = Object.keys(self.state.selected); self.setState({ selecting: false, selected: {} }); self.setOwnedBulk(ids, true, 'Marked ' + ids.length + (ids.length === 1 ? ' coin' : ' coins') + ' as owned.'); },
+      applyMissing: function () { var ids = Object.keys(self.state.selected); self.setState({ selecting: false, selected: {} }); self.setOwnedBulk(ids, false, 'Marked ' + ids.length + (ids.length === 1 ? ' coin' : ' coins') + ' as missing.'); },
+      closeMenu: function () { self.setState({ menuFor: null }); },
+      live: st.live,
+      hasToast: !!st.toast,
+      toastText: st.toast ? st.toast.text : '',
+      undo: function () { if (self.state.toast && self.state.toast.undo) self.state.toast.undo(); },
+      dismiss: function () { self.setState({ toast: null }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

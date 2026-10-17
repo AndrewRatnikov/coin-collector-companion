@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My sets mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/9289bb8d20793fdaa54f2a398d1afa04">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="m cc">
+<header class="m-top">
+<span class="brand-mark" aria-hidden="true"></span>
+<span class="t">My sets</span>
+<a href="#" class="icon-btn" aria-label="New set"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg></a>
+<button type="button" class="icon-btn" aria-label="Account menu"><span class="avatar" aria-hidden="true">A</span></button>
+</header>
+<main class="m-body">
+
+<sc-if value="{{isMany}}" hint-placeholder-val="{{ true }}">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div class="stat" style="padding: 12px 14px"><span class="stat-v" style="font-size: 24px">137</span><span class="stat-l" style="font-size: 12px">coins still missing</span></div>
+<div class="stat" style="padding: 12px 14px"><span class="stat-v" style="font-size: 24px">88</span><span class="stat-l" style="font-size: 12px">in your collection</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; background: #fff3e4; border: 1px solid #e1ad66; border-radius: 7px">
+<span class="eyebrow" style="font-size: 11px">Closest to complete</span>
+<span style="font-weight: 600">We Are Strong. We Are Together</span>
+<span style="font-size: 13px; color: #444141"><span class="mono">1</span> to go · Zaporizhzhia Oblast</span>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between"><h2 class="eyebrow">Your sets · <span class="mono">4</span></h2><a href="#" class="link" style="font-size: 13px">Browse checklists</a></div>
+<ul class="sgrid" style="gap: 12px">
+<sc-for list="{{sets}}" as="s" hint-placeholder-count="4">
+<li class="scard" style="padding: 14px; gap: 10px">
+<a href="#" class="scard-title" style="font-size: 22px">{{s.name}}</a>
+<div style="display: flex; flex-direction: column; gap: 6px"><div class="progress" role="progressbar" aria-valuenow="{{s.pct}}" aria-valuemin="0" aria-valuemax="100" aria-label="{{s.pctLabel}}"><span style="{{s.bar}}"></span></div><div class="scard-stats"><span><b>{{s.owned}}</b> of <b>{{s.total}}</b> owned</span><b>{{s.pct}}%</b></div></div>
+<div class="scard-foot"><span style="font-size: 13px; color: #444141; min-width: 0">{{s.next}}</span><span class="badge b-missing">{{s.missing}} missing</span></div>
+</li>
+</sc-for>
+</ul>
+</sc-if>
+
+<sc-if value="{{isOne}}" hint-placeholder-val="{{ false }}">
+<ul class="sgrid">
+<li class="scard" style="padding: 14px; gap: 10px"><a href="#" class="scard-title" style="font-size: 22px">We Are Strong. We Are Together</a><div style="display: flex; flex-direction: column; gap: 6px"><div class="progress"><span style="width: 92%"></span></div><div class="scard-stats"><span><b>11</b> of <b>12</b> owned</span><b>92%</b></div></div><div class="scard-foot"><span style="font-size: 13px; color: #444141">Next: Zaporizhzhia Oblast</span><span class="badge b-missing">1 missing</span></div></li>
+</ul>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px dashed #b68235; border-radius: 7px">
+<span class="eyebrow" style="font-size: 11px">A good next set</span>
+<span style="font-weight: 600">Ukrainian Circulating Commemoratives</span>
+<span style="font-size: 13px; color: #444141"><span class="mono">31</span> coins. You already own <span class="mono">11</span>.</span>
+<a href="#" class="btn btn-secondary btn-sm" style="align-self: flex-start">Start this set</a>
+</div>
+</sc-if>
+
+<sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 14px; padding: 20px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px">
+<div style="display: flex" aria-hidden="true"><span class="coin gold" style="width: 56px; height: 56px; font-size: 56px"><span class="n">10</span></span><span class="coin copper missing" style="width: 56px; height: 56px; font-size: 56px; margin-left: -14px"><span class="n">1</span></span><span class="coin silver" style="width: 56px; height: 56px; font-size: 56px; margin-left: -14px"><span class="n">5</span></span></div>
+<h1 class="h2" style="font-size: 28px">Start your first set</h1>
+<p style="color: #444141">A set is a checklist of coins. Tick the ones you own and we’ll show exactly what’s missing.</p>
+<a href="#" class="btn btn-primary" style="min-height: 48px">Choose a curated checklist</a>
+<a href="#" class="link" style="font-size: 13px; align-self: center">or start an empty set</a>
+</div>
+<span class="eyebrow">Popular checklists</span>
+<a href="#" style="display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; background: #f8f4f4; border: 1px solid #d7d3d3; border-radius: 7px"><span style="font-weight: 600">We Are Strong. We Are Together</span><span class="mono" style="font-size: 12px; color: #605d5d">12 coins · Ukraine</span></a>
+<a href="#" style="display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; background: #f8f4f4; border: 1px solid #d7d3d3; border-radius: 7px"><span style="font-weight: 600">Lincoln Wheat Cent Key Dates</span><span class="mono" style="font-size: 12px; color: #605d5d">7 coins · United States</span></a>
+</sc-if>
+
+<sc-if value="{{isLoading}}" hint-placeholder-val="{{ false }}">
+<div aria-busy="true" aria-label="Loading your sets" style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px"><span class="sk" style="height: 68px; border-radius: 7px"></span><span class="sk" style="height: 68px; border-radius: 7px"></span></div>
+<span class="sk" style="height: 120px; border-radius: 7px"></span>
+<span class="sk" style="height: 120px; border-radius: 7px"></span>
+<span class="sk" style="height: 120px; border-radius: 7px"></span>
+</div>
+</sc-if>
+
+<sc-if value="{{isError}}" hint-placeholder-val="{{ false }}">
+<div class="alert" role="alert" style="flex-direction: column">
+<b style="font-weight: 600">We couldn’t load your sets.</b>
+<span style="font-size: 14px">Your sets are safe. Check your connection and try again.</span>
+<button type="button" class="btn btn-secondary btn-sm">Try again</button>
+</div>
+</sc-if>
+
+</main>
+<nav class="m-tabs" aria-label="Main" style="grid-template-columns: repeat(3, 1fr)">
+<a href="#" aria-current="page"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><rect x="3" y="4" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.6"></rect><circle cx="8" cy="9" r="1.8" stroke="currentColor" stroke-width="1.4"></circle><circle cx="14" cy="9" r="1.8" stroke="currentColor" stroke-width="1.4"></circle><circle cx="8" cy="14" r="1.8" stroke="currentColor" stroke-width="1.4"></circle><circle cx="14" cy="14" r="1.8" stroke="currentColor" stroke-width="1.4"></circle></svg>My sets</a>
+<a href="#"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><ellipse cx="11" cy="6.5" rx="6" ry="2.5" stroke="currentColor" stroke-width="1.6"></ellipse><path d="M5 6.5v4.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V6.5M5 11v4.5c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5V11" stroke="currentColor" stroke-width="1.6"></path></svg>Collection</a>
+<a href="#"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3 5h5.5A2.5 2.5 0 0 1 11 7.5V18a2 2 0 0 0-2-2H3zM19 5h-5.5A2.5 2.5 0 0 0 11 7.5V18a2 2 0 0 1 2-2h6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>Catalog</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["many","one","empty","loading","error"],"default":"many"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.props.state || 'many';
+    var raw = [
+      { name: 'We Are Strong. We Are Together', owned: 11, total: 12, next: 'Next: Zaporizhzhia Oblast' },
+      { name: 'Ukrainian Circulating Commemoratives', owned: 22, total: 31, next: '9 to find' },
+      { name: 'Ukraine Circulation Coins', owned: 64, total: 187, next: '123 to find' },
+      { name: 'Lincoln Wheat Cent Key Dates', owned: 2, total: 7, next: 'Next: 1909-S VDB +4' }
+    ];
+    return {
+      sets: raw.map(function (s) { var p = Math.round(s.owned / s.total * 100); return { name: s.name, owned: s.owned, total: s.total, pct: p, pctLabel: p + '% complete', bar: 'width: ' + p + '%', missing: s.total - s.owned, next: s.next }; }),
+      isMany: st === 'many', isOne: st === 'one', isEmpty: st === 'empty', isLoading: st === 'loading', isError: st === 'error'
+    };
+  }
+}
+</script>
+</body>
+</html>

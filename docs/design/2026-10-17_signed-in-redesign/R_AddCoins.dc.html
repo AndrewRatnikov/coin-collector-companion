@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add coins sheet</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/9289bb8d20793fdaa54f2a398d1afa04">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cc" style="width: 1280px; height: 900px; position: relative; overflow: hidden">
+<header class="nav">
+<div class="nav-in">
+<a href="#" class="brand"><span class="brand-mark" aria-hidden="true"></span>Coin Collector Companion</a>
+<nav class="nav-links" aria-label="Main"><a href="#" aria-current="page">My sets</a><a href="#">Collection</a><a href="#">Catalog</a></nav>
+<div class="nav-end"><span class="avatar" aria-hidden="true">A</span></div>
+</div>
+</header>
+<div class="wrap" style="padding-top: 24px; display: flex; flex-direction: column; gap: 18px" aria-hidden="true">
+<span class="crumb">‹ My sets</span>
+<h1 class="h1">We Are Strong. We Are Together</h1>
+<ul class="cgrid">
+<li class="ccard owned"><div class="ccard-well"><span class="coin gold"><span class="n">10</span><span class="u">Hryvnias</span></span></div><div class="ccard-body"><span class="ccard-title">Autonomous Republic of Crimea</span><span class="ccard-sub">Ukraine · 10 Hryvnias · 2025</span></div></li>
+<li class="ccard owned"><div class="ccard-well"><span class="coin gold"><span class="n">10</span><span class="u">Hryvnias</span></span></div><div class="ccard-body"><span class="ccard-title">Donetsk Oblast</span><span class="ccard-sub">Ukraine · 10 Hryvnias · 2025</span></div></li>
+<li class="ccard owned"><div class="ccard-well"><span class="coin gold"><span class="n">10</span><span class="u">Hryvnias</span></span></div><div class="ccard-body"><span class="ccard-title">Luhansk Oblast</span><span class="ccard-sub">Ukraine · 10 Hryvnias · 2025</span></div></li>
+<li class="ccard owned"><div class="ccard-well"><span class="coin gold"><span class="n">10</span><span class="u">Hryvnias</span></span></div><div class="ccard-body"><span class="ccard-title">Chernihiv Oblast</span><span class="ccard-sub">Ukraine · 10 Hryvnias · 2026</span></div></li>
+</ul>
+</div>
+
+<div class="scrim" aria-hidden="true"></div>
+<aside class="sheet" role="dialog" aria-modal="true" aria-labelledby="add-h">
+<div class="sheet-h">
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+<h2 id="add-h" class="h2">Add coins</h2>
+<p class="muted" style="font-size: 13px">to We Are Strong. We Are Together</p>
+</div>
+<button type="button" class="icon-btn" aria-label="Close"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></button>
+</div>
+<div class="sheet-b">
+<span class="searchbox"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"></circle><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path></svg><input class="input" type="search" aria-label="Search the catalog" value="10 Hryvnias"></span>
+<div style="display: flex; flex-wrap: wrap; gap: 8px">
+<button type="button" class="chip" aria-pressed="true">Ukraine <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+<button type="button" class="chip" aria-pressed="false">Any denomination <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+<button type="button" class="chip" aria-pressed="false">Any year <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+<button type="button" class="chip" aria-pressed="{{hideIn}}" onClick="{{toggleHide}}">Hide coins in this set</button>
+</div>
+<p class="muted" style="font-size: 13px"><span class="mono">{{count}}</span> results</p>
+<div class="ltable" style="background: #ffffff">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+<div class="rrow">
+<span class="coin gold sm" aria-hidden="true"><span class="n">10</span></span>
+<div class="lname" style="position: relative"><sc-if value="{{r.eyebrow}}" hint-placeholder-val="{{ false }}"><span class="ccard-eyebrow">{{r.eyebrow}}</span></sc-if><a href="#" style="white-space: normal">{{r.title}}</a><small>{{r.sub}}</small>
+<span class="badges"><sc-if value="{{r.inSet}}" hint-placeholder-val="{{ false }}"><span class="badge b-inset">In this set</span></sc-if><sc-if value="{{r.owned}}" hint-placeholder-val="{{ false }}"><span class="badge b-owned">✓ Owned</span></sc-if></span></div>
+<sc-if value="{{r.canAdd}}" hint-placeholder-val="{{ true }}"><button type="button" class="btn btn-secondary btn-sm" onClick="{{r.add}}" aria-label="{{r.addLabel}}"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>Add</button></sc-if>
+<sc-if value="{{r.adding}}" hint-placeholder-val="{{ false }}"><span class="btn btn-sm" aria-live="polite" style="color: #605d5d; font-style: italic">Adding…</span></sc-if>
+<sc-if value="{{r.justAdded}}" hint-placeholder-val="{{ false }}"><span style="display: inline-flex; align-items: center; gap: 6px"><span class="badge b-owned" style="height: 36px; padding: 0 12px; font-size: 13px" aria-live="polite">✓ Added</span><button type="button" class="link" style="border: 0; background: transparent; cursor: pointer; font-size: 13px; min-height: 36px" onClick="{{r.undo}}">Undo</button></span></sc-if>
+<sc-if value="{{r.already}}" hint-placeholder-val="{{ false }}"><span class="muted" style="font-size: 13px; padding: 0 8px">Already added</span></sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+<div class="sheet-f">
+<span style="font-size: 14px; color: #444141">{{footer}}</span>
+<button type="button" class="btn btn-primary">Done</button>
+</div>
+</aside>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      hideIn: false,
+      rows: [
+        { id: 'a', eyebrow: '', title: '10 Hryvnias', sub: 'Ukraine · 2020', inSet: false, owned: true, st: 'idle' },
+        { id: 'b', eyebrow: '', title: '10 Hryvnias', sub: 'Ukraine · 2021', inSet: false, owned: false, st: 'idle' },
+        { id: 'c', eyebrow: '', title: '10 Hryvnias', sub: 'Ukraine · 2022', inSet: false, owned: false, st: 'idle' },
+        { id: 'd', eyebrow: 'We Are Strong. We Are Together', title: 'Donetsk Oblast', sub: 'Ukraine · 10 Hryvnias · 2025', inSet: true, owned: true, st: 'idle' },
+        { id: 'e', eyebrow: 'We Are Strong. We Are Together', title: 'Odesa Oblast', sub: 'Ukraine · 10 Hryvnias · 2026', inSet: true, owned: true, st: 'idle' },
+        { id: 'f', eyebrow: 'We Are Strong. We Are Together', title: 'Zaporizhzhia Oblast', sub: 'Ukraine · 10 Hryvnias · 2026', inSet: true, owned: false, st: 'idle' }
+      ]
+    };
+  }
+  renderVals() {
+    var self = this, st = this.state;
+    function set(id, f) { self.setState(function (s) { return { rows: s.rows.map(function (r) { return r.id === id ? Object.assign({}, r, f) : r; }) }; }); }
+    var added = st.rows.filter(function (r) { return r.st === 'added'; }).length;
+    var rows = st.rows.filter(function (r) { return !(st.hideIn && r.inSet && r.st !== 'added'); }).map(function (r) {
+      return {
+        eyebrow: r.eyebrow, title: r.title, sub: r.sub, owned: r.owned,
+        inSet: r.inSet && r.st !== 'added',
+        canAdd: !r.inSet && r.st === 'idle',
+        adding: r.st === 'adding',
+        justAdded: r.st === 'added',
+        already: r.inSet && r.st !== 'added',
+        addLabel: 'Add ' + r.title + ' (' + r.sub + ') to this set',
+        add: function () { set(r.id, { st: 'adding' }); setTimeout(function () { set(r.id, { st: 'added' }); }, 700); },
+        undo: function () { set(r.id, { st: 'idle' }); }
+      };
+    });
+    return {
+      rows: rows, count: rows.length,
+      hideIn: st.hideIn,
+      toggleHide: function () { self.setState({ hideIn: !self.state.hideIn }); },
+      footer: added ? added + (added === 1 ? ' coin added' : ' coins added') : 'Added coins appear in the set right away.'
+    };
+  }
+}
+</script>
+</body>
+</html>

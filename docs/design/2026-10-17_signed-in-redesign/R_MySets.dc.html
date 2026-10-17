@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>My sets</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/9289bb8d20793fdaa54f2a398d1afa04">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="cc">
+<header class="nav">
+<div class="nav-in">
+<a href="#" class="brand"><span class="brand-mark" aria-hidden="true"></span>Coin Collector Companion</a>
+<nav class="nav-links" aria-label="Main"><a href="#" aria-current="page">My sets</a><a href="#">Collection</a><a href="#">Catalog</a></nav>
+<div class="nav-end">
+<div class="lang" role="group" aria-label="Language"><button type="button" aria-pressed="true">EN</button><button type="button" aria-pressed="false">ES</button></div>
+<button type="button" class="acct" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu"><span class="avatar" aria-hidden="true">A</span><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+</div>
+</div>
+</header>
+
+<main class="wrap" style="padding-top: 32px; display: flex; flex-direction: column; gap: 28px">
+
+<div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h1 class="h1">My sets</h1>
+<sc-if value="{{hasCount}}" hint-placeholder-val="{{ true }}"><p class="muted">{{countLabel}}</p></sc-if>
+</div>
+<sc-if value="{{showHeaderActions}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+<a href="#" class="link" style="font-size: 14px">Browse checklists and collectors’ sets</a>
+<a href="#" class="btn btn-primary"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>New set</a>
+</div>
+</sc-if>
+</div>
+
+<sc-if value="{{isMany}}" hint-placeholder-val="{{ true }}">
+<section aria-label="Summary" class="stats">
+<div class="stat"><span class="stat-v">137</span><span class="stat-l">coins still missing across your sets</span><a href="#" class="link" style="font-size: 13px; margin-top: 4px">See what to look for</a></div>
+<div class="stat"><span class="stat-l">Closest to complete</span><span class="stat-v text">We Are Strong. We Are Together</span><span class="stat-l"><span class="mono">1</span> coin to go · Zaporizhzhia Oblast</span></div>
+<div class="stat"><span class="stat-v">88</span><span class="stat-l">coins in your collection</span><a href="#" class="link" style="font-size: 13px; margin-top: 4px">Open Collection</a></div>
+</section>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+<h2 class="eyebrow">Your sets</h2>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #444141">Sort
+<select class="input" style="width: auto; height: 36px; font-size: 13px"><option>Closest to complete</option><option>Recently updated</option><option>Name A–Z</option><option>Most missing</option></select>
+</label>
+</div>
+<ul class="sgrid">
+<sc-for list="{{sets}}" as="s" hint-placeholder-count="4">
+<li class="scard">
+<span class="scard-src">{{s.src}}</span>
+<a href="#" class="scard-title">{{s.name}}</a>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div class="progress" role="progressbar" aria-valuenow="{{s.pct}}" aria-valuemin="0" aria-valuemax="100" aria-label="{{s.pctLabel}}"><span style="{{s.bar}}"></span></div>
+<div class="scard-stats"><span><b>{{s.owned}}</b> of <b>{{s.total}}</b> owned</span><b>{{s.pct}}%</b></div>
+</div>
+<div class="scard-foot"><span style="font-size: 13px; color: #444141; min-width: 0">{{s.next}}</span><span class="badge b-missing">{{s.missing}} missing</span></div>
+</li>
+</sc-for>
+</ul>
+</div>
+</sc-if>
+
+<sc-if value="{{isOne}}" hint-placeholder-val="{{ false }}">
+<section aria-label="Summary" class="stats">
+<div class="stat"><span class="stat-v">1</span><span class="stat-l">coin still missing</span><span class="stat-l">Zaporizhzhia Oblast</span></div>
+<div class="stat"><span class="stat-v">11</span><span class="stat-l">coins in your collection</span><a href="#" class="link" style="font-size: 13px; margin-top: 4px">Open Collection</a></div>
+</section>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(360px, 100%), 1fr)); gap: 16px; align-items: start">
+<ul class="sgrid" style="grid-template-columns: 1fr">
+<li class="scard">
+<span class="scard-src">From curated checklist</span>
+<a href="#" class="scard-title">We Are Strong. We Are Together</a>
+<div style="display: flex; flex-direction: column; gap: 6px"><div class="progress" role="progressbar" aria-valuenow="92" aria-valuemin="0" aria-valuemax="100" aria-label="92% complete"><span style="width: 92%"></span></div><div class="scard-stats"><span><b>11</b> of <b>12</b> owned</span><b>92%</b></div></div>
+<div class="scard-foot"><span style="font-size: 13px; color: #444141">Next: <b style="font-weight: 500">Zaporizhzhia Oblast</b></span><span class="badge b-missing">1 missing</span></div>
+</li>
+</ul>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 18px; border: 1px dashed #b68235; border-radius: 7px">
+<span class="eyebrow">A good next set</span>
+<p class="serif" style="font-size: 22px; line-height: 1.2">Ukrainian Circulating Commemoratives</p>
+<p style="font-size: 14px; color: #444141"><span class="mono">31</span> coins. You already own <span class="mono">11</span> of them, because ownership carries across sets.</p>
+<a href="#" class="btn btn-secondary" style="align-self: flex-start">Start this set</a>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{isEmpty}}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="empty-h" style="display: flex; flex-direction: column; gap: 22px; padding: 36px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px">
+<div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: center">
+<div style="display: flex; gap: -10px" aria-hidden="true"><span class="coin gold" style="width: 72px; height: 72px; font-size: 72px"><span class="n">10</span><span class="u">Hryvnias</span></span><span class="coin copper missing" style="width: 72px; height: 72px; font-size: 72px; margin-left: -18px"><span class="n">1</span><span class="u">Cent</span></span><span class="coin silver" style="width: 72px; height: 72px; font-size: 72px; margin-left: -18px"><span class="n">5</span><span class="u">Kopiyok</span></span></div>
+<div style="flex: 1 1 360px; display: flex; flex-direction: column; gap: 8px">
+<h2 id="empty-h" class="h2" style="font-size: 32px">Start your first set</h2>
+<p style="font-size: 15px; color: #444141; max-width: 560px">A set is a checklist of coins. Tick the ones you own and we’ll show exactly what’s missing. The quickest start is a curated checklist.</p>
+</div>
+<a href="#" class="btn btn-primary" style="min-height: 48px; font-size: 15px">Choose a curated checklist</a>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px">
+<span class="eyebrow">Popular checklists</span>
+<ul style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 12px">
+<li><a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: #f8f4f4; border: 1px solid #d7d3d3; border-radius: 7px"><span style="font-weight: 600">We Are Strong. We Are Together</span><span class="mono" style="font-size: 12px; color: #605d5d">12 coins · 2025–2026 · Ukraine</span></a></li>
+<li><a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: #f8f4f4; border: 1px solid #d7d3d3; border-radius: 7px"><span style="font-weight: 600">Lincoln Wheat Cent Key Dates</span><span class="mono" style="font-size: 12px; color: #605d5d">7 coins · 1909–1955 · United States</span></a></li>
+<li><a href="#" style="display: flex; flex-direction: column; gap: 4px; padding: 14px 16px; background: #f8f4f4; border: 1px solid #d7d3d3; border-radius: 7px"><span style="font-weight: 600">Ukraine Circulation Coins</span><span class="mono" style="font-size: 12px; color: #605d5d">187 coins · 1992–2026 · Ukraine</span></a></li>
+</ul>
+</div>
+<p style="font-size: 13px; color: #605d5d">Prefer to pick every coin yourself? <a href="#" class="link">Start an empty set</a></p>
+</section>
+</sc-if>
+
+<sc-if value="{{isLoading}}" hint-placeholder-val="{{ false }}">
+<div aria-busy="true" aria-label="Loading your sets" style="display: flex; flex-direction: column; gap: 28px">
+<div class="stats"><div class="stat"><span class="sk" style="height: 30px; width: 60px"></span><span class="sk" style="height: 12px; width: 70%"></span></div><div class="stat"><span class="sk" style="height: 30px; width: 60px"></span><span class="sk" style="height: 12px; width: 70%"></span></div><div class="stat"><span class="sk" style="height: 30px; width: 60px"></span><span class="sk" style="height: 12px; width: 70%"></span></div></div>
+<ul class="sgrid">
+<li class="scard"><span class="sk" style="height: 12px; width: 40%"></span><span class="sk" style="height: 24px; width: 80%"></span><span class="sk" style="height: 8px; margin-top: 8px"></span><span class="sk" style="height: 12px; width: 50%"></span></li>
+<li class="scard"><span class="sk" style="height: 12px; width: 40%"></span><span class="sk" style="height: 24px; width: 70%"></span><span class="sk" style="height: 8px; margin-top: 8px"></span><span class="sk" style="height: 12px; width: 50%"></span></li>
+<li class="scard"><span class="sk" style="height: 12px; width: 40%"></span><span class="sk" style="height: 24px; width: 85%"></span><span class="sk" style="height: 8px; margin-top: 8px"></span><span class="sk" style="height: 12px; width: 50%"></span></li>
+</ul>
+</div>
+</sc-if>
+
+<sc-if value="{{isError}}" hint-placeholder-val="{{ false }}">
+<div class="alert" role="alert">
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" style="flex: none; margin-top: 1px"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"></circle><path d="M10 6v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><circle cx="10" cy="13.8" r="1.1" fill="currentColor"></circle></svg>
+<div style="flex: 1; display: flex; flex-direction: column; gap: 4px"><b style="font-weight: 600">We couldn’t load your sets.</b><span style="font-size: 14px">Your sets are safe. Check your connection and try again. If the server was asleep, it can take up to a minute to wake.</span></div>
+<button type="button" class="btn btn-secondary btn-sm">Try again</button>
+</div>
+</sc-if>
+
+</main>
+
+<footer class="foot">
+<div class="foot-in">
+<nav aria-label="Footer"><a href="#">Glossary</a><a href="#">Help</a><a href="#">Send feedback</a></nav>
+<span>Catalog data derived from <a href="#">Wikipedia</a>, used under CC BY-SA 4.0.</span>
+</div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"state":{"editor":"enum","options":["many","one","empty","loading","error"],"default":"many"},"$preview":{"width":1280,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.props.state || 'many';
+    var raw = [
+      { src: 'From curated checklist', name: 'We Are Strong. We Are Together', owned: 11, total: 12, next: 'Next: Zaporizhzhia Oblast' },
+      { src: 'From curated checklist', name: 'Ukrainian Circulating Commemoratives', owned: 22, total: 31, next: '9 coins to find' },
+      { src: 'From curated checklist', name: 'Ukraine Circulation Coins', owned: 64, total: 187, next: '123 coins to find' },
+      { src: 'From curated checklist', name: 'Lincoln Wheat Cent Key Dates', owned: 2, total: 7, next: 'Next: 1909-S VDB and 4 more' }
+    ];
+    var sets = raw.map(function (s) {
+      var pct = Math.round(s.owned / s.total * 100);
+      return { src: s.src, name: s.name, owned: s.owned, total: s.total, pct: pct, pctLabel: pct + '% complete', bar: 'width: ' + pct + '%', missing: s.total - s.owned, next: s.next };
+    });
+    return {
+      sets: sets,
+      isMany: st === 'many',
+      isOne: st === 'one',
+      isEmpty: st === 'empty',
+      isLoading: st === 'loading',
+      isError: st === 'error',
+      hasCount: st === 'many' || st === 'one',
+      countLabel: st === 'one' ? '1 set' : '4 sets',
+      showHeaderActions: st !== 'empty'
+    };
+  }
+}
+</script>
+</body>
+</html>
