@@ -1,4 +1,4 @@
-import type { CatalogCoin, GapSlot } from '@coin-collector/shared';
+import { getCoinName, type CatalogCoin, type GapSlot } from '@coin-collector/shared';
 
 export interface AlbumColumn {
   mintMark: string;
@@ -148,14 +148,9 @@ export function formatOwnedOfTotal(template: string, owned: number, total: numbe
 }
 
 // ---------------------------------------------------------------------------
-// Coin-card naming rules (Album view)
+// Variety splitting and short names for flat (aria) strings. Visible coin names use
+// getCoinName from @coin-collector/shared.
 // ---------------------------------------------------------------------------
-
-export interface AlbumCardText {
-  eyebrow: string;
-  title: string;
-  secondary: string;
-}
 
 const VARIETY_SEPARATOR = ': ';
 
@@ -191,24 +186,13 @@ function titleHasYear(title: string, year: number): boolean {
   return title.includes(String(year));
 }
 
-/** Eyebrow, title and secondary line shown on an album coin card. */
-export function getAlbumCardText(
-  coin: Pick<CatalogCoin, 'year' | 'mintMark' | 'variety' | 'denomination'>,
-): AlbumCardText {
-  const { eyebrow, title } = cardTitle(coin);
-  const secondary = titleHasYear(title, coin.year)
-    ? coin.denomination
-    : `${formatCollectorNotation(coin)} · ${coin.denomination}`;
-  return { eyebrow, title, secondary };
-}
-
 // Lives in shared so the API orders denomination facets by the same rule.
 export { getDenominationNumeral } from '@coin-collector/shared';
 
 /** The eyebrow shared by every coin on the page (at least two coins), else ''. */
 export function getSharedEyebrow(page: AlbumPage): string {
   const eyebrows = page.rows.flatMap((row) =>
-    row.cells.flatMap((cell) => cell.slots.map((slot) => getAlbumCardText(slot.coin).eyebrow)),
+    row.cells.flatMap((cell) => cell.slots.map((slot) => getCoinName(slot.coin).eyebrow)),
   );
   if (eyebrows.length < 2) return '';
   const first = eyebrows[0];
