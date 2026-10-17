@@ -1,10 +1,15 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import type { OwnershipItem, SetOwnershipResponse } from '@coin-collector/shared';
+import type {
+  BulkSetOwnershipResponse,
+  OwnershipItem,
+  SetOwnershipResponse,
+} from '@coin-collector/shared';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/strategies/jwt.strategy';
 import { CollectionService } from './collection.service';
 import { SetOwnershipDto } from './dto/set-ownership.dto';
+import { BulkSetOwnershipDto } from './dto/bulk-set-ownership.dto';
 import { FindCollectionQueryDto } from './dto/find-collection-query.dto';
 
 @ApiTags('collection')
@@ -21,6 +26,16 @@ export class CollectionController {
     @Query() query: FindCollectionQueryDto,
   ): Promise<OwnershipItem[]> {
     return this.collectionService.findAll(user.userId, query);
+  }
+
+  @Patch()
+  @ApiOperation({ summary: 'Set owned status for many coins in one request (idempotent)' })
+  @ApiOkResponse({ description: 'The de-duplicated coin ids and the owned state applied' })
+  setOwnershipBulk(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: BulkSetOwnershipDto,
+  ): Promise<BulkSetOwnershipResponse> {
+    return this.collectionService.setOwnershipBulk(user.userId, dto.coinIds, dto.owned);
   }
 
   @Patch(':coinId')
