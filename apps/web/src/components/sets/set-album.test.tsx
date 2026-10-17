@@ -2,12 +2,19 @@
  * Tests for: SetAlbum (coin cards) and SetViewSwitch components
  * Contract source: runs/run_20261010_083926/plan.md § Interface Contract → Component: SetAlbum
  *                   runs/run_20261011_095624/plan.md § Interface Contract → Component: SetAlbum
+ *                   runs/run_20261017_142658/plan.md § Approach §3 and §1 (card text via getCoinName, year label font)
  * Covers criteria: #4, #5, #7, #8, #9, #13, #14, #15, #16, #17, #18 (class hooks), #19, #20, #22, #23, #24
  *                  (run_20261010_083926); #3, #4, #6, #7, #8 (run_20261011_095624: hide-not-dim,
- *                  all-owned message, trimmed legend, visitor status line, image well, focus-within)
+ *                  all-owned message, trimmed legend, visitor status line, image well, focus-within);
+ *                  #3, #6 (run_20261017_142658: names per getCoinName, year group label in Plex Mono 20/500)
  *
  * run_20261011_095624 intentionally rewrites: the "explains the new visuals" legend test, the
  * Missing-filter (gapOnly) muting tests (now hide-not-dim), and the visitor year-on-grid expectation.
+ *
+ * run_20261017_142658 rewrites the card-text expectations (eyebrow, title and secondary line now come
+ * from getCoinName: a variety without a series prefix gets the coin's type name as eyebrow, the secondary
+ * line is country, denomination and year with already-shown parts left out) and adds the year label font.
+ * Every other test is unchanged.
  *
  * CONTRACT_GAPS: none
  */
@@ -298,6 +305,22 @@ describe('SetAlbum: no-mint-mark pages use year rows with a wrapping card grid',
     });
   });
 
+  it('sets each year group label in Plex Mono 20px medium with tabular lining numerals, not in the heading font', () => {
+    renderAlbum({ slots: [WAS_KYIV, ...WAS_SLOTS_2025()] });
+
+    const labels = screen.getAllByTestId('set-album-year-label');
+    expect(labels).toHaveLength(2);
+    labels.forEach((label) => {
+      expect(label.className).toContain('font-mono');
+      expect(label.className).toContain('text-[20px]');
+      expect(label.className).toContain('font-medium');
+      expect(label.className).toContain('lining-nums');
+      expect(label.className).toContain('tabular-nums');
+      expect(label.className).not.toContain('text-[26px]');
+      expect(label.className).not.toContain('font-[family-name:var(--font-heading)]');
+    });
+  });
+
   it('sizes the year grid with a 170px minimum column', () => {
     renderAlbum({ slots: WAS });
     screen.getAllByTestId('set-album-year-grid').forEach((g) => {
@@ -332,17 +355,21 @@ describe('SetAlbum: no-mint-mark pages use year rows with a wrapping card grid',
     expect(within(was).getAllByTestId('set-album-year-group').length).toBeGreaterThan(0);
   });
 
-  it('shows plain Ukrainian circulation coins titled by year with numeral placeholders', () => {
+  it('names plain Ukrainian circulation coins by their type name or design, with numeral placeholders', () => {
     renderAlbum({ slots: [KOP_1, KOP_10] });
 
+    // The type name is the title; country and denomination are already in it, so only the year is left.
     const k1 = cardByCoin('coin-kop1');
-    expect(within(k1).getByTestId('set-album-card-title').textContent).toBe('2014');
-    expect(within(k1).getByTestId('set-album-card-secondary').textContent).toBe('1 Kopiyka');
+    expect(within(k1).getByTestId('set-album-card-title').textContent).toBe('Ukraine Circulation 1 Kopiyka');
+    expect(within(k1).getByTestId('set-album-card-secondary').textContent).toBe('2014');
+    expect(within(k1).queryByTestId('set-album-card-eyebrow')).not.toBeInTheDocument();
     expect(within(k1).getByTestId('set-album-card-numeral').textContent).toBe('1');
 
+    // The design is the title, the type name moves up to the eyebrow, the subtitle keeps all three parts.
     const k10 = cardByCoin('coin-kop10');
     expect(within(k10).getByTestId('set-album-card-title').textContent).toBe('Brass-plated steel');
-    expect(within(k10).getByTestId('set-album-card-secondary').textContent).toBe('2014 · 10 Kopiyok');
+    expect(within(k10).getByTestId('set-album-card-eyebrow').textContent).toBe('Ukraine Circulation 10 Kopiyok');
+    expect(within(k10).getByTestId('set-album-card-secondary').textContent).toBe('Ukraine · 10 Kopiyok · 2014');
     expect(within(k10).getByTestId('set-album-card-numeral').textContent).toBe('10');
   });
 });
@@ -392,24 +419,30 @@ describe('SetAlbum: cells (mint-mark pages)', () => {
 });
 
 describe('SetAlbum: card text', () => {
-  it('shows the Lincoln notation titles and secondary lines', () => {
+  it('shows the getCoinName titles and subtitles for the Lincoln coins', () => {
     renderAlbum();
 
+    // key date without a variety: date-style title, the year is left out of the subtitle
     const s1931 = cardByCoin('coin-1931s');
     expect(within(s1931).getByTestId('set-album-card-title').textContent).toBe('1931-S');
-    expect(within(s1931).getByTestId('set-album-card-secondary').textContent).toBe('Cent');
+    expect(within(s1931).getByTestId('set-album-card-secondary').textContent).toBe('USA · Cent');
 
+    // no variety: the type name is the title, and "Cent" is already in it
     const plain = cardByCoin('coin-plain');
-    expect(within(plain).getByTestId('set-album-card-title').textContent).toBe('1909');
-    expect(within(plain).getByTestId('set-album-card-secondary').textContent).toBe('Cent');
+    expect(within(plain).getByTestId('set-album-card-title').textContent).toBe('Lincoln Wheat Cent');
+    expect(within(plain).getByTestId('set-album-card-secondary').textContent).toBe('USA · 1909');
+
+    const d1931 = cardByCoin('coin-1931d');
+    expect(within(d1931).getByTestId('set-album-card-title').textContent).toBe('Lincoln Wheat Cent');
+    expect(within(d1931).getByTestId('set-album-card-secondary').textContent).toBe('USA · 1931-D');
 
     const vdb = cardByCoin('coin-vdb');
     expect(within(vdb).getByTestId('set-album-card-title').textContent).toBe('VDB');
-    expect(within(vdb).getByTestId('set-album-card-secondary').textContent).toBe('1909 · Cent');
+    expect(within(vdb).getByTestId('set-album-card-secondary').textContent).toBe('USA · Cent · 1909');
 
     const svdb = cardByCoin('coin-svdb');
     expect(within(svdb).getByTestId('set-album-card-title').textContent).toBe('VDB');
-    expect(within(svdb).getByTestId('set-album-card-secondary').textContent).toBe('1909-S · Cent');
+    expect(within(svdb).getByTestId('set-album-card-secondary').textContent).toBe('USA · Cent · 1909-S');
   });
 
   it('shows the full long variety as the title without any shortening', () => {
@@ -417,9 +450,15 @@ describe('SetAlbum: card text', () => {
     expect(screen.getByTestId('set-album-card-title').textContent).toBe(U_ONE.coin.variety);
   });
 
-  it('renders no eyebrow element for coins without an eyebrow', () => {
+  it('shows the type name as the eyebrow of a design that has no series, and none for coins titled by it', () => {
     renderAlbum();
-    expect(screen.queryByTestId('set-album-card-eyebrow')).not.toBeInTheDocument();
+
+    ['coin-vdb', 'coin-svdb', 'coin-1931s'].forEach((id) => {
+      expect(within(cardByCoin(id)).getByTestId('set-album-card-eyebrow').textContent).toBe('Lincoln Wheat Cent');
+    });
+    expect(within(cardByCoin('coin-plain')).queryByTestId('set-album-card-eyebrow')).not.toBeInTheDocument();
+    expect(within(cardByCoin('coin-1931d')).queryByTestId('set-album-card-eyebrow')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('set-album-card-eyebrow')).toHaveLength(3);
   });
 
   it('sets data-owned, data-key-date and data-coin-id per card', () => {
@@ -459,9 +498,9 @@ describe('SetAlbum: eyebrow hoisting', () => {
       'Kyiv Oblast',
     ]);
     expect(screen.getAllByTestId('set-album-card-secondary').map((t) => t.textContent)).toEqual([
-      '2025 · 10 Hryvnias',
-      '2025 · 10 Hryvnias',
-      '2026 · 10 Hryvnias',
+      'Ukraine · 10 Hryvnias · 2025',
+      'Ukraine · 10 Hryvnias · 2025',
+      'Ukraine · 10 Hryvnias · 2026',
     ]);
   });
 
@@ -470,10 +509,10 @@ describe('SetAlbum: eyebrow hoisting', () => {
 
     expect(screen.queryByTestId('set-album-page-eyebrow')).not.toBeInTheDocument();
     const eyebrows = screen.getAllByTestId('set-album-card-eyebrow');
-    expect(eyebrows).toHaveLength(1);
-    expect(eyebrows[0].textContent).toBe(WAS_SERIES);
+    expect(eyebrows.map((e) => e.textContent)).toEqual([WAS_SERIES, WAS_NAME]);
     expect(within(cardByCoin('coin-comm-series')).getByTestId('set-album-card-eyebrow')).toBe(eyebrows[0]);
-    expect(within(cardByCoin('coin-comm-bridge')).queryByTestId('set-album-card-eyebrow')).not.toBeInTheDocument();
+    // the standalone design has no series, so the coin's type name is its eyebrow
+    expect(within(cardByCoin('coin-comm-bridge')).getByTestId('set-album-card-eyebrow')).toBe(eyebrows[1]);
     expect(within(cardByCoin('coin-comm-bridge')).getByTestId('set-album-card-title').textContent).toBe(
       'Antonivskyi Bridge',
     );

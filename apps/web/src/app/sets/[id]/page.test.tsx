@@ -4,9 +4,14 @@
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
  *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/sets/[id]/page.tsx — Set Editor
  *                   runs/run_20261011_095624/plan.md § Interface Contract → Page: SetEditorPage (MODIFY)
+ *                   runs/run_20261017_142658/plan.md § Approach §4 (Skeleton now carries a testid)
  * Covers criteria: #1, #3, #4, #5, #9 (from run_20260721_171115's prd.md), #1 (from
  *                  run_20260722_121303's prd.md), #12, #13 (from run_20260728_071525's prd.md),
- *                  #9, #10, #11, #13, #14 (from run_20261011_095624's prd.md)
+ *                  #9, #10, #11, #13, #14 (from run_20261011_095624's prd.md),
+ *                  #13 (from run_20261017_142658's prd.md)
+ *
+ * run_20261017_142658: only the skeleton assertion in "criterion 1" changes. Skeleton no longer uses the
+ * `animate-pulse` class, so the test finds it by its `skeleton` testid inside set-editor-loading.
  *
  * run_20261011_095624 intentionally changes three older assertions: the visitor no longer gets the
  * ⋯ actions menu (owner-only), the Missing toggle text is now "Missing · {n}", and the Rename item
@@ -54,7 +59,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SetEditorPage from '@/app/sets/[id]/page';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
@@ -286,12 +291,12 @@ describe('SetEditorPage', () => {
     it('renders a skeleton element within set-editor-loading, no literal "Loading…" text, and the set-editor-page wrapper carries the standard flex/gap/padding classes', async () => {
       setStoredToken('tok-abc');
       usePublicSetMock.mockReturnValue(queryResult({ isLoading: true }));
-      const { container } = renderPage();
+      renderPage();
 
       await waitFor(() => {
         expect(screen.getByTestId('set-editor-loading')).toBeInTheDocument();
       });
-      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(within(screen.getByTestId('set-editor-loading')).getByTestId('skeleton')).toBeInTheDocument();
       expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
 
       const page = screen.getByTestId('set-editor-page');

@@ -4,8 +4,10 @@
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
  *                   runs/run_20260725_140648/plan.md § Interface Contract → Frontend — apps/web/src/app/catalog/[coinId]/page.tsx (MODIFY)
  *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/catalog/[coinId]/page.tsx
+ *                   runs/run_20261017_142658/plan.md § Approach §3 and §4 (name block via getCoinName; Skeleton testid)
  * Covers criteria: #5 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md),
- *                  #7 (from run_20260725_140648's prd.md), #5 (from run_20260728_071525's prd.md)
+ *                  #7 (from run_20260725_140648's prd.md), #5 (from run_20260728_071525's prd.md),
+ *                  #6, #13 (from run_20261017_142658's prd.md)
  *
  * CoinDetailPage unwraps its `params` prop (a Promise, per the Next.js 16 App Router
  * contract) via React's `use()`, which suspends on first render. Rendering it directly
@@ -22,6 +24,11 @@
  * every other page's use of getStoredToken elsewhere in this repo), since they are plain
  * lib functions / thin query-mutation hooks whose own internals are covered by their own
  * dedicated test files, not this page's.
+ *
+ * run_20261017_142658: two existing tests change. The "full identity fields" test now expects the
+ * heading to be the getCoinName title (it used to be the formatCoinLabel string), and the loading
+ * test looks for the Skeleton's testid instead of the removed `.animate-pulse` class. A new block
+ * covers the eyebrow, subtitle and the removed unlabelled variety line.
  */
 
 import { Suspense } from 'react';
@@ -184,12 +191,12 @@ describe('CoinDetailPage', () => {
   describe('criterion 1: loading state uses a Skeleton, not bare text', () => {
     it('renders a skeleton element within coin-detail-loading and no literal "Loading…" text', async () => {
       useCoinMock.mockReturnValue(queryResult({ isLoading: true }));
-      const { container } = renderPage();
+      renderPage();
 
       await waitFor(() => {
         expect(screen.getByTestId('coin-detail-loading')).toBeInTheDocument();
       });
-      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(within(screen.getByTestId('coin-detail-loading')).getByTestId('skeleton')).toBeInTheDocument();
       expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     });
   });
@@ -206,12 +213,12 @@ describe('CoinDetailPage', () => {
   });
 
   describe('criterion 5: renders full identity fields', () => {
-    it('renders country/denomination/year/mintMark/variety and the compact label', async () => {
+    it('renders country/denomination/year/mintMark/variety and the getCoinName title as the heading', async () => {
       useCoinMock.mockReturnValue(queryResult({ data: COIN_WITH_IMAGE as never }));
       renderPage('coin-1');
 
       await waitFor(() => {
-        expect(screen.getByTestId('coin-detail-label')).toHaveTextContent('USA 1 Cent (1984 D)');
+        expect(screen.getByTestId('coin-detail-label')).toHaveTextContent(/^Type 2$/);
       });
       expect(screen.getByTestId('coin-detail-page')).toBeInTheDocument();
       expect(screen.getByTestId('coin-detail-country')).toHaveTextContent('USA');
@@ -220,6 +227,85 @@ describe('CoinDetailPage', () => {
       expect(screen.getByTestId('coin-detail-mint-mark')).toHaveTextContent('D');
       expect(screen.getByTestId('coin-detail-variety')).toHaveTextContent('Type 2');
       expect(useCoinMock).toHaveBeenCalledWith('coin-1');
+    });
+  });
+
+  describe('run_20261017_142658 criterion 6: eyebrow, title and subtitle from getCoinName', () => {
+    it('shows the type name as the eyebrow above the heading and the subtitle below it', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_WITH_IMAGE as never }));
+      renderPage('coin-1');
+
+      const label = await screen.findByTestId('coin-detail-label');
+      const eyebrow = screen.getByTestId('coin-detail-eyebrow');
+      const subtitle = screen.getByTestId('coin-detail-subtitle');
+
+      expect(eyebrow).toHaveTextContent(/^Lincoln Memorial Cent$/);
+      expect(subtitle).toHaveTextContent(/^USA · 1 Cent · 1984-D$/);
+      expect(label.compareDocumentPosition(eyebrow) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+      expect(label.compareDocumentPosition(subtitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('shows the series as the eyebrow and the design as the heading for a series coin', async () => {
+      const donetsk: CatalogCoin = {
+        ...COIN_NO_IMAGE,
+        id: 'coin-donetsk',
+        country: 'Ukraine',
+        denomination: '10 Hryvnias',
+        year: 2025,
+        mintMark: '',
+        variety: 'We Are Strong. We Are Together: Donetsk Oblast',
+        name: 'Ukraine Commemorative 10 Hryvnias',
+      };
+      useCoinMock.mockReturnValue(queryResult({ data: donetsk as never }));
+      renderPage('coin-donetsk');
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-label')).toHaveTextContent(/^Donetsk Oblast$/);
+      });
+      expect(screen.getByTestId('coin-detail-eyebrow')).toHaveTextContent(/^We Are Strong\. We Are Together$/);
+      expect(screen.getByTestId('coin-detail-subtitle')).toHaveTextContent(/^Ukraine · 10 Hryvnias · 2025$/);
+    });
+
+    it('renders no eyebrow element when the heading is already the type name', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: { ...COIN_NO_IMAGE, variety: '' } as never }));
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-label')).toHaveTextContent(/^Lincoln Memorial Cent$/);
+      });
+      expect(screen.queryByTestId('coin-detail-eyebrow')).not.toBeInTheDocument();
+      expect(screen.getByTestId('coin-detail-subtitle')).toHaveTextContent(/^USA · 1 Cent · 1984-D$/);
+    });
+
+    it('titles a key date with its collector notation and leaves the year out of the subtitle', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: { ...COIN_NO_IMAGE, isKeyDate: true } as never }));
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-label')).toHaveTextContent(/^1984-D Type 2$/);
+      });
+      expect(screen.getByTestId('coin-detail-subtitle')).toHaveTextContent(/^USA · 1 Cent$/);
+      expect(screen.getByTestId('coin-detail-eyebrow')).toHaveTextContent('Lincoln Memorial Cent');
+    });
+
+    it('no longer repeats the raw variety in an unlabelled line under the heading', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('coin-detail-label')).toBeInTheDocument();
+      });
+      // exactly the heading and the labelled spec row show the variety; the old extra paragraph is gone
+      expect(screen.getAllByText('Type 2')).toHaveLength(2);
+      expect(screen.getByTestId('coin-detail-variety')).toHaveTextContent('Type 2');
+    });
+
+    it('keeps the flat formatCoinLabel text as the image alt', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_WITH_IMAGE as never }));
+      renderPage();
+
+      const image = await screen.findByTestId('coin-detail-image');
+      expect(image).toHaveAttribute('alt', 'USA 1 Cent (1984 D)');
     });
   });
 

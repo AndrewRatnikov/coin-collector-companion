@@ -2,8 +2,9 @@
  * Tests for: MySubmissionsPage
  * Contract source: runs/run_20260731_132040/plan.md § Interface Contract → Component: MySubmissionsPage (CREATE)
  *                   runs/run_20261001_224939/plan.md § Interface Contract → Page: MySubmissionsPage (MODIFY)
+ *                   runs/run_20261017_142658/plan.md § Approach §3 (link text via getCoinName)
  * Covers criteria: #6, #7 (partially — nav link itself covered in site-nav.test.tsx), #8, #9 (from run_20260731_132040's prd.md),
- *                  #22 (from run_20261001_224939's prd.md)
+ *                  #22 (from run_20261001_224939's prd.md), #6 (from run_20261017_142658's prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -12,6 +13,10 @@
  *
  * run_20261001_224939: only the new describe block "criterion #22: rejection reason" at the end is
  * added; every existing block is unchanged.
+ *
+ * run_20261017_142658: the criterion #8 block changes. The link no longer reads like the old
+ * formatCoinLabel string ("USA 1 Cent (1943 D)"); it holds the getCoinName eyebrow, title and subtitle,
+ * so the link is found by its href instead of by its accessible name. A new block covers the name block.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -44,6 +49,7 @@ const PENDING_COIN = {
   mintMark: 'D',
   variety: 'Steel',
   name: 'Lincoln Wheat Cent',
+  isKeyDate: false,
   status: 'pending',
 };
 
@@ -55,6 +61,7 @@ const APPROVED_COIN = {
   mintMark: 'S',
   variety: '',
   name: 'Lincoln Wheat Cent',
+  isKeyDate: false,
   status: 'approved',
 };
 
@@ -66,7 +73,20 @@ const REJECTED_COIN = {
   mintMark: '',
   variety: '',
   name: 'Beaver Nickel',
+  isKeyDate: false,
   status: 'rejected',
+};
+
+const SERIES_COIN = {
+  id: 'coin-series-1',
+  country: 'Ukraine',
+  denomination: '10 Hryvnias',
+  year: 2025,
+  mintMark: '',
+  variety: 'We Are Strong. We Are Together: Donetsk Oblast',
+  name: 'Ukraine Commemorative 10 Hryvnias',
+  isKeyDate: false,
+  status: 'pending',
 };
 
 describe('MySubmissionsPage', () => {
@@ -182,13 +202,78 @@ describe('MySubmissionsPage', () => {
       useMySubmissionsMock.mockReturnValue(queryResult({ data: { items: [PENDING_COIN], page: 1, limit: 20, total: 1 } }));
       render(<MySubmissionsPage />);
 
-      await waitFor(() => {
-        expect(screen.getByTestId('my-submissions-item')).toBeInTheDocument();
-      });
-      // Label format follows the same formatCoinLabel(coin) convention as collection/page.tsx:
-      // "{country} {denomination} ({year} {mintMark})"
-      const link = screen.getByRole('link', { name: 'USA 1 Cent (1943 D)' });
+      const item = await screen.findByTestId('my-submissions-item');
+      // The link text is now the getCoinName block (eyebrow, title, subtitle), so find the link by its href.
+      const link = within(item).getByRole('link');
       expect(link.getAttribute('href')).toBe('/catalog/coin-pending-1');
+      expect(within(link).getByTestId('my-submissions-item-title')).toHaveTextContent('Steel');
+    });
+
+    it('gives each row its own href', async () => {
+      setStoredToken('tok-abc');
+      useMySubmissionsMock.mockReturnValue(
+        queryResult({ data: { items: [PENDING_COIN, APPROVED_COIN], page: 1, limit: 20, total: 2 } }),
+      );
+      render(<MySubmissionsPage />);
+
+      const items = await screen.findAllByTestId('my-submissions-item');
+      expect(within(items[0]).getByRole('link').getAttribute('href')).toBe('/catalog/coin-pending-1');
+      expect(within(items[1]).getByRole('link').getAttribute('href')).toBe('/catalog/coin-approved-1');
+    });
+  });
+
+  describe('run_20261017_142658 criterion #6: name block from getCoinName', () => {
+    it('shows the type name as the eyebrow, the design as the title and country, denomination and year as the subtitle', async () => {
+      setStoredToken('tok-abc');
+      useMySubmissionsMock.mockReturnValue(queryResult({ data: { items: [PENDING_COIN], page: 1, limit: 20, total: 1 } }));
+      render(<MySubmissionsPage />);
+
+      const item = await screen.findByTestId('my-submissions-item');
+      expect(within(item).getByTestId('my-submissions-item-eyebrow')).toHaveTextContent(/^Lincoln Wheat Cent$/);
+      expect(within(item).getByTestId('my-submissions-item-title')).toHaveTextContent(/^Steel$/);
+      expect(within(item).getByTestId('my-submissions-item-subtitle')).toHaveTextContent(/^USA · 1 Cent · 1943-D$/);
+    });
+
+    it('no longer shows the old formatCoinLabel text', async () => {
+      setStoredToken('tok-abc');
+      useMySubmissionsMock.mockReturnValue(queryResult({ data: { items: [PENDING_COIN], page: 1, limit: 20, total: 1 } }));
+      render(<MySubmissionsPage />);
+
+      await screen.findByTestId('my-submissions-item');
+      expect(screen.queryByText('USA 1 Cent (1943 D)')).not.toBeInTheDocument();
+    });
+
+    it('titles a coin without a variety by its type name and shows no eyebrow', async () => {
+      setStoredToken('tok-abc');
+      useMySubmissionsMock.mockReturnValue(queryResult({ data: { items: [REJECTED_COIN], page: 1, limit: 20, total: 1 } }));
+      render(<MySubmissionsPage />);
+
+      const item = await screen.findByTestId('my-submissions-item');
+      expect(within(item).getByTestId('my-submissions-item-title')).toHaveTextContent(/^Beaver Nickel$/);
+      expect(within(item).getByTestId('my-submissions-item-subtitle')).toHaveTextContent(/^Canada · 5 Cents · 1937$/);
+      expect(within(item).queryByTestId('my-submissions-item-eyebrow')).not.toBeInTheDocument();
+    });
+
+    it('shows the series as the eyebrow for a series coin', async () => {
+      setStoredToken('tok-abc');
+      useMySubmissionsMock.mockReturnValue(queryResult({ data: { items: [SERIES_COIN], page: 1, limit: 20, total: 1 } }));
+      render(<MySubmissionsPage />);
+
+      const item = await screen.findByTestId('my-submissions-item');
+      expect(within(item).getByTestId('my-submissions-item-eyebrow')).toHaveTextContent(
+        /^We Are Strong\. We Are Together$/,
+      );
+      expect(within(item).getByTestId('my-submissions-item-title')).toHaveTextContent(/^Donetsk Oblast$/);
+    });
+
+    it('keeps the status badge outside the name block', async () => {
+      setStoredToken('tok-abc');
+      useMySubmissionsMock.mockReturnValue(queryResult({ data: { items: [PENDING_COIN], page: 1, limit: 20, total: 1 } }));
+      render(<MySubmissionsPage />);
+
+      const item = await screen.findByTestId('my-submissions-item');
+      const link = within(item).getByRole('link');
+      expect(link.contains(within(item).getByTestId('my-submissions-status-badge'))).toBe(false);
     });
   });
 

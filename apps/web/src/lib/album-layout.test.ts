@@ -1,8 +1,14 @@
 /**
  * Tests for: album-layout (pure layout + formatters)
  * Contract source: runs/run_20261010_083926/plan.md § Interface Contract → Module: album-layout
+ *                   runs/run_20261017_142658/plan.md § Approach §3 (getAlbumCardText removed; getSharedEyebrow uses getCoinName)
  * Covers criteria: existing #3, #4, #5 (all-'' page), #6, #7, #8, #10, #17, #18, #19 (buildAlbumLayout and
  *                  formatters, preserved), and new #1, #2, #3, #5, #6, #7, #9, #15, #20, #23, #24
+ *                  run_20261017_142658: #6 (getAlbumCardText gone, shared eyebrow via getCoinName)
+ *
+ * run_20261017_142658 removes the getAlbumCardText suite (the function is gone; getCoinName in
+ * packages/shared replaces it and is tested in get-coin-name.test.ts) and re-states the
+ * getSharedEyebrow expectations under the new naming rule. Every other test is unchanged.
  *
  * CONTRACT_GAPS: none
  */
@@ -19,7 +25,6 @@ import {
   formatAlbumSlotLabel,
   formatCollectorNotation,
   formatOwnedOfTotal,
-  getAlbumCardText,
   getDenominationNumeral,
   getSharedEyebrow,
   hasBlankCells,
@@ -375,125 +380,20 @@ describe('formatCollectorNotation', () => {
   });
 });
 
-describe('getAlbumCardText', () => {
-  it('Donetsk (WAS 2025): eyebrow is the series, title the oblast, secondary has year and denomination', () => {
-    expect(
-      getAlbumCardText({
-        year: 2025,
-        mintMark: '',
-        variety: 'We Are Strong. We Are Together: Donetsk Oblast',
-        denomination: '10 Hryvnias',
-      }),
-    ).toEqual({
-      eyebrow: 'We Are Strong. We Are Together',
-      title: 'Donetsk Oblast',
-      secondary: '2025 · 10 Hryvnias',
-    });
+describe('getAlbumCardText is gone (replaced by getCoinName in the shared package)', () => {
+  it('is no longer exported from album-layout', async () => {
+    const albumLayout = await import('@/lib/album-layout');
+    expect(albumLayout).not.toHaveProperty('getAlbumCardText');
   });
 
-  it('a different WAS oblast and year change title and secondary', () => {
-    expect(
-      getAlbumCardText({
-        year: 2026,
-        mintMark: '',
-        variety: 'We Are Strong. We Are Together: Luhansk Oblast',
-        denomination: '10 Hryvnias',
-      }),
-    ).toEqual({
-      eyebrow: 'We Are Strong. We Are Together',
-      title: 'Luhansk Oblast',
-      secondary: '2026 · 10 Hryvnias',
-    });
-  });
-
-  it("1931-S with no variety: title is the collector notation, secondary is just the denomination", () => {
-    expect(getAlbumCardText({ year: 1931, mintMark: 'S', variety: '', denomination: 'Cent' })).toEqual({
-      eyebrow: '',
-      title: '1931-S',
-      secondary: 'Cent',
-    });
-  });
-
-  it('plain 1909 Cent: title 1909, secondary Cent', () => {
-    expect(getAlbumCardText({ year: 1909, mintMark: '', variety: '', denomination: 'Cent' })).toEqual({
-      eyebrow: '',
-      title: '1909',
-      secondary: 'Cent',
-    });
-  });
-
-  it('1909 VDB: variety is the title, secondary prefixes the year', () => {
-    expect(getAlbumCardText({ year: 1909, mintMark: '', variety: 'VDB', denomination: 'Cent' })).toEqual({
-      eyebrow: '',
-      title: 'VDB',
-      secondary: '1909 · Cent',
-    });
-  });
-
-  it('1909-S VDB uses the collector notation in the secondary line', () => {
-    expect(getAlbumCardText({ year: 1909, mintMark: 'S', variety: 'VDB', denomination: 'Cent' }).secondary).toBe(
-      '1909-S · Cent',
-    );
-  });
-
-  it('1922 No D', () => {
-    expect(getAlbumCardText({ year: 1922, mintMark: '', variety: 'No D', denomination: 'Cent' })).toEqual({
-      eyebrow: '',
-      title: 'No D',
-      secondary: '1922 · Cent',
-    });
-  });
-
-  it('1955 Doubled Die', () => {
-    expect(getAlbumCardText({ year: 1955, mintMark: '', variety: 'Doubled Die', denomination: 'Cent' })).toEqual({
-      eyebrow: '',
-      title: 'Doubled Die',
-      secondary: '1955 · Cent',
-    });
-  });
-
-  it('plain Ukrainian 2014 1 Kopiyka', () => {
-    expect(getAlbumCardText({ year: 2014, mintMark: '', variety: '', denomination: '1 Kopiyka' })).toEqual({
-      eyebrow: '',
-      title: '2014',
-      secondary: '1 Kopiyka',
-    });
-  });
-
-  it('2014 Brass-plated steel 10 Kopiyok', () => {
-    expect(
-      getAlbumCardText({ year: 2014, mintMark: '', variety: 'Brass-plated steel', denomination: '10 Kopiyok' }),
-    ).toEqual({ eyebrow: '', title: 'Brass-plated steel', secondary: '2014 · 10 Kopiyok' });
-  });
-
-  it('Antonivskyi Bridge (2023) shows the full subject as the title with no eyebrow', () => {
-    const text = getAlbumCardText({
-      year: 2023,
-      mintMark: '',
-      variety: 'Antonivskyi Bridge',
-      denomination: '10 Hryvnias',
-    });
-    expect(text.eyebrow).toBe('');
-    expect(text.title).toBe('Antonivskyi Bridge');
-    expect(text.secondary).toBe('2023 · 10 Hryvnias');
-  });
-
-  it('does not repeat the year when the title already contains it (UEFA Euro 2012)', () => {
-    expect(
-      getAlbumCardText({
-        year: 2012,
-        mintMark: '',
-        variety: 'UEFA Euro 2012 Final Tournament',
-        denomination: '1 Hryvnia',
-      }),
-    ).toEqual({ eyebrow: '', title: 'UEFA Euro 2012 Final Tournament', secondary: '1 Hryvnia' });
-  });
-
-  it('does not mutate its input', () => {
-    const coin = { year: 1909, mintMark: 'S', variety: 'VDB', denomination: 'Cent' };
-    const snapshot = JSON.stringify(coin);
-    getAlbumCardText(coin);
-    expect(JSON.stringify(coin)).toBe(snapshot);
+  it('still exports the flat-string helpers and the other card helpers', async () => {
+    const albumLayout = await import('@/lib/album-layout');
+    expect(albumLayout).toHaveProperty('splitVariety');
+    expect(albumLayout).toHaveProperty('formatCollectorNotation');
+    expect(albumLayout).toHaveProperty('formatAlbumCoinShortName');
+    expect(albumLayout).toHaveProperty('formatAlbumCheckLabel');
+    expect(albumLayout).toHaveProperty('formatAlbumCardLabel');
+    expect(albumLayout).toHaveProperty('getSharedEyebrow');
   });
 });
 
@@ -513,7 +413,7 @@ describe('getDenominationNumeral', () => {
   });
 });
 
-describe('getSharedEyebrow', () => {
+describe('getSharedEyebrow (eyebrows come from getCoinName)', () => {
   it('returns the series name when all 12 WAS coins share it', () => {
     const [page] = buildAlbumLayout(wasSlots());
     expect(getSharedEyebrow(page)).toBe(WAS_SERIES);
@@ -534,7 +434,24 @@ describe('getSharedEyebrow', () => {
     expect(getSharedEyebrow(page)).toBe(WAS_SERIES);
   });
 
-  it("returns '' when one coin has no eyebrow", () => {
+  it("returns '' when one coin has no eyebrow at all", () => {
+    const mixed = [
+      ...wasSlots().slice(0, 3),
+      // No variety: the type name is this coin's title, so it has no eyebrow (same album page as the WAS coins).
+      slot(50, {
+        id: 'plain-hryvnias',
+        year: 2023,
+        country: 'Ukraine',
+        denomination: '10 Hryvnias',
+        name: 'Ukraine Commemorative 10 Hryvnias',
+        variety: '',
+      }),
+    ];
+    const [page] = buildAlbumLayout(mixed);
+    expect(getSharedEyebrow(page)).toBe('');
+  });
+
+  it("returns '' when a standalone design shows the type name while the others show the series", () => {
     const mixed = [
       ...wasSlots().slice(0, 3),
       slot(50, {
@@ -571,9 +488,16 @@ describe('getSharedEyebrow', () => {
     expect(getSharedEyebrow(page)).toBe('');
   });
 
-  it("returns '' for plain coins without a variety", () => {
+  it("returns '' for plain coins without a variety (their title is the type name, so no eyebrow)", () => {
     const [page] = buildAlbumLayout([L1, L5]);
     expect(getSharedEyebrow(page)).toBe('');
+  });
+
+  it('returns the type name when every coin on the page is a variety of the same type', () => {
+    const a = slot(0, { id: 'va', year: 1909, variety: 'VDB' });
+    const b = slot(1, { id: 'vb', year: 1922, variety: 'No D' });
+    const [page] = buildAlbumLayout([a, b]);
+    expect(getSharedEyebrow(page)).toBe('Lincoln Wheat Cent');
   });
 });
 

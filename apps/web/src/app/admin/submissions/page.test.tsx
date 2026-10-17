@@ -2,7 +2,8 @@
  * Tests for: AdminSubmissionsPage and SubmissionReviewItem
  * Contract source: runs/run_20261001_224939/plan.md § Interface Contract → Page: AdminSubmissionsPage (CREATE),
  *                  Component: SubmissionReviewItem (CREATE)
- * Covers criteria: #16, #17, #18, #19, #20, #24 (from prd.md)
+ *                  runs/run_20261017_142658/plan.md § Approach §3 (label via getCoinName)
+ * Covers criteria: #16, #17, #18, #19, #20, #24 (from prd.md); #6 (from run_20261017_142658's prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -13,6 +14,10 @@
  * vi.stubGlobal rather than vi.mock(), the same pattern the lib tests use.
  * Edited input values are replaced with fireEvent.change (user.clear + user.type appends on
  * pre-filled controlled inputs, see the repo's web rules).
+ *
+ * run_20261017_142658: only the "list rendering" block changes. The label now holds the getCoinName title
+ * and subtitle instead of the formatCoinLabel string, plus the submitted name when it differs from the title.
+ * Everything else is unchanged.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -39,6 +44,7 @@ function makeItem(overrides: Item = {}): Item {
     year: 1943,
     mintMark: 'D',
     variety: 'Steel',
+    isKeyDate: false,
     status: 'pending',
     rejectionReason: null,
     submitterEmail: 'submitter@example.com',
@@ -193,7 +199,7 @@ describe('AdminSubmissionsPage', () => {
   });
 
   describe('list rendering (criterion #16)', () => {
-    it('renders one item per pending coin, with label, name and submitter email, in order', async () => {
+    it('renders one item per pending coin, with title, subtitle, submitted name and submitter email, in order', async () => {
       installBackend({
         items: [
           makeItem({ id: 'coin-1', year: 1943, mintMark: 'D', name: 'Lincoln Wheat Cent', submitterEmail: 'one@example.com' }),
@@ -215,15 +221,75 @@ describe('AdminSubmissionsPage', () => {
       expect(items).toHaveLength(2);
       expect(screen.getByTestId('admin-submissions-list')).toBeInTheDocument();
 
-      expect(within(items[0]).getByTestId('admin-submission-label')).toHaveTextContent('USA 1 Cent (1943 D)');
+      expect(within(items[0]).getByTestId('admin-submission-title')).toHaveTextContent(/^Steel$/);
+      expect(within(items[0]).getByTestId('admin-submission-subtitle')).toHaveTextContent(/^USA · 1 Cent · 1943-D$/);
       expect(within(items[0]).getByTestId('admin-submission-label')).toHaveTextContent('Lincoln Wheat Cent');
       expect(within(items[0]).getByTestId('admin-submission-submitter')).toHaveTextContent('Submitted by');
       expect(within(items[0]).getByTestId('admin-submission-submitter')).toHaveTextContent('one@example.com');
 
-      expect(within(items[1]).getByTestId('admin-submission-label')).toHaveTextContent('Canada 5 Cents');
+      expect(within(items[1]).getByTestId('admin-submission-subtitle')).toHaveTextContent(
+        /^Canada · 5 Cents · 1937$/,
+      );
       expect(within(items[1]).getByTestId('admin-submission-label')).toHaveTextContent('Beaver Nickel');
       expect(within(items[1]).getByTestId('admin-submission-submitter')).toHaveTextContent('two@example.com');
       expect(within(items[1]).getByTestId('admin-submission-submitter')).not.toHaveTextContent('one@example.com');
+    });
+
+    it('keeps the title, subtitle and submitted name inside the label, and no longer shows the old formatCoinLabel text', async () => {
+      installBackend({ items: [makeItem()] });
+
+      renderPage();
+
+      const [item] = await findItems();
+      const label = within(item).getByTestId('admin-submission-label');
+      expect(within(label).getByTestId('admin-submission-title')).toBeInTheDocument();
+      expect(within(label).getByTestId('admin-submission-subtitle')).toBeInTheDocument();
+      expect(within(label).getByTestId('admin-submission-name')).toBeInTheDocument();
+      expect(label).not.toHaveTextContent('USA 1 Cent (1943 D)');
+    });
+
+    it('shows the raw submitted name when it differs from the title, so a reviewer always sees it', async () => {
+      installBackend({ items: [makeItem({ variety: 'Steel', name: 'Lincoln Wheat Cent' })] });
+
+      renderPage();
+
+      const [item] = await findItems();
+      expect(within(item).getByTestId('admin-submission-name')).toHaveTextContent(/^Lincoln Wheat Cent$/);
+      expect(within(item).getByTestId('admin-submission-title')).not.toHaveTextContent('Lincoln Wheat Cent');
+    });
+
+    it('hides the submitted name when it is the same text as the title', async () => {
+      installBackend({ items: [makeItem({ variety: '', name: 'Lincoln Wheat Cent' })] });
+
+      renderPage();
+
+      const [item] = await findItems();
+      expect(within(item).getByTestId('admin-submission-title')).toHaveTextContent(/^Lincoln Wheat Cent$/);
+      expect(within(item).queryByTestId('admin-submission-name')).not.toBeInTheDocument();
+    });
+
+    it('compares the submitted name with the title ignoring surrounding spaces', async () => {
+      installBackend({ items: [makeItem({ variety: '', name: '  Lincoln Wheat Cent  ' })] });
+
+      renderPage();
+
+      const [item] = await findItems();
+      expect(within(item).queryByTestId('admin-submission-name')).not.toBeInTheDocument();
+    });
+
+    it('decides per row whether the submitted name is shown', async () => {
+      installBackend({
+        items: [
+          makeItem({ id: 'coin-1', variety: 'Steel', name: 'Lincoln Wheat Cent' }),
+          makeItem({ id: 'coin-2', variety: '', name: 'Lincoln Wheat Cent', year: 1950 }),
+        ],
+      });
+
+      renderPage();
+
+      const items = await findItems();
+      expect(within(items[0]).getByTestId('admin-submission-name')).toBeInTheDocument();
+      expect(within(items[1]).queryByTestId('admin-submission-name')).not.toBeInTheDocument();
     });
 
     it('shows the localized unknown-submitter text when the submitter email is null', async () => {

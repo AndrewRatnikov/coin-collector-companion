@@ -2,11 +2,16 @@
  * Tests for: CanonicalSetsPage
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CanonicalSetsPage
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
- * Covers criteria: #8 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md)
+ *                   runs/run_20261017_142658/plan.md § Approach §4 (Skeleton now carries a testid)
+ * Covers criteria: #8 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md),
+ *                  #13 (from run_20261017_142658's prd.md)
  *
  * run_20260728_071525: plan.md's Interface Contract for this page states "No export/
  * prop/testid/hook changes at all — pure token/copy/layout restyle." No assertion in
  * this file changes as a result; it is carried over byte-for-byte from the prior run.
+ *
+ * run_20261017_142658: only the skeleton test changes. Skeleton no longer uses the `animate-pulse`
+ * class, so the test finds it by its `skeleton` testid inside the loading wrapper.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -71,10 +76,10 @@ describe('CanonicalSetsPage', () => {
   describe('criterion 1: loading state uses a skeleton, not bare text', () => {
     it('renders a skeleton element within canonical-sets-loading and no literal "Loading…" text', () => {
       useCanonicalSetsMock.mockReturnValue(queryResult({ isLoading: true }));
-      const { container } = render(<CanonicalSetsPage />);
+      render(<CanonicalSetsPage />);
 
       expect(screen.getByTestId('canonical-sets-loading')).toBeInTheDocument();
-      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(within(screen.getByTestId('canonical-sets-loading')).getAllByTestId('skeleton').length).toBeGreaterThan(0);
       expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     });
   });

@@ -3,8 +3,9 @@
  * Contract source: runs/run_20260721_161448/plan.md § Interface Contract → Component: PublicSetDetailPage
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
  *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/sets/public/[id]/page.tsx
+ *                   runs/run_20261017_142658/plan.md § Approach §3 and §4 (name block via getCoinName; Skeleton testid)
  * Covers criteria: #5, #6, #7 (from run_20260721_161448's prd.md), #1 (from run_20260722_121303's prd.md),
- *                  #7 (from run_20260728_071525's prd.md)
+ *                  #7 (from run_20260728_071525's prd.md), #6, #13 (from run_20261017_142658's prd.md)
  *
  * Unwraps params via useEffect+useState (matching the fix already applied to
  * sets/canonical/[id]/page.tsx per memory.md's recorded use()+Suspense gotcha), not
@@ -13,6 +14,11 @@
  * run_20260728_071525: adds coverage for the new public-set-detail-overlap line, which
  * reuses the already-mocked useSetGaps result (gaps.ownedCount / gaps.slots.length) — no
  * new fetch/mock is introduced. Every other assertion below is carried over unchanged.
+ *
+ * run_20261017_142658: two tests change. The skeleton test looks for the Skeleton testid instead of
+ * the removed `.animate-pulse` class, and the anonymous coin list test expects the getCoinName title and
+ * subtitle instead of the formatCoinLabel string. The coin fixtures now carry the naming fields
+ * (name, variety, isKeyDate) because getCoinName reads them.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -68,12 +74,30 @@ const DETAIL = {
     {
       id: 'usc-2',
       position: 1,
-      coin: { id: 'coin-2', country: 'USA', denomination: '1 Cent', year: 1958, mintMark: '' },
+      coin: {
+        id: 'coin-2',
+        country: 'USA',
+        denomination: '1 Cent',
+        year: 1958,
+        mintMark: '',
+        variety: '',
+        name: 'Lincoln Wheat Cent',
+        isKeyDate: false,
+      },
     },
     {
       id: 'usc-1',
       position: 0,
-      coin: { id: 'coin-1', country: 'USA', denomination: '1 Cent', year: 1909, mintMark: 'S' },
+      coin: {
+        id: 'coin-1',
+        country: 'USA',
+        denomination: '1 Cent',
+        year: 1909,
+        mintMark: 'S',
+        variety: '',
+        name: 'Lincoln Wheat Cent',
+        isKeyDate: false,
+      },
     },
   ],
 };
@@ -112,12 +136,14 @@ describe('PublicSetDetailPage', () => {
   describe('criterion 1: loading state uses a skeleton, not bare text', () => {
     it('renders a skeleton element within public-set-detail-loading and no literal "Loading…" text', async () => {
       usePublicSetMock.mockReturnValue(publicSetResult({ isLoading: true }));
-      const { container } = renderPage();
+      renderPage();
 
       await waitFor(() => {
         expect(screen.getByTestId('public-set-detail-loading')).toBeInTheDocument();
       });
-      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(
+        within(screen.getByTestId('public-set-detail-loading')).getByTestId('skeleton'),
+      ).toBeInTheDocument();
       expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     });
   });
@@ -144,10 +170,25 @@ describe('PublicSetDetailPage', () => {
       });
       const items = screen.getAllByTestId('public-set-detail-coin-item');
       expect(items).toHaveLength(2);
-      expect(within(items[0]).getByText('USA 1 Cent (1909 S)')).toBeInTheDocument();
-      expect(within(items[1]).getByText('USA 1 Cent (1958)')).toBeInTheDocument();
+      expect(within(items[0]).getByTestId('public-set-detail-coin-title')).toHaveTextContent(/^Lincoln Wheat Cent$/);
+      expect(within(items[0]).getByTestId('public-set-detail-coin-subtitle')).toHaveTextContent(
+        /^USA · 1 Cent · 1909-S$/,
+      );
+      expect(within(items[1]).getByTestId('public-set-detail-coin-title')).toHaveTextContent(/^Lincoln Wheat Cent$/);
+      expect(within(items[1]).getByTestId('public-set-detail-coin-subtitle')).toHaveTextContent(
+        /^USA · 1 Cent · 1958$/,
+      );
       expect(screen.queryByTestId('public-set-detail-coin-status')).not.toBeInTheDocument();
       expect(usePublicSetMock).toHaveBeenCalledWith('set-1');
+    });
+
+    it('no longer shows the old formatCoinLabel text', async () => {
+      usePublicSetMock.mockReturnValue(publicSetResult({ data: DETAIL as never }));
+      renderPage('set-1');
+
+      await screen.findAllByTestId('public-set-detail-coin-item');
+      expect(screen.queryByText('USA 1 Cent (1909 S)')).not.toBeInTheDocument();
+      expect(screen.queryByText('USA 1 Cent (1958)')).not.toBeInTheDocument();
     });
   });
 
