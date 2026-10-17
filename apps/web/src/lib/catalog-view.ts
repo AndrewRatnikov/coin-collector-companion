@@ -3,7 +3,7 @@
 
 import { CATALOG_SORTS, DEFAULT_CATALOG_SORT, type CatalogCoin, type CatalogSort } from '@coin-collector/shared';
 import type { CatalogFilters } from '@/lib/catalog-api';
-import { getAlbumCardText } from '@/lib/album-layout';
+import { splitVariety } from '@/lib/album-layout';
 
 export const CATALOG_PAGE_SIZE = 20;
 
@@ -166,16 +166,17 @@ export interface CatalogRowText {
 }
 
 /**
- * Row text for the catalog list. Reuses the album's card naming when there is a variety;
- * a plain coin is titled by its denomination, so the year is never repeated in the title.
+ * Row text for the catalog list. A coin with a variety is titled by the variety's design part
+ * (the series prefix becomes the subtitle); a plain coin is titled by its denomination, so the
+ * year is never repeated in the title.
  */
 export function getCatalogRowText(
   coin: Pick<CatalogCoin, 'year' | 'mintMark' | 'variety' | 'denomination'>,
 ): CatalogRowText {
-  const card = getAlbumCardText(coin);
+  const { eyebrow, title } = splitVariety(coin.variety);
   return {
-    title: coin.variety.trim() === '' ? coin.denomination : card.title,
-    subtitle: card.eyebrow,
+    title: coin.variety.trim() === '' ? coin.denomination : title,
+    subtitle: eyebrow,
     yearLabel: coin.mintMark === '' ? String(coin.year) : `${coin.year} ${coin.mintMark}`,
   };
 }
