@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { formatCoinLabel } from '@coin-collector/shared';
+import { getCoinName } from '@coin-collector/shared';
 import type { CoinStatus, SubmittedCoin } from '@coin-collector/shared';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
@@ -45,36 +45,47 @@ function MySubmissionsList() {
           </p>
         ) : (
           <ul data-testid="my-submissions-list" className="flex flex-col border-t border-[var(--color-divider)]">
-            {data.items.map((coin: SubmittedCoin) => (
-              <li
-                key={coin.id}
-                data-testid="my-submissions-item"
-                className="flex items-center justify-between gap-4 border-b border-[var(--color-divider)] px-1 py-4"
-              >
-                <Link
-                  href={`/catalog/${coin.id}`}
-                  className="text-sm text-[var(--color-text)] transition-colors hover:text-[var(--color-accent)]"
+            {data.items.map((coin: SubmittedCoin) => {
+              const name = getCoinName(coin);
+              return (
+                <li
+                  key={coin.id}
+                  data-testid="my-submissions-item"
+                  className="flex items-center justify-between gap-4 border-b border-[var(--color-divider)] px-1 py-4"
                 >
-                  {formatCoinLabel(coin)}
-                </Link>
-                <div className="flex flex-col items-end gap-1">
-                  <span
-                    data-testid="my-submissions-status-badge"
-                    className="w-fit rounded-[2px] bg-[color:var(--color-accent-100)] px-2 py-1 text-xs font-medium text-[color:var(--color-accent-800)]"
+                  <Link
+                    href={`/catalog/${coin.id}`}
+                    className="flex min-w-0 flex-col text-sm text-[var(--color-text)] transition-colors hover:text-[var(--color-accent)]"
                   >
-                    {t(STATUS_LABEL_KEY[coin.status])}
-                  </span>
-                  {coin.status === 'rejected' && coin.rejectionReason && (
-                    <p
-                      data-testid="my-submissions-rejection-reason"
-                      className="max-w-[40ch] text-right text-xs text-[var(--color-neutral-600)]"
+                    {name.eyebrow !== '' && (
+                      <span data-testid="my-submissions-item-eyebrow" className="text-[11px] font-medium text-neutral-700">
+                        {name.eyebrow}
+                      </span>
+                    )}
+                    <span data-testid="my-submissions-item-title">{name.title}</span>
+                    <span data-testid="my-submissions-item-subtitle" className="text-xs text-neutral-700">
+                      {name.subtitle}
+                    </span>
+                  </Link>
+                  <div className="flex flex-col items-end gap-1">
+                    <span
+                      data-testid="my-submissions-status-badge"
+                      className="w-fit rounded-[2px] bg-[color:var(--color-accent-100)] px-2 py-1 text-xs font-medium text-[color:var(--color-accent-800)]"
                     >
-                      {t('mySubmissions.rejectionReasonLabel')} {coin.rejectionReason}
-                    </p>
-                  )}
-                </div>
-              </li>
-            ))}
+                      {t(STATUS_LABEL_KEY[coin.status])}
+                    </span>
+                    {coin.status === 'rejected' && coin.rejectionReason && (
+                      <p
+                        data-testid="my-submissions-rejection-reason"
+                        className="max-w-[40ch] text-right text-xs text-[var(--color-neutral-600)]"
+                      >
+                        {t('mySubmissions.rejectionReasonLabel')} {coin.rejectionReason}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         ))}
     </main>
