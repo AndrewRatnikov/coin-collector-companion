@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useQueries } from '@tanstack/react-query';
-import { formatCoinLabel } from '@coin-collector/shared';
+import { formatCoinLabel, getCoinName } from '@coin-collector/shared';
 import { useCoin } from '@/lib/hooks/use-catalog';
 import { useCollection, useSetOwnership } from '@/lib/hooks/use-collection';
 import { useUserSets } from '@/lib/hooks/use-user-sets';
@@ -70,6 +70,7 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
     : [];
   const specRows = allSpecRows.filter((row) => row.value !== null);
 
+  const coinName = coin ? getCoinName(coin) : null;
   const coinIsOwned = collection?.some((item) => item.coinId === coinId) ?? false;
   const coinAppearsIn = setsToCheck.filter((_set, index) => {
     const gaps = gapQueries[index]?.data;
@@ -118,13 +119,22 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
             <p className="text-[11px] font-medium uppercase tracking-[.14em] text-[color:var(--color-neutral-600)]">
               Catalogue entry
             </p>
-            <h1
-              data-testid="coin-detail-label"
-              className="font-[family-name:var(--font-heading)] text-[32px] font-semibold text-[color:var(--color-text)]"
-            >
-              {formatCoinLabel(coin)}
-            </h1>
-            {coin.variety && <p className="text-sm text-[color:var(--color-neutral-600)]">{coin.variety}</p>}
+            <div className="flex flex-col gap-1">
+              {coinName && coinName.eyebrow !== '' && (
+                <p data-testid="coin-detail-eyebrow" className="text-[11px] font-medium text-neutral-700">
+                  {coinName.eyebrow}
+                </p>
+              )}
+              <h1
+                data-testid="coin-detail-label"
+                className="font-[family-name:var(--font-heading)] text-[32px] font-semibold text-[color:var(--color-text)]"
+              >
+                {coinName?.title}
+              </h1>
+              <p data-testid="coin-detail-subtitle" className="text-xs text-neutral-700">
+                {coinName?.subtitle}
+              </p>
+            </div>
 
             {coin.isKeyDate && (
               <span
