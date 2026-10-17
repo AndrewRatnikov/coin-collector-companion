@@ -135,7 +135,7 @@ export function UndoToastProvider({ children }: { children: ReactNode }) {
               focusedRef.current = false;
               resumeIfIdle();
             }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3.5 rounded-lg bg-neutral-900 py-2 pr-2 pl-4 text-sm text-white shadow-lg max-w-[calc(100%-32px)]"
+            className="fixed bottom-[76px] min-[900px]:bottom-6 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3.5 rounded-lg bg-neutral-900 py-2 pr-2 pl-4 text-sm text-white shadow-lg max-w-[calc(100%-32px)]"
           >
             <span data-testid="undo-toast-message" className="min-w-0">
               {toast.options.message}
