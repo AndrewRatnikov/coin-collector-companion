@@ -1,6 +1,6 @@
 # The set Album view is a client-side projection of the gap data, with the view mode kept in the URL
 
-- **Status:** Accepted
+- **Status:** Superseded by [2026-10-17-set-page-album-default-year-groups](2026-10-17-set-page-album-default-year-groups.md)
 - **Date:** 2026-10-09 (later refined by `run_20261010_083926` and `run_20261011_095624`; their visual design is in `docs/design/2026-10-10_album-view.md`)
 - **Source:** orchestrator run `run_20261009_211156` (Album view on `/sets/[id]`)
 - **Code:** `apps/web/src/lib/album-layout.ts` (`buildAlbumLayout`, card-text helpers), `apps/web/src/components/sets/set-album.tsx`, `apps/web/src/app/sets/[id]/page.tsx`

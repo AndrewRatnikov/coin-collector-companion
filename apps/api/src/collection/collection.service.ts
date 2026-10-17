@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import type { OwnershipItem, SetOwnershipResponse } from '@coin-collector/shared';
+import type {
+  BulkSetOwnershipResponse,
+  OwnershipItem,
+  SetOwnershipResponse,
+} from '@coin-collector/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { FindCollectionQueryDto } from './dto/find-collection-query.dto';
 
@@ -31,6 +35,41 @@ export class CollectionService {
 
     await this.prisma.ownership.deleteMany({ where: { userId, coinId } });
     return { coinId, owned: false, ownedAt: null };
+  }
+
+  /**
+   * Sets the same owned state for many coins at once (`PATCH /collection`).
+   * Idempotent: owning an owned coin or un-owning a missing one is a no-op, and
+   * existing `ownedAt` values are never touched. All-or-nothing on unknown coins.
+   */
+  async setOwnershipBulk(
+    userId: string,
+    coinIds: string[],
+    owned: boolean,
+  ): Promise<BulkSetOwnershipResponse> {
+    const ids = [...new Set(coinIds)];
+
+    if (owned) {
+      const existing = await this.prisma.coin.count({ where: { id: { in: ids } } });
+      if (existing < ids.length) {
+        throw new NotFoundException('Coin not found');
+      }
+      try {
+        await this.prisma.ownership.createMany({
+          data: ids.map((coinId) => ({ userId, coinId })),
+          skipDuplicates: true,
+        });
+      } catch (err) {
+        if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
+          throw new NotFoundException('Coin not found');
+        }
+        throw err;
+      }
+      return { coinIds: ids, owned: true };
+    }
+
+    await this.prisma.ownership.deleteMany({ where: { userId, coinId: { in: ids } } });
+    return { coinIds: ids, owned: false };
   }
 
   async findAll(userId: string, query: FindCollectionQueryDto): Promise<OwnershipItem[]> {

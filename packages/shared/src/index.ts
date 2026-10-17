@@ -205,6 +205,18 @@ export interface SetOwnershipResponse {
   ownedAt: Date | null;
 }
 
+/** Body of `PATCH /collection`: set the same owned state for many coins in one request. */
+export interface BulkSetOwnershipRequest {
+  coinIds: string[];
+  owned: boolean;
+}
+
+/** Response of `PATCH /collection`: the de-duplicated ids, in first-seen order. */
+export interface BulkSetOwnershipResponse {
+  coinIds: string[];
+  owned: boolean;
+}
+
 export interface GapSlot {
   id: string;
   position: number;

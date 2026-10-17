@@ -1,8 +1,8 @@
 export type SetView = 'list' | 'album';
 
-/** `'album'` only for `view=album`; anything else falls back to `'list'`. */
+/** `'list'` only for `view=list`; anything else (including no param) is the default `'album'`. */
 export function parseSetView(search: string): SetView {
-  return new URLSearchParams(search).get('view') === 'album' ? 'album' : 'list';
+  return new URLSearchParams(search).get('view') === 'list' ? 'list' : 'album';
 }
 
 /**
@@ -11,8 +11,8 @@ export function parseSetView(search: string): SetView {
  */
 export function buildSetViewSearch(search: string, view: SetView): string {
   const params = new URLSearchParams(search);
-  if (view === 'album') {
-    params.set('view', 'album');
+  if (view === 'list') {
+    params.set('view', 'list');
   } else {
     params.delete('view');
   }

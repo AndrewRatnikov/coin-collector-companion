@@ -4,6 +4,9 @@
  *                   runs/run_20261011_095624/plan.md § Interface Contract → Page: SetEditorPage (MODIFY)
  * Covers criteria: #7, #8, #9 (from prd.md); #10, #11 (run_20261011_095624: visitor gets no download/print controls)
  *
+ * run_20261017_210503: the page now also calls useBulkSetOwnership and useAddCoinsToSet, so the module
+ * mock factories return them too. Nothing else changes in this file.
+ *
  * CONTRACT_GAPs: none
  */
 
@@ -12,8 +15,15 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import SetEditorPage from '@/app/sets/[id]/page';
 import { buildMissingCsv } from '@/lib/missing-list';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
-import { useDeleteSet, usePatchSetCoins, useRenameSet, useSetGaps, useUserSets } from '@/lib/hooks/use-user-sets';
-import { useSetOwnership } from '@/lib/hooks/use-collection';
+import {
+  useAddCoinsToSet,
+  useDeleteSet,
+  usePatchSetCoins,
+  useRenameSet,
+  useSetGaps,
+  useUserSets,
+} from '@/lib/hooks/use-user-sets';
+import { useBulkSetOwnership, useSetOwnership } from '@/lib/hooks/use-collection';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import { setStoredToken } from '@/lib/auth-token';
 
@@ -32,12 +42,14 @@ vi.mock('@/lib/hooks/use-user-sets', () => ({
   useSetGaps: vi.fn(),
   useUserSets: vi.fn(),
   usePatchSetCoins: vi.fn(),
+  useAddCoinsToSet: vi.fn(),
   useRenameSet: vi.fn(),
   useDeleteSet: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/use-collection', () => ({
   useSetOwnership: vi.fn(),
+  useBulkSetOwnership: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/use-catalog', () => ({
@@ -48,13 +60,15 @@ const usePublicSetMock = vi.mocked(usePublicSet);
 const useSetGapsMock = vi.mocked(useSetGaps);
 const useUserSetsMock = vi.mocked(useUserSets);
 const usePatchSetCoinsMock = vi.mocked(usePatchSetCoins);
+const useAddCoinsToSetMock = vi.mocked(useAddCoinsToSet);
 const useRenameSetMock = vi.mocked(useRenameSet);
 const useDeleteSetMock = vi.mocked(useDeleteSet);
 const useSetOwnershipMock = vi.mocked(useSetOwnership);
+const useBulkSetOwnershipMock = vi.mocked(useBulkSetOwnership);
 const useCatalogMock = vi.mocked(useCatalog);
 
 function queryResult(overrides: Record<string, unknown> = {}) {
-  return { data: undefined, isLoading: false, isError: false, ...overrides } as never;
+  return { data: undefined, isLoading: false, isError: false, refetch: vi.fn(), ...overrides } as never;
 }
 
 function mutationMock() {
@@ -144,9 +158,11 @@ function setDefaultMocks(gaps: unknown = GAPS) {
   useSetGapsMock.mockReturnValue(queryResult({ data: gaps }));
   useUserSetsMock.mockReturnValue(queryResult({ data: MY_SETS }));
   usePatchSetCoinsMock.mockReturnValue(mutationMock());
+  useAddCoinsToSetMock.mockReturnValue(mutationMock());
   useRenameSetMock.mockReturnValue(mutationMock());
   useDeleteSetMock.mockReturnValue(mutationMock());
   useSetOwnershipMock.mockReturnValue(mutationMock());
+  useBulkSetOwnershipMock.mockReturnValue(mutationMock());
   useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
 }
 
@@ -183,9 +199,11 @@ describe('SetEditorPage missing-list controls', () => {
       useSetGapsMock,
       useUserSetsMock,
       usePatchSetCoinsMock,
+      useAddCoinsToSetMock,
       useRenameSetMock,
       useDeleteSetMock,
       useSetOwnershipMock,
+      useBulkSetOwnershipMock,
       useCatalogMock,
     ].forEach((m) => m.mockReset());
     setDefaultMocks();

@@ -1,4 +1,8 @@
-import type { OwnershipItem, SetOwnershipResponse } from '@coin-collector/shared';
+import type {
+  BulkSetOwnershipResponse,
+  OwnershipItem,
+  SetOwnershipResponse,
+} from '@coin-collector/shared';
 import { apiFetch } from './api-client';
 
 export interface CollectionFilters {
@@ -20,5 +24,16 @@ export async function setOwnership(coinId: string, owned: boolean): Promise<SetO
   return apiFetch<SetOwnershipResponse>(`/collection/${coinId}`, {
     method: 'PATCH',
     body: JSON.stringify({ owned }),
+  });
+}
+
+/** One `PATCH /collection` for many coins: the same owned state for every id. */
+export async function setOwnershipBulk(
+  coinIds: string[],
+  owned: boolean,
+): Promise<BulkSetOwnershipResponse> {
+  return apiFetch<BulkSetOwnershipResponse>('/collection', {
+    method: 'PATCH',
+    body: JSON.stringify({ coinIds, owned }),
   });
 }

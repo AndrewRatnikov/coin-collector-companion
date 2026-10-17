@@ -15,6 +15,8 @@ export interface StatusToggleProps {
   onToggle: () => void;
   onRetry?: () => void;
   className?: string;
+  /** Pill only: under 900px the text label becomes screen-reader-only, leaving just the disc. */
+  collapseLabelOnMobile?: boolean;
 }
 
 /** A pending save shows its spinner only after this long, so fast saves never flash. */
@@ -68,6 +70,7 @@ export function StatusToggle({
   onToggle,
   onRetry,
   className = '',
+  collapseLabelOnMobile = false,
 }: StatusToggleProps) {
   const { t } = useTranslation();
   const pending = state === 'pending';
@@ -149,11 +152,12 @@ export function StatusToggle({
       label = 'ui.toggle.labelMissing';
     }
 
-    classes = `inline-flex h-10 items-center gap-2 rounded-full pl-2 pr-3.5 text-[13px] font-medium whitespace-nowrap ${tone} ${FOCUS_CLASSES}`;
+    const collapse = collapseLabelOnMobile ? ' max-[899px]:h-9 max-[899px]:pr-2.5' : '';
+    classes = `inline-flex h-10 items-center gap-2 rounded-full pl-2 pr-3.5 text-[13px] font-medium whitespace-nowrap ${tone} ${FOCUS_CLASSES}${collapse}`;
     content = (
       <>
         {disc}
-        <span>{t(label)}</span>
+        <span className={collapseLabelOnMobile ? 'max-[899px]:sr-only' : undefined}>{t(label)}</span>
       </>
     );
   }

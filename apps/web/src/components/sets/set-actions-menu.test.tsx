@@ -1,7 +1,10 @@
 /**
  * Tests for: SetActionsMenu (owner-only ⋯ menu)
  * Contract source: runs/run_20261011_095624/plan.md § Interface Contract → Component: SetActionsMenu
- * Covers criteria: #11 (from prd.md)
+ * Extended by: runs/run_20261017_210503/plan.md § Interface Contract → Component: SetActionsMenu (MODIFY)
+ * Covers criteria: #11 (run_20261011_095624); #14 (run_20261017_210503, mobile Select / Mark all items)
+ *
+ * jsdom loads no Tailwind, so the min-[900px]:hidden items are visible to tests at every width.
  *
  * CONTRACT_GAP: none.
  */
@@ -258,5 +261,123 @@ describe('SetActionsMenu: keyboard navigation', () => {
 
     expect(onDownloadMissing).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
+  });
+});
+
+describe('SetActionsMenu: mobile Select and Mark all items (criterion 14)', () => {
+  it('renders neither item without the new props', async () => {
+    renderMenu();
+    await openMenu();
+    expect(screen.queryByTestId('set-editor-select-item')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-editor-mark-all-item')).not.toBeInTheDocument();
+  });
+
+  it('renders Select coins and Mark all before Rename when both handlers are given', async () => {
+    renderMenu({ onSelectCoins: vi.fn(), onMarkAllOwned: vi.fn(), markAllCount: 5 });
+    await openMenu();
+
+    const ids = screen.getAllByRole('menuitem').map((i) => i.getAttribute('data-testid'));
+    expect(ids).toEqual([
+      'set-editor-select-item',
+      'set-editor-mark-all-item',
+      'set-editor-rename-item',
+      'set-editor-download-missing',
+      'set-editor-print-missing',
+      'set-editor-delete-button',
+    ]);
+    expect(screen.getByTestId('set-editor-select-item')).toHaveTextContent('Select coins');
+  });
+
+  it('renders only the Select item when only onSelectCoins is given', async () => {
+    renderMenu({ onSelectCoins: vi.fn() });
+    await openMenu();
+    expect(screen.getByTestId('set-editor-select-item')).toBeInTheDocument();
+    expect(screen.queryByTestId('set-editor-mark-all-item')).not.toBeInTheDocument();
+  });
+
+  it('renders only the Mark all item when only onMarkAllOwned is given', async () => {
+    renderMenu({ onMarkAllOwned: vi.fn(), markAllCount: 2 });
+    await openMenu();
+    expect(screen.queryByTestId('set-editor-select-item')).not.toBeInTheDocument();
+    expect(screen.getByTestId('set-editor-mark-all-item')).toBeInTheDocument();
+  });
+
+  it('labels Mark all with the count, and uses the singular for one coin', async () => {
+    const { unmount } = renderMenu({ onMarkAllOwned: vi.fn(), markAllCount: 12 });
+    await openMenu();
+    expect(screen.getByTestId('set-editor-mark-all-item')).toHaveTextContent('Mark all 12 as owned');
+    unmount();
+
+    renderMenu({ onMarkAllOwned: vi.fn(), markAllCount: 1 });
+    await openMenu();
+    expect(screen.getByTestId('set-editor-mark-all-item')).toHaveTextContent('Mark 1 as owned');
+    expect(screen.getByTestId('set-editor-mark-all-item')).not.toHaveTextContent('Mark all');
+  });
+
+  it('hides both items on desktop with min-[900px]:hidden', async () => {
+    renderMenu({ onSelectCoins: vi.fn(), onMarkAllOwned: vi.fn(), markAllCount: 3 });
+    await openMenu();
+    expect(screen.getByTestId('set-editor-select-item').className).toContain('min-[900px]:hidden');
+    expect(screen.getByTestId('set-editor-mark-all-item').className).toContain('min-[900px]:hidden');
+  });
+
+  it('Select coins closes the menu and calls onSelectCoins once', async () => {
+    const onSelectCoins = vi.fn();
+    const { onRename } = renderMenu({ onSelectCoins });
+    const user = await openMenu();
+
+    await user.click(screen.getByTestId('set-editor-select-item'));
+
+    expect(onSelectCoins).toHaveBeenCalledTimes(1);
+    expect(onRename).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
+  });
+
+  it('Mark all closes the menu and calls onMarkAllOwned once', async () => {
+    const onMarkAllOwned = vi.fn();
+    renderMenu({ onMarkAllOwned, markAllCount: 4 });
+    const user = await openMenu();
+
+    await user.click(screen.getByTestId('set-editor-mark-all-item'));
+
+    expect(onMarkAllOwned).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
+  });
+
+  it('disables Mark all when markAllCount is 0 and does not call the handler', async () => {
+    const onMarkAllOwned = vi.fn();
+    renderMenu({ onMarkAllOwned, markAllCount: 0 });
+    await openMenu();
+
+    const item = screen.getByTestId('set-editor-mark-all-item');
+    expect(item).toBeDisabled();
+    fireEvent.click(item);
+    expect(onMarkAllOwned).not.toHaveBeenCalled();
+  });
+
+  it('enables Mark all when markAllCount is above 0', async () => {
+    renderMenu({ onMarkAllOwned: vi.fn(), markAllCount: 1 });
+    await openMenu();
+    expect(screen.getByTestId('set-editor-mark-all-item')).toBeEnabled();
+  });
+
+  it('focuses Select coins first on open and arrow keys reach Rename', async () => {
+    renderMenu({ onSelectCoins: vi.fn(), onMarkAllOwned: vi.fn(), markAllCount: 3 });
+    const user = await openMenu();
+
+    expect(screen.getByTestId('set-editor-select-item')).toHaveFocus();
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByTestId('set-editor-mark-all-item')).toHaveFocus();
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByTestId('set-editor-rename-item')).toHaveFocus();
+  });
+
+  it('keyboard navigation skips a disabled Mark all', async () => {
+    renderMenu({ onSelectCoins: vi.fn(), onMarkAllOwned: vi.fn(), markAllCount: 0 });
+    const user = await openMenu();
+
+    expect(screen.getByTestId('set-editor-select-item')).toHaveFocus();
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByTestId('set-editor-rename-item')).toHaveFocus();
   });
 });

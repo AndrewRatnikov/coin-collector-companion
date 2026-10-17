@@ -1,61 +1,24 @@
 /**
- * Tests for: SetEditorPage
- * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Page: SetEditorPage (CREATE)
- *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
- *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/sets/[id]/page.tsx — Set Editor
- *                   runs/run_20261011_095624/plan.md § Interface Contract → Page: SetEditorPage (MODIFY)
- *                   runs/run_20261017_142658/plan.md § Approach §4 (Skeleton now carries a testid)
- * Covers criteria: #1, #3, #4, #5, #9 (from run_20260721_171115's prd.md), #1 (from
- *                  run_20260722_121303's prd.md), #12, #13 (from run_20260728_071525's prd.md),
- *                  #9, #10, #11, #13, #14 (from run_20261011_095624's prd.md),
- *                  #13 (from run_20261017_142658's prd.md)
+ * Tests for: SetEditorPage (Phase 4 redesign): header, loading/error, rename, delete, add sheet, visitor
+ * Contract source: runs/run_20261017_210503/plan.md § Interface Contract → Page: SetEditorPage (MODIFY)
+ * Earlier contracts kept: runs/run_20260721_171115, run_20260722_121303, run_20260728_071525,
+ *                         run_20261011_095624, run_20261017_142658
+ * Covers criteria: #1, #2, #3, #4, #15, #16 (run_20261017_210503) plus the delete, rename and add-coins
+ *                  behaviour that earlier runs pinned and this run keeps.
  *
- * run_20261017_142658: only the skeleton assertion in "criterion 1" changes. Skeleton no longer uses the
- * `animate-pulse` class, so the test finds it by its `skeleton` testid inside set-editor-loading.
+ * run_20261017_210503 intentionally drops what is gone: decade accordions, per-row Mark owned / Remove
+ * buttons, the owner's always-on name input (now behind Rename), "All coins · N" labels and the /sets
+ * breadcrumb. Behaviour that stays (delete dialog, CSV controls live in missing-export.test.tsx, Add
+ * coins sheet, blur-to-save rename) keeps its assertions.
  *
- * run_20261011_095624 intentionally changes three older assertions: the visitor no longer gets the
- * ⋯ actions menu (owner-only), the Missing toggle text is now "Missing · {n}", and the Rename item
- * now selects the name input text as well as focusing it.
+ * Unwraps `params` via the useEffect/useState pattern (documented gotcha: use() in Suspense never
+ * re-renders in this repo's jsdom+vitest setup), so no <Suspense> is needed around renderPage().
  *
- * Unwraps `params` via the useEffect/useState pattern already used by
- * sets/canonical/[id]/page.tsx and sets/public/[id]/page.tsx (documented gotcha:
- * React's use() inside <Suspense> never re-renders on resolution in this repo's
- * jsdom+vitest setup) — no <Suspense> boundary needed around renderPage() below.
+ * Mutation mocks auto-invoke onSuccess/onError, mirroring sets/new/page.test.tsx.
  *
- * Mutation hooks are mocked with both an auto-invoked onSuccess/onError callback
- * (mirroring sets/new/page.test.tsx's makeMutationMock convention) so the test
- * asserts observable results (mutate call args, router.push) rather than pinning
- * down exactly how the Coder wires the callback.
+ * Rename is saved on blur (and on Enter); Escape cancels. These are the plan's rules.
  *
- * run_20260728_071525 replaces the separate rename-form (REMOVE set-editor-rename-form/
- * -rename-input/-rename-submit) with an inline-editable set-editor-name-input in the owner
- * branch (non-owners keep the unchanged, read-only set-editor-name heading); replaces the
- * flat set-editor-gap-grid item list with decade-grouped accordions (set-editor-decade-group/
- * -decade-toggle, default all-open) plus an all/missing toggle (set-editor-show-all-toggle/
- * -show-missing-toggle); and gates the existing add-coins panel behind a new
- * set-editor-toggle-add-coins button (pickerOpen, default false). The fixture data below
- * is deliberately richer than the prior run's (4 coins spanning 3 different decades, with
- * positions intentionally NOT in decade order) specifically to make decade-grouping and
- * decade-then-position sorting independently falsifiable — a 2-coin, single-decade fixture
- * could not distinguish "sorted by decade then position" from "sorted by position alone".
- *
- * CONTRACT_GAP:
- * - plan.md's set-editor-name-input bullet reads: "calls useRenameSet().mutate({id, name})
- *   on blur (or debounced change) when the value differs from the last-saved name" — it
- *   offers two alternative save triggers without picking one. This is the highest-risk
- *   ambiguity in the whole plan per the plan's own "Risks" section. Best-documented choice:
- *   this test file asserts the **blur** trigger only (deterministic in jsdom/vitest with no
- *   fake timers and no unstated debounce interval to guess at). If the Coder instead
- *   implements a debounced-change save with no blur handler at all, the two tests below
- *   ("calls useRenameSet().mutate on blur…" / "does not call … when unchanged") will fail
- *   even though a debounced-change implementation could still satisfy the same payload
- *   shape and PRD intent — reconcile by updating these two tests to fire/advance a debounce
- *   timer instead of `fireEvent.blur`, not by weakening the mutate-payload assertion itself.
- * - The decade-toggle's exact text format ("decade label e.g. '1910s' + owned/total summary")
- *   is not fully pinned down — no example string is given for the summary portion (e.g.
- *   "2/3" vs "2 of 3" vs "(2 owned)"). Tests below assert the decade label exactly (derived
- *   deterministically from `Math.floor(year / 10) * 10`) and only assert *some* digit is
- *   present in the toggle's text for the summary portion, rather than an exact format.
+ * CONTRACT_GAPS: none
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -63,8 +26,15 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import SetEditorPage from '@/app/sets/[id]/page';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
-import { useDeleteSet, usePatchSetCoins, useRenameSet, useSetGaps, useUserSets } from '@/lib/hooks/use-user-sets';
-import { useSetOwnership } from '@/lib/hooks/use-collection';
+import {
+  useAddCoinsToSet,
+  useDeleteSet,
+  usePatchSetCoins,
+  useRenameSet,
+  useSetGaps,
+  useUserSets,
+} from '@/lib/hooks/use-user-sets';
+import { useBulkSetOwnership, useSetOwnership } from '@/lib/hooks/use-collection';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import { setStoredToken } from '@/lib/auth-token';
 
@@ -83,12 +53,14 @@ vi.mock('@/lib/hooks/use-user-sets', () => ({
   useSetGaps: vi.fn(),
   useUserSets: vi.fn(),
   usePatchSetCoins: vi.fn(),
+  useAddCoinsToSet: vi.fn(),
   useRenameSet: vi.fn(),
   useDeleteSet: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/use-collection', () => ({
   useSetOwnership: vi.fn(),
+  useBulkSetOwnership: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/use-catalog', () => ({
@@ -99,13 +71,15 @@ const usePublicSetMock = vi.mocked(usePublicSet);
 const useSetGapsMock = vi.mocked(useSetGaps);
 const useUserSetsMock = vi.mocked(useUserSets);
 const usePatchSetCoinsMock = vi.mocked(usePatchSetCoins);
+const useAddCoinsToSetMock = vi.mocked(useAddCoinsToSet);
 const useRenameSetMock = vi.mocked(useRenameSet);
 const useDeleteSetMock = vi.mocked(useDeleteSet);
 const useSetOwnershipMock = vi.mocked(useSetOwnership);
+const useBulkSetOwnershipMock = vi.mocked(useBulkSetOwnership);
 const useCatalogMock = vi.mocked(useCatalog);
 
 function queryResult(overrides: Record<string, unknown> = {}) {
-  return { data: undefined, isLoading: false, isError: false, ...overrides } as never;
+  return { data: undefined, isLoading: false, isError: false, refetch: vi.fn(), ...overrides } as never;
 }
 
 function mutationMock({ resolvedValue, rejectedValue }: { resolvedValue?: unknown; rejectedValue?: Error } = {}) {
@@ -122,14 +96,14 @@ function renderPage(id = 'set-1') {
   return render(<SetEditorPage params={Promise.resolve({ id })} />);
 }
 
-const COIN_1 = {
-  id: 'coin-1',
-  country: 'USA',
-  denomination: '1 Cent',
-  year: 1909, // 1900s
-  mintMark: 'S',
-  variety: '',
-  name: 'Lincoln Wheat Cent',
+const BASE_COIN = {
+  id: 'coin-a',
+  country: 'Ukraine',
+  denomination: '10 Hryvnias',
+  year: 2025,
+  mintMark: '',
+  variety: 'We Are Strong. We Are Together: Donetsk Oblast',
+  name: 'Ukraine Commemorative 10 Hryvnias',
   imageUrl: null,
   imageSource: null,
   imageLicense: null,
@@ -139,46 +113,48 @@ const COIN_1 = {
   material: null,
   mintage: null,
   isKeyDate: false,
+  status: 'approved',
+  submittedAt: null,
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   updatedAt: new Date('2026-01-01T00:00:00.000Z'),
 };
-const COIN_2 = { ...COIN_1, id: 'coin-2', year: 1958 }; // 1950s
-const COIN_3 = { ...COIN_1, id: 'coin-3', year: 1943 }; // 1940s
-const COIN_4 = { ...COIN_1, id: 'coin-4', year: 1952 }; // 1950s (same decade as coin-2)
+const COIN_A = BASE_COIN; // 2025 owned
+const COIN_B = { ...BASE_COIN, id: 'coin-b', variety: 'We Are Strong. We Are Together: Luhansk Oblast' }; // 2025
+const COIN_C = { ...BASE_COIN, id: 'coin-c', year: 2026, variety: 'We Are Strong. We Are Together: Odesa Oblast' };
+const COIN_D = { ...BASE_COIN, id: 'coin-d', year: 2026, variety: 'We Are Strong. We Are Together: Kyiv Oblast' };
+
+const SET_NAME = 'We Are Strong. We Are Together';
 
 const SET_DETAIL = {
   id: 'set-1',
   userId: 'user-1',
-  name: 'My Wheat Cents',
-  clonedFromCanonicalId: null,
+  name: SET_NAME,
+  clonedFromCanonicalId: 'canon-1',
   clonedFromUserSetId: null,
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   updatedAt: new Date('2026-01-01T00:00:00.000Z'),
   coins: [
-    { id: 'usc-1', position: 2, coin: COIN_1 },
-    { id: 'usc-2', position: 0, coin: COIN_2 },
-    { id: 'usc-3', position: 1, coin: COIN_3 },
-    { id: 'usc-4', position: 3, coin: COIN_4 },
+    { id: 'usc-a', position: 0, coin: COIN_A },
+    { id: 'usc-b', position: 1, coin: COIN_B },
+    { id: 'usc-c', position: 2, coin: COIN_C },
+    { id: 'usc-d', position: 3, coin: COIN_D },
   ],
 };
 
-// Positions are deliberately scrambled relative to decade order: expected
-// decade-then-position render order is coin-1 (1900s), coin-3 (1940s),
-// coin-2 (1950s, position 0), coin-4 (1950s, position 3).
+// Positions scrambled relative to array order so year/position ordering is falsifiable.
 const GAPS = {
   setId: 'set-1',
   ownedCount: 1,
   totalCount: 4,
   completionPercent: 25,
   slots: [
-    { id: 'usc-4', position: 3, coin: COIN_4, owned: false },
-    { id: 'usc-1', position: 2, coin: COIN_1, owned: true },
-    { id: 'usc-2', position: 0, coin: COIN_2, owned: false },
-    { id: 'usc-3', position: 1, coin: COIN_3, owned: false },
+    { id: 'usc-c', position: 2, coin: COIN_C, owned: false },
+    { id: 'usc-a', position: 0, coin: COIN_A, owned: true },
+    { id: 'usc-d', position: 3, coin: COIN_D, owned: false },
+    { id: 'usc-b', position: 1, coin: COIN_B, owned: false },
   ],
 };
 
-// Nothing owned yet: the delete dialog must not claim the collection is safe
 const GAPS_NONE_OWNED = {
   ...GAPS,
   ownedCount: 0,
@@ -186,51 +162,75 @@ const GAPS_NONE_OWNED = {
   slots: GAPS.slots.map((s) => ({ ...s, owned: false })),
 };
 
-// Two owned (coin-1 and coin-2): the count in the safe note must follow the data
 const GAPS_TWO_OWNED = {
   ...GAPS,
   ownedCount: 2,
   completionPercent: 50,
-  slots: GAPS.slots.map((s) => ({ ...s, owned: s.id === 'usc-1' || s.id === 'usc-2' })),
+  slots: GAPS.slots.map((s) => ({ ...s, owned: s.id === 'usc-a' || s.id === 'usc-b' })),
 };
 
 const MY_SETS = [
   {
     id: 'set-1',
     userId: 'user-1',
-    name: 'My Wheat Cents',
-    clonedFromCanonicalId: null,
+    name: SET_NAME,
+    clonedFromCanonicalId: 'canon-1',
     clonedFromUserSetId: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
   },
 ];
 
+function setUrl(path: string) {
+  window.history.replaceState(null, '', path);
+}
+
 function setDefaultMocks() {
   usePublicSetMock.mockReturnValue(queryResult({ data: SET_DETAIL }));
   useSetGapsMock.mockReturnValue(queryResult({ data: GAPS }));
   useUserSetsMock.mockReturnValue(queryResult({ data: MY_SETS }));
   usePatchSetCoinsMock.mockReturnValue(mutationMock());
+  useAddCoinsToSetMock.mockReturnValue(mutationMock());
   useRenameSetMock.mockReturnValue(mutationMock());
   useDeleteSetMock.mockReturnValue(mutationMock());
   useSetOwnershipMock.mockReturnValue(mutationMock());
+  useBulkSetOwnershipMock.mockReturnValue(mutationMock());
   useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
+}
+
+function setWith(overrides: { name?: string; coins?: typeof SET_DETAIL.coins; kind?: Record<string, string | null> }) {
+  return {
+    ...SET_DETAIL,
+    ...(overrides.name ? { name: overrides.name } : {}),
+    ...(overrides.kind ?? {}),
+  };
+}
+
+async function waitForPage() {
+  await waitFor(() => {
+    expect(screen.getByTestId('set-editor-name')).toBeInTheDocument();
+  });
 }
 
 describe('SetEditorPage', () => {
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
+    setUrl('/sets/set-1');
     pushMock.mockClear();
     replaceMock.mockClear();
-    usePublicSetMock.mockReset();
-    useSetGapsMock.mockReset();
-    useUserSetsMock.mockReset();
-    usePatchSetCoinsMock.mockReset();
-    useRenameSetMock.mockReset();
-    useDeleteSetMock.mockReset();
-    useSetOwnershipMock.mockReset();
-    useCatalogMock.mockReset();
+    [
+      usePublicSetMock,
+      useSetGapsMock,
+      useUserSetsMock,
+      usePatchSetCoinsMock,
+      useAddCoinsToSetMock,
+      useRenameSetMock,
+      useDeleteSetMock,
+      useSetOwnershipMock,
+      useBulkSetOwnershipMock,
+      useCatalogMock,
+    ].forEach((m) => m.mockReset());
     setDefaultMocks();
   });
 
@@ -245,8 +245,8 @@ describe('SetEditorPage', () => {
     });
   });
 
-  describe('criterion 4/5: loading and error states', () => {
-    it('renders set-editor-loading while usePublicSet is loading', async () => {
+  describe('criterion 15: loading and error states', () => {
+    it('renders set-editor-loading with skeletons and aria-busy while usePublicSet is loading', async () => {
       setStoredToken('tok-abc');
       usePublicSetMock.mockReturnValue(queryResult({ isLoading: true }));
       renderPage();
@@ -254,6 +254,12 @@ describe('SetEditorPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('set-editor-loading')).toBeInTheDocument();
       });
+      const loading = screen.getByTestId('set-editor-loading');
+      expect(loading).toHaveAttribute('aria-busy', 'true');
+      // title, subtitle, toolbar and five card placeholders
+      expect(within(loading).getAllByTestId('skeleton').length).toBeGreaterThanOrEqual(5);
+      expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
+      expect(screen.getByTestId('set-editor-page')).toBeInTheDocument();
     });
 
     it('renders set-editor-loading while useSetGaps is loading', async () => {
@@ -266,7 +272,7 @@ describe('SetEditorPage', () => {
       });
     });
 
-    it('renders set-editor-error when usePublicSet fails', async () => {
+    it('renders a danger alert with title, body and a retry button when usePublicSet fails', async () => {
       setStoredToken('tok-abc');
       usePublicSetMock.mockReturnValue(queryResult({ isError: true }));
       renderPage();
@@ -274,9 +280,14 @@ describe('SetEditorPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('set-editor-error')).toBeInTheDocument();
       });
+      const alert = screen.getByTestId('set-editor-error');
+      expect(alert).toHaveAttribute('role', 'alert');
+      expect(alert.textContent).toMatch(/We couldn.t load this set\./);
+      expect(alert).toHaveTextContent('Check your connection and try again.');
+      expect(screen.getByTestId('set-editor-error-retry')).toHaveTextContent('Try again');
     });
 
-    it('renders set-editor-error when useSetGaps fails', async () => {
+    it('renders the same alert when useSetGaps fails', async () => {
       setStoredToken('tok-abc');
       useSetGapsMock.mockReturnValue(queryResult({ isError: true }));
       renderPage();
@@ -284,224 +295,306 @@ describe('SetEditorPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('set-editor-error')).toBeInTheDocument();
       });
-    });
-  });
-
-  describe('criterion 1: loading state uses a Skeleton and matches the page\'s own spacing', () => {
-    it('renders a skeleton element within set-editor-loading, no literal "Loading…" text, and the set-editor-page wrapper carries the standard flex/gap/padding classes', async () => {
-      setStoredToken('tok-abc');
-      usePublicSetMock.mockReturnValue(queryResult({ isLoading: true }));
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-loading')).toBeInTheDocument();
-      });
-      expect(within(screen.getByTestId('set-editor-loading')).getByTestId('skeleton')).toBeInTheDocument();
-      expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
-
-      const page = screen.getByTestId('set-editor-page');
-      expect(page).toHaveClass('flex');
-      expect(page).toHaveClass('flex-col');
-      expect(page).toHaveClass('gap-6');
-      expect(page).toHaveClass('mx-auto');
-      expect(page).toHaveClass('max-w-[1080px]');
-    });
-  });
-
-  describe('criterion 4: renders completion % and the gap grid sorted by decade then position', () => {
-    it('groups slots into decade accordions, ordered decade-ascending then position-ascending within a decade, regardless of API array order', async () => {
-      setStoredToken('tok-abc');
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getAllByTestId('set-editor-gap-item')).toHaveLength(4);
-      });
-      expect(screen.getByTestId('set-editor-completion')).toHaveTextContent('25%');
-
-      const groups = screen.getAllByTestId('set-editor-decade-group');
-      expect(groups).toHaveLength(3);
-      const toggles = screen.getAllByTestId('set-editor-decade-toggle');
-      expect(toggles[0]).toHaveTextContent('1900s');
-      expect(toggles[1]).toHaveTextContent('1940s');
-      expect(toggles[2]).toHaveTextContent('1950s');
-      // Each decade-toggle shows some owned/total summary alongside the label
-      // (exact copy format isn't pinned by the Interface Contract beyond "decade
-      // label + owned/total summary" — asserting a digit is present is
-      // sufficient to falsify a toggle that renders no summary at all).
-      toggles.forEach((toggle) => expect(toggle.textContent).toMatch(/\d/));
-
-      const items = screen.getAllByTestId('set-editor-gap-item');
-      const statuses = screen.getAllByTestId('set-editor-gap-status');
-      // Expected order: coin-1 (1900s), coin-3 (1940s), coin-2 (1950s, pos 0), coin-4 (1950s, pos 3)
-      expect(items[0]).toHaveTextContent('Lincoln Wheat Cent'); // sanity: label renders at all
-      expect(statuses[0]).toHaveTextContent('owned'); // coin-1
-      expect(statuses[1]).toHaveTextContent('missing'); // coin-3
-      expect(statuses[2]).toHaveTextContent('missing'); // coin-2
-      expect(statuses[3]).toHaveTextContent('missing'); // coin-4
+      expect(screen.getByTestId('set-editor-error-retry')).toBeInTheDocument();
     });
 
-    it('all decade groups are open by default (every item visible without any prior interaction)', async () => {
+    it('Try again refetches both the set query and the gaps query', async () => {
       setStoredToken('tok-abc');
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getAllByTestId('set-editor-gap-item')).toHaveLength(4);
-      });
-      // No click on any set-editor-decade-toggle happened above — all 4 items are
-      // already visible, proving the default collapsed-state map starts empty.
-    });
-
-    it('clicking a decade-toggle collapses that decade\'s items only; clicking again re-expands it', async () => {
-      setStoredToken('tok-abc');
+      const refetchSet = vi.fn();
+      const refetchGaps = vi.fn();
+      usePublicSetMock.mockReturnValue(queryResult({ isError: true, refetch: refetchSet }));
+      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS, refetch: refetchGaps }));
       const user = userEvent.setup();
       renderPage();
 
       await waitFor(() => {
-        expect(screen.getAllByTestId('set-editor-gap-item')).toHaveLength(4);
+        expect(screen.getByTestId('set-editor-error-retry')).toBeInTheDocument();
       });
-      const toggles = screen.getAllByTestId('set-editor-decade-toggle');
-      await user.click(toggles[0]); // collapse 1900s (coin-1, the only slot in that decade)
+      await user.click(screen.getByTestId('set-editor-error-retry'));
 
-      await waitFor(() => {
-        expect(screen.getAllByTestId('set-editor-gap-item')).toHaveLength(3);
-      });
-
-      await user.click(toggles[0]); // re-expand
-      await waitFor(() => {
-        expect(screen.getAllByTestId('set-editor-gap-item')).toHaveLength(4);
-      });
+      expect(refetchSet).toHaveBeenCalledTimes(1);
+      expect(refetchGaps).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('run_20260728_071525 criterion 12: all/missing-only toggle', () => {
-    it('defaults to showing all coins, with the "All coins" toggle reflected as active via aria-pressed', async () => {
+  describe('criterion 2: header, breadcrumb, title and subtitle', () => {
+    it('shows "‹ My sets" linking to /dashboard for the owner', async () => {
       setStoredToken('tok-abc');
       renderPage();
+      await waitForPage();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-show-all-toggle')).toBeInTheDocument();
-      });
-      expect(screen.getByTestId('set-editor-show-all-toggle')).toHaveAttribute('aria-pressed', 'true');
-      expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveAttribute('aria-pressed', 'false');
-      expect(screen.getByTestId('set-editor-show-all-toggle')).toHaveTextContent('All coins');
-      // 3 of the 4 slots are missing in the default fixture.
-      expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveTextContent('3');
-      expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveTextContent('Missing · 3');
+      const crumb = screen.getByTestId('set-editor-breadcrumb');
+      expect(crumb).toHaveTextContent('‹ My sets');
+      expect(crumb).toHaveAttribute('href', '/dashboard');
     });
 
-    it('the Missing toggle count follows the data', async () => {
+    it('shows "‹ Public sets" linking to /sets/public for a visitor', async () => {
+      setStoredToken('tok-abc');
+      useUserSetsMock.mockReturnValue(queryResult({ data: [] }));
+      renderPage();
+      await waitForPage();
+
+      const crumb = screen.getByTestId('set-editor-breadcrumb');
+      expect(crumb).toHaveTextContent('‹ Public sets');
+      expect(crumb).toHaveAttribute('href', '/sets/public');
+    });
+
+    it('renders the title as a plain h1 with the full set name, for the owner too (no input)', async () => {
+      setStoredToken('tok-abc');
+      renderPage();
+      await waitForPage();
+
+      const h1 = screen.getByTestId('set-editor-name');
+      expect(h1.tagName).toBe('H1');
+      expect(h1).toHaveTextContent(SET_NAME);
+      expect(screen.queryByTestId('set-editor-name-input')).not.toBeInTheDocument();
+    });
+
+    it('never truncates a very long title: full text present and no truncate class', async () => {
+      setStoredToken('tok-abc');
+      const longName = 'The Very Long Title of a Collector Set That Must Wrap Onto Several Lines at 390 Pixels Wide';
+      usePublicSetMock.mockReturnValue(queryResult({ data: setWith({ name: longName }) }));
+      renderPage();
+      await waitForPage();
+
+      const h1 = screen.getByTestId('set-editor-name');
+      expect(h1.textContent).toBe(longName);
+      expect(h1.className).not.toContain('truncate');
+      expect(h1.className).not.toContain('overflow-hidden');
+    });
+
+    it('shows the shared-parts subtitle for a curated set', async () => {
+      setStoredToken('tok-abc');
+      renderPage();
+      await waitForPage();
+
+      expect(screen.getByTestId('set-editor-subtitle').textContent).toBe(
+        'Curated checklist · Ukraine · 10 Hryvnias · 2025–2026',
+      );
+      const years = screen.getByTestId('set-editor-subtitle-years');
+      expect(years).toHaveTextContent('2025–2026');
+      expect(years.className).toContain('font-mono');
+    });
+
+    it('uses the kind label for a copied set and a custom set', async () => {
+      setStoredToken('tok-abc');
+      usePublicSetMock.mockReturnValue(
+        queryResult({ data: setWith({ kind: { clonedFromCanonicalId: null, clonedFromUserSetId: 'set-9' } }) }),
+      );
+      const { unmount } = renderPage();
+      await waitForPage();
+      expect(screen.getByTestId('set-editor-subtitle').textContent).toMatch(/^Copied set · /);
+      unmount();
+
+      usePublicSetMock.mockReturnValue(
+        queryResult({ data: setWith({ kind: { clonedFromCanonicalId: null, clonedFromUserSetId: null } }) }),
+      );
+      renderPage();
+      await waitForPage();
+      expect(screen.getByTestId('set-editor-subtitle').textContent).toMatch(/^Custom set · /);
+    });
+
+    it('omits parts that vary across the set', async () => {
+      setStoredToken('tok-abc');
+      const mixed = {
+        ...GAPS,
+        slots: GAPS.slots.map((s) =>
+          s.id === 'usc-d' ? { ...s, coin: { ...COIN_D, country: 'Poland', denomination: '5 Zlotych' } } : s,
+        ),
+      };
+      useSetGapsMock.mockReturnValue(queryResult({ data: mixed }));
+      renderPage();
+      await waitForPage();
+
+      const text = screen.getByTestId('set-editor-subtitle').textContent ?? '';
+      expect(text).not.toContain('Ukraine');
+      expect(text).not.toContain('Poland');
+      expect(text).not.toContain('Hryvnias');
+      expect(text).toContain('Curated checklist');
+      expect(text).toContain('2025–2026');
+    });
+
+    it('shows one year for a single-year set', async () => {
+      setStoredToken('tok-abc');
+      const oneYear = {
+        ...GAPS,
+        slots: GAPS.slots.map((s) => ({ ...s, coin: { ...s.coin, year: 2025 } })),
+      };
+      useSetGapsMock.mockReturnValue(queryResult({ data: oneYear }));
+      renderPage();
+      await waitForPage();
+
+      expect(screen.getByTestId('set-editor-subtitle-years').textContent).toBe('2025');
+      expect(screen.getByTestId('set-editor-subtitle').textContent).toBe(
+        'Curated checklist · Ukraine · 10 Hryvnias · 2025',
+      );
+    });
+  });
+
+  describe('criterion 3: progress block', () => {
+    it('shows "N of M owned" with the exact plain text, following the data', async () => {
+      setStoredToken('tok-abc');
+      const { unmount } = renderPage();
+      await waitForPage();
+      expect(screen.getByTestId('set-editor-owned-count').textContent).toBe('1 of 4 owned');
+      unmount();
+
+      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_TWO_OWNED }));
+      renderPage();
+      await waitForPage();
+      expect(screen.getByTestId('set-editor-owned-count').textContent).toBe('2 of 4 owned');
+    });
+
+    it('shows the percentage in mono tabular-nums and a progressbar with the same value', async () => {
+      setStoredToken('tok-abc');
+      renderPage();
+      await waitForPage();
+
+      const completion = screen.getByTestId('set-editor-completion');
+      expect(completion).toHaveTextContent('25%');
+      expect(completion.className).toContain('font-mono');
+      expect(completion.className).toContain('tabular-nums');
+      expect(screen.getByRole('progressbar', { name: 'Set completion' })).toHaveAttribute('aria-valuenow', '25');
+      expect(screen.getByTestId('set-editor-progress')).toContainElement(screen.getByTestId('set-editor-owned-count'));
+    });
+
+    it('updates the numbers at once when the gaps data changes', async () => {
+      setStoredToken('tok-abc');
+      const { rerender } = renderPage();
+      await waitForPage();
+      expect(screen.getByTestId('set-editor-completion')).toHaveTextContent('25%');
+
+      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_TWO_OWNED }));
+      rerender(<SetEditorPage params={Promise.resolve({ id: 'set-1' })} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-completion')).toHaveTextContent('50%');
+      });
+      expect(screen.getByTestId('set-editor-owned-count').textContent).toBe('2 of 4 owned');
+    });
+  });
+
+  describe('criterion 1: Show segments', () => {
+    it('shows "All 4" and "Missing 3" with All pressed by default', async () => {
+      setStoredToken('tok-abc');
+      renderPage();
+      await waitForPage();
+
+      expect(screen.getByTestId('set-editor-show-all-toggle').textContent).toBe('All 4');
+      expect(screen.getByTestId('set-editor-show-missing-toggle').textContent).toBe('Missing 3');
+      expect(screen.getByTestId('set-editor-show-all-toggle')).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    it('the Missing count follows the data', async () => {
       setStoredToken('tok-abc');
       useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_TWO_OWNED }));
       renderPage();
+      await waitForPage();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-show-missing-toggle')).toBeInTheDocument();
-      });
-      expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveTextContent('Missing · 2');
-      expect(screen.getByTestId('set-editor-show-missing-toggle')).not.toHaveTextContent('Missing · 3');
-    });
-
-    it('clicking "missing" hides owned slots and any decade group left with zero slots', async () => {
-      setStoredToken('tok-abc');
-      const user = userEvent.setup();
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getAllByTestId('set-editor-gap-item')).toHaveLength(4);
-      });
-      await user.click(screen.getByTestId('set-editor-show-missing-toggle'));
-
-      await waitFor(() => {
-        expect(screen.getAllByTestId('set-editor-gap-item')).toHaveLength(3);
-      });
-      // coin-1 (the only owned slot, and the only slot in the 1900s decade) is gone,
-      // and its now-empty 1900s decade group is hidden entirely.
-      expect(screen.getAllByTestId('set-editor-decade-group')).toHaveLength(2);
-      expect(screen.getByTestId('set-editor-show-missing-toggle')).toHaveAttribute('aria-pressed', 'true');
-      expect(screen.getByTestId('set-editor-show-all-toggle')).toHaveAttribute('aria-pressed', 'false');
-
-      await user.click(screen.getByTestId('set-editor-show-all-toggle'));
-      await waitFor(() => {
-        expect(screen.getAllByTestId('set-editor-gap-item')).toHaveLength(4);
-      });
-      expect(screen.getAllByTestId('set-editor-decade-group')).toHaveLength(3);
+      expect(screen.getByTestId('set-editor-show-missing-toggle').textContent).toBe('Missing 2');
     });
   });
 
-  describe('criterion 5: non-owner (logged in, set not in useUserSets) sees a read-only view', () => {
-    it('renders the read-only heading and gap grid but no edit controls and no actions menu', async () => {
+  describe('criterion 4: toolbar', () => {
+    it('gives the owner Select (album), Add coins and the set menu', async () => {
       setStoredToken('tok-abc');
-      useUserSetsMock.mockReturnValue(queryResult({ data: [] }));
       renderPage();
+      await waitForPage();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-name')).toHaveTextContent('My Wheat Cents');
-      });
-      expect(screen.queryByTestId('set-editor-name-input')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('set-editor-toggle-owned-button')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('set-editor-remove-button')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('set-editor-toggle-add-coins')).not.toBeInTheDocument();
-      // The ⋯ actions menu is owner-only now: a visitor gets no trigger, hence no
-      // download / print / rename / delete either.
-      expect(screen.queryByTestId('set-editor-actions-trigger')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('set-editor-download-missing')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('set-editor-print-missing')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('set-editor-delete-button')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('set-editor-rename-item')).not.toBeInTheDocument();
+      const select = screen.getByTestId('set-editor-select-toggle');
+      expect(select).toHaveTextContent('Select');
+      expect(select).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.getByRole('button', { name: 'Add coins' })).toBe(screen.getByTestId('set-editor-toggle-add-coins'));
+      expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-add-coins-panel')).not.toBeInTheDocument();
     });
 
-    it('gives the visitor an h1 with the set name', async () => {
+    it('hides Select in List view', async () => {
+      setStoredToken('tok-abc');
+      setUrl('/sets/set-1?view=list');
+      renderPage();
+      await waitForPage();
+
+      expect(screen.queryByTestId('set-editor-select-toggle')).not.toBeInTheDocument();
+      expect(screen.getByTestId('set-editor-toggle-add-coins')).toBeInTheDocument();
+    });
+
+    it('gives a visitor no Select, no Add coins and no set menu', async () => {
       setStoredToken('tok-abc');
       useUserSetsMock.mockReturnValue(queryResult({ data: [] }));
       renderPage();
+      await waitForPage();
 
+      expect(screen.queryByTestId('set-editor-select-toggle')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-toggle-add-coins')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-actions-trigger')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-download-missing')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-delete-button')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-add-coins-panel')).not.toBeInTheDocument();
+    });
+
+    it('gives a visitor the coins without owner controls', async () => {
+      setStoredToken('tok-abc');
+      useUserSetsMock.mockReturnValue(queryResult({ data: [] }));
+      renderPage();
       await waitFor(() => {
-        expect(screen.getByTestId('set-editor-name')).toBeInTheDocument();
+        expect(screen.getAllByTestId('set-album-item')).toHaveLength(4);
       });
+
+      expect(screen.queryAllByTestId('status-toggle')).toHaveLength(0);
       expect(screen.getByTestId('set-editor-name').tagName).toBe('H1');
+    });
+
+    it('closes the actions menu on Escape and returns focus to its trigger', async () => {
+      setStoredToken('tok-abc');
+      const user = userEvent.setup();
+      renderPage();
+      await waitForPage();
+
+      const trigger = screen.getByTestId('set-editor-actions-trigger');
+      await user.click(trigger);
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
+      await user.keyboard('{Escape}');
+
+      expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
     });
   });
 
-  describe('run_20260728_071525 criterion 12: owner sees an inline-editable name input instead of the read-only heading', () => {
-    it('renders set-editor-name-input with the set\'s current name, and no read-only set-editor-name heading', async () => {
-      setStoredToken('tok-abc');
+  describe('rename (behind the ⋯ menu)', () => {
+    async function startRename() {
+      const user = userEvent.setup();
       renderPage();
+      await waitForPage();
+      await user.click(screen.getByTestId('set-editor-actions-trigger'));
+      await user.click(screen.getByTestId('set-editor-rename-item'));
+      return user;
+    }
 
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-name-input')).toBeInTheDocument();
-      });
-      expect(screen.getByTestId('set-editor-name-input')).toHaveValue('My Wheat Cents');
-      expect(screen.queryByTestId('set-editor-name')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('set-editor-rename-form')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('set-editor-rename-input')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('set-editor-rename-submit')).not.toBeInTheDocument();
-    });
-
-    it('puts the owner\'s name input inside an h1 so the page has a top-level heading', async () => {
+    it('swaps the h1 text for a focused input holding the whole name, selected', async () => {
       setStoredToken('tok-abc');
-      renderPage();
+      await startRename();
 
+      const input = await screen.findByTestId<HTMLInputElement>('set-editor-name-input');
+      expect(input).toHaveValue(SET_NAME);
+      expect(input.closest('h1')).not.toBeNull();
       await waitFor(() => {
-        expect(screen.getByTestId('set-editor-name-input')).toBeInTheDocument();
+        expect(input).toHaveFocus();
       });
-      expect(screen.getByTestId('set-editor-name-input').closest('h1')).not.toBeNull();
+      expect(input.selectionStart).toBe(0);
+      expect(input.selectionEnd).toBe(SET_NAME.length);
+      expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
     });
 
     it('calls useRenameSet().mutate({ id, name }) on blur when the value has changed', async () => {
       setStoredToken('tok-abc');
       const renameMutate = vi.fn();
       useRenameSetMock.mockReturnValue({ mutate: renameMutate, isPending: false } as never);
-      renderPage();
+      await startRename();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-name-input')).toBeInTheDocument();
-      });
-      const input = screen.getByTestId('set-editor-name-input');
-      // fireEvent.change replaces the controlled input's value in one synthetic event —
-      // user.clear() + user.type() was tried first but appended rather than replaced
-      // against this pre-populated controlled input in this jsdom+vitest setup
-      // (documented gotcha, memory.md run_20260721_171115).
+      const input = await screen.findByTestId('set-editor-name-input');
+      // fireEvent.change replaces a controlled input's value in one event (user.clear + type appends here)
       fireEvent.change(input, { target: { value: 'Renamed Set' } });
       fireEvent.blur(input);
 
@@ -511,245 +604,52 @@ describe('SetEditorPage', () => {
       expect(renameMutate.mock.calls[0][0]).toEqual({ id: 'set-1', name: 'Renamed Set' });
     });
 
-    it('does not call useRenameSet().mutate on blur when the value is unchanged from the last-saved name', async () => {
+    it('does not call mutate on blur when the value is unchanged', async () => {
       setStoredToken('tok-abc');
       const renameMutate = vi.fn();
       useRenameSetMock.mockReturnValue({ mutate: renameMutate, isPending: false } as never);
-      renderPage();
+      await startRename();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-name-input')).toBeInTheDocument();
-      });
-      const input = screen.getByTestId('set-editor-name-input');
-      fireEvent.blur(input);
+      fireEvent.blur(await screen.findByTestId('set-editor-name-input'));
 
       expect(renameMutate).not.toHaveBeenCalled();
     });
-  });
 
-  describe('criterion 4: owner view renders edit controls', () => {
-    it('renders toggle-owned and remove on every gap item, plus delete and the add-coins toggle', async () => {
+    it('saves on Enter when the value has changed', async () => {
       setStoredToken('tok-abc');
-      renderPage();
+      const renameMutate = vi.fn();
+      useRenameSetMock.mockReturnValue({ mutate: renameMutate, isPending: false } as never);
+      await startRename();
+
+      const input = await screen.findByTestId('set-editor-name-input');
+      fireEvent.change(input, { target: { value: 'Entered Name' } });
+      fireEvent.keyDown(input, { key: 'Enter' });
 
       await waitFor(() => {
-        expect(screen.getAllByTestId('set-editor-toggle-owned-button')).toHaveLength(4);
+        expect(renameMutate).toHaveBeenCalled();
       });
-      expect(screen.getAllByTestId('set-editor-remove-button')).toHaveLength(4);
-      expect(screen.getByTestId('set-editor-toggle-add-coins')).toBeInTheDocument();
-      await userEvent.setup().click(screen.getByTestId('set-editor-actions-trigger'));
-      expect(screen.getByTestId('set-editor-delete-button')).toBeInTheDocument();
-      expect(screen.getByTestId('set-editor-rename-item')).toBeInTheDocument();
-      // The add-coins panel is gated behind the toggle now — not shown until clicked.
-      expect(screen.queryByTestId('set-editor-add-coins-panel')).not.toBeInTheDocument();
+      expect(renameMutate.mock.calls[0][0]).toEqual({ id: 'set-1', name: 'Entered Name' });
     });
 
-    it('toggling an unowned coin (coin-3, 1940s) calls useSetOwnership().mutate with owned: true (never a client-side flip)', async () => {
+    it('cancels on Escape: no mutate, the input goes away and the old name stays', async () => {
       setStoredToken('tok-abc');
-      const ownershipMutate = vi.fn();
-      useSetOwnershipMock.mockReturnValue({ mutate: ownershipMutate, isPending: false } as never);
-      const user = userEvent.setup();
-      renderPage();
+      const renameMutate = vi.fn();
+      useRenameSetMock.mockReturnValue({ mutate: renameMutate, isPending: false } as never);
+      await startRename();
+
+      const input = await screen.findByTestId('set-editor-name-input');
+      fireEvent.change(input, { target: { value: 'Discarded' } });
+      fireEvent.keyDown(input, { key: 'Escape' });
 
       await waitFor(() => {
-        expect(screen.getAllByTestId('set-editor-toggle-owned-button')).toHaveLength(4);
+        expect(screen.queryByTestId('set-editor-name-input')).not.toBeInTheDocument();
       });
-      const toggles = screen.getAllByTestId('set-editor-toggle-owned-button');
-      await user.click(toggles[1]); // decade-then-position order: [coin-1, coin-3, coin-2, coin-4]
-
-      expect(ownershipMutate).toHaveBeenCalledTimes(1);
-      expect(ownershipMutate.mock.calls[0][0]).toEqual({ coinId: 'coin-3', owned: true });
-    });
-
-    it('toggling an owned coin (coin-1, 1900s) calls useSetOwnership().mutate with owned: false', async () => {
-      setStoredToken('tok-abc');
-      const ownershipMutate = vi.fn();
-      useSetOwnershipMock.mockReturnValue({ mutate: ownershipMutate, isPending: false } as never);
-      const user = userEvent.setup();
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getAllByTestId('set-editor-toggle-owned-button')).toHaveLength(4);
-      });
-      const toggles = screen.getAllByTestId('set-editor-toggle-owned-button');
-      await user.click(toggles[0]); // coin-1
-
-      expect(ownershipMutate).toHaveBeenCalledTimes(1);
-      expect(ownershipMutate.mock.calls[0][0]).toEqual({ coinId: 'coin-1', owned: false });
-    });
-
-    it('removing a slot (coin-2, 1950s) calls usePatchSetCoins(id).mutate with { remove: [coinId] } — the catalog coin id, not the UserSetCoin row id', async () => {
-      setStoredToken('tok-abc');
-      const patchMutate = vi.fn();
-      usePatchSetCoinsMock.mockReturnValue({ mutate: patchMutate, isPending: false } as never);
-      const user = userEvent.setup();
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getAllByTestId('set-editor-remove-button')).toHaveLength(4);
-      });
-      const removeButtons = screen.getAllByTestId('set-editor-remove-button');
-      await user.click(removeButtons[2]); // coin-2
-
-      expect(patchMutate).toHaveBeenCalledTimes(1);
-      expect(patchMutate.mock.calls[0][0]).toEqual({ remove: ['coin-2'] });
-      expect(usePatchSetCoinsMock).toHaveBeenCalledWith('set-1');
-    });
-
-    it('clicking delete opens a confirmation dialog rather than deleting immediately', async () => {
-      setStoredToken('tok-abc');
-      const deleteMutate = vi.fn();
-      useDeleteSetMock.mockReturnValue({ mutate: deleteMutate, isPending: false } as never);
-      const user = userEvent.setup();
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
-      });
-      expect(screen.queryByTestId('set-editor-delete-confirm')).not.toBeInTheDocument();
-
-      await user.click(screen.getByTestId('set-editor-actions-trigger'));
-      await user.click(screen.getByTestId('set-editor-delete-button'));
-
-      expect(screen.getByTestId('set-editor-delete-confirm')).toBeInTheDocument();
-      expect(deleteMutate).not.toHaveBeenCalled();
-    });
-
-    it('shows the set name, the safe-collection note and the coin counts in the delete dialog', async () => {
-      setStoredToken('tok-abc');
-      const user = userEvent.setup();
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
-      });
-      await user.click(screen.getByTestId('set-editor-actions-trigger'));
-      await user.click(screen.getByTestId('set-editor-delete-button'));
-
-      const dialog = screen.getByTestId('set-editor-delete-confirm');
-      expect(dialog).toHaveTextContent('Delete “My Wheat Cents”?');
-      expect(dialog).toHaveTextContent('Your collection is safe');
-    });
-
-    it('closes the actions menu on Escape and returns focus to its trigger', async () => {
-      setStoredToken('tok-abc');
-      const user = userEvent.setup();
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
-      });
-      const trigger = screen.getByTestId('set-editor-actions-trigger');
-      await user.click(trigger);
-      expect(trigger).toHaveAttribute('aria-expanded', 'true');
-      await user.keyboard('{Escape}');
-
-      expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
-      expect(trigger).toHaveFocus();
-    });
-
-    it('Rename set in the menu focuses the name input', async () => {
-      setStoredToken('tok-abc');
-      const user = userEvent.setup();
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
-      });
-      await user.click(screen.getByTestId('set-editor-actions-trigger'));
-      await user.click(screen.getByTestId('set-editor-rename-item'));
-
-      expect(screen.getByTestId('set-editor-name-input')).toHaveFocus();
-      expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
-    });
-
-    it('Rename set in the menu also selects the whole name so typing replaces it', async () => {
-      setStoredToken('tok-abc');
-      const user = userEvent.setup();
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
-      });
-      await user.click(screen.getByTestId('set-editor-actions-trigger'));
-      await user.click(screen.getByTestId('set-editor-rename-item'));
-
-      const input = screen.getByTestId<HTMLInputElement>('set-editor-name-input');
-      expect(input).toHaveFocus();
-      expect(input.selectionStart).toBe(0);
-      expect(input.selectionEnd).toBe('My Wheat Cents'.length);
-    });
-
-    it('shows an owned-of-total line and a progressbar for completion', async () => {
-      setStoredToken('tok-abc');
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-completion')).toBeInTheDocument();
-      });
-      expect(screen.getByTestId('set-editor-owned-count')).toHaveTextContent(/^\d+ of \d+ owned$/);
-      const bar = screen.getByRole('progressbar', { name: 'Set completion' });
-      expect(bar).toHaveAttribute('aria-valuenow', '25');
-    });
-
-    it('the owned-of-total text follows the data and keeps the exact wording', async () => {
-      setStoredToken('tok-abc');
-      renderPage();
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-owned-count')).toBeInTheDocument();
-      });
-      expect(screen.getByTestId('set-editor-owned-count').textContent).toBe('1 of 4 owned');
-    });
-
-    it('shows the owned-of-total text for two owned coins', async () => {
-      setStoredToken('tok-abc');
-      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_TWO_OWNED }));
-      renderPage();
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-owned-count')).toBeInTheDocument();
-      });
-      expect(screen.getByTestId('set-editor-owned-count').textContent).toBe('2 of 4 owned');
-    });
-
-    it('clicking cancel in the confirmation dialog closes it without deleting', async () => {
-      setStoredToken('tok-abc');
-      const deleteMutate = vi.fn();
-      useDeleteSetMock.mockReturnValue({ mutate: deleteMutate, isPending: false } as never);
-      const user = userEvent.setup();
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
-      });
-      await user.click(screen.getByTestId('set-editor-actions-trigger'));
-      await user.click(screen.getByTestId('set-editor-delete-button'));
-      await user.click(screen.getByTestId('set-editor-delete-confirm-cancel'));
-
-      expect(screen.queryByTestId('set-editor-delete-confirm')).not.toBeInTheDocument();
-      expect(deleteMutate).not.toHaveBeenCalled();
-    });
-
-    it('confirming in the dialog calls useDeleteSet().mutate with the id and redirects to /dashboard on success', async () => {
-      setStoredToken('tok-abc');
-      useDeleteSetMock.mockReturnValue(mutationMock({ resolvedValue: undefined }));
-      const user = userEvent.setup();
-      renderPage();
-
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
-      });
-      await user.click(screen.getByTestId('set-editor-actions-trigger'));
-      await user.click(screen.getByTestId('set-editor-delete-button'));
-      await user.click(screen.getByTestId('set-editor-delete-confirm-confirm'));
-
-      expect(screen.queryByTestId('set-editor-delete-confirm')).not.toBeInTheDocument();
-      await waitFor(() => {
-        expect(pushMock).toHaveBeenCalledWith('/dashboard');
-      });
+      expect(renameMutate).not.toHaveBeenCalled();
+      expect(screen.getByTestId('set-editor-name')).toHaveTextContent(SET_NAME);
     });
   });
 
-  describe('run_20261011_095624 criterion 13: danger delete dialog and reassurance note', () => {
+  describe('delete', () => {
     async function openDeleteDialog() {
       const user = userEvent.setup();
       renderPage();
@@ -761,7 +661,27 @@ describe('SetEditorPage', () => {
       return user;
     }
 
-    it('renders the delete dialog in the danger variant with a danger confirm button', async () => {
+    it('clicking delete opens a confirmation dialog rather than deleting immediately', async () => {
+      setStoredToken('tok-abc');
+      const deleteMutate = vi.fn();
+      useDeleteSetMock.mockReturnValue({ mutate: deleteMutate, isPending: false } as never);
+      await openDeleteDialog();
+
+      expect(screen.getByTestId('set-editor-delete-confirm')).toBeInTheDocument();
+      expect(deleteMutate).not.toHaveBeenCalled();
+    });
+
+    it('shows the set name, the coin count and the safe-collection note', async () => {
+      setStoredToken('tok-abc');
+      await openDeleteDialog();
+
+      const dialog = screen.getByTestId('set-editor-delete-confirm');
+      expect(dialog).toHaveTextContent(`Delete “${SET_NAME}”?`);
+      expect(dialog).toHaveTextContent('list of 4 coins');
+      expect(dialog).toHaveTextContent('Your collection is safe');
+    });
+
+    it('renders the dialog in the danger variant', async () => {
       setStoredToken('tok-abc');
       await openDeleteDialog();
 
@@ -770,92 +690,69 @@ describe('SetEditorPage', () => {
       expect(screen.getByTestId('set-editor-delete-confirm-confirm').className).toContain('bg-danger');
     });
 
-    it('shows the coin count in the body', async () => {
-      setStoredToken('tok-abc');
-      await openDeleteDialog();
-
-      expect(screen.getByTestId('set-editor-delete-confirm')).toHaveTextContent('list of 4 coins');
-    });
-
-    it('shows the reassurance note when the owner owns coins from the set, with the owned count', async () => {
-      setStoredToken('tok-abc');
-      await openDeleteDialog();
-
-      const note = screen.getByTestId('set-editor-delete-confirm-safe');
-      expect(note).toHaveTextContent(/^Your collection is safe: the 1 coins/);
-    });
-
-    it('the reassurance note follows the owned count', async () => {
+    it('the safe note follows the owned count and is omitted when nothing is owned', async () => {
       setStoredToken('tok-abc');
       useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_TWO_OWNED }));
-      await openDeleteDialog();
-
-      expect(screen.getByTestId('set-editor-delete-confirm-safe')).toHaveTextContent(
-        /^Your collection is safe: the 2 coins/,
-      );
-    });
-
-    it('omits the reassurance note when the owner owns nothing from the set', async () => {
-      setStoredToken('tok-abc');
-      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_NONE_OWNED }));
-      await openDeleteDialog();
-
-      expect(screen.getByTestId('set-editor-delete-confirm')).toBeInTheDocument();
-      expect(screen.queryByTestId('set-editor-delete-confirm-safe')).not.toBeInTheDocument();
-      expect(screen.getByTestId('set-editor-delete-confirm')).not.toHaveTextContent('Your collection is safe');
-    });
-  });
-
-  describe('run_20261011_095624 criterion 14: after a successful delete', () => {
-    async function confirmDelete() {
+      const view = renderPage();
       const user = userEvent.setup();
-      renderPage();
       await waitFor(() => {
         expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
       });
       await user.click(screen.getByTestId('set-editor-actions-trigger'));
       await user.click(screen.getByTestId('set-editor-delete-button'));
-      await user.click(screen.getByTestId('set-editor-delete-confirm-confirm'));
-    }
+      expect(screen.getByTestId('set-editor-delete-confirm-safe')).toHaveTextContent(
+        /^Your collection is safe: the 2 coins/,
+      );
+      view.unmount();
 
-    it('stores the set name for the dashboard notice and goes to /dashboard', async () => {
+      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_NONE_OWNED }));
+      await openDeleteDialog();
+      expect(screen.getByTestId('set-editor-delete-confirm')).toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-delete-confirm-safe')).not.toBeInTheDocument();
+    });
+
+    it('clicking cancel closes the dialog without deleting', async () => {
       setStoredToken('tok-abc');
-      useDeleteSetMock.mockReturnValue(mutationMock({ resolvedValue: undefined }));
-      await confirmDelete();
+      const deleteMutate = vi.fn();
+      useDeleteSetMock.mockReturnValue({ mutate: deleteMutate, isPending: false } as never);
+      const user = await openDeleteDialog();
+
+      await user.click(screen.getByTestId('set-editor-delete-confirm-cancel'));
+
+      expect(screen.queryByTestId('set-editor-delete-confirm')).not.toBeInTheDocument();
+      expect(deleteMutate).not.toHaveBeenCalled();
+      expect(sessionStorage.getItem('ccc-set-deleted')).toBeNull();
+    });
+
+    it('confirming calls useDeleteSet().mutate with the id, stores the notice and goes to /dashboard', async () => {
+      setStoredToken('tok-abc');
+      const deleteHook = mutationMock({ resolvedValue: undefined });
+      useDeleteSetMock.mockReturnValue(deleteHook);
+      const user = await openDeleteDialog();
+
+      await user.click(screen.getByTestId('set-editor-delete-confirm-confirm'));
 
       await waitFor(() => {
         expect(pushMock).toHaveBeenCalledWith('/dashboard');
       });
-      expect(sessionStorage.getItem('ccc-set-deleted')).toBe('My Wheat Cents');
+      expect((deleteHook as unknown as { mutate: ReturnType<typeof vi.fn> }).mutate.mock.calls[0][0]).toBe('set-1');
+      expect(sessionStorage.getItem('ccc-set-deleted')).toBe(SET_NAME);
+      expect(screen.queryByTestId('set-editor-delete-confirm')).not.toBeInTheDocument();
     });
 
     it('does not set the notice flag or navigate when the delete fails', async () => {
       setStoredToken('tok-abc');
       useDeleteSetMock.mockReturnValue(mutationMock({ rejectedValue: new Error('boom') }));
-      await confirmDelete();
+      const user = await openDeleteDialog();
 
-      expect(sessionStorage.getItem('ccc-set-deleted')).toBeNull();
-      expect(pushMock).not.toHaveBeenCalled();
-    });
-
-    it('does not set the flag before the delete is confirmed', async () => {
-      setStoredToken('tok-abc');
-      useDeleteSetMock.mockReturnValue(mutationMock({ resolvedValue: undefined }));
-      const user = userEvent.setup();
-      renderPage();
-      await waitFor(() => {
-        expect(screen.getByTestId('set-editor-actions-trigger')).toBeInTheDocument();
-      });
-      await user.click(screen.getByTestId('set-editor-actions-trigger'));
-      await user.click(screen.getByTestId('set-editor-delete-button'));
-      await user.click(screen.getByTestId('set-editor-delete-confirm-cancel'));
+      await user.click(screen.getByTestId('set-editor-delete-confirm-confirm'));
 
       expect(sessionStorage.getItem('ccc-set-deleted')).toBeNull();
       expect(pushMock).not.toHaveBeenCalled();
     });
   });
 
-  describe('run_20260728_071525 criterion 12: add-coins panel is gated behind set-editor-toggle-add-coins', () => {
+  describe('Add coins sheet (unchanged picker)', () => {
     it('shows the panel in a sheet only after clicking the toggle, and hides it again via the sheet close button', async () => {
       setStoredToken('tok-abc');
       const user = userEvent.setup();
@@ -874,14 +771,12 @@ describe('SetEditorPage', () => {
       expect(screen.queryByTestId('set-editor-add-coins-panel')).not.toBeInTheDocument();
     });
 
-    it('the Add coins panel filters via useCatalog and adding a result calls usePatchSetCoins(id).mutate with { add: [coin.id] }', async () => {
+    it('filters via useCatalog and adding a result calls usePatchSetCoins(id).mutate with { add: [coin.id] }', async () => {
       setStoredToken('tok-abc');
       const patchMutate = vi.fn();
       usePatchSetCoinsMock.mockReturnValue({ mutate: patchMutate, isPending: false } as never);
-      const EXTRA_COIN = { ...COIN_1, id: 'coin-extra', year: 1972 };
-      useCatalogMock.mockReturnValue(
-        queryResult({ data: { items: [EXTRA_COIN], page: 1, limit: 20, total: 1 } }),
-      );
+      const EXTRA_COIN = { ...BASE_COIN, id: 'coin-extra', year: 1972 };
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: [EXTRA_COIN], page: 1, limit: 20, total: 1 } }));
       const user = userEvent.setup();
       renderPage();
 
@@ -898,14 +793,14 @@ describe('SetEditorPage', () => {
       };
       expect(initialCallArgs.country).toBeUndefined();
 
-      await user.type(screen.getByTestId('set-editor-add-coins-filter-country'), 'USA');
+      await user.type(screen.getByTestId('set-editor-add-coins-filter-country'), 'Ukraine');
       await user.click(screen.getByTestId('set-editor-add-coins-filter-submit'));
 
       await waitFor(() => {
         const lastCallArgs = useCatalogMock.mock.calls[useCatalogMock.mock.calls.length - 1][0] as {
           country?: string;
         };
-        expect(lastCallArgs.country).toBe('USA');
+        expect(lastCallArgs.country).toBe('Ukraine');
       });
 
       const addButtons = screen.getAllByTestId('set-editor-add-coins-add-button');

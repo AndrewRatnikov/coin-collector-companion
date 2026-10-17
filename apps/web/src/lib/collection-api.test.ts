@@ -1,12 +1,13 @@
 /**
  * Tests for: collection-api
  * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Module: collection-api.ts (CREATE)
- * Covers criteria: #6 (from prd.md)
+ * Extended by: runs/run_20261017_210503/plan.md § Interface Contract → Web API client
+ * Covers criteria: #6 (run_20260721_171115); #10 (run_20261017_210503)
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // fetch is mocked via vi.stubGlobal, not vi.mock(), see vitest.setup.ts
-import { getCollection, setOwnership } from '@/lib/collection-api';
+import { getCollection, setOwnership, setOwnershipBulk } from '@/lib/collection-api';
 
 function stubFetchResolving(status: number, body: unknown) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -105,6 +106,34 @@ describe('collection-api', () => {
     it('propagates a rejection when the request fails', async () => {
       stubFetchResolving(404, { message: 'Coin not found' });
       await expect(setOwnership('missing', true)).rejects.toThrow();
+    });
+  });
+
+  describe('criterion 10: setOwnershipBulk calls PATCH /collection with { coinIds, owned }', () => {
+    it('sends one PATCH to /collection (no coin id in the path) with the ids and owned: true', async () => {
+      const response = { coinIds: ['coin-1', 'coin-2'], owned: true };
+      const fetchMock = stubFetchResolving(200, response);
+
+      const result = await setOwnershipBulk(['coin-1', 'coin-2'], true);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url.endsWith('/collection')).toBe(true);
+      expect(init.method).toBe('PATCH');
+      expect(JSON.parse(init.body as string)).toEqual({ coinIds: ['coin-1', 'coin-2'], owned: true });
+      expect(result).toEqual(response);
+    });
+
+    it('sends owned: false explicitly', async () => {
+      const fetchMock = stubFetchResolving(200, { coinIds: ['coin-3'], owned: false });
+      await setOwnershipBulk(['coin-3'], false);
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(JSON.parse(init.body as string)).toEqual({ coinIds: ['coin-3'], owned: false });
+    });
+
+    it('propagates a rejection when the request fails', async () => {
+      stubFetchResolving(404, { message: 'Coin not found' });
+      await expect(setOwnershipBulk(['missing'], true)).rejects.toThrow();
     });
   });
 });
