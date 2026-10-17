@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { formatCoinLabel } from '@coin-collector/shared';
+import { getCoinName } from '@coin-collector/shared';
 import type { GapSlot } from '@coin-collector/shared';
 import { RequireAuth } from '@/components/auth/require-auth';
 import CatalogFilterForm, { type CatalogFilterFormValues } from '@/components/catalog/catalog-filter-form';
@@ -367,50 +367,57 @@ function SetEditor({ id }: { id: string }) {
                 </button>
                 {!isCollapsed && (
                   <ul className="flex flex-col gap-2">
-                    {group.visibleSlots.map((slot) => (
-                      <li
-                        key={slot.id}
-                        data-testid="set-editor-gap-item"
-                        className="flex items-center justify-between gap-4 rounded border border-gray-200 p-3"
-                      >
-                        <Link
-                          href={`/catalog/${slot.coin.id}`}
-                          data-testid="set-editor-gap-coin-link"
-                          className="flex flex-col hover:underline"
+                    {group.visibleSlots.map((slot) => {
+                      const name = getCoinName(slot.coin);
+                      return (
+                        <li
+                          key={slot.id}
+                          data-testid="set-editor-gap-item"
+                          className="flex items-center justify-between gap-4 rounded border border-gray-200 p-3"
                         >
-                          <span className="text-[15px] font-medium">{slot.coin.name}</span>
-                          <span className="text-xs text-gray-500">{formatCoinLabel(slot.coin)}</span>
-                          {slot.coin.variety ? (
-                            <span data-testid="set-editor-gap-variety" className="text-xs text-gray-500">
-                              {slot.coin.variety}
+                          <Link
+                            href={`/catalog/${slot.coin.id}`}
+                            data-testid="set-editor-gap-coin-link"
+                            className="flex flex-col hover:underline"
+                          >
+                            {name.eyebrow !== '' && (
+                              <span data-testid="set-editor-gap-eyebrow" className="text-[11px] font-medium text-neutral-700">
+                                {name.eyebrow}
+                              </span>
+                            )}
+                            <span data-testid="set-editor-gap-title" className="text-[15px] font-medium">
+                              {name.title}
                             </span>
-                          ) : null}
-                        </Link>
-                        <span data-testid="set-editor-gap-status" className="text-xs text-gray-500">
-                          {slot.owned ? t('common.owned') : t('common.missing')}
-                        </span>
-                        {isOwner && (
-                          <button
-                            type="button"
-                            data-testid="set-editor-toggle-owned-button"
-                            onClick={() => handleToggle(slot.coin.id, slot.owned)}
-                            className="rounded border border-gray-300 px-2 py-1 text-xs"
-                          >
-                            {slot.owned ? t('setEditor.markNotOwned') : t('setEditor.markOwned')}
-                          </button>
-                        )}
-                        {isOwner && (
-                          <button
-                            type="button"
-                            data-testid="set-editor-remove-button"
-                            onClick={() => handleRemove(slot.coin.id)}
-                            className="rounded border border-gray-300 px-2 py-1 text-xs"
-                          >
-                            {t('setEditor.removeButton')}
-                          </button>
-                        )}
-                      </li>
-                    ))}
+                            <span data-testid="set-editor-gap-subtitle" className="text-xs text-neutral-700">
+                              {name.subtitle}
+                            </span>
+                          </Link>
+                          <span data-testid="set-editor-gap-status" className="text-xs text-gray-500">
+                            {slot.owned ? t('common.owned') : t('common.missing')}
+                          </span>
+                          {isOwner && (
+                            <button
+                              type="button"
+                              data-testid="set-editor-toggle-owned-button"
+                              onClick={() => handleToggle(slot.coin.id, slot.owned)}
+                              className="rounded border border-gray-300 px-2 py-1 text-xs"
+                            >
+                              {slot.owned ? t('setEditor.markNotOwned') : t('setEditor.markOwned')}
+                            </button>
+                          )}
+                          {isOwner && (
+                            <button
+                              type="button"
+                              data-testid="set-editor-remove-button"
+                              onClick={() => handleRemove(slot.coin.id)}
+                              className="rounded border border-gray-300 px-2 py-1 text-xs"
+                            >
+                              {t('setEditor.removeButton')}
+                            </button>
+                          )}
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </li>
@@ -423,23 +430,31 @@ function SetEditor({ id }: { id: string }) {
         <div data-testid="set-editor-add-coins-panel" className="flex flex-col gap-3">
           <CatalogFilterForm testIdPrefix="set-editor-add-coins" onSubmit={handleAddCoinsFilterSubmit} />
           <ul data-testid="set-editor-add-coins-results" className="flex flex-col gap-2">
-            {(catalogQuery.data?.items ?? []).map((coin) => (
-              <li
-                key={coin.id}
-                data-testid="set-editor-add-coins-item"
-                className="flex items-center justify-between gap-4 rounded border border-gray-200 p-2"
-              >
-                <span>{formatCoinLabel(coin)}</span>
-                <button
-                  type="button"
-                  data-testid="set-editor-add-coins-add-button"
-                  onClick={() => handleAdd(coin.id)}
-                  className="rounded border border-gray-300 px-2 py-1 text-xs"
+            {(catalogQuery.data?.items ?? []).map((coin) => {
+              const name = getCoinName(coin);
+              return (
+                <li
+                  key={coin.id}
+                  data-testid="set-editor-add-coins-item"
+                  className="flex items-center justify-between gap-4 rounded border border-gray-200 p-2"
                 >
-                  {t('setEditor.addButton')}
-                </button>
-              </li>
-            ))}
+                  <span className="flex min-w-0 flex-col">
+                    <span data-testid="set-editor-add-coins-item-title">{name.title}</span>
+                    <span data-testid="set-editor-add-coins-item-subtitle" className="text-xs text-neutral-700">
+                      {name.subtitle}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    data-testid="set-editor-add-coins-add-button"
+                    onClick={() => handleAdd(coin.id)}
+                    className="rounded border border-gray-300 px-2 py-1 text-xs"
+                  >
+                    {t('setEditor.addButton')}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </Sheet>
