@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
-import { formatCoinLabel } from '@coin-collector/shared';
+import { getCoinName } from '@coin-collector/shared';
 import type { AdminCoinListItem, ReviewCoinRequest } from '@coin-collector/shared';
 import { ApiError } from '@/lib/api-client';
 import { useReviewCoin } from '@/lib/hooks/use-admin';
@@ -31,6 +31,7 @@ export function SubmissionReviewItem({ coin }: SubmissionReviewItemProps) {
   const review = useReviewCoin();
   const [mode, setMode] = useState<Mode>('idle');
   const isPending = review.isPending;
+  const coinName = getCoinName(coin);
 
   function submit(body: ReviewCoinRequest) {
     review.mutate(
@@ -57,9 +58,19 @@ export function SubmissionReviewItem({ coin }: SubmissionReviewItemProps) {
       className="flex flex-col gap-3 border-b border-[var(--color-divider)] px-1 py-4"
     >
       <div className="flex flex-col gap-1">
-        <p data-testid="admin-submission-label" className="text-sm text-[var(--color-text)]">
-          <span className="font-medium">{formatCoinLabel(coin)}</span> <span>{coin.name}</span>
-        </p>
+        <div data-testid="admin-submission-label" className="flex flex-col text-sm text-[var(--color-text)]">
+          <span data-testid="admin-submission-title" className="font-medium">
+            {coinName.title}
+          </span>
+          <span data-testid="admin-submission-subtitle" className="text-xs text-neutral-700">
+            {coinName.subtitle}
+          </span>
+          {coin.name.trim() !== coinName.title && (
+            <span data-testid="admin-submission-name" className="text-xs text-neutral-700">
+              {coin.name}
+            </span>
+          )}
+        </div>
         <p data-testid="admin-submission-submitter" className="text-xs text-[var(--color-neutral-600)]">
           {coin.submitterEmail ? `${t('admin.submittedBy')} ${coin.submitterEmail}` : t('admin.submitterUnknown')}
         </p>

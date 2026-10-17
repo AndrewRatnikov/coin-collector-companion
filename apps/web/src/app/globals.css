@@ -17,6 +17,16 @@
   --color-divider: color-mix(in srgb, #201f1d 16%, transparent);
   /* Destructive actions only (delete confirm button, Delete menu item). */
   --color-danger: #a3271f;
+  --color-danger-bg: #fbeceb;
+  --color-danger-line: #e7b7b3;
+
+  /* Placeholder coin metals: fill (-1) and rim (-2). */
+  --color-gold-1: #ecd59a;
+  --color-gold-2: #c9a55a;
+  --color-silver-1: #dedcd8;
+  --color-silver-2: #b3afa9;
+  --color-copper-1: #dfae88;
+  --color-copper-2: #b07651;
 
   --color-neutral-100: #f8f4f4;
   --color-neutral-200: #eae7e7;
@@ -74,6 +84,22 @@
   --shadow-sm: 0 1px 2px color-mix(in srgb, #2d2b2b 14%, transparent);
   --shadow-md: 0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent);
   --shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
+
+  /* Loading placeholders (Skeleton) and the pending ownership check (StatusToggle). */
+  --animate-skeleton: skeleton-pulse 1.4s ease-in-out infinite;
+  --animate-check-spin: check-spin 0.8s linear infinite;
+
+  @keyframes skeleton-pulse {
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  @keyframes check-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 }
 
 :root {
@@ -101,6 +127,8 @@ body {
   font-family: var(--font-body);
   font-size: 14px;
   line-height: 1.55;
+  /* Lining figures everywhere; headings inherit them (Cormorant defaults to old-style). */
+  font-variant-numeric: lining-nums;
 }
 
 h1,

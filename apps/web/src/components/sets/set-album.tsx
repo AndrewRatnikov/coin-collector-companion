@@ -2,14 +2,13 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import type { GapSlot } from '@coin-collector/shared';
+import { getCoinName, type GapSlot } from '@coin-collector/shared';
 import {
   buildAlbumLayout,
   formatAlbumCardLabel,
   formatAlbumCheckLabel,
   formatAlbumPageHeading,
   formatOwnedOfTotal,
-  getAlbumCardText,
   getDenominationNumeral,
   getSharedEyebrow,
   hasBlankCells,
@@ -206,7 +205,7 @@ function AlbumCard({
   statusMissing: string;
 }) {
   const { coin, owned } = slot;
-  const text = getAlbumCardText(coin);
+  const name = getCoinName(coin);
   // A visitor sees someone else's set: ownership isn't theirs to show, so the card stays neutral.
   const showOwned = isOwner && owned;
   const showMissing = isOwner && !owned;
@@ -232,9 +231,9 @@ function AlbumCard({
         <CoinCircle denomination={coin.denomination} imageUrl={coin.imageUrl} faded={showMissing} lifted={showOwned} />
       </div>
       <div className="flex min-w-0 flex-col gap-0.5 break-words px-3.5 pb-3.5 pt-3">
-        {text.eyebrow && !hoistedEyebrow && (
+        {name.eyebrow && !hoistedEyebrow && (
           <p data-testid="set-album-card-eyebrow" className="text-xs text-neutral-700">
-            {text.eyebrow}
+            {name.eyebrow}
           </p>
         )}
         <Link
@@ -243,10 +242,10 @@ function AlbumCard({
           aria-label={formatAlbumCardLabel(slot, words)}
           className={CARD_LINK_CLASSNAME}
         >
-          <span data-testid="set-album-card-title">{text.title}</span>
+          <span data-testid="set-album-card-title">{name.title}</span>
         </Link>
         <p data-testid="set-album-card-secondary" className="text-[13px] text-neutral-700">
-          {text.secondary}
+          {name.subtitle}
         </p>
         <div className={`mt-2 flex items-center ${showStatus ? 'justify-between' : 'justify-end'}`}>
           {showStatus && (
@@ -421,7 +420,7 @@ export function SetAlbum({
                     <div className="flex items-baseline gap-3">
                       <h3
                         data-testid="set-album-year-label"
-                        className={`${HEADING_FONT_CLASSNAME} text-[26px] font-semibold leading-none`}
+                        className="font-mono text-[20px] font-medium leading-none lining-nums tabular-nums"
                       >
                         {row.year}
                       </h3>

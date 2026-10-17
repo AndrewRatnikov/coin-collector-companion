@@ -2,7 +2,9 @@
  * Tests for: apps/web/src/app/globals.css + apps/web/src/app/layout.tsx
  * Contract source: runs/run_20260728_071525/plan.md § Interface Contract
  *                   runs/run_20261011_095624/plan.md § Interface Contract → Token: --color-danger
- * Covers criteria: #1 (from prd.md) — global design tokens applied app-wide; #12 (run_20261011_095624) --color-danger
+ *                   runs/run_20261017_142658/plan.md § Interface Contract → Tokens (globals.css)
+ * Covers criteria: #1 (from prd.md) — global design tokens applied app-wide; #12 (run_20261011_095624) --color-danger;
+ *                  #1, #2, #13, #15 (run_20261017_142658) danger/metal tokens, lining numerals, animations
  *
  * These two files carry no exports/props/testids (pure CSS + a font-loader swap in a
  * root layout), so there is nothing to render/mount here. Instead this reads both files'
@@ -21,6 +23,34 @@ const APP_DIR = path.resolve(here); // this test file lives at apps/web/src/app/
 
 const globalsCss = readFileSync(path.join(APP_DIR, 'globals.css'), 'utf-8');
 const layoutTsx = readFileSync(path.join(APP_DIR, 'layout.tsx'), 'utf-8');
+
+/** The text between the braces of the first plain `@theme { ... }` block (not `@theme inline`). */
+function themeBlock(css: string): string {
+  const match = /@theme\s*\{/.exec(css);
+  if (!match) return '';
+  const start = match.index + match[0].length;
+  let depth = 1;
+  for (let i = start; i < css.length; i += 1) {
+    if (css[i] === '{') depth += 1;
+    if (css[i] === '}') {
+      depth -= 1;
+      if (depth === 0) return css.slice(start, i);
+    }
+  }
+  return css.slice(start);
+}
+
+/** The declarations of the top-level `body { ... }` rule. */
+function bodyRule(css: string): string {
+  const match = /(?:^|\n)body\s*\{([^}]*)\}/.exec(css);
+  return match ? match[1] : '';
+}
+
+/** The declarations of the `h1, h2, h3, h4, h5, h6 { ... }` rule. */
+function headingRule(css: string): string {
+  const match = /h1,\s*h2,\s*h3,\s*h4,\s*h5,\s*h6\s*\{([^}]*)\}/.exec(css);
+  return match ? match[1] : '';
+}
 
 describe('Classical design tokens (globals.css)', () => {
   describe('criterion 1: global design tokens applied app-wide', () => {
@@ -55,6 +85,68 @@ describe('Classical design tokens (globals.css)', () => {
       expect(themeStart).toBeGreaterThanOrEqual(0);
       const dangerIndex = globalsCss.search(/--color-danger:\s*#a3271f/);
       expect(dangerIndex).toBeGreaterThan(themeStart);
+    });
+  });
+
+  describe('run_20261017_142658 criterion 1: danger and metal tokens', () => {
+    const tokens: Array<[string, string]> = [
+      ['--color-danger', '#a3271f'],
+      ['--color-danger-bg', '#fbeceb'],
+      ['--color-danger-line', '#e7b7b3'],
+      ['--color-gold-1', '#ecd59a'],
+      ['--color-gold-2', '#c9a55a'],
+      ['--color-silver-1', '#dedcd8'],
+      ['--color-silver-2', '#b3afa9'],
+      ['--color-copper-1', '#dfae88'],
+      ['--color-copper-2', '#b07651'],
+    ];
+
+    it.each(tokens)('defines %s as %s inside the plain @theme block', (name, value) => {
+      const theme = themeBlock(globalsCss);
+      expect(theme).not.toBe('');
+      expect(theme).toMatch(new RegExp(`${name}:\\s*${value}`));
+    });
+
+    it('keeps each token distinct (no two metals share a value)', () => {
+      const values = tokens.map(([, value]) => value);
+      expect(new Set(values).size).toBe(values.length);
+    });
+  });
+
+  describe('run_20261017_142658 criterion 2: lining numerals', () => {
+    it('sets font-variant-numeric: lining-nums on body', () => {
+      expect(bodyRule(globalsCss)).toMatch(/font-variant-numeric:\s*lining-nums/);
+    });
+
+    it('does not override font-variant-numeric on the h1-h6 rule, so Cormorant headings inherit lining figures', () => {
+      const headings = headingRule(globalsCss);
+      expect(headings).not.toBe('');
+      expect(headings).toMatch(/font-family:/);
+      expect(headings).not.toMatch(/font-variant-numeric/);
+    });
+  });
+
+  describe('run_20261017_142658 criteria 13 and 15: animations', () => {
+    it('defines --animate-skeleton as a 1.4s ease-in-out infinite pulse inside @theme', () => {
+      expect(themeBlock(globalsCss)).toMatch(
+        /--animate-skeleton:\s*skeleton-pulse\s+1\.4s\s+ease-in-out\s+infinite/,
+      );
+    });
+
+    it('defines --animate-check-spin as a 0.8s linear infinite spin inside @theme', () => {
+      expect(themeBlock(globalsCss)).toMatch(/--animate-check-spin:\s*check-spin\s+0\.8s\s+linear\s+infinite/);
+    });
+
+    it('defines the skeleton-pulse keyframes as a halfway dip to 0.5 opacity', () => {
+      expect(globalsCss).toMatch(/@keyframes\s+skeleton-pulse\s*\{\s*50%\s*\{\s*opacity:\s*0\.5;?\s*\}/);
+    });
+
+    it('defines the check-spin keyframes as a full turn', () => {
+      expect(globalsCss).toMatch(/@keyframes\s+check-spin\s*\{\s*to\s*\{\s*transform:\s*rotate\(360deg\);?\s*\}/);
+    });
+
+    it('does not copy the classical.css class or animation names into the app', () => {
+      expect(globalsCss).not.toMatch(/\.ccard|\.coin\.gold|cc-pulse|cc-spin|--a100/);
     });
   });
 });

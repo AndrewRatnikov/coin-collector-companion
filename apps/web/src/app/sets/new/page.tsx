@@ -4,13 +4,12 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import type { CreateSetRequestBody } from '@coin-collector/shared';
+import { getCoinName, getDenominationNumeral, type CreateSetRequestBody } from '@coin-collector/shared';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { useCanonicalSet, useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
 import { usePublicSet, usePublicSets } from '@/lib/hooks/use-public-sets';
 import { useCreateSet } from '@/lib/hooks/use-user-sets';
-import { getAlbumCardText, getDenominationNumeral } from '@/lib/album-layout';
 import {
   buildCoinPreview,
   formatYearRange,
@@ -551,36 +550,39 @@ function NewSetForm() {
                             {group.year}
                           </div>
                           <ul className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr))]">
-                            {group.coins.map((coin) => (
-                              <li
-                                key={coin.id}
-                                data-testid="set-new-preview-item"
-                                className="flex min-w-0 items-center gap-3"
-                              >
-                                <span
-                                  aria-hidden="true"
-                                  className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-neutral-400 bg-neutral-300 font-mono text-xs text-neutral-800"
+                            {group.coins.map((coin) => {
+                              const coinName = getCoinName(coin);
+                              return (
+                                <li
+                                  key={coin.id}
+                                  data-testid="set-new-preview-item"
+                                  className="flex min-w-0 items-center gap-3"
                                 >
-                                  {coin.imageUrl ? (
-                                    <img
-                                      src={coin.imageUrl}
-                                      alt=""
-                                      className="h-full w-full object-cover"
-                                    />
-                                  ) : (
-                                    getDenominationNumeral(coin.denomination)
-                                  )}
-                                </span>
-                                <span className="flex min-w-0 flex-col">
-                                  <span className="truncate text-sm font-medium">
-                                    {getAlbumCardText(coin).title}
+                                  <span
+                                    aria-hidden="true"
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-neutral-400 bg-neutral-300 font-mono text-xs text-neutral-800"
+                                  >
+                                    {coin.imageUrl ? (
+                                      <img
+                                        src={coin.imageUrl}
+                                        alt=""
+                                        className="h-full w-full object-cover"
+                                      />
+                                    ) : (
+                                      getDenominationNumeral(coin.denomination)
+                                    )}
                                   </span>
-                                  <span className="text-xs text-neutral-700">
-                                    {coin.denomination}
+                                  <span className="flex min-w-0 flex-col">
+                                    <span data-testid="set-new-preview-title" className="truncate text-sm font-medium">
+                                      {coinName.title}
+                                    </span>
+                                    <span data-testid="set-new-preview-subtitle" className="text-xs text-neutral-700">
+                                      {coinName.subtitle}
+                                    </span>
                                   </span>
-                                </span>
-                              </li>
-                            ))}
+                                </li>
+                              );
+                            })}
                           </ul>
                         </div>
                       ))}

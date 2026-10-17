@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { formatCoinLabel } from '@coin-collector/shared';
+import { getCoinName } from '@coin-collector/shared';
 import { getStoredToken } from '@/lib/auth-token';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import { useSetGaps } from '@/lib/hooks/use-user-sets';
@@ -97,37 +97,40 @@ export default function PublicSetDetailPage({ params }: { params: Promise<{ id: 
           <ul data-testid="public-set-detail-coin-list" className="flex flex-col border-t border-[var(--color-divider)]">
             {[...set.coins]
               .sort((a, b) => a.position - b.position)
-              .map((item) => (
-                <li
-                  key={item.id}
-                  data-testid="public-set-detail-coin-item"
-                  className="flex items-center justify-between gap-2 border-b border-[var(--color-divider)] px-1 py-3"
-                >
-                  <Link
-                    href={`/catalog/${item.coin.id}`}
-                    data-testid="public-set-detail-coin-link"
-                    className="flex flex-col hover:underline"
+              .map((item) => {
+                const name = getCoinName(item.coin);
+                return (
+                  <li
+                    key={item.id}
+                    data-testid="public-set-detail-coin-item"
+                    className="flex items-center justify-between gap-2 border-b border-[var(--color-divider)] px-1 py-3"
                   >
-                    <span>{formatCoinLabel(item.coin)}</span>
-                    {item.coin.variety ? (
-                      <span
-                        data-testid="public-set-detail-coin-variety"
-                        className="text-xs text-[var(--color-neutral-600)]"
-                      >
-                        {item.coin.variety}
-                      </span>
-                    ) : null}
-                  </Link>
-                  {gapsQuery.isSuccess && ownedById.has(item.coin.id) && (
-                    <span
-                      data-testid="public-set-detail-coin-status"
-                      className="text-xs uppercase tracking-[0.08em] text-[var(--color-neutral-600)]"
+                    <Link
+                      href={`/catalog/${item.coin.id}`}
+                      data-testid="public-set-detail-coin-link"
+                      className="flex flex-col hover:underline"
                     >
-                      {ownedById.get(item.coin.id) ? t('common.owned') : t('common.missing')}
-                    </span>
-                  )}
-                </li>
-              ))}
+                      {name.eyebrow !== '' && (
+                        <span data-testid="public-set-detail-coin-eyebrow" className="text-[11px] font-medium text-neutral-700">
+                          {name.eyebrow}
+                        </span>
+                      )}
+                      <span data-testid="public-set-detail-coin-title">{name.title}</span>
+                      <span data-testid="public-set-detail-coin-subtitle" className="text-xs text-neutral-700">
+                        {name.subtitle}
+                      </span>
+                    </Link>
+                    {gapsQuery.isSuccess && ownedById.has(item.coin.id) && (
+                      <span
+                        data-testid="public-set-detail-coin-status"
+                        className="text-xs uppercase tracking-[0.08em] text-[var(--color-neutral-600)]"
+                      >
+                        {ownedById.get(item.coin.id) ? t('common.owned') : t('common.missing')}
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
           </ul>
         </>
       )}

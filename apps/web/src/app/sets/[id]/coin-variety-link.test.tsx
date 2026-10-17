@@ -1,9 +1,19 @@
 /**
  * Tests for: SetEditorPage coin row variety + link to the coin page
  * Contract source: runs/run_20261006_215558/plan.md § Interface Contract → Page: SetEditorPage (modify)
- * Covers criteria: #1, #2, #3, #4 (from run_20261006_215558's prd.md)
+ *                   runs/run_20261017_142658/plan.md § Approach §3 (variety is now carried by the title and eyebrow)
+ * Covers criteria: #1, #2, #3, #4 (from run_20261006_215558's prd.md), #6 (from run_20261017_142658's prd.md)
  *
  * Mock setup mirrors sets/[id]/page.test.tsx.
+ *
+ * run_20261017_142658: the raw-variety line (set-editor-gap-variety) is removed. A gap row now shows the
+ * getCoinName eyebrow, title and subtitle inside the link, so the variety is the title and the coin's type
+ * name is the eyebrow. The status and owner-button tests are unchanged.
+ *
+ * The Add-coins picker rows (set-editor-add-coins-item-title / -subtitle) are covered in the last block;
+ * the Sheet is opened with set-editor-toggle-add-coins.
+ *
+ * CONTRACT_GAPS: none
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -154,7 +164,7 @@ describe('SetEditorPage: coin variety and link to coin page', () => {
   });
 
   describe('criterion 1: variety shown when non-empty', () => {
-    it('shows each coin variety verbatim in set-editor-gap-variety inside its own row', async () => {
+    it('shows each coin variety verbatim as the title of its own row, with the type name as eyebrow', async () => {
       renderPage();
 
       await waitFor(() => {
@@ -162,13 +172,27 @@ describe('SetEditorPage: coin variety and link to coin page', () => {
       });
       const items = screen.getAllByTestId('set-editor-gap-item');
 
-      expect(within(items[0]).getByTestId('set-editor-gap-variety')).toHaveTextContent(/^DDO$/);
-      expect(within(items[2]).getByTestId('set-editor-gap-variety')).toHaveTextContent(/^Doubled Die Reverse$/);
+      expect(within(items[0]).getByTestId('set-editor-gap-title')).toHaveTextContent(/^DDO$/);
+      expect(within(items[0]).getByTestId('set-editor-gap-eyebrow')).toHaveTextContent(/^Lincoln Wheat Cent$/);
+      expect(within(items[2]).getByTestId('set-editor-gap-title')).toHaveTextContent(/^Doubled Die Reverse$/);
+      expect(within(items[2]).getByTestId('set-editor-gap-eyebrow')).toHaveTextContent(/^Lincoln Wheat Cent$/);
+    });
+
+    it('no longer renders the raw variety line in any row', async () => {
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getAllByTestId('set-editor-gap-item')).toHaveLength(3);
+      });
+      screen.getAllByTestId('set-editor-gap-item').forEach((item) => {
+        expect(within(item).queryByTestId('set-editor-gap-variety')).not.toBeInTheDocument();
+      });
+      expect(screen.queryByTestId('set-editor-gap-variety')).not.toBeInTheDocument();
     });
   });
 
   describe('criterion 2: nothing rendered for an empty variety', () => {
-    it('renders no variety element in the row of the coin whose variety is empty', async () => {
+    it('titles the coin whose variety is empty by its type name, with no eyebrow and no variety text', async () => {
       renderPage();
 
       await waitFor(() => {
@@ -176,11 +200,11 @@ describe('SetEditorPage: coin variety and link to coin page', () => {
       });
       const items = screen.getAllByTestId('set-editor-gap-item');
 
-      expect(within(items[1]).queryByTestId('set-editor-gap-variety')).not.toBeInTheDocument();
-      // The link text for the plain coin is only the name and label, no stray separator
+      expect(within(items[1]).queryByTestId('set-editor-gap-eyebrow')).not.toBeInTheDocument();
+      // The link text for the plain coin is the type name and the subtitle, no stray separator
       const link = within(items[1]).getByTestId('set-editor-gap-coin-link');
-      expect(link).toHaveTextContent('Lincoln Wheat Cent');
-      expect(link).toHaveTextContent('USA 1 Cent (1943 S)');
+      expect(within(link).getByTestId('set-editor-gap-title')).toHaveTextContent(/^Lincoln Wheat Cent$/);
+      expect(within(link).getByTestId('set-editor-gap-subtitle')).toHaveTextContent(/^USA · 1 Cent · 1943-S$/);
       expect(link.textContent).not.toMatch(/DDO|Doubled/);
       expect(link.textContent).not.toMatch(/[-,/|·]\s*$/);
     });
@@ -200,7 +224,7 @@ describe('SetEditorPage: coin variety and link to coin page', () => {
       expect(within(items[2]).getByTestId('set-editor-gap-coin-link').getAttribute('href')).toBe('/catalog/coin-2');
     });
 
-    it('keeps the label text and the variety inside the link', async () => {
+    it('keeps the eyebrow, title and subtitle inside the link', async () => {
       renderPage();
 
       await waitFor(() => {
@@ -209,8 +233,10 @@ describe('SetEditorPage: coin variety and link to coin page', () => {
       const items = screen.getAllByTestId('set-editor-gap-item');
       const link = within(items[0]).getByTestId('set-editor-gap-coin-link');
 
-      expect(within(link).getByText('USA 1 Cent (1909 S)')).toBeInTheDocument();
-      expect(within(link).getByTestId('set-editor-gap-variety')).toHaveTextContent('DDO');
+      expect(within(link).getByTestId('set-editor-gap-eyebrow')).toHaveTextContent('Lincoln Wheat Cent');
+      expect(within(link).getByTestId('set-editor-gap-title')).toHaveTextContent('DDO');
+      expect(within(link).getByTestId('set-editor-gap-subtitle')).toHaveTextContent(/^USA · 1 Cent · 1909-S$/);
+      expect(link.textContent).not.toContain('USA 1 Cent (1909 S)');
     });
   });
 
@@ -244,6 +270,44 @@ describe('SetEditorPage: coin variety and link to coin page', () => {
 
       expect(ownershipMutate).toHaveBeenCalledTimes(1);
       expect(ownershipMutate.mock.calls[0][0]).toEqual({ coinId: 'coin-3', owned: true });
+    });
+  });
+
+  describe('run_20261017_142658: Add-coins picker rows use the name block', () => {
+    it('shows the getCoinName title and subtitle for each catalog result, and the old label text is gone', async () => {
+      const donetsk = {
+        ...BASE_COIN,
+        id: 'coin-donetsk',
+        country: 'Ukraine',
+        denomination: '10 Hryvnias',
+        year: 2025,
+        mintMark: '',
+        variety: 'We Are Strong. We Are Together: Donetsk Oblast',
+        name: 'Ukraine Commemorative 10 Hryvnias',
+      };
+      useCatalogMock.mockReturnValue(
+        queryResult({ data: { items: [BASE_COIN, donetsk], page: 1, limit: 20, total: 2 } }),
+      );
+      const user = userEvent.setup();
+      renderPage();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-toggle-add-coins')).toBeInTheDocument();
+      });
+      await user.click(screen.getByTestId('set-editor-toggle-add-coins'));
+
+      const results = screen.getByTestId('set-editor-add-coins-results');
+      const rows = within(results).getAllByTestId('set-editor-add-coins-item');
+      expect(rows).toHaveLength(2);
+      expect(within(rows[0]).getByTestId('set-editor-add-coins-item-title')).toHaveTextContent(/^DDO$/);
+      expect(within(rows[0]).getByTestId('set-editor-add-coins-item-subtitle')).toHaveTextContent(
+        /^USA · 1 Cent · 1909-S$/,
+      );
+      expect(within(rows[1]).getByTestId('set-editor-add-coins-item-title')).toHaveTextContent(/^Donetsk Oblast$/);
+      expect(within(rows[1]).getByTestId('set-editor-add-coins-item-subtitle')).toHaveTextContent(
+        /^Ukraine · 10 Hryvnias · 2025$/,
+      );
+      expect(results).not.toHaveTextContent('USA 1 Cent (1909 S)');
     });
   });
 });

@@ -2,7 +2,9 @@
  * Tests for: CanonicalSetDetailPage
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CanonicalSetDetailPage
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
- * Covers criteria: #9 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md)
+ *                   runs/run_20261017_142658/plan.md § Approach §3 and §4 (name block via getCoinName; Skeleton testid)
+ * Covers criteria: #9 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md),
+ *                  #6, #13 (from run_20261017_142658's prd.md)
  *
  * Like CoinDetailPage, this page unwraps a Promise `params` prop via React's `use()`,
  * which suspends on first render — rendered here inside a <Suspense> boundary for the
@@ -13,6 +15,11 @@
  * canonical-set-clone-cta and its existing <Link> behavior, restyled as the design's
  * solid-accent button." No assertion in this file changes as a result; it is carried
  * over byte-for-byte from the prior run.
+ *
+ * run_20261017_142658: two tests change. The skeleton test looks for the Skeleton testid instead of
+ * the removed `.animate-pulse` class, and the coin list test expects the getCoinName title and subtitle
+ * instead of the formatCoinLabel string. The coin fixtures now carry the full set of naming fields
+ * (name, variety, isKeyDate) because getCoinName reads them.
  */
 
 import { Suspense } from 'react';
@@ -57,8 +64,34 @@ const DETAIL = {
   source: 'seed-template',
   templateVersion: 'v1',
   coins: [
-    { id: 'usc-2', position: 1, coin: { id: 'coin-2', country: 'USA', denomination: '1 Cent', year: 1958, mintMark: '' } },
-    { id: 'usc-1', position: 0, coin: { id: 'coin-1', country: 'USA', denomination: '1 Cent', year: 1909, mintMark: 'S' } },
+    {
+      id: 'usc-2',
+      position: 1,
+      coin: {
+        id: 'coin-2',
+        country: 'USA',
+        denomination: '1 Cent',
+        year: 1958,
+        mintMark: '',
+        variety: '',
+        name: 'Lincoln Wheat Cent',
+        isKeyDate: false,
+      },
+    },
+    {
+      id: 'usc-1',
+      position: 0,
+      coin: {
+        id: 'coin-1',
+        country: 'USA',
+        denomination: '1 Cent',
+        year: 1909,
+        mintMark: 'S',
+        variety: '',
+        name: 'Lincoln Wheat Cent',
+        isKeyDate: false,
+      },
+    },
   ],
 };
 
@@ -83,12 +116,14 @@ describe('CanonicalSetDetailPage', () => {
   describe('criterion 1: loading state uses a skeleton, not bare text', () => {
     it('renders a skeleton element within canonical-set-detail-loading and no literal "Loading…" text', async () => {
       useCanonicalSetMock.mockReturnValue(queryResult({ isLoading: true }));
-      const { container } = renderPage();
+      renderPage();
 
       await waitFor(() => {
         expect(screen.getByTestId('canonical-set-detail-loading')).toBeInTheDocument();
       });
-      expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(
+        within(screen.getByTestId('canonical-set-detail-loading')).getByTestId('skeleton'),
+      ).toBeInTheDocument();
       expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
     });
   });
@@ -105,7 +140,7 @@ describe('CanonicalSetDetailPage', () => {
   });
 
   describe('criterion 9: renders name, description, and the coin list ordered by position', () => {
-    it('sorts coins by position ascending regardless of API array order', async () => {
+    it('sorts coins by position ascending regardless of API array order, naming each by getCoinName', async () => {
       useCanonicalSetMock.mockReturnValue(queryResult({ data: DETAIL as never }));
       renderPage('set-1');
 
@@ -118,9 +153,22 @@ describe('CanonicalSetDetailPage', () => {
 
       const items = screen.getAllByTestId('canonical-set-coin-item');
       expect(items).toHaveLength(2);
-      expect(within(items[0]).getByText('USA 1 Cent (1909 S)')).toBeInTheDocument();
-      expect(within(items[1]).getByText('USA 1 Cent (1958)')).toBeInTheDocument();
+      expect(within(items[0]).getByTestId('canonical-set-coin-title')).toHaveTextContent(/^Lincoln Wheat Cent$/);
+      expect(within(items[0]).getByTestId('canonical-set-coin-subtitle')).toHaveTextContent(
+        /^USA · 1 Cent · 1909-S$/,
+      );
+      expect(within(items[1]).getByTestId('canonical-set-coin-title')).toHaveTextContent(/^Lincoln Wheat Cent$/);
+      expect(within(items[1]).getByTestId('canonical-set-coin-subtitle')).toHaveTextContent(/^USA · 1 Cent · 1958$/);
       expect(useCanonicalSetMock).toHaveBeenCalledWith('set-1');
+    });
+
+    it('no longer shows the old formatCoinLabel text', async () => {
+      useCanonicalSetMock.mockReturnValue(queryResult({ data: DETAIL as never }));
+      renderPage('set-1');
+
+      await screen.findAllByTestId('canonical-set-coin-item');
+      expect(screen.queryByText('USA 1 Cent (1909 S)')).not.toBeInTheDocument();
+      expect(screen.queryByText('USA 1 Cent (1958)')).not.toBeInTheDocument();
     });
   });
 

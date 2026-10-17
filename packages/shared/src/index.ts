@@ -241,6 +241,96 @@ export function formatCoinLabel(coin: CatalogCoin): string {
     : `${coin.country} ${coin.denomination} (${coin.year})`;
 }
 
+// The redesign's naming rule: one eyebrow / title / subtitle block for every place a coin
+// is named (cards, rows, headings). Pure; every text input is trimmed first.
+export interface CoinName {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+}
+
+export type CoinNameInput = Pick<CatalogCoin, 'country' | 'denomination' | 'year' | 'mintMark' | 'variety' | 'name'> & {
+  isKeyDate?: boolean;
+};
+
+const COIN_NAME_VARIETY_SEPARATOR = ': ';
+const COIN_NAME_SUBTITLE_SEPARATOR = ' · ';
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Whole word: bounded by the string edge or a character that is not a letter or digit.
+function wholeWordPattern(part: string): RegExp {
+  return new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(part)}(?![\\p{L}\\p{N}])`, 'giu');
+}
+
+function containsWholeWord(text: string, part: string): boolean {
+  if (part === '') return false;
+  return wholeWordPattern(part).test(text);
+}
+
+function removeWholeWord(text: string, part: string): string {
+  if (part === '') return text;
+  return text.replace(wholeWordPattern(part), ' ');
+}
+
+// Trims; a missing value (loosely typed callers, partial API data) counts as ''.
+function cleanText(value: string | null | undefined): string {
+  return (value ?? '').trim();
+}
+
+function splitCoinVariety(variety: string): { series: string; design: string } {
+  const index = variety.indexOf(COIN_NAME_VARIETY_SEPARATOR);
+  if (index === -1) return { series: '', design: variety };
+  const left = variety.slice(0, index).trim();
+  const right = variety.slice(index + COIN_NAME_VARIETY_SEPARATOR.length).trim();
+  if (left === '' || right === '') return { series: '', design: left || right };
+  return { series: left, design: right };
+}
+
+/**
+ * Eyebrow, title and subtitle for a coin, e.g. Donetsk Oblast:
+ * { eyebrow: "We Are Strong. We Are Together", title: "Donetsk Oblast", subtitle: "Ukraine · 10 Hryvnias · 2025" }.
+ */
+export function getCoinName(coin: CoinNameInput): CoinName {
+  const country = cleanText(coin.country);
+  const denomination = cleanText(coin.denomination);
+  const mintMark = cleanText(coin.mintMark);
+  const name = cleanText(coin.name);
+  const year = String(coin.year);
+
+  const { series, design } = splitCoinVariety(cleanText(coin.variety));
+  const notation = mintMark ? `${year}-${mintMark}` : year;
+
+  const remainder = removeWholeWord(removeWholeWord(name, country), denomination);
+  const typeName = /[\p{L}\p{N}]/u.test(remainder) ? name : '';
+
+  let title: string;
+  if (coin.isKeyDate === true && series === '') {
+    if (design === '') title = notation;
+    else if (containsWholeWord(design, year)) title = design;
+    else title = `${notation} ${design}`;
+  } else if (design !== '') {
+    title = design;
+  } else if (typeName !== '') {
+    title = typeName;
+  } else {
+    title = denomination;
+  }
+
+  let eyebrow = '';
+  if (series !== '') eyebrow = series;
+  else if (typeName !== '' && title !== typeName) eyebrow = typeName;
+
+  const subtitleParts: string[] = [];
+  if (country !== '' && !containsWholeWord(title, country)) subtitleParts.push(country);
+  if (denomination !== '' && !containsWholeWord(title, denomination)) subtitleParts.push(denomination);
+  if (!containsWholeWord(title, year)) subtitleParts.push(notation);
+
+  return { eyebrow, title, subtitle: subtitleParts.join(COIN_NAME_SUBTITLE_SEPARATOR) };
+}
+
 // CSV collection import (POST /collection/import/preview and /confirm). The preview parses and
 // matches an uploaded CSV in memory and writes nothing; only confirm creates Ownership rows.
 export const IMPORT_MAX_FILE_BYTES = 1_048_576;

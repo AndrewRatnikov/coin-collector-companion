@@ -1,11 +1,17 @@
 /**
  * Tests for: NewSetPage (two-step new-set flow)
  * Contract source: runs/run_20261013_062900/plan.md § Interface Contract → Page: NewSetPage
+ *                   runs/run_20261017_142658/plan.md § Approach §3 (preview title and subtitle via getCoinName)
  * Covers criteria: #1-#16, #22 (from runs/run_20261013_062900/prd.md)
  *
  * This file replaces the previous picker/pending-list tests (run_20260728_071525), which tested the
  * create-then-patch design that D1 of the new plan removes. `set-new-page`, `set-new-name-input`,
  * `set-new-submit` and `set-new-error` are kept; the picker and in-set ids are asserted absent.
+ *
+ * run_20261017_142658: only the "criterion 11: coin preview" first test changes. The preview rows now
+ * show getCoinName(coin).title and .subtitle (set-new-preview-title / set-new-preview-subtitle) instead of
+ * the removed getAlbumCardText. COIN_A and COIN_B share baseCoin (same name, no variety), so their titles
+ * are equal; the rows are told apart by their subtitles, which carry the year and mint mark.
  *
  * CONTRACT_GAP: none.
  *
@@ -17,8 +23,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { getCoinName } from '@coin-collector/shared';
 import NewSetPage from '@/app/sets/new/page';
-import { getAlbumCardText } from '@/lib/album-layout';
 import { useCreateSet, usePatchSetCoins } from '@/lib/hooks/use-user-sets';
 import { useCanonicalSet, useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
 import { usePublicSet, usePublicSets } from '@/lib/hooks/use-public-sets';
@@ -841,7 +847,7 @@ describe('NewSetPage', () => {
   });
 
   describe('criterion 11: coin preview', () => {
-    it('lists each coin with its album-card title and denomination, grouped under ascending year headers', async () => {
+    it('lists each coin with its getCoinName title and subtitle, grouped under ascending year headers', async () => {
       searchParamsValue = new URLSearchParams('cloneFrom=canonical&cloneFromId=c2');
       mockCanonicalDetails({
         c2: loaded({
@@ -858,12 +864,46 @@ describe('NewSetPage', () => {
       expect(years).toEqual(['1909', '1943']);
       const items = screen.getAllByTestId('set-new-preview-item');
       expect(items).toHaveLength(2);
+
+      // COIN_A and COIN_B share baseCoin, so their titles are equal and cannot tell the rows apart.
+      // The subtitles can: they carry the year and mint mark.
+      const nameA = getCoinName(COIN_A);
+      const nameB = getCoinName(COIN_B);
+      expect(nameA.title).toBe('Lincoln Wheat Cent');
+      expect(nameA.subtitle).toBe('USA · 1 Cent · 1909-S');
+      expect(nameB.subtitle).toBe('USA · 1 Cent · 1943');
+
       // Year-ascending groups: COIN_A (1909) renders before COIN_B (1943) although B has the lower position.
-      expect(items[0]).toHaveTextContent(getAlbumCardText(COIN_A).title);
-      expect(items[1]).toHaveTextContent(getAlbumCardText(COIN_B).title);
-      expect(items[0]).not.toHaveTextContent(getAlbumCardText(COIN_B).title);
-      expect(items[0]).toHaveTextContent('1 Cent');
+      expect(within(items[0]).getByTestId('set-new-preview-title')).toHaveTextContent(nameA.title);
+      expect(within(items[0]).getByTestId('set-new-preview-subtitle')).toHaveTextContent(nameA.subtitle);
+      expect(within(items[1]).getByTestId('set-new-preview-title')).toHaveTextContent(nameB.title);
+      expect(within(items[1]).getByTestId('set-new-preview-subtitle')).toHaveTextContent(nameB.subtitle);
+      expect(items[0]).not.toHaveTextContent(nameB.subtitle);
+      expect(items[1]).not.toHaveTextContent(nameA.subtitle);
       expect(screen.queryByTestId('set-new-preview-more')).not.toBeInTheDocument();
+    });
+
+    it('shows the design as the title and country, denomination and year as the subtitle for a series coin', async () => {
+      searchParamsValue = new URLSearchParams('cloneFrom=canonical&cloneFromId=c2');
+      const donetsk = {
+        ...baseCoin,
+        id: 'coin-donetsk',
+        country: 'Ukraine',
+        denomination: '10 Hryvnias',
+        year: 2025,
+        variety: 'We Are Strong. We Are Together: Donetsk Oblast',
+        name: 'Ukraine Commemorative 10 Hryvnias',
+      };
+      mockCanonicalDetails({
+        c2: loaded({ ...CANONICAL_DETAIL_C2, coins: [{ id: 'r1', position: 0, coin: donetsk }] }),
+      });
+      await renderPage();
+
+      const [item] = screen.getAllByTestId('set-new-preview-item');
+      expect(within(item).getByTestId('set-new-preview-title')).toHaveTextContent(/^Donetsk Oblast$/);
+      expect(within(item).getByTestId('set-new-preview-subtitle')).toHaveTextContent(
+        /^Ukraine · 10 Hryvnias · 2025$/,
+      );
     });
 
     it('shows an image disc when a coin has an imageUrl and none when it does not', async () => {
