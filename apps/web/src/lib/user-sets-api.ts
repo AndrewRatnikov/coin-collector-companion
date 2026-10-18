@@ -3,12 +3,18 @@ import type {
   GapViewResponse,
   PatchSetCoinsRequest,
   UserSetCoinSummary,
+  UserSetListItem,
+  UserSetsSummaryResponse,
   UserSetSummary,
 } from '@coin-collector/shared';
 import { apiFetch } from './api-client';
 
-export async function getUserSets(): Promise<UserSetSummary[]> {
-  return apiFetch<UserSetSummary[]>('/sets');
+export async function getUserSets(): Promise<UserSetListItem[]> {
+  return apiFetch<UserSetListItem[]>('/sets');
+}
+
+export async function getSetsSummary(): Promise<UserSetsSummaryResponse> {
+  return apiFetch<UserSetsSummaryResponse>('/sets/summary');
 }
 
 export async function createSet(body: CreateSetRequestBody): Promise<UserSetSummary> {
