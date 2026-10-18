@@ -75,6 +75,21 @@ describe('AccountMenu', () => {
       expect(screen.getByTestId('site-nav-account-avatar')).toHaveTextContent('Z');
     });
 
+    it('derives the accessible name, header name and email from the given user', async () => {
+      const user = userEvent.setup();
+      renderMenu(makeUser({ email: 'zed@example.com' }));
+      const trigger = screen.getByTestId('site-nav-account-trigger');
+      expect(trigger).toHaveAttribute('aria-label', 'Account menu for zed');
+
+      await user.click(trigger);
+      const name = screen.getByTestId('site-nav-account-name');
+      const email = screen.getByTestId('site-nav-account-email');
+      expect(name).toHaveTextContent('zed');
+      expect(email).toHaveTextContent('zed@example.com');
+      expect(name).not.toHaveTextContent('collector');
+      expect(email).not.toHaveTextContent('collector');
+    });
+
     it('has aria-haspopup=menu and a collapsed state when closed', () => {
       renderMenu();
       const trigger = screen.getByTestId('site-nav-account-trigger');
