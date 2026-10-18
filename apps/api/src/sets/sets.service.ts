@@ -1,13 +1,17 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import type { UserSet } from '@prisma/client';
+import { getCoinName } from '@coin-collector/shared';
 import type {
   CanonicalSetDetail,
   CanonicalSetSummary,
   GapViewResponse,
   PaginatedResponse,
   PublicSetSummary,
+  SuggestedCanonicalSet,
   UserSetCoinSummary,
   UserSetDetail,
+  UserSetListItem,
+  UserSetsSummaryResponse,
   UserSetSummary,
 } from '@coin-collector/shared';
 import { PrismaService } from '../prisma/prisma.service';
@@ -18,15 +22,106 @@ import { FindPublicSetsQueryDto } from './dto/find-public-sets-query.dto';
 
 const MAX_LIMIT = 100;
 
+// Most owned coins first; ties by name, then id, so the suggestion is deterministic.
+function compareSuggestions(a: SuggestedCanonicalSet, b: SuggestedCanonicalSet): number {
+  if (a.ownedCount !== b.ownedCount) return b.ownedCount - a.ownedCount;
+  const byName = a.name.localeCompare(b.name, 'en');
+  if (byName !== 0) return byName;
+  if (a.id === b.id) return 0;
+  return a.id < b.id ? -1 : 1;
+}
+
 @Injectable()
 export class SetsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAllForUser(userId: string): Promise<UserSetSummary[]> {
-    return this.prisma.userSet.findMany({
+  async findAllForUser(userId: string): Promise<UserSetListItem[]> {
+    const rows = await this.prisma.userSet.findMany({
       where: { userId },
       orderBy: { createdAt: 'asc' },
+      include: {
+        coins: {
+          orderBy: { position: 'asc' },
+          select: {
+            coinId: true,
+            coin: {
+              select: {
+                country: true,
+                denomination: true,
+                year: true,
+                mintMark: true,
+                variety: true,
+                name: true,
+                isKeyDate: true,
+                ownerships: { where: { userId }, select: { coinId: true } },
+              },
+            },
+          },
+        },
+      },
     });
+
+    return rows.map(({ coins, ...set }) => {
+      const firstUnowned = coins.find((slot) => slot.coin.ownerships.length === 0);
+      return {
+        ...set,
+        ownedCount: coins.filter((slot) => slot.coin.ownerships.length > 0).length,
+        totalCount: coins.length,
+        firstMissing: firstUnowned ? getCoinName(firstUnowned.coin).title : null,
+      };
+    });
+  }
+
+  async getSummary(userId: string): Promise<UserSetsSummaryResponse> {
+    const [missingSlots, collectionCount, userSets, ownedChecklistCoins, checklists] =
+      await Promise.all([
+        this.prisma.userSetCoin.findMany({
+          where: { userSet: { userId }, coin: { ownerships: { none: { userId } } } },
+          select: { coinId: true },
+        }),
+        this.prisma.ownership.count({ where: { userId } }),
+        this.prisma.userSet.findMany({
+          where: { userId },
+          select: { clonedFromCanonicalId: true },
+        }),
+        this.prisma.canonicalSetCoin.findMany({
+          where: { coin: { ownerships: { some: { userId } } } },
+          select: { canonicalSetId: true },
+        }),
+        this.findAllCanonical(),
+      ]);
+
+    // Deduped here, not in SQL: a coin missing from two of the caller's sets counts once.
+    const uniqueMissingCount = new Set(missingSlots.map((slot) => slot.coinId)).size;
+
+    const alreadyCloned = new Set(
+      userSets
+        .map((set) => set.clonedFromCanonicalId)
+        .filter((id): id is string => id !== null),
+    );
+
+    // One row per distinct owned coin in a checklist (@@unique([canonicalSetId, coinId])).
+    const ownedPerChecklist = new Map<string, number>();
+    for (const row of ownedChecklistCoins) {
+      ownedPerChecklist.set(row.canonicalSetId, (ownedPerChecklist.get(row.canonicalSetId) ?? 0) + 1);
+    }
+
+    let suggestedSet: SuggestedCanonicalSet | null = null;
+    for (const checklist of checklists) {
+      const owned = ownedPerChecklist.get(checklist.id) ?? 0;
+      if (owned === 0 || alreadyCloned.has(checklist.id)) continue;
+      const candidate: SuggestedCanonicalSet = {
+        id: checklist.id,
+        name: checklist.name,
+        coinCount: checklist.coinCount,
+        ownedCount: owned,
+      };
+      if (!suggestedSet || compareSuggestions(candidate, suggestedSet) < 0) {
+        suggestedSet = candidate;
+      }
+    }
+
+    return { uniqueMissingCount, collectionCount, suggestedSet };
   }
 
   async create(userId: string, dto: CreateSetDto): Promise<UserSetSummary> {
