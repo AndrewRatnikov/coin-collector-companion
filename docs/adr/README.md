@@ -32,6 +32,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-10-17](2026-10-17-set-page-album-default-year-groups.md) | The set page defaults to Album and shows both views as year groups, replacing the country/mint-mark album pages | Accepted |
 | [2026-10-18](2026-10-18-user-set-list-returns-progress-per-set.md) | GET /sets returns a new UserSetListItem with ownedCount, totalCount and firstMissing, and UserSetSummary stays unchanged | Accepted |
 | [2026-10-18](2026-10-18-sets-summary-endpoint-computes-suggestion-server-side.md) | GET /sets/summary returns the unique missing count, collection size and suggested checklist in one server-computed response | Accepted |
+| [2026-10-18](2026-10-18-add-coins-sheet-membership-and-count-on-client.md) | The Add coins sheet derives set membership, ownership, hiding and the results count on the client, with no API change | Accepted |
 
 ## Where else decisions live
 
