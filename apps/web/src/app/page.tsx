@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AccountDeletedNotice } from '@/components/settings/account-deleted-notice';
 import { getStoredToken } from '@/lib/auth-token';
 import { useCatalog } from '@/lib/hooks/use-catalog';
@@ -20,9 +20,13 @@ export default function Home() {
 
   // Signed-in visitors land on My sets. The session lives in localStorage, so this can
   // only happen in the browser after mount (same pattern as RequireAuth). `replace`, not
-  // `push`, so Back doesn't bounce through `/`.
+  // `push`, so Back doesn't bounce through `/`. The ref guard makes the redirect fire once
+  // per mount even if the router object identity changes between renders.
+  const redirectedRef = useRef(false);
   useEffect(() => {
+    if (redirectedRef.current) return;
     if (getStoredToken()) {
+      redirectedRef.current = true;
       setRedirecting(true);
       router.replace('/dashboard');
     }
