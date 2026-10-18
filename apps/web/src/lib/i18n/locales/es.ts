@@ -9,7 +9,6 @@ import type { MessageKey } from './en';
 const esShape: Record<MessageKey, string> = {
   // nav
   'nav.catalog': 'Catálogo',
-  'nav.sets': 'Colecciones',
   'nav.canonicalSets': 'Colecciones canónicas',
   'nav.publicSets': 'Colecciones públicas',
   'nav.dashboard': 'Panel',
@@ -18,12 +17,17 @@ const esShape: Record<MessageKey, string> = {
   'nav.logOut': 'Cerrar sesión',
   'nav.logIn': 'Iniciar sesión',
   'nav.brand': 'Coin Collector Companion',
-  'nav.signUp': 'Registrarse',
   'nav.glossary': 'Glosario',
-  'nav.account': 'Cuenta',
   'nav.settings': 'Configuración',
   'nav.admin': 'Administración',
-  'nav.importCollection': 'Importar colección',
+  'nav.importCollection': 'Importar desde CSV',
+  'nav.mySets': 'Mis colecciones',
+  'nav.checklists': 'Listas de control',
+  'nav.createAccount': 'Crear cuenta',
+  'nav.mainLabel': 'Principal',
+  'nav.languageLabel': 'Idioma',
+  'nav.accountMenu': 'Menú de la cuenta',
+  'nav.accountMenuFor': 'Menú de la cuenta de',
 
   // language switcher
   'languageSwitcher.english': 'English',
@@ -322,6 +326,8 @@ const esShape: Record<MessageKey, string> = {
   'footer.attributionPrefix': 'Datos del catálogo obtenidos de',
   'footer.wikipediaLinkText': 'Wikipedia',
   'footer.attributionSuffix': ', utilizados bajo CC BY-SA 4.0.',
+  'footer.navLabel': 'Pie de página',
+  'footer.sendFeedback': 'Enviar comentarios',
 
   // glossary
   'glossary.pageTitle': 'Glosario',
