@@ -3,9 +3,11 @@
  * Contract source: runs/run_20260719_200109/plan.md § Interface Contract (Controller: SetsController)
  *                   runs/run_20260720_070901/plan.md § Interface Contract (Controller: SetsController)
  *                   runs/run_20260720_142942/plan.md § Interface Contract (Controller: SetsController — new handler)
+ *                   runs/run_20261018_105617/plan.md § Interface Contract (API: GET /api/v1/sets/summary)
  * Covers criteria: #1, #2, #8, #9 (from runs/run_20260719_200109/prd.md)
  *                   #1, #2, #7, #8, #9, #10, #11, #12 (from runs/run_20260720_070901/prd.md)
  *                   #9 (from runs/run_20260720_142942/prd.md)
+ *                   #3 (from runs/run_20261018_105617/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -16,7 +18,8 @@
  * logic, which belongs to sets.service.spec.ts. Route *declaration order* (PRD criterion #13/#14
  * from run_20260720_070901/prd.md) is explicitly a manual-pass concern per plan.md's Interface
  * Contract and Risks section — it requires a live HTTP server to observe NestJS's actual route
- * matching, which a direct controller-instance unit test (no HTTP layer) cannot exercise. No real
+ * matching, which a direct controller-instance unit test (no HTTP layer) cannot exercise; the
+ * `GET /sets/summary` route is exercised over HTTP in test/sets-summary.e2e-spec.ts. No real
  * network/DB call anywhere in this file.
  */
 
@@ -35,6 +38,7 @@ describe('SetsController', () => {
   let controller: SetsController;
   let mockSetsService: {
     findAllForUser: jest.Mock;
+    getSummary: jest.Mock;
     create: jest.Mock;
     update: jest.Mock;
     remove: jest.Mock;
@@ -51,6 +55,7 @@ describe('SetsController', () => {
   beforeEach(async () => {
     mockSetsService = {
       findAllForUser: jest.fn(),
+      getSummary: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       remove: jest.fn(),
@@ -122,6 +127,14 @@ describe('SetsController', () => {
     });
   });
 
+  describe('@Public() metadata — getSummary (criterion #3 from run_20261018_105617/prd.md)', () => {
+    const reflector = new Reflector();
+
+    it('does NOT mark getSummary as public — the summary is user-scoped', () => {
+      expect(reflector.get<boolean>(IS_PUBLIC_KEY, controller.getSummary)).toBeFalsy();
+    });
+  });
+
   describe('findAll (criterion #1 from run_20260719_200109/prd.md)', () => {
     it('delegates the caller userId to setsService.findAllForUser and returns its result unchanged', async () => {
       const serviceResult = [{ id: 'set-1', userId: 'user-1', name: 'My Set' }];
@@ -130,6 +143,34 @@ describe('SetsController', () => {
       const result = await controller.findAll(user);
 
       expect(mockSetsService.findAllForUser).toHaveBeenCalledWith('user-1');
+      expect(result).toBe(serviceResult);
+    });
+  });
+
+  describe('getSummary (criterion #3 from run_20261018_105617/prd.md)', () => {
+    it('delegates the caller userId to setsService.getSummary and returns its result unchanged', async () => {
+      const serviceResult = { uniqueMissingCount: 4, collectionCount: 9, suggestedSet: null };
+      mockSetsService.getSummary.mockResolvedValue(serviceResult);
+
+      const result = await controller.getSummary(user);
+
+      expect(mockSetsService.getSummary).toHaveBeenCalledWith('user-1');
+      expect(result).toBe(serviceResult);
+    });
+
+    it('passes the userId of whichever caller made the request', async () => {
+      const otherUser: AuthenticatedUser = { userId: 'user-2', email: 'b@example.com' };
+      const serviceResult = {
+        uniqueMissingCount: 0,
+        collectionCount: 1,
+        suggestedSet: { id: 'cs-1', name: 'Lincoln Cents', coinCount: 12, ownedCount: 3 },
+      };
+      mockSetsService.getSummary.mockResolvedValue(serviceResult);
+
+      const result = await controller.getSummary(otherUser);
+
+      expect(mockSetsService.getSummary).toHaveBeenCalledWith('user-2');
+      expect(mockSetsService.getSummary).not.toHaveBeenCalledWith('user-1');
       expect(result).toBe(serviceResult);
     });
   });

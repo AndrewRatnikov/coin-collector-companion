@@ -1,16 +1,25 @@
 /**
  * Tests for: user-sets-api
  * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Module: user-sets-api.ts (MODIFY)
- * Covers criteria: #1 (from prd.md)
+ *                   runs/run_20261018_105617/plan.md § Interface Contract → Module: user-sets-api.ts (MODIFY)
+ * Covers criteria: #1 (from prd.md); #2, #3 (from run_20261018_105617's prd.md)
  *
  * This file supersedes the prior run's version of the same file, adding
  * patchSetCoins coverage alongside the existing getUserSets/createSet/renameSet/
- * deleteSet/getSetGaps tests (all unchanged from before).
+ * deleteSet/getSetGaps tests (all unchanged from before), and getSetsSummary.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // fetch is mocked via vi.stubGlobal, not vi.mock(), see vitest.setup.ts
-import { createSet, deleteSet, getSetGaps, getUserSets, patchSetCoins, renameSet } from '@/lib/user-sets-api';
+import {
+  createSet,
+  deleteSet,
+  getSetGaps,
+  getSetsSummary,
+  getUserSets,
+  patchSetCoins,
+  renameSet,
+} from '@/lib/user-sets-api';
 
 function stubFetchResolving(status: number, body: unknown) {
   const fetchMock = vi.fn().mockResolvedValue({
@@ -55,6 +64,49 @@ describe('user-sets-api', () => {
       const result = await getUserSets();
       expect(Array.isArray(result)).toBe(true);
       expect(result).toEqual(sets);
+    });
+
+    it('passes the progress fields (ownedCount, totalCount, firstMissing) through unchanged', async () => {
+      const sets = [{ ...SUMMARY, ownedCount: 3, totalCount: 8, firstMissing: 'Odesa Oblast' }];
+      stubFetchResolving(200, sets);
+      const result = await getUserSets();
+      expect(result[0].ownedCount).toBe(3);
+      expect(result[0].totalCount).toBe(8);
+      expect(result[0].firstMissing).toBe('Odesa Oblast');
+    });
+  });
+
+  describe('run_20261018_105617 criterion 3: getSetsSummary calls GET /sets/summary', () => {
+    it('requests /sets/summary with a single argument and returns the summary body', async () => {
+      const body = {
+        uniqueMissingCount: 4,
+        collectionCount: 21,
+        suggestedSet: { id: 'cs-1', name: 'Lincoln Cents', coinCount: 12, ownedCount: 3 },
+      };
+      const fetchMock = stubFetchResolving(200, body);
+      const result = await getSetsSummary();
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url.endsWith('/sets/summary')).toBe(true);
+      expect(result).toEqual(body);
+    });
+
+    it('does not request the plain /sets list', async () => {
+      const fetchMock = stubFetchResolving(200, { uniqueMissingCount: 0, collectionCount: 0, suggestedSet: null });
+      await getSetsSummary();
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url.endsWith('/sets')).toBe(false);
+    });
+
+    it('returns a null suggestedSet as null', async () => {
+      stubFetchResolving(200, { uniqueMissingCount: 0, collectionCount: 5, suggestedSet: null });
+      const result = await getSetsSummary();
+      expect(result.suggestedSet).toBeNull();
+      expect(result.collectionCount).toBe(5);
+    });
+
+    it('propagates a rejection when the request fails', async () => {
+      stubFetchResolving(500, { message: 'Internal error' });
+      await expect(getSetsSummary()).rejects.toThrow();
     });
   });
 

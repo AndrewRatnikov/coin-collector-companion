@@ -2,10 +2,11 @@
  * Tests for: use-user-sets hooks
  * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Module: use-user-sets.ts (MODIFY)
  * Extended by: runs/run_20261017_210503/plan.md § Interface Contract → Hooks in use-user-sets.ts
- * Covers criteria: #1, #2 (run_20260721_171115); #12 (run_20261017_210503)
+ *              runs/run_20261018_105617/plan.md § Interface Contract → Module: use-user-sets.ts (MODIFY)
+ * Covers criteria: #1, #2 (run_20260721_171115); #12 (run_20261017_210503); #3, #10 (run_20261018_105617)
  *
  * All earlier tests are kept unchanged. Added: optimistic remove in usePatchSetCoins, the extra
- * ['user-sets'] invalidation, and useAddCoinsToSet.
+ * ['user-sets'] invalidation, useAddCoinsToSet, and useSetsSummary.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -20,12 +21,22 @@ import {
   usePatchSetCoins,
   useRenameSet,
   useSetGaps,
+  useSetsSummary,
   useUserSets,
 } from '@/lib/hooks/use-user-sets';
-import { createSet, deleteSet, getSetGaps, getUserSets, patchSetCoins, renameSet } from '@/lib/user-sets-api';
+import {
+  createSet,
+  deleteSet,
+  getSetGaps,
+  getSetsSummary,
+  getUserSets,
+  patchSetCoins,
+  renameSet,
+} from '@/lib/user-sets-api';
 
 vi.mock('@/lib/user-sets-api', () => ({
   getUserSets: vi.fn(),
+  getSetsSummary: vi.fn(),
   createSet: vi.fn(),
   renameSet: vi.fn(),
   deleteSet: vi.fn(),
@@ -34,6 +45,7 @@ vi.mock('@/lib/user-sets-api', () => ({
 }));
 
 const getUserSetsMock = vi.mocked(getUserSets);
+const getSetsSummaryMock = vi.mocked(getSetsSummary);
 const createSetMock = vi.mocked(createSet);
 const renameSetMock = vi.mocked(renameSet);
 const deleteSetMock = vi.mocked(deleteSet);
@@ -116,6 +128,7 @@ const SET = {
 describe('use-user-sets hooks', () => {
   beforeEach(() => {
     getUserSetsMock.mockReset();
+    getSetsSummaryMock.mockReset();
     createSetMock.mockReset();
     renameSetMock.mockReset();
     deleteSetMock.mockReset();
@@ -143,6 +156,73 @@ describe('use-user-sets hooks', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(getUserSetsMock).not.toHaveBeenCalled();
       expect(result.current.fetchStatus).toBe('idle');
+    });
+  });
+
+  describe('run_20261018_105617 criterion 3/10: useSetsSummary wraps getSetsSummary under the user-sets key prefix', () => {
+    const SUMMARY = {
+      uniqueMissingCount: 6,
+      collectionCount: 14,
+      suggestedSet: { id: 'cs-1', name: 'Lincoln Cents', coinCount: 12, ownedCount: 3 },
+    };
+
+    it('calls getSetsSummary and exposes the resolved summary as data', async () => {
+      getSetsSummaryMock.mockResolvedValue(SUMMARY as never);
+      const { wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useSetsSummary(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.data).toEqual(SUMMARY);
+      });
+      expect(getSetsSummaryMock).toHaveBeenCalledTimes(1);
+      expect(getUserSetsMock).not.toHaveBeenCalled();
+    });
+
+    it('stores the result under ["user-sets", "summary"], separate from the ["user-sets"] list', async () => {
+      getSetsSummaryMock.mockResolvedValue(SUMMARY as never);
+      getUserSetsMock.mockResolvedValue([SET] as never);
+      const { queryClient, wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => ({ summary: useSetsSummary(), sets: useUserSets() }), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.summary.data).toEqual(SUMMARY);
+        expect(result.current.sets.data).toEqual([SET]);
+      });
+      expect(queryClient.getQueryData(['user-sets', 'summary'])).toEqual(SUMMARY);
+      expect(queryClient.getQueryData(['user-sets'])).toEqual([SET]);
+    });
+
+    it('refetches when the ["user-sets"] prefix is invalidated (how ownership changes refresh the dashboard)', async () => {
+      getSetsSummaryMock.mockResolvedValueOnce(SUMMARY as never);
+      getSetsSummaryMock.mockResolvedValueOnce({ ...SUMMARY, uniqueMissingCount: 5 } as never);
+      const { queryClient, wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useSetsSummary(), { wrapper });
+      await waitFor(() => {
+        expect(result.current.data?.uniqueMissingCount).toBe(6);
+      });
+
+      await act(async () => {
+        await queryClient.invalidateQueries({ queryKey: ['user-sets'] });
+      });
+
+      await waitFor(() => {
+        expect(result.current.data?.uniqueMissingCount).toBe(5);
+      });
+      expect(getSetsSummaryMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('exposes an error when getSetsSummary rejects', async () => {
+      getSetsSummaryMock.mockRejectedValue(new ApiError(500, 'Internal server error'));
+      const { wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useSetsSummary(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.isError).toBe(true);
+      });
     });
   });
 

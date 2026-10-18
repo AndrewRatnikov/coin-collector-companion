@@ -1,23 +1,26 @@
 /**
  * Tests for: use-collection hooks
  * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Module: use-collection.ts (CREATE)
- * Covers criteria: #3, #6, #8 (from prd.md)
+ *                   runs/run_20261018_105617/plan.md § Interface Contract → Module: use-collection.ts (unchanged)
+ * Covers criteria: #3, #6, #8 (from prd.md); #10 (from run_20261018_105617's prd.md)
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useCollection, useSetOwnership } from '@/lib/hooks/use-collection';
-import { getCollection, setOwnership } from '@/lib/collection-api';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
+import { useBulkSetOwnership, useCollection, useSetOwnership } from '@/lib/hooks/use-collection';
+import { getCollection, setOwnership, setOwnershipBulk } from '@/lib/collection-api';
 import { ApiError } from '@/lib/api-client';
 
 vi.mock('@/lib/collection-api', () => ({
   getCollection: vi.fn(),
   setOwnership: vi.fn(),
+  setOwnershipBulk: vi.fn(),
 }));
 
 const getCollectionMock = vi.mocked(getCollection);
 const setOwnershipMock = vi.mocked(setOwnership);
+const setOwnershipBulkMock = vi.mocked(setOwnershipBulk);
 
 function makeWrapper() {
   const queryClient = new QueryClient({
@@ -56,6 +59,7 @@ describe('use-collection hooks', () => {
   beforeEach(() => {
     getCollectionMock.mockReset();
     setOwnershipMock.mockReset();
+    setOwnershipBulkMock.mockReset();
   });
 
   describe('criterion 6: useCollection wraps getCollection', () => {
@@ -132,6 +136,102 @@ describe('use-collection hooks', () => {
         expect(result.current.isSuccess).toBe(true);
       });
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['collection'] });
+    });
+  });
+
+  describe('run_20261018_105617 criterion 10: ownership changes refresh the My sets queries', () => {
+    const LIST = [{ id: 'set-1', ownedCount: 1, totalCount: 3, firstMissing: 'Odesa Oblast' }];
+    const SUMMARY = { uniqueMissingCount: 2, collectionCount: 1, suggestedSet: null };
+
+    it('marks both the ["user-sets"] list and the ["user-sets", "summary"] query invalidated after a toggle', async () => {
+      setOwnershipMock.mockResolvedValue({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+      const { queryClient, wrapper } = makeWrapper();
+      queryClient.setQueryData(['user-sets'], LIST);
+      queryClient.setQueryData(['user-sets', 'summary'], SUMMARY);
+      expect(queryClient.getQueryState(['user-sets'])?.isInvalidated).toBe(false);
+      expect(queryClient.getQueryState(['user-sets', 'summary'])?.isInvalidated).toBe(false);
+
+      const { result } = renderHook(() => useSetOwnership(), { wrapper });
+      result.current.mutate({ coinId: 'coin-1', owned: true });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+      expect(queryClient.getQueryState(['user-sets'])?.isInvalidated).toBe(true);
+      expect(queryClient.getQueryState(['user-sets', 'summary'])?.isInvalidated).toBe(true);
+    });
+
+    it('refetches active list and summary queries after a toggle', async () => {
+      setOwnershipMock.mockResolvedValue({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+      const { wrapper } = makeWrapper();
+      const listFn = vi.fn().mockResolvedValue(LIST);
+      const summaryFn = vi.fn().mockResolvedValue(SUMMARY);
+
+      // Both queries are mounted, as on the dashboard.
+      const { result } = renderHook(
+        () => ({
+          list: useQuery({ queryKey: ['user-sets'], queryFn: listFn }),
+          summary: useQuery({ queryKey: ['user-sets', 'summary'], queryFn: summaryFn }),
+          ownership: useSetOwnership(),
+        }),
+        { wrapper },
+      );
+      await waitFor(() => {
+        expect(result.current.list.isSuccess).toBe(true);
+        expect(result.current.summary.isSuccess).toBe(true);
+      });
+      expect(listFn).toHaveBeenCalledTimes(1);
+      expect(summaryFn).toHaveBeenCalledTimes(1);
+
+      result.current.ownership.mutate({ coinId: 'coin-1', owned: true });
+
+      await waitFor(() => {
+        expect(result.current.ownership.isSuccess).toBe(true);
+      });
+      expect(listFn).toHaveBeenCalledTimes(2);
+      expect(summaryFn).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not patch the summary as a gap view during the optimistic step', async () => {
+      let finish!: () => void;
+      setOwnershipMock.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finish = () => resolve({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+          }),
+      );
+      const { queryClient, wrapper } = makeWrapper();
+      queryClient.setQueryData(['user-sets', 'summary'], SUMMARY);
+
+      const { result } = renderHook(() => useSetOwnership(), { wrapper });
+      result.current.mutate({ coinId: 'coin-1', owned: true });
+
+      await waitFor(() => {
+        expect(setOwnershipMock).toHaveBeenCalled();
+      });
+      expect(queryClient.getQueryData(['user-sets', 'summary'])).toEqual(SUMMARY);
+
+      finish();
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+    });
+
+    it('also invalidates both queries after a bulk change', async () => {
+      setOwnershipBulkMock.mockResolvedValue({ updated: 2 } as never);
+      const { queryClient, wrapper } = makeWrapper();
+      queryClient.setQueryData(['user-sets'], LIST);
+      queryClient.setQueryData(['user-sets', 'summary'], SUMMARY);
+
+      const { result } = renderHook(() => useBulkSetOwnership(), { wrapper });
+      result.current.mutate({ coinIds: ['coin-1', 'coin-2'], owned: true });
+
+      await waitFor(() => {
+        expect(result.current.isSuccess).toBe(true);
+      });
+      expect(setOwnershipBulkMock).toHaveBeenCalledWith(['coin-1', 'coin-2'], true);
+      expect(queryClient.getQueryState(['user-sets'])?.isInvalidated).toBe(true);
+      expect(queryClient.getQueryState(['user-sets', 'summary'])?.isInvalidated).toBe(true);
     });
   });
 
