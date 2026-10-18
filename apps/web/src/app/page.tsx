@@ -1,7 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { AccountDeletedNotice } from '@/components/settings/account-deleted-notice';
+import { getStoredToken } from '@/lib/auth-token';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import { useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
 import { usePublicSets } from '@/lib/hooks/use-public-sets';
@@ -12,6 +15,18 @@ const ROW_CLASSES =
 
 export default function Home() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const [redirecting, setRedirecting] = useState(false);
+
+  // Signed-in visitors land on My sets. The session lives in localStorage, so this can
+  // only happen in the browser after mount (same pattern as RequireAuth). `replace`, not
+  // `push`, so Back doesn't bounce through `/`.
+  useEffect(() => {
+    if (getStoredToken()) {
+      setRedirecting(true);
+      router.replace('/dashboard');
+    }
+  }, [router]);
 
   const catalog = useCatalog({ page: 1, limit: 1 });
   const canonicalSets = useCanonicalSets();
@@ -20,6 +35,10 @@ export default function Home() {
   const catalogTotal = !catalog.isLoading && catalog.data ? catalog.data.total : null;
   const canonicalTotal = !canonicalSets.isLoading && canonicalSets.data ? canonicalSets.data.length : null;
   const publicTotal = !publicSets.isLoading && publicSets.data ? publicSets.data.total : null;
+
+  if (redirecting) {
+    return <main data-testid="home-redirecting" className="flex-1" />;
+  }
 
   return (
     <main
