@@ -24,6 +24,8 @@ import DashboardPage from '@/app/dashboard/page';
 import { useSetsSummary, useUserSets } from '@/lib/hooks/use-user-sets';
 import { useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
 import { setStoredToken } from '@/lib/auth-token';
+import { I18nProvider } from '@/lib/i18n/i18n-context';
+import { LOCALE_STORAGE_KEY } from '@/lib/i18n/types';
 
 const replaceMock = vi.fn();
 
@@ -238,6 +240,32 @@ describe('DashboardPage', () => {
         'dashboard-new-set-cta',
       ]) {
         expect(screen.queryByTestId(id)).not.toBeInTheDocument();
+      }
+    });
+  });
+
+  describe('criterion 1: Spanish', () => {
+    it('localizes the title, New set action and sort labels when es is stored', async () => {
+      localStorage.setItem(LOCALE_STORAGE_KEY, 'es');
+      setStoredToken('tok-abc');
+      mockLoaded(SETS);
+      render(
+        <I18nProvider>
+          <DashboardPage />
+        </I18nProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('dashboard-title')).toHaveTextContent('Mis colecciones');
+      });
+      expect(screen.getByTestId('dashboard-new-set')).not.toHaveTextContent('New set');
+      const labels = within(screen.getByTestId('dashboard-sort'))
+        .getAllByRole('option')
+        .map((o) => o.textContent);
+      expect(labels).toHaveLength(4);
+      const english = ['Closest to complete', 'Recently updated', 'Name A–Z', 'Most missing'];
+      for (let i = 0; i < english.length; i++) {
+        expect(labels[i]).not.toBe(english[i]);
       }
     });
   });
