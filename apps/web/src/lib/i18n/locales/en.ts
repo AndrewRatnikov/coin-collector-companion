@@ -14,21 +14,25 @@
 const enShape = {
   // nav
   'nav.catalog': 'Catalog',
-  'nav.sets': 'Sets',
   'nav.canonicalSets': 'Canonical Sets',
   'nav.publicSets': 'Public Sets',
   'nav.dashboard': 'Dashboard',
   'nav.collection': 'Collection',
-  'nav.mySubmissions': 'My Submissions',
+  'nav.mySubmissions': 'My submissions',
   'nav.logOut': 'Log out',
   'nav.logIn': 'Log in',
   'nav.brand': 'Coin Collector Companion',
-  'nav.signUp': 'Sign up',
   'nav.glossary': 'Glossary',
-  'nav.account': 'Account',
   'nav.settings': 'Settings',
   'nav.admin': 'Admin',
-  'nav.importCollection': 'Import collection',
+  'nav.importCollection': 'Import from CSV',
+  'nav.mySets': 'My sets',
+  'nav.checklists': 'Checklists',
+  'nav.createAccount': 'Create account',
+  'nav.mainLabel': 'Main',
+  'nav.languageLabel': 'Language',
+  'nav.accountMenu': 'Account menu',
+  'nav.accountMenuFor': 'Account menu for',
 
   // language switcher
   'languageSwitcher.english': 'English',
@@ -327,6 +331,8 @@ const enShape = {
   'footer.attributionPrefix': 'Catalog data derived from',
   'footer.wikipediaLinkText': 'Wikipedia',
   'footer.attributionSuffix': ', used under CC BY-SA 4.0.',
+  'footer.navLabel': 'Footer',
+  'footer.sendFeedback': 'Send feedback',
 
   // glossary
   'glossary.pageTitle': 'Glossary',
