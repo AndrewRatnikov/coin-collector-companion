@@ -8,7 +8,15 @@ import type {
 } from '@coin-collector/shared';
 import { ApiError } from '@/lib/api-client';
 import { removeCoinsFromGaps } from '@/lib/set-page';
-import { createSet, deleteSet, getSetGaps, getUserSets, patchSetCoins, renameSet } from '@/lib/user-sets-api';
+import {
+  createSet,
+  deleteSet,
+  getSetGaps,
+  getSetsSummary,
+  getUserSets,
+  patchSetCoins,
+  renameSet,
+} from '@/lib/user-sets-api';
 
 // `enabled` lets a public page skip this authenticated call for an anonymous visitor
 // (see useCollection).
@@ -17,6 +25,15 @@ export function useUserSets({ enabled = true }: { enabled?: boolean } = {}) {
     queryKey: ['user-sets'],
     queryFn: getUserSets,
     enabled,
+  });
+}
+
+// Under the ['user-sets'] prefix on purpose: every set and ownership mutation invalidates
+// ['user-sets'], which refreshes this summary too.
+export function useSetsSummary() {
+  return useQuery({
+    queryKey: ['user-sets', 'summary'],
+    queryFn: getSetsSummary,
   });
 }
 
