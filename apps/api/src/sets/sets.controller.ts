@@ -8,6 +8,8 @@ import type {
   PublicSetSummary,
   UserSetCoinSummary,
   UserSetDetail,
+  UserSetListItem,
+  UserSetsSummaryResponse,
   UserSetSummary,
 } from '@coin-collector/shared';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -27,8 +29,8 @@ export class SetsController {
 
   @Get()
   @ApiOperation({ summary: "List the current user's own sets" })
-  @ApiOkResponse({ description: "The caller's UserSet rows" })
-  findAll(@CurrentUser() user: AuthenticatedUser): Promise<UserSetSummary[]> {
+  @ApiOkResponse({ description: "The caller's UserSet rows with their progress" })
+  findAll(@CurrentUser() user: AuthenticatedUser): Promise<UserSetListItem[]> {
     return this.setsService.findAllForUser(user.userId);
   }
 
@@ -40,6 +42,15 @@ export class SetsController {
     @Body() dto: CreateSetDto,
   ): Promise<UserSetSummary> {
     return this.setsService.create(user.userId, dto);
+  }
+
+  @Get('summary')
+  @ApiOperation({
+    summary: "Summary of the current user's sets: unique missing coins, collection size, suggested checklist",
+  })
+  @ApiOkResponse({ description: 'Summary for the My sets page' })
+  getSummary(@CurrentUser() user: AuthenticatedUser): Promise<UserSetsSummaryResponse> {
+    return this.setsService.getSummary(user.userId);
   }
 
   @Public()
