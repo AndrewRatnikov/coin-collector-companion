@@ -2,15 +2,18 @@
  * Tests for: shared package types (UserSetSummary, CloneFromRequest, CreateSetRequestBody,
  * CanonicalSetSummary, CanonicalSetCoinItem, CanonicalSetDetail, UserSetCoinItem, UserSetDetail,
  * UserSetCoinSummary, PatchSetCoinsRequest, OwnershipItem, SetOwnershipRequest,
- * SetOwnershipResponse, GapSlot, GapViewResponse, PublicSetSummary)
+ * SetOwnershipResponse, GapSlot, GapViewResponse, PublicSetSummary, UserSetListItem,
+ * SuggestedCanonicalSet, UserSetsSummaryResponse)
  * Contract source: runs/run_20260719_200109/plan.md § Interface Contract (Shared types)
  *                   runs/run_20260720_070901/plan.md § Interface Contract (Shared types)
  *                   runs/run_20260720_142942/plan.md § Interface Contract (Shared types)
  *                   runs/run_20261013_062900/plan.md § Interface Contract (Shared types)
+ *                   runs/run_20261018_105617/plan.md § Interface Contract (Shared types)
  * Covers criteria: #11 (from runs/run_20260719_200109/prd.md)
  *                   #17 (from runs/run_20260720_070901/prd.md)
  *                   #12 (from runs/run_20260720_142942/prd.md)
  *                   #18, #19 (from runs/run_20261013_062900/prd.md)
+ *                   #2, #3, #7 (from runs/run_20261018_105617/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -26,13 +29,16 @@
  * For run_20261013_062900 the `@ts-expect-error` lines pin the type shape: a CanonicalSetDetail
  * literal must NOT accept `coinCount` (it is `Omit<CanonicalSetSummary, 'coinCount'>`-based), and
  * a PublicSetSummary literal must require it. If the types drift, the directive becomes unused
- * and ts-jest fails the file.
+ * and ts-jest fails the file. The same technique pins UserSetListItem (run_20261018_105617).
  */
 
 import type {
   CloneFromRequest,
   CreateSetRequestBody,
   UserSetSummary,
+  UserSetListItem,
+  SuggestedCanonicalSet,
+  UserSetsSummaryResponse,
   CanonicalSetSummary,
   CanonicalSetCoinItem,
   CanonicalSetDetail,
@@ -271,6 +277,99 @@ describe('shared package: PublicSetSummary (criterion #19 from run_20261013_0629
     };
 
     expect(summary.name).toBe('Own set');
+  });
+});
+
+describe('shared package: UserSetListItem (criterion #2 from run_20261018_105617/prd.md)', () => {
+  it('extends UserSetSummary with ownedCount, totalCount and a nullable firstMissing', () => {
+    const inProgress: UserSetListItem = {
+      id: '11111111-1111-1111-1111-111111111111',
+      userId: '22222222-2222-2222-2222-222222222222',
+      name: 'We Are Strong',
+      clonedFromCanonicalId: null,
+      clonedFromUserSetId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ownedCount: 11,
+      totalCount: 12,
+      firstMissing: 'Zaporizhzhia Oblast',
+    };
+    const complete: UserSetListItem = { ...inProgress, ownedCount: 12, firstMissing: null };
+    const asUserSummary: UserSetSummary = inProgress;
+
+    expect(inProgress.firstMissing).toBe('Zaporizhzhia Oblast');
+    expect(complete.firstMissing).toBeNull();
+    expect(complete.ownedCount).not.toBe(inProgress.ownedCount);
+    expect(asUserSummary.name).toBe('We Are Strong');
+  });
+
+  it('requires ownedCount, totalCount and firstMissing', () => {
+    // @ts-expect-error the list item requires the progress fields
+    const missing: UserSetListItem = {
+      id: '11111111-1111-1111-1111-111111111111',
+      userId: '22222222-2222-2222-2222-222222222222',
+      name: 'No progress',
+      clonedFromCanonicalId: null,
+      clonedFromUserSetId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    expect(missing.name).toBe('No progress');
+  });
+
+  it('leaves UserSetSummary without the progress fields', () => {
+    const summary: UserSetSummary = {
+      id: '11111111-1111-1111-1111-111111111111',
+      userId: '22222222-2222-2222-2222-222222222222',
+      name: 'Own set',
+      clonedFromCanonicalId: null,
+      clonedFromUserSetId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      // @ts-expect-error UserSetSummary itself stays count-free (create and rename responses)
+      ownedCount: 1,
+    };
+
+    expect(summary.name).toBe('Own set');
+  });
+});
+
+describe('shared package: UserSetsSummaryResponse (criteria #3, #7 from run_20261018_105617/prd.md)', () => {
+  it('SuggestedCanonicalSet carries id, name, coinCount and ownedCount', () => {
+    const suggestion: SuggestedCanonicalSet = {
+      id: 'cs-1',
+      name: 'Ukraine circulation coins',
+      coinCount: 40,
+      ownedCount: 7,
+    };
+
+    expect(suggestion.coinCount).toBe(40);
+    expect(suggestion.ownedCount).toBe(7);
+  });
+
+  it('UserSetsSummaryResponse allows suggestedSet to be a suggestion or null', () => {
+    const withSuggestion: UserSetsSummaryResponse = {
+      uniqueMissingCount: 9,
+      collectionCount: 31,
+      suggestedSet: { id: 'cs-1', name: 'Lincoln Cents', coinCount: 12, ownedCount: 3 },
+    };
+    const without: UserSetsSummaryResponse = {
+      uniqueMissingCount: 0,
+      collectionCount: 0,
+      suggestedSet: null,
+    };
+
+    expect(withSuggestion.suggestedSet?.id).toBe('cs-1');
+    expect(without.suggestedSet).toBeNull();
+    expect(withSuggestion.uniqueMissingCount).not.toBe(without.uniqueMissingCount);
+  });
+
+  it('requires uniqueMissingCount and collectionCount', () => {
+    // @ts-expect-error both counts are required on the summary response
+    const missing: UserSetsSummaryResponse = { suggestedSet: null };
+
+    expect(missing.suggestedSet).toBeNull();
   });
 });
 

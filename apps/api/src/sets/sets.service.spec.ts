@@ -5,6 +5,7 @@
  *                   runs/run_20260720_142942/plan.md § Interface Contract (Service: SetsService — new method)
  *                   runs/run_20260720_171320/plan.md § Interface Contract (Test addition: getGaps — no-coins-owned case)
  *                   runs/run_20261013_062900/plan.md § Interface Contract (API: SetsService — coinCount on list methods)
+ *                   runs/run_20261018_105617/plan.md § Interface Contract (API: GET /sets, GET /sets/summary)
  * Covers criteria: #1, #3, #4, #5, #6, #7, #8, #9, #10 (from runs/run_20260719_200109/prd.md)
  *                   #1, #2 [validated in dto spec, not here], #3, #4, #5, #6, #7, #8, #9, #10,
  *                   #11, #12, #17 (from runs/run_20260720_070901/prd.md)
@@ -13,6 +14,8 @@
  *                   gap-computation case, distinct from the pre-existing zero-*coin*-set case)
  *                   #18, #19, #20 (from runs/run_20261013_062900/prd.md — coinCount from Prisma _count
  *                   on findAllCanonical and findAllPublic, with no _count key leaking out)
+ *                   #2, #3, #7 (from runs/run_20261018_105617/prd.md — findAllForUser progress fields,
+ *                   getSummary unique-missing dedupe / no sets / suggestion)
  *
  * CONTRACT_GAP: none.
  *
@@ -29,6 +32,9 @@
  * Prisma nested include (`coins.coin.ownerships` filtered to `where: { userId: callerId }`
  * at the DB layer) — the mock's `coins[].coin.ownerships` array is pre-shaped as if that
  * filter already ran, since a mocked Prisma client cannot itself apply a WHERE clause.
+ *
+ * The same holds for findAllForUser and getSummary (run_20261018_105617): the mocked rows are
+ * pre-shaped as if the WHERE / include filters already ran.
  */
 
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
@@ -70,6 +76,7 @@ describe('SetsService', () => {
       upsert: jest.Mock;
       delete: jest.Mock;
       deleteMany: jest.Mock;
+      count: jest.Mock;
     };
     $transaction: jest.Mock;
   };
@@ -106,6 +113,7 @@ describe('SetsService', () => {
         upsert: jest.fn(),
         delete: jest.fn(),
         deleteMany: jest.fn(),
+        count: jest.fn().mockResolvedValue(0),
       },
       $transaction: jest.fn((callback: (tx: unknown) => unknown) => callback(mockPrismaService)),
     };
@@ -125,13 +133,357 @@ describe('SetsService', () => {
       expect(call.where.userId).toBe('user-1');
     });
 
-    it('returns whatever prisma resolves', async () => {
-      const rows = [{ id: 'set-1', userId: 'user-1', name: 'My Set' }];
-      mockPrismaService.userSet.findMany.mockResolvedValue(rows);
+    it('returns an empty array when the user has no sets', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([]);
+
+      await expect(service.findAllForUser('user-1')).resolves.toEqual([]);
+    });
+  });
+
+  describe('findAllForUser — progress fields (criterion #2 from run_20261018_105617/prd.md)', () => {
+    function makeCoin(name: string, owned: boolean, extra: Record<string, unknown> = {}) {
+      return {
+        coinId: `coin-${name}`,
+        coin: {
+          country: 'Ukraine',
+          denomination: '10 Hryvnias',
+          year: 2022,
+          mintMark: '',
+          variety: '',
+          name,
+          isKeyDate: false,
+          ownerships: owned ? [{ coinId: `coin-${name}` }] : [],
+          ...extra,
+        },
+      };
+    }
+
+    function makeRow(id: string, name: string, coins: ReturnType<typeof makeCoin>[]) {
+      return {
+        id,
+        userId: 'user-1',
+        name,
+        clonedFromCanonicalId: null,
+        clonedFromUserSetId: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+        coins,
+      };
+    }
+
+    it('asks Prisma for one query ordered by createdAt asc with coins ordered by position and ownerships scoped to the caller', async () => {
+      await service.findAllForUser('user-1');
+
+      expect(mockPrismaService.userSet.findMany).toHaveBeenCalledTimes(1);
+      const call = mockPrismaService.userSet.findMany.mock.calls[0][0];
+      expect(call.where).toEqual({ userId: 'user-1' });
+      expect(call.orderBy).toEqual({ createdAt: 'asc' });
+      expect(call.include.coins.orderBy).toEqual({ position: 'asc' });
+      expect(call.include.coins.select.coin.select.ownerships).toEqual({
+        where: { userId: 'user-1' },
+        select: { coinId: true },
+      });
+      expect(mockPrismaService.userSetCoin.findMany).not.toHaveBeenCalled();
+      expect(mockPrismaService.ownership.findMany).not.toHaveBeenCalled();
+    });
+
+    it('adds ownedCount, totalCount and firstMissing and keeps the existing set fields', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([
+        makeRow('set-1', 'We Are Strong', [
+          makeCoin('Kyiv Oblast', true),
+          makeCoin('Odesa Oblast', false),
+          makeCoin('Lviv Oblast', true),
+          makeCoin('Zaporizhzhia Oblast', false),
+        ]),
+      ]);
 
       const result = await service.findAllForUser('user-1');
 
-      expect(result).toBe(rows);
+      expect(result).toEqual([
+        {
+          id: 'set-1',
+          userId: 'user-1',
+          name: 'We Are Strong',
+          clonedFromCanonicalId: null,
+          clonedFromUserSetId: null,
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+          updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+          ownedCount: 2,
+          totalCount: 4,
+          firstMissing: 'Odesa Oblast',
+        },
+      ]);
+    });
+
+    it('does not leak the coins key into the response', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([
+        makeRow('set-1', 'A', [makeCoin('Kyiv Oblast', true)]),
+      ]);
+
+      const result = await service.findAllForUser('user-1');
+
+      expect(result[0]).not.toHaveProperty('coins');
+    });
+
+    it('takes firstMissing from the first unowned coin in position order, not the last', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([
+        makeRow('set-1', 'A', [
+          makeCoin('Kyiv Oblast', false),
+          makeCoin('Odesa Oblast', false),
+        ]),
+      ]);
+
+      const [first] = await service.findAllForUser('user-1');
+      expect(first.firstMissing).toBe('Kyiv Oblast');
+
+      mockPrismaService.userSet.findMany.mockResolvedValue([
+        makeRow('set-1', 'A', [
+          makeCoin('Kyiv Oblast', true),
+          makeCoin('Odesa Oblast', false),
+        ]),
+      ]);
+
+      const [second] = await service.findAllForUser('user-1');
+      expect(second.firstMissing).toBe('Odesa Oblast');
+    });
+
+    it('uses the shared coin title (getCoinName), not the raw name field', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([
+        makeRow('set-1', 'A', [
+          makeCoin('Ukraine 10 Hryvnias', false, { year: 2019, mintMark: '', variety: '', isKeyDate: false }),
+        ]),
+      ]);
+
+      const [item] = await service.findAllForUser('user-1');
+
+      // The name only repeats the country and denomination, so the title falls back to the denomination.
+      expect(item.firstMissing).toBe('10 Hryvnias');
+    });
+
+    it('returns firstMissing null and ownedCount equal to totalCount for a complete set', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([
+        makeRow('set-1', 'Done', [makeCoin('Kyiv Oblast', true), makeCoin('Odesa Oblast', true)]),
+      ]);
+
+      const [item] = await service.findAllForUser('user-1');
+
+      expect(item.ownedCount).toBe(2);
+      expect(item.totalCount).toBe(2);
+      expect(item.firstMissing).toBeNull();
+    });
+
+    it('returns 0, 0 and null for a set with no coins', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([makeRow('set-1', 'Empty', [])]);
+
+      const [item] = await service.findAllForUser('user-1');
+
+      expect(item.ownedCount).toBe(0);
+      expect(item.totalCount).toBe(0);
+      expect(item.firstMissing).toBeNull();
+    });
+
+    it('gives every set its own counts and preserves the row order', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([
+        makeRow('set-1', 'First', [makeCoin('Kyiv Oblast', true), makeCoin('Odesa Oblast', false)]),
+        makeRow('set-2', 'Second', [
+          makeCoin('Lviv Oblast', false),
+          makeCoin('Sumy Oblast', false),
+          makeCoin('Poltava Oblast', false),
+        ]),
+      ]);
+
+      const result = await service.findAllForUser('user-1');
+
+      expect(result.map((r) => r.id)).toEqual(['set-1', 'set-2']);
+      expect(result.map((r) => r.ownedCount)).toEqual([1, 0]);
+      expect(result.map((r) => r.totalCount)).toEqual([2, 3]);
+      expect(result.map((r) => r.firstMissing)).toEqual(['Odesa Oblast', 'Lviv Oblast']);
+    });
+  });
+
+  describe('getSummary (criteria #3, #7 from run_20261018_105617/prd.md)', () => {
+    const canonical = (id: string, name: string, coins: number) => ({
+      id,
+      name,
+      description: null,
+      source: 'admin',
+      templateVersion: '1',
+      _count: { coins },
+    });
+
+    const ownedTally = (canonicalSetId: string, times: number) =>
+      Array.from({ length: times }, () => ({ canonicalSetId }));
+
+    beforeEach(() => {
+      mockPrismaService.userSetCoin.findMany.mockResolvedValue([]);
+      mockPrismaService.ownership.count.mockResolvedValue(0);
+      mockPrismaService.userSet.findMany.mockResolvedValue([]);
+      mockPrismaService.canonicalSetCoin.findMany.mockResolvedValue([]);
+      mockPrismaService.canonicalSet.findMany.mockResolvedValue([]);
+    });
+
+    it('scopes every read to the caller', async () => {
+      await service.getSummary('user-1');
+
+      expect(mockPrismaService.userSetCoin.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userSet: { userId: 'user-1' }, coin: { ownerships: { none: { userId: 'user-1' } } } },
+          select: { coinId: true },
+        }),
+      );
+      expect(mockPrismaService.ownership.count).toHaveBeenCalledWith({ where: { userId: 'user-1' } });
+      expect(mockPrismaService.userSet.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: 'user-1' },
+          select: { clonedFromCanonicalId: true },
+        }),
+      );
+      expect(mockPrismaService.canonicalSetCoin.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { coin: { ownerships: { some: { userId: 'user-1' } } } },
+          select: { canonicalSetId: true },
+        }),
+      );
+    });
+
+    it('counts a coin missing from two sets once', async () => {
+      mockPrismaService.userSetCoin.findMany.mockResolvedValue([
+        { coinId: 'coin-a' },
+        { coinId: 'coin-b' },
+        { coinId: 'coin-a' },
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.uniqueMissingCount).toBe(2);
+    });
+
+    it('counts distinct coins when none repeat (different input gives a different count)', async () => {
+      mockPrismaService.userSetCoin.findMany.mockResolvedValue([
+        { coinId: 'coin-a' },
+        { coinId: 'coin-b' },
+        { coinId: 'coin-c' },
+        { coinId: 'coin-d' },
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.uniqueMissingCount).toBe(4);
+    });
+
+    it('returns uniqueMissingCount 0 for a user with no sets', async () => {
+      const result = await service.getSummary('user-1');
+
+      expect(result.uniqueMissingCount).toBe(0);
+      expect(result.suggestedSet).toBeNull();
+    });
+
+    it('returns collectionCount from the ownership count', async () => {
+      mockPrismaService.ownership.count.mockResolvedValue(17);
+      const first = await service.getSummary('user-1');
+      expect(first.collectionCount).toBe(17);
+
+      mockPrismaService.ownership.count.mockResolvedValue(3);
+      const second = await service.getSummary('user-1');
+      expect(second.collectionCount).toBe(3);
+    });
+
+    it('suggests the unadded checklist with the most owned coins', async () => {
+      mockPrismaService.canonicalSetCoin.findMany.mockResolvedValue([
+        ...ownedTally('cs-small', 2),
+        ...ownedTally('cs-big', 5),
+      ]);
+      mockPrismaService.canonicalSet.findMany.mockResolvedValue([
+        canonical('cs-small', 'Small Set', 10),
+        canonical('cs-big', 'Big Set', 40),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.suggestedSet).toEqual({ id: 'cs-big', name: 'Big Set', coinCount: 40, ownedCount: 5 });
+    });
+
+    it('excludes checklists the user already cloned, even when they share the most coins', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([
+        { clonedFromCanonicalId: 'cs-big' },
+        { clonedFromCanonicalId: null },
+      ]);
+      mockPrismaService.canonicalSetCoin.findMany.mockResolvedValue([
+        ...ownedTally('cs-small', 2),
+        ...ownedTally('cs-big', 5),
+      ]);
+      mockPrismaService.canonicalSet.findMany.mockResolvedValue([
+        canonical('cs-small', 'Small Set', 10),
+        canonical('cs-big', 'Big Set', 40),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.suggestedSet).toEqual({ id: 'cs-small', name: 'Small Set', coinCount: 10, ownedCount: 2 });
+    });
+
+    it('returns null when the only candidates were already cloned', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([{ clonedFromCanonicalId: 'cs-big' }]);
+      mockPrismaService.canonicalSetCoin.findMany.mockResolvedValue(ownedTally('cs-big', 5));
+      mockPrismaService.canonicalSet.findMany.mockResolvedValue([canonical('cs-big', 'Big Set', 40)]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.suggestedSet).toBeNull();
+    });
+
+    it('returns null when no checklist shares an owned coin', async () => {
+      mockPrismaService.canonicalSetCoin.findMany.mockResolvedValue([]);
+      mockPrismaService.canonicalSet.findMany.mockResolvedValue([
+        canonical('cs-a', 'Alpha', 10),
+        canonical('cs-b', 'Beta', 20),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.suggestedSet).toBeNull();
+    });
+
+    it('breaks a tally tie by name', async () => {
+      mockPrismaService.canonicalSetCoin.findMany.mockResolvedValue([
+        ...ownedTally('cs-z', 3),
+        ...ownedTally('cs-a', 3),
+      ]);
+      mockPrismaService.canonicalSet.findMany.mockResolvedValue([
+        canonical('cs-z', 'Zebra Set', 10),
+        canonical('cs-a', 'Alpha Set', 10),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.suggestedSet?.id).toBe('cs-a');
+    });
+
+    it('breaks a tally and name tie by id', async () => {
+      mockPrismaService.canonicalSetCoin.findMany.mockResolvedValue([
+        ...ownedTally('cs-2', 3),
+        ...ownedTally('cs-1', 3),
+      ]);
+      mockPrismaService.canonicalSet.findMany.mockResolvedValue([
+        canonical('cs-2', 'Same Name', 10),
+        canonical('cs-1', 'Same Name', 10),
+      ]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.suggestedSet?.id).toBe('cs-1');
+    });
+
+    it('ignores owned-coin rows for checklists that no longer exist', async () => {
+      mockPrismaService.canonicalSetCoin.findMany.mockResolvedValue([
+        ...ownedTally('cs-gone', 9),
+        ...ownedTally('cs-a', 1),
+      ]);
+      mockPrismaService.canonicalSet.findMany.mockResolvedValue([canonical('cs-a', 'Alpha', 10)]);
+
+      const result = await service.getSummary('user-1');
+
+      expect(result.suggestedSet?.id).toBe('cs-a');
     });
   });
 

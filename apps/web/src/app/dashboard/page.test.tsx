@@ -1,36 +1,31 @@
 /**
- * Tests for: DashboardPage
+ * Tests for: DashboardPage (My sets)
  * Contract source: runs/run_20260721_161448/plan.md § Interface Contract → Component: DashboardPage (MODIFY)
- *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/dashboard/page.tsx
  *                   runs/run_20261011_095624/plan.md § Interface Contract → Page: DashboardPage (MODIFY)
- * Covers criteria: #8, #9 (from run_20260721_161448's prd.md), #9 (from run_20260728_071525's prd.md),
- *                  #14 (from run_20261011_095624's prd.md)
+ *                   runs/run_20261018_105617/plan.md § Interface Contract → Page: DashboardPage
+ * Covers criteria: #14 (from run_20261011_095624's prd.md: set-deleted notice);
+ *                  #1, #4, #5, #6, #7, #8, #9 (from run_20261018_105617's prd.md)
  *
- * This replaces run_20260721_094026's placeholder dashboard test entirely — that run
- * only verified the Day 1 RequireAuth-gated placeholder; this run builds the real
- * content described in plan.md. The auth-redirect behavior is still covered below.
+ * This file replaces the earlier dashboard test: the old stat tiles (dashboard-stat-*), list
+ * (dashboard-set-list, dashboard-set-completion), per-set /gaps queries and dashboard-new-set-cta
+ * are gone, so their assertions are removed. The auth redirect and the set-deleted notice tests are
+ * carried over.
  *
- * DashboardPage calls the real (unmocked) `useQueries` from '@tanstack/react-query'
- * per the Interface Contract (a dynamic per-set gap query list), so every render here
- * needs a real QueryClientProvider ancestor — unlike pages that mock their query hooks
- * wholesale and need no provider at all.
+ * The page now takes its data from useUserSets() and useSetsSummary() (both mocked here) and
+ * MySetsEmpty calls useCanonicalSets() (mocked as well), so no QueryClientProvider is needed.
  *
- * run_20260728_071525: adds coverage for the three new stat tiles
- * (dashboard-stat-sets / dashboard-stat-coins-owned / dashboard-stat-average-completion),
- * per plan.md's exact formula: coins-owned sums ownedCount across all resolved per-set
- * gap query results (double-counting a coin present in >1 set is a deliberate,
- * documented simplification, not a bug — see plan.md § Risks), and average-completion is
- * the rounded mean of completionPercent across the same resolved results. Every other
- * assertion below is carried over unchanged.
+ * CONTRACT_GAPS: none
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import type { CanonicalSetSummary, UserSetListItem, UserSetsSummaryResponse } from '@coin-collector/shared';
 import DashboardPage from '@/app/dashboard/page';
-import { useUserSets } from '@/lib/hooks/use-user-sets';
-import { getSetGaps } from '@/lib/user-sets-api';
+import { useSetsSummary, useUserSets } from '@/lib/hooks/use-user-sets';
+import { useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
 import { setStoredToken } from '@/lib/auth-token';
+import { I18nProvider } from '@/lib/i18n/i18n-context';
+import { LOCALE_STORAGE_KEY } from '@/lib/i18n/types';
 
 const replaceMock = vi.fn();
 
@@ -40,60 +35,133 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/lib/hooks/use-user-sets', () => ({
   useUserSets: vi.fn(),
+  useSetsSummary: vi.fn(),
 }));
 
-vi.mock('@/lib/user-sets-api', () => ({
-  getSetGaps: vi.fn(),
+vi.mock('@/lib/hooks/use-canonical-sets', () => ({
+  useCanonicalSets: vi.fn(),
 }));
 
 const useUserSetsMock = vi.mocked(useUserSets);
-const getSetGapsMock = vi.mocked(getSetGaps);
+const useSetsSummaryMock = vi.mocked(useSetsSummary);
+const useCanonicalSetsMock = vi.mocked(useCanonicalSets);
 
-function userSetsResult(overrides: Partial<ReturnType<typeof useUserSets>> = {}) {
-  return { data: undefined, isLoading: false, isError: false, ...overrides } as ReturnType<typeof useUserSets>;
+const setsRefetch = vi.fn();
+const summaryRefetch = vi.fn();
+
+function setsResult(overrides: Record<string, unknown> = {}) {
+  return {
+    data: undefined,
+    isLoading: false,
+    isError: false,
+    refetch: setsRefetch,
+    ...overrides,
+  } as unknown as ReturnType<typeof useUserSets>;
+}
+
+function summaryResult(overrides: Record<string, unknown> = {}) {
+  return {
+    data: undefined,
+    isLoading: false,
+    isError: false,
+    refetch: summaryRefetch,
+    ...overrides,
+  } as unknown as ReturnType<typeof useSetsSummary>;
+}
+
+function canonicalResult(overrides: Record<string, unknown> = {}) {
+  return { data: [], isLoading: false, isError: false, ...overrides } as unknown as ReturnType<
+    typeof useCanonicalSets
+  >;
+}
+
+function makeSet(over: Partial<UserSetListItem> & Pick<UserSetListItem, 'id' | 'name'>): UserSetListItem {
+  return {
+    userId: 'user-1',
+    clonedFromCanonicalId: null,
+    clonedFromUserSetId: null,
+    createdAt: new Date('2026-01-01T00:00:00.000Z'),
+    updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+    ownedCount: 0,
+    totalCount: 10,
+    firstMissing: null,
+    ...over,
+  };
+}
+
+// closest: bravo, alpha, charlie; name: alpha, bravo, charlie; recent: alpha, charlie, bravo;
+// most missing: charlie, alpha, bravo. Each sort gives a different order.
+const BRAVO = makeSet({
+  id: 's-bravo',
+  name: 'Bravo Set',
+  ownedCount: 8,
+  totalCount: 10,
+  firstMissing: 'Odesa Oblast',
+  clonedFromCanonicalId: 'cs-1',
+  updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+});
+const CHARLIE = makeSet({
+  id: 's-charlie',
+  name: 'Charlie Set',
+  ownedCount: 2,
+  totalCount: 10,
+  firstMissing: 'Kyiv Oblast',
+  clonedFromUserSetId: 'us-9',
+  updatedAt: new Date('2026-03-01T00:00:00.000Z'),
+});
+const ALPHA = makeSet({
+  id: 's-alpha',
+  name: 'Alpha Set',
+  ownedCount: 5,
+  totalCount: 10,
+  firstMissing: null,
+  updatedAt: new Date('2026-04-01T00:00:00.000Z'),
+});
+const SETS = [BRAVO, CHARLIE, ALPHA];
+
+const SUMMARY: UserSetsSummaryResponse = {
+  uniqueMissingCount: 15,
+  collectionCount: 40,
+  suggestedSet: null,
+};
+
+const SUGGESTION = { id: 'cs-7', name: 'Lincoln Wheat Cents', coinCount: 187, ownedCount: 9 };
+
+function checklist(id: string, name: string, coinCount: number): CanonicalSetSummary {
+  return { id, name, description: null, source: 'admin', templateVersion: '1', coinCount };
 }
 
 function renderDashboard() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <DashboardPage />
-    </QueryClientProvider>,
-  );
+  return render(<DashboardPage />);
 }
 
-const SETS = [
-  {
-    id: 's1',
-    userId: 'user-1',
-    name: 'My Wheat Cents',
-    clonedFromCanonicalId: null,
-    clonedFromUserSetId: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 's2',
-    userId: 'user-1',
-    name: 'My Key Dates',
-    clonedFromCanonicalId: null,
-    clonedFromUserSetId: null,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+function mockLoaded(sets: UserSetListItem[], summary: UserSetsSummaryResponse = SUMMARY) {
+  useUserSetsMock.mockReturnValue(setsResult({ data: sets }));
+  useSetsSummaryMock.mockReturnValue(summaryResult({ data: summary }));
+}
+
+function renderedNames() {
+  return screen
+    .getAllByTestId('dashboard-set-item')
+    .map((item) => within(item).getByTestId('set-card-link').textContent);
+}
 
 describe('DashboardPage', () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
     replaceMock.mockClear();
+    setsRefetch.mockReset();
+    summaryRefetch.mockReset();
     useUserSetsMock.mockReset();
-    getSetGapsMock.mockReset();
+    useSetsSummaryMock.mockReset();
+    useCanonicalSetsMock.mockReset();
+    useCanonicalSetsMock.mockReturnValue(canonicalResult());
   });
 
   describe('auth gating (unchanged from Day 1)', () => {
     it('does not render dashboard content and redirects to /login when no token is present', async () => {
-      useUserSetsMock.mockReturnValue(userSetsResult({ data: [] }));
+      mockLoaded([]);
       renderDashboard();
 
       await waitFor(() => {
@@ -103,160 +171,426 @@ describe('DashboardPage', () => {
     });
   });
 
-  describe("criterion 8: lists the user's own sets with completion % when a token is present", () => {
-    it('renders one dashboard-set-item per set, each linking to its own /sets/[id] page, with completion %', async () => {
+  describe('criterion 1: header', () => {
+    beforeEach(() => {
       setStoredToken('tok-abc');
-      useUserSetsMock.mockReturnValue(userSetsResult({ data: SETS }));
-      getSetGapsMock.mockImplementation(async (id: string) => ({
-        setId: id,
-        ownedCount: id === 's1' ? 3 : 0,
-        totalCount: 10,
-        completionPercent: id === 's1' ? 30 : 0,
-        slots: [],
-      }));
+    });
+
+    it('renders the "My sets" title', async () => {
+      mockLoaded(SETS);
       renderDashboard();
 
+      const title = await screen.findByTestId('dashboard-title');
+      expect(title.tagName).toBe('H1');
+      expect(title).toHaveTextContent('My sets');
+    });
+
+    it('shows "{n} sets" for several sets', async () => {
+      mockLoaded(SETS);
+      renderDashboard();
+
+      expect(await screen.findByTestId('dashboard-set-count')).toHaveTextContent(/^3 sets$/);
+    });
+
+    it('shows the singular "1 set" for one set', async () => {
+      mockLoaded([ALPHA]);
+      renderDashboard();
+
+      expect(await screen.findByTestId('dashboard-set-count')).toHaveTextContent(/^1 set$/);
+    });
+
+    it('links to the browse page and the New set flow', async () => {
+      mockLoaded(SETS);
+      renderDashboard();
+
+      const browse = await screen.findByTestId('dashboard-browse-link');
+      expect(browse).toHaveAttribute('href', '/sets');
+      expect(browse).toHaveTextContent('Browse checklists and collectors’ sets');
+      const newSet = screen.getByTestId('dashboard-new-set');
+      expect(newSet).toHaveAttribute('href', '/sets/new');
+      expect(newSet).toHaveTextContent('New set');
+    });
+
+    it('keeps the header actions during loading and error', async () => {
+      useUserSetsMock.mockReturnValue(setsResult({ isLoading: true }));
+      useSetsSummaryMock.mockReturnValue(summaryResult({ isLoading: true }));
+      const { unmount } = renderDashboard();
+      expect(await screen.findByTestId('dashboard-new-set')).toBeInTheDocument();
+      expect(screen.getByTestId('dashboard-browse-link')).toBeInTheDocument();
+      unmount();
+
+      useUserSetsMock.mockReturnValue(setsResult({ isError: true }));
+      useSetsSummaryMock.mockReturnValue(summaryResult());
+      renderDashboard();
+      expect(await screen.findByTestId('dashboard-new-set')).toBeInTheDocument();
+      expect(screen.getByTestId('dashboard-browse-link')).toBeInTheDocument();
+    });
+
+    it('does not show the old stat tiles or list markup', async () => {
+      mockLoaded(SETS);
+      renderDashboard();
+
+      await screen.findByTestId('dashboard-page');
+      for (const id of [
+        'dashboard-stat-sets',
+        'dashboard-stat-coins-owned',
+        'dashboard-stat-average-completion',
+        'dashboard-set-list',
+        'dashboard-set-completion',
+        'dashboard-new-set-cta',
+      ]) {
+        expect(screen.queryByTestId(id)).not.toBeInTheDocument();
+      }
+    });
+  });
+
+  describe('criterion 1: Spanish', () => {
+    it('localizes the title, New set action and sort labels when es is stored', async () => {
+      localStorage.setItem(LOCALE_STORAGE_KEY, 'es');
+      setStoredToken('tok-abc');
+      mockLoaded(SETS);
+      render(
+        <I18nProvider>
+          <DashboardPage />
+        </I18nProvider>,
+      );
+
       await waitFor(() => {
-        expect(screen.getAllByTestId('dashboard-set-item')).toHaveLength(2);
+        expect(screen.getByTestId('dashboard-title')).toHaveTextContent('Mis colecciones');
       });
+      expect(screen.getByTestId('dashboard-new-set')).not.toHaveTextContent('New set');
+      const labels = within(screen.getByTestId('dashboard-sort'))
+        .getAllByRole('option')
+        .map((o) => o.textContent);
+      expect(labels).toHaveLength(4);
+      const english = ['Closest to complete', 'Recently updated', 'Name A–Z', 'Most missing'];
+      for (let i = 0; i < english.length; i++) {
+        expect(labels[i]).not.toBe(english[i]);
+      }
+    });
+  });
+
+  describe('criterion 4: summary tiles', () => {
+    beforeEach(() => {
+      setStoredToken('tok-abc');
+    });
+
+    it('renders the three tiles with values from the summary', async () => {
+      mockLoaded(SETS);
+      renderDashboard();
+
+      await screen.findByTestId('dashboard-summary');
+      expect(screen.getByTestId('dashboard-tile-missing-value')).toHaveTextContent(/^15$/);
+      expect(screen.getByTestId('dashboard-tile-collection-value')).toHaveTextContent(/^40$/);
+      expect(screen.getByTestId('dashboard-tile-closest-name')).toHaveTextContent('Bravo Set');
+    });
+
+    it('shows the closest set coins-to-go detail', async () => {
+      mockLoaded(SETS);
+      renderDashboard();
+
+      expect(await screen.findByTestId('dashboard-tile-closest-detail')).toHaveTextContent(
+        '2 coins to go · Odesa Oblast',
+      );
+    });
+  });
+
+  describe('criterion 5: set grid', () => {
+    beforeEach(() => {
+      setStoredToken('tok-abc');
+    });
+
+    it('renders one SetCard per set, each linking to /sets/{id}', async () => {
+      mockLoaded(SETS);
+      renderDashboard();
+
+      await screen.findByTestId('dashboard-set-grid');
       const items = screen.getAllByTestId('dashboard-set-item');
-      expect(within(items[0]).getByText('My Wheat Cents')).toBeInTheDocument();
-      expect(within(items[0]).getByRole('link').getAttribute('href')).toBe('/sets/s1');
-      expect(within(items[1]).getByText('My Key Dates')).toBeInTheDocument();
-      expect(within(items[1]).getByRole('link').getAttribute('href')).toBe('/sets/s2');
-
-      await waitFor(() => {
-        expect(within(items[0]).getByTestId('dashboard-set-completion')).toHaveTextContent('30%');
+      expect(items).toHaveLength(3);
+      for (const item of items) {
+        expect(within(item).getAllByTestId('set-card')).toHaveLength(1);
+      }
+      const hrefs = Object.fromEntries(
+        items.map((item) => {
+          const link = within(item).getByTestId('set-card-link');
+          return [link.textContent, link.getAttribute('href')];
+        }),
+      );
+      expect(hrefs).toEqual({
+        'Bravo Set': '/sets/s-bravo',
+        'Charlie Set': '/sets/s-charlie',
+        'Alpha Set': '/sets/s-alpha',
       });
-      await waitFor(() => {
-        expect(within(items[1]).getByTestId('dashboard-set-completion')).toHaveTextContent('0%');
-      });
+      expect(screen.getByTestId('dashboard-set-grid').tagName).toBe('UL');
+      expect(items[0].tagName).toBe('LI');
     });
 
-    it('shows dashboard-loading while the set list query is loading', async () => {
-      setStoredToken('tok-abc');
-      useUserSetsMock.mockReturnValue(userSetsResult({ isLoading: true }));
+    it('feeds each card its own progress and next missing coin', async () => {
+      mockLoaded(SETS);
       renderDashboard();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('dashboard-loading')).toBeInTheDocument();
-      });
+      await screen.findByTestId('dashboard-set-grid');
+      // Default order is closest to complete: Bravo, Alpha, Charlie.
+      const [bravo, alpha, charlie] = screen.getAllByTestId('dashboard-set-item');
+      expect(within(bravo).getByTestId('set-card-owned')).toHaveTextContent(/^8 of 10 owned$/);
+      expect(within(bravo).getByTestId('set-card-percent')).toHaveTextContent(/^80%$/);
+      expect(within(bravo).getByTestId('set-card-next')).toHaveTextContent('Odesa Oblast');
+
+      expect(within(charlie).getByTestId('set-card-owned')).toHaveTextContent(/^2 of 10 owned$/);
+      expect(within(charlie).getByTestId('set-card-next')).toHaveTextContent('Kyiv Oblast');
+
+      expect(within(alpha).queryByTestId('set-card-next')).not.toBeInTheDocument();
+      expect(within(alpha).getByTestId('set-card-to-find')).toHaveTextContent('5');
     });
 
-    it('shows dashboard-error when the set list query fails', async () => {
-      setStoredToken('tok-abc');
-      useUserSetsMock.mockReturnValue(userSetsResult({ isError: true }));
+    it('shows the complete state for a complete set', async () => {
+      mockLoaded([makeSet({ id: 's-done', name: 'Done Set', ownedCount: 4, totalCount: 4 })]);
       renderDashboard();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('dashboard-error')).toBeInTheDocument();
-      });
+      const card = await screen.findByTestId('set-card');
+      expect(card).toHaveAttribute('data-complete', 'true');
+      expect(within(card).getByTestId('set-card-every-found')).toBeInTheDocument();
+    });
+
+    it('labels the source of cloned sets and leaves scratch sets unlabeled', async () => {
+      mockLoaded(SETS);
+      renderDashboard();
+
+      await screen.findByTestId('dashboard-set-grid');
+      // Default order is closest to complete: Bravo, Alpha, Charlie.
+      const [bravo, alpha, charlie] = screen.getAllByTestId('dashboard-set-item');
+      expect(within(bravo).getByTestId('set-card-source')).toHaveTextContent('From curated checklist');
+      expect(within(charlie).getByTestId('set-card-source')).toHaveTextContent('From a collector’s set');
+      expect(within(alpha).queryByTestId('set-card-source')).not.toBeInTheDocument();
+    });
+
+    it('offers a mobile browse link beside the grid', async () => {
+      mockLoaded(SETS);
+      renderDashboard();
+
+      const mobileLink = await screen.findByTestId('dashboard-browse-link-mobile');
+      expect(mobileLink).toHaveAttribute('href', '/sets');
     });
   });
 
-  describe('criterion 9: shows an empty state pointing at /sets/new when the user has no sets', () => {
-    it('renders dashboard-empty and dashboard-new-set-cta instead of a list', async () => {
+  describe('criterion 6: sorting', () => {
+    beforeEach(() => {
       setStoredToken('tok-abc');
-      useUserSetsMock.mockReturnValue(userSetsResult({ data: [] }));
+      mockLoaded(SETS);
+    });
+
+    it('offers the four sorts in order and defaults to closest to complete', async () => {
       renderDashboard();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('dashboard-empty')).toBeInTheDocument();
-      });
-      expect(screen.getByTestId('dashboard-new-set-cta').getAttribute('href')).toBe('/sets/new');
-      expect(screen.queryByTestId('dashboard-set-list')).not.toBeInTheDocument();
+      const select = await screen.findByTestId('dashboard-sort');
+      expect(select.tagName).toBe('SELECT');
+      const options = within(select).getAllByRole('option');
+      expect(options.map((o) => o.getAttribute('value'))).toEqual(['closest', 'recent', 'name', 'most-missing']);
+      expect(options.map((o) => o.textContent)).toEqual([
+        'Closest to complete',
+        'Recently updated',
+        'Name A–Z',
+        'Most missing',
+      ]);
+      expect(select).toHaveValue('closest');
+    });
+
+    it('orders by closest to complete by default', async () => {
+      renderDashboard();
+
+      await screen.findByTestId('dashboard-set-grid');
+      expect(renderedNames()).toEqual(['Bravo Set', 'Alpha Set', 'Charlie Set']);
+    });
+
+    it('reorders by name A to Z', async () => {
+      renderDashboard();
+
+      fireEvent.change(await screen.findByTestId('dashboard-sort'), { target: { value: 'name' } });
+
+      expect(renderedNames()).toEqual(['Alpha Set', 'Bravo Set', 'Charlie Set']);
+    });
+
+    it('reorders by recently updated', async () => {
+      renderDashboard();
+
+      fireEvent.change(await screen.findByTestId('dashboard-sort'), { target: { value: 'recent' } });
+
+      expect(renderedNames()).toEqual(['Alpha Set', 'Charlie Set', 'Bravo Set']);
+    });
+
+    it('reorders by most missing', async () => {
+      renderDashboard();
+
+      fireEvent.change(await screen.findByTestId('dashboard-sort'), { target: { value: 'most-missing' } });
+
+      expect(renderedNames()).toEqual(['Charlie Set', 'Alpha Set', 'Bravo Set']);
+    });
+
+    it('goes back to closest when selected again', async () => {
+      renderDashboard();
+      const select = await screen.findByTestId('dashboard-sort');
+
+      fireEvent.change(select, { target: { value: 'name' } });
+      fireEvent.change(select, { target: { value: 'closest' } });
+
+      expect(renderedNames()).toEqual(['Bravo Set', 'Alpha Set', 'Charlie Set']);
     });
   });
 
-  describe('run_20260728_071525 criterion 9: stat tiles', () => {
-    it('renders dashboard-stat-sets as sets.length', async () => {
+  describe('criterion 7: one set and the next-set suggestion', () => {
+    beforeEach(() => {
       setStoredToken('tok-abc');
-      useUserSetsMock.mockReturnValue(userSetsResult({ data: SETS }));
-      getSetGapsMock.mockImplementation(async (id: string) => ({
-        setId: id,
-        ownedCount: id === 's1' ? 3 : 0,
-        totalCount: 10,
-        completionPercent: id === 's1' ? 30 : 0,
-        slots: [],
-      }));
-      renderDashboard();
-
-      await waitFor(() => {
-        expect(screen.getByTestId('dashboard-stat-sets')).toHaveTextContent('2');
-      });
     });
 
-    it('renders dashboard-stat-coins-owned as the sum of ownedCount across all resolved per-set gap queries (double-counting allowed, not deduplicated)', async () => {
-      setStoredToken('tok-abc');
-      useUserSetsMock.mockReturnValue(userSetsResult({ data: SETS }));
-      getSetGapsMock.mockImplementation(async (id: string) => ({
-        setId: id,
-        ownedCount: id === 's1' ? 3 : 5,
-        totalCount: 10,
-        completionPercent: id === 's1' ? 30 : 50,
-        slots: [],
-      }));
+    it('shows the suggestion beside a single set', async () => {
+      mockLoaded([ALPHA], { ...SUMMARY, suggestedSet: SUGGESTION });
       renderDashboard();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('dashboard-stat-coins-owned')).toHaveTextContent('8');
-      });
+      expect(await screen.findByTestId('dashboard-suggestion')).toBeInTheDocument();
+      expect(screen.getByTestId('dashboard-suggestion-name')).toHaveTextContent('Lincoln Wheat Cents');
+      expect(screen.getByTestId('dashboard-suggestion-body')).toHaveTextContent('You already own 9 of them');
+      expect(screen.getByTestId('dashboard-suggestion-cta')).toHaveAttribute(
+        'href',
+        '/sets/new?cloneFrom=canonical&cloneFromId=cs-7',
+      );
+      expect(screen.getAllByTestId('dashboard-set-item')).toHaveLength(1);
     });
 
-    it('renders dashboard-stat-average-completion as the rounded mean of completionPercent across all resolved per-set gap queries', async () => {
-      setStoredToken('tok-abc');
-      useUserSetsMock.mockReturnValue(userSetsResult({ data: SETS }));
-      getSetGapsMock.mockImplementation(async (id: string) => ({
-        setId: id,
-        ownedCount: id === 's1' ? 3 : 0,
-        totalCount: 10,
-        completionPercent: id === 's1' ? 30 : 0,
-        slots: [],
-      }));
+    it('hides the suggestion for a single set when the API has no candidate', async () => {
+      mockLoaded([ALPHA], { ...SUMMARY, suggestedSet: null });
       renderDashboard();
 
-      // mean of [30, 0] = 15
-      await waitFor(() => {
-        expect(screen.getByTestId('dashboard-stat-average-completion')).toHaveTextContent('15');
-      });
+      await screen.findByTestId('dashboard-set-grid');
+      expect(screen.queryByTestId('dashboard-suggestion')).not.toBeInTheDocument();
     });
 
-    it('does not show resolved numeric totals for the gap-dependent stats before the per-set gap queries resolve', async () => {
-      setStoredToken('tok-abc');
-      useUserSetsMock.mockReturnValue(userSetsResult({ data: SETS }));
-      // Never resolves within this test, simulating gap queries still in flight.
-      getSetGapsMock.mockImplementation(() => new Promise(() => {}));
+    it('hides the suggestion when there is more than one set, even if the API returned one', async () => {
+      mockLoaded(SETS, { ...SUMMARY, suggestedSet: SUGGESTION });
       renderDashboard();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('dashboard-stat-sets')).toHaveTextContent('2');
-      });
+      await screen.findByTestId('dashboard-set-grid');
+      expect(screen.queryByTestId('dashboard-suggestion')).not.toBeInTheDocument();
+    });
+  });
 
-      // Per plan.md, the gap-dependent tiles either render '—' or are omitted entirely
-      // while their useQueries results are loading (consistent with the existing
-      // per-row dashboard-set-completion loading behavior) — either way, they must not
-      // show a resolved digit-bearing total yet.
-      const coinsOwned = screen.queryByTestId('dashboard-stat-coins-owned');
-      const avgCompletion = screen.queryByTestId('dashboard-stat-average-completion');
-      if (coinsOwned) {
-        expect(coinsOwned.textContent).not.toMatch(/\d/);
+  describe('criterion 8: zero sets', () => {
+    beforeEach(() => {
+      setStoredToken('tok-abc');
+      mockLoaded([]);
+      useCanonicalSetsMock.mockReturnValue(
+        canonicalResult({
+          data: [
+            checklist('c1', 'First', 10),
+            checklist('c2', 'Second', 50),
+            checklist('c3', 'Third', 30),
+            checklist('c4', 'Fourth', 20),
+          ],
+        }),
+      );
+    });
+
+    it('renders the empty state with the curated action and the popular checklists', async () => {
+      renderDashboard();
+
+      const empty = await screen.findByTestId('dashboard-empty');
+      expect(within(empty).getByTestId('dashboard-empty-curated-cta')).toHaveAttribute('href', '/sets/new');
+      expect(within(empty).getAllByTestId('dashboard-popular-item')).toHaveLength(3);
+      expect(within(empty).getByTestId('dashboard-empty-blank-link')).toHaveAttribute('href', '/sets/new');
+    });
+
+    it('does not render the tiles, count, sort, grid or header actions', async () => {
+      renderDashboard();
+
+      await screen.findByTestId('dashboard-empty');
+      expect(screen.getByTestId('dashboard-title')).toHaveTextContent('My sets');
+      for (const id of [
+        'dashboard-summary',
+        'dashboard-set-count',
+        'dashboard-sort',
+        'dashboard-set-grid',
+        'dashboard-browse-link',
+        'dashboard-new-set',
+        'dashboard-browse-link-mobile',
+        'dashboard-suggestion',
+      ]) {
+        expect(screen.queryByTestId(id)).not.toBeInTheDocument();
       }
-      if (avgCompletion) {
-        expect(avgCompletion.textContent).not.toMatch(/\d/);
-      }
+    });
+  });
+
+  describe('criterion 9: loading and error', () => {
+    beforeEach(() => {
+      setStoredToken('tok-abc');
     });
 
-    it('does not render any stat tile when the user has no sets (dashboard-empty state)', async () => {
-      setStoredToken('tok-abc');
-      useUserSetsMock.mockReturnValue(userSetsResult({ data: [] }));
+    it('shows skeleton tiles and cards while the sets load', async () => {
+      useUserSetsMock.mockReturnValue(setsResult({ isLoading: true }));
+      useSetsSummaryMock.mockReturnValue(summaryResult({ isLoading: true }));
       renderDashboard();
 
-      await waitFor(() => {
-        expect(screen.getByTestId('dashboard-empty')).toBeInTheDocument();
-      });
-      expect(screen.queryByTestId('dashboard-stat-sets')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('dashboard-stat-coins-owned')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('dashboard-stat-average-completion')).not.toBeInTheDocument();
+      const loading = await screen.findByTestId('dashboard-loading');
+      expect(loading).toHaveAttribute('aria-busy', 'true');
+      expect(within(loading).getAllByTestId('skeleton').length).toBeGreaterThan(0);
+      expect(within(loading).getAllByTestId('set-card-skeleton')).toHaveLength(3);
+      expect(screen.queryByTestId('dashboard-set-grid')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-set-count')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-empty')).not.toBeInTheDocument();
+    });
+
+    it('keeps showing the loading state while only the summary is still loading', async () => {
+      useUserSetsMock.mockReturnValue(setsResult({ data: SETS }));
+      useSetsSummaryMock.mockReturnValue(summaryResult({ isLoading: true }));
+      renderDashboard();
+
+      expect(await screen.findByTestId('dashboard-loading')).toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-set-grid')).not.toBeInTheDocument();
+    });
+
+    it('shows no loading state once both queries have data', async () => {
+      mockLoaded(SETS);
+      renderDashboard();
+
+      await screen.findByTestId('dashboard-set-grid');
+      expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-error')).not.toBeInTheDocument();
+    });
+
+    it('shows an alert with the wake-up hint when the sets query fails', async () => {
+      useUserSetsMock.mockReturnValue(setsResult({ isError: true }));
+      useSetsSummaryMock.mockReturnValue(summaryResult());
+      renderDashboard();
+
+      const alert = await screen.findByTestId('dashboard-error');
+      expect(alert).toHaveAttribute('role', 'alert');
+      expect(alert).toHaveTextContent('We couldn’t load your sets.');
+      expect(alert).toHaveTextContent('up to a minute to wake');
+      expect(screen.queryByTestId('dashboard-loading')).not.toBeInTheDocument();
+    });
+
+    it('shows the same alert when only the summary query fails, instead of a half-loaded page', async () => {
+      useUserSetsMock.mockReturnValue(setsResult({ data: SETS }));
+      useSetsSummaryMock.mockReturnValue(summaryResult({ isError: true }));
+      renderDashboard();
+
+      expect(await screen.findByTestId('dashboard-error')).toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-set-grid')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-summary')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-set-count')).not.toBeInTheDocument();
+    });
+
+    it('refetches both queries when "Try again" is clicked', async () => {
+      useUserSetsMock.mockReturnValue(setsResult({ isError: true }));
+      useSetsSummaryMock.mockReturnValue(summaryResult({ isError: true }));
+      renderDashboard();
+
+      const retry = await screen.findByTestId('dashboard-retry');
+      expect(retry).toHaveTextContent('Try again');
+      expect(setsRefetch).not.toHaveBeenCalled();
+
+      fireEvent.click(retry);
+
+      expect(setsRefetch).toHaveBeenCalledTimes(1);
+      expect(summaryRefetch).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -264,14 +598,7 @@ describe('DashboardPage', () => {
     beforeEach(() => {
       sessionStorage.clear();
       setStoredToken('tok-abc');
-      useUserSetsMock.mockReturnValue(userSetsResult({ data: SETS }));
-      getSetGapsMock.mockImplementation(async (id: string) => ({
-        setId: id,
-        ownedCount: 3,
-        totalCount: 10,
-        completionPercent: 30,
-        slots: [],
-      }));
+      mockLoaded(SETS);
     });
 
     it('shows no notice when the flag is not set', async () => {

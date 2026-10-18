@@ -30,6 +30,8 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-10-17](2026-10-17-optimistic-ownership-toggle.md) | Ownership toggles are optimistic through the existing `useSetOwnership` mutation, with snapshot rollback | Accepted |
 | [2026-10-17](2026-10-17-bulk-ownership-endpoint.md) | Bulk ownership changes go through one idempotent `PATCH /collection` request and a hook that shares the single-coin cache patching | Accepted |
 | [2026-10-17](2026-10-17-set-page-album-default-year-groups.md) | The set page defaults to Album and shows both views as year groups, replacing the country/mint-mark album pages | Accepted |
+| [2026-10-18](2026-10-18-user-set-list-returns-progress-per-set.md) | GET /sets returns a new UserSetListItem with ownedCount, totalCount and firstMissing, and UserSetSummary stays unchanged | Accepted |
+| [2026-10-18](2026-10-18-sets-summary-endpoint-computes-suggestion-server-side.md) | GET /sets/summary returns the unique missing count, collection size and suggested checklist in one server-computed response | Accepted |
 
 ## Where else decisions live
 

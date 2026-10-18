@@ -167,6 +167,28 @@ export interface PublicSetSummary extends UserSetSummary {
   coinCount: number;
 }
 
+// GET /sets list item: the caller's own set with its progress. UserSetSummary itself stays
+// count-free (create and rename responses don't carry these fields).
+export interface UserSetListItem extends UserSetSummary {
+  ownedCount: number; // set coins the caller owns
+  totalCount: number; // coins in the set
+  firstMissing: string | null; // getCoinName(coin).title of the lowest-position unowned coin; null when none is missing
+}
+
+// GET /sets/summary: the curated checklist suggested to a collector (used by the one-set state).
+export interface SuggestedCanonicalSet {
+  id: string; // CanonicalSet id
+  name: string;
+  coinCount: number; // coins in the checklist
+  ownedCount: number; // of those, coins the caller owns (> 0)
+}
+
+export interface UserSetsSummaryResponse {
+  uniqueMissingCount: number; // distinct coins missing across all the caller's sets (a coin missing from 2 sets counts once)
+  collectionCount: number; // Ownership rows of the caller
+  suggestedSet: SuggestedCanonicalSet | null;
+}
+
 export interface UserSetCoinItem {
   id: string;
   position: number;
