@@ -1,15 +1,14 @@
 /**
- * Tests for: LanguageSwitcher
- * Contract source: runs/run_20260730_153718/plan.md § Interface Contract → Component: LanguageSwitcher
- * Covers criteria: #1, #2, #3, #4, #5, #6, #7 (from prd.md)
+ * Tests for: LanguageSwitcher (segmented EN/ES control)
+ * Contract source: runs/run_20261018_085900/plan.md § Interface Contract → Component: LanguageSwitcher
+ * Covers criteria: #6 (from prd.md)
  *
- * run_20260730_153718: migrates LanguageSwitcher from two <button> toggles to a
- * single native <select> dropdown. Replaces the entire prior test file (old
- * `language-switcher-en`/`language-switcher-es` button testids and `aria-pressed`
- * assertions no longer apply — see plan.md § Interface Contract).
+ * Replaces the dropdown-era tests from run_20260730_153718 (select testid removed).
+ *
+ * CONTRACT_GAP: none.
  */
 
-import { describe, expect, it, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
@@ -29,83 +28,75 @@ describe('LanguageSwitcher', () => {
     localStorage.clear();
   });
 
-  describe('rendering', () => {
-    it('renders the root wrapper and a single select dropdown, with no button-based controls', () => {
-      renderSwitcher();
+  it('renders a group named "Language" with exactly two buttons, EN and ES', () => {
+    renderSwitcher();
 
-      const root = screen.getByTestId('language-switcher');
-      expect(root).toBeInTheDocument();
-      expect(screen.getByTestId('language-switcher-select')).toBeInTheDocument();
-      expect(within(root).queryAllByRole('button')).toHaveLength(0);
+    const root = screen.getByTestId('language-switcher');
+    expect(root).toHaveAttribute('role', 'group');
+    expect(screen.getByRole('group', { name: 'Language' })).toBe(root);
+    expect(within(root).getAllByRole('button')).toHaveLength(2);
+    expect(screen.getByTestId('language-switcher-en')).toHaveTextContent('EN');
+    expect(screen.getByTestId('language-switcher-es')).toHaveTextContent('ES');
+  });
+
+  it('labels the buttons English and Spanish', () => {
+    renderSwitcher();
+
+    expect(screen.getByTestId('language-switcher-en')).toHaveAttribute('aria-label', 'English');
+    expect(screen.getByTestId('language-switcher-es')).toHaveAttribute('aria-label', 'Spanish');
+  });
+
+  it('marks English as pressed by default', () => {
+    renderSwitcher();
+
+    expect(screen.getByTestId('language-switcher-en')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('language-switcher-es')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('switches the pressed button when Spanish is clicked', async () => {
+    const user = userEvent.setup();
+    renderSwitcher();
+
+    await user.click(screen.getByTestId('language-switcher-es'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('language-switcher-es')).toHaveAttribute('aria-pressed', 'true');
+    });
+    expect(screen.getByTestId('language-switcher-en')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('switches back to English after Spanish', async () => {
+    const user = userEvent.setup();
+    renderSwitcher();
+
+    await user.click(screen.getByTestId('language-switcher-es'));
+    await user.click(screen.getByTestId('language-switcher-en'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('language-switcher-en')).toHaveAttribute('aria-pressed', 'true');
+    });
+    expect(screen.getByTestId('language-switcher-es')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('persists the choice to localStorage', async () => {
+    const user = userEvent.setup();
+    renderSwitcher();
+
+    await user.click(screen.getByTestId('language-switcher-es'));
+
+    await waitFor(() => {
+      expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('es');
     });
   });
 
-  describe('criterion 3: dropdown exposes exactly the two existing locale options', () => {
-    it('has exactly two options, labeled "English" and "Spanish"', () => {
-      renderSwitcher();
+  it('restores a stored Spanish locale and localizes the group name', async () => {
+    localStorage.setItem(LOCALE_STORAGE_KEY, 'es');
+    renderSwitcher();
 
-      const select = screen.getByTestId('language-switcher-select');
-      const options = within(select).getAllByRole('option');
-
-      expect(options).toHaveLength(2);
-      expect(options[0]).toHaveTextContent('English');
-      expect(options[0]).toHaveValue('en');
-      expect(options[1]).toHaveTextContent('Spanish');
-      expect(options[1]).toHaveValue('es');
+    await waitFor(() => {
+      expect(screen.getByTestId('language-switcher-es')).toHaveAttribute('aria-pressed', 'true');
     });
-  });
-
-  describe('criterion 2: trigger displays the currently active language', () => {
-    it('shows English as the selected value by default', () => {
-      renderSwitcher();
-
-      expect(screen.getByTestId('language-switcher-select')).toHaveValue('en');
-    });
-  });
-
-  describe('criterion 4: selecting a language updates the displayed value', () => {
-    it('updates the select value to "es" after choosing Spanish', async () => {
-      const user = userEvent.setup();
-      renderSwitcher();
-
-      await user.selectOptions(screen.getByTestId('language-switcher-select'), 'es');
-
-      await waitFor(() => {
-        expect(screen.getByTestId('language-switcher-select')).toHaveValue('es');
-      });
-    });
-  });
-
-  describe('criterion 5: selecting a language persists it', () => {
-    it('writes "es" to localStorage under LOCALE_STORAGE_KEY after selecting Spanish', async () => {
-      const user = userEvent.setup();
-      renderSwitcher();
-
-      await user.selectOptions(screen.getByTestId('language-switcher-select'), 'es');
-
-      await waitFor(() => {
-        expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('es');
-      });
-    });
-  });
-
-  describe('criterion 6: initial render reflects a previously persisted locale', () => {
-    it('restores "es" as the selected value when it was already stored before mount', async () => {
-      localStorage.setItem(LOCALE_STORAGE_KEY, 'es');
-      renderSwitcher();
-
-      await waitFor(() => {
-        expect(screen.getByTestId('language-switcher-select')).toHaveValue('es');
-      });
-    });
-  });
-
-  describe('criterion 7: dropdown uses native, keyboard-operable combobox semantics', () => {
-    it('exposes the select element via the implicit combobox role', () => {
-      renderSwitcher();
-
-      const combobox = screen.getByRole('combobox');
-      expect(combobox).toBe(screen.getByTestId('language-switcher-select'));
-    });
+    expect(screen.getByRole('group', { name: 'Idioma' })).toBe(screen.getByTestId('language-switcher'));
+    expect(screen.getByTestId('language-switcher-es')).toHaveAttribute('aria-label', 'Español');
   });
 });

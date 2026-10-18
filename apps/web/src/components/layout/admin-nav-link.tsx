@@ -1,42 +1,35 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
 import type { Role } from '@coin-collector/shared';
-import { getCurrentUser } from '@/lib/auth-api';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 
-const navLinkClassName =
-  'text-[13px] text-[var(--color-text)] opacity-70 transition-opacity hover:text-[var(--color-accent)] hover:opacity-100';
+const defaultClassName =
+  'flex h-10 items-center gap-2.5 px-3.5 text-[13px] text-[var(--color-text)] outline-none hover:bg-[var(--color-neutral-100)] focus-visible:bg-[var(--color-neutral-100)]';
 
-// Rendered by SiteNav only for a logged-in visitor. Plain effect + state rather than
-// react-query, so SiteNav keeps working without a QueryClientProvider. Hidden while the
-// role is unknown, on error, and for non-admins. Showing the link is cosmetic: the API
-// enforces the role on every admin request.
-export function AdminNavLink() {
+export interface AdminNavLinkProps {
+  role: Role | null | undefined;
+  className?: string;
+}
+
+// The Admin item of the account menu. Presentational: SiteNav fetches the current user
+// once and passes the role down. Hidden while the role is unknown, on error, and for
+// non-admins. Showing the item is cosmetic: the API enforces the role on every admin
+// request.
+export function AdminNavLink({ role, className }: AdminNavLinkProps) {
   const { t } = useTranslation();
-  const [role, setRole] = useState<Role | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    getCurrentUser()
-      .then((user) => {
-        if (active) setRole(user.role);
-      })
-      .catch(() => {
-        // Keep the link hidden; a failed /auth/me is handled elsewhere (apiFetch's 401 flow).
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
 
   if (role !== 'admin') {
     return null;
   }
 
   return (
-    <Link href="/admin/submissions" data-testid="site-nav-admin-link" className={navLinkClassName}>
+    <Link
+      href="/admin/submissions"
+      role="menuitem"
+      data-testid="site-nav-admin-link"
+      className={className ?? defaultClassName}
+    >
       {t('nav.admin')}
     </Link>
   );

@@ -13,14 +13,29 @@
  * they are the existing routes those three pages already live at (confirmed in
  * codebase-survey.md §10.2/§10.4/§10.6 and mirrored by SiteNav's own links to the same
  * paths), not new names invented for this file.
+ *
+ * run_20261018_085900: Home now calls `useRouter` and redirects signed-in users to
+ * /dashboard (plan.md § Interface Contract → Page: Home). Adds the `next/navigation`
+ * mock, clears localStorage in beforeEach, and a new "signed-in redirect" block at the
+ * end; every existing block is unchanged. Criterion #9.
+ *
+ * CONTRACT_GAP: none.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import Home from '@/app/page';
+import { setStoredToken } from '@/lib/auth-token';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import { useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
 import { usePublicSets } from '@/lib/hooks/use-public-sets';
+
+const replaceMock = vi.fn();
+const pushMock = vi.fn();
+
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: replaceMock, push: pushMock }),
+}));
 
 vi.mock('@/lib/hooks/use-catalog', () => ({
   useCatalog: vi.fn(),
@@ -58,6 +73,9 @@ const CANONICAL_SETS = [
 
 describe('Home', () => {
   beforeEach(() => {
+    localStorage.clear();
+    replaceMock.mockClear();
+    pushMock.mockClear();
     useCatalogMock.mockReset();
     useCanonicalSetsMock.mockReset();
     usePublicSetsMock.mockReset();
@@ -201,6 +219,39 @@ describe('Home', () => {
 
       expect(screen.getByTestId('home-page')).toBeInTheDocument();
       expect(screen.getByTestId('home-headline')).toBeInTheDocument();
+    });
+  });
+
+  describe('run_20261018_085900 criterion 9: signed-in redirect to /dashboard', () => {
+    it('replaces the route with /dashboard once when a token is stored', async () => {
+      setStoredToken('tok-abc');
+      render(<Home />);
+
+      await waitFor(() => {
+        expect(replaceMock).toHaveBeenCalledWith('/dashboard');
+      });
+      expect(replaceMock).toHaveBeenCalledTimes(1);
+      expect(pushMock).not.toHaveBeenCalled();
+    });
+
+    it('renders home-redirecting instead of the home content while redirecting', async () => {
+      setStoredToken('tok-abc');
+      render(<Home />);
+
+      expect(await screen.findByTestId('home-redirecting')).toBeInTheDocument();
+      expect(screen.queryByTestId('home-page')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('home-headline')).not.toBeInTheDocument();
+    });
+
+    it('does not redirect and shows the home page when signed out', async () => {
+      render(<Home />);
+
+      expect(screen.getByTestId('home-page')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('home-page')).toBeInTheDocument();
+      });
+      expect(replaceMock).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('home-redirecting')).not.toBeInTheDocument();
     });
   });
 });
