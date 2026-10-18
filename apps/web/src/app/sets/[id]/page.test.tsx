@@ -1,15 +1,21 @@
 /**
  * Tests for: SetEditorPage (Phase 4 redesign): header, loading/error, rename, delete, add sheet, visitor
  * Contract source: runs/run_20261017_210503/plan.md § Interface Contract → Page: SetEditorPage (MODIFY)
+ *                  runs/run_20261018_161537/plan.md § Interface Contract → Page: SetEditorPage (MODIFY)
  * Earlier contracts kept: runs/run_20260721_171115, run_20260722_121303, run_20260728_071525,
  *                         run_20261011_095624, run_20261017_142658
  * Covers criteria: #1, #2, #3, #4, #15, #16 (run_20261017_210503) plus the delete, rename and add-coins
  *                  behaviour that earlier runs pinned and this run keeps.
+ *                  run_20261018_161537: #1, #14, #15 (the Add coins block now targets AddCoinsSheet)
  *
  * run_20261017_210503 intentionally drops what is gone: decade accordions, per-row Mark owned / Remove
  * buttons, the owner's always-on name input (now behind Rename), "All coins · N" labels and the /sets
  * breadcrumb. Behaviour that stays (delete dialog, CSV controls live in missing-export.test.tsx, Add
  * coins sheet, blur-to-save rename) keeps its assertions.
+ *
+ * run_20261018_161537: the old shared Sheet + CatalogFilterForm picker is replaced by AddCoinsSheet. The
+ * "Add coins sheet" block is rewritten; every test that opens the sheet needs useCatalogFacets, useCollection
+ * and a usePatchSetCoins mock with mutateAsync.
  *
  * Unwraps `params` via the useEffect/useState pattern (documented gotcha: use() in Suspense never
  * re-renders in this repo's jsdom+vitest setup), so no <Suspense> is needed around renderPage().
@@ -22,7 +28,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import SetEditorPage from '@/app/sets/[id]/page';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
@@ -34,8 +40,8 @@ import {
   useSetGaps,
   useUserSets,
 } from '@/lib/hooks/use-user-sets';
-import { useBulkSetOwnership, useSetOwnership } from '@/lib/hooks/use-collection';
-import { useCatalog } from '@/lib/hooks/use-catalog';
+import { useBulkSetOwnership, useCollection, useSetOwnership } from '@/lib/hooks/use-collection';
+import { useCatalog, useCatalogFacets } from '@/lib/hooks/use-catalog';
 import { setStoredToken } from '@/lib/auth-token';
 
 const pushMock = vi.fn();
@@ -61,10 +67,12 @@ vi.mock('@/lib/hooks/use-user-sets', () => ({
 vi.mock('@/lib/hooks/use-collection', () => ({
   useSetOwnership: vi.fn(),
   useBulkSetOwnership: vi.fn(),
+  useCollection: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/use-catalog', () => ({
   useCatalog: vi.fn(),
+  useCatalogFacets: vi.fn(),
 }));
 
 const usePublicSetMock = vi.mocked(usePublicSet);
@@ -76,7 +84,9 @@ const useRenameSetMock = vi.mocked(useRenameSet);
 const useDeleteSetMock = vi.mocked(useDeleteSet);
 const useSetOwnershipMock = vi.mocked(useSetOwnership);
 const useBulkSetOwnershipMock = vi.mocked(useBulkSetOwnership);
+const useCollectionMock = vi.mocked(useCollection);
 const useCatalogMock = vi.mocked(useCatalog);
+const useCatalogFacetsMock = vi.mocked(useCatalogFacets);
 
 function queryResult(overrides: Record<string, unknown> = {}) {
   return { data: undefined, isLoading: false, isError: false, refetch: vi.fn(), ...overrides } as never;
@@ -89,7 +99,8 @@ function mutationMock({ resolvedValue, rejectedValue }: { resolvedValue?: unknow
       else opts?.onSuccess?.(resolvedValue);
     },
   );
-  return { mutate, isPending: false } as never;
+  const mutateAsync = vi.fn(() => (rejectedValue ? Promise.reject(rejectedValue) : Promise.resolve(resolvedValue)));
+  return { mutate, mutateAsync, isPending: false } as never;
 }
 
 function renderPage(id = 'set-1') {
@@ -196,6 +207,8 @@ function setDefaultMocks() {
   useSetOwnershipMock.mockReturnValue(mutationMock());
   useBulkSetOwnershipMock.mockReturnValue(mutationMock());
   useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
+  useCatalogFacetsMock.mockReturnValue(queryResult({ data: { countries: [], denominations: [] } }));
+  useCollectionMock.mockReturnValue(queryResult({ data: [] }));
 }
 
 function setWith(overrides: { name?: string; coins?: typeof SET_DETAIL.coins; kind?: Record<string, string | null> }) {
@@ -229,7 +242,9 @@ describe('SetEditorPage', () => {
       useDeleteSetMock,
       useSetOwnershipMock,
       useBulkSetOwnershipMock,
+      useCollectionMock,
       useCatalogMock,
+      useCatalogFacetsMock,
     ].forEach((m) => m.mockReset());
     setDefaultMocks();
   });
@@ -532,6 +547,7 @@ describe('SetEditorPage', () => {
       expect(screen.queryByTestId('set-editor-download-missing')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-delete-button')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-add-coins-panel')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('add-coins-sheet')).not.toBeInTheDocument();
     });
 
     it('gives a visitor the coins without owner controls', async () => {
@@ -752,63 +768,149 @@ describe('SetEditorPage', () => {
     });
   });
 
-  describe('Add coins sheet (unchanged picker)', () => {
-    it('shows the panel in a sheet only after clicking the toggle, and hides it again via the sheet close button', async () => {
+  describe('Add coins sheet (run_20261018_161537: AddCoinsSheet replaces the old picker)', () => {
+    const EXTRA_COIN = { ...BASE_COIN, id: 'coin-extra', year: 1972, variety: '', name: 'Poland 2 Zlote' };
+
+    async function openSheet() {
       setStoredToken('tok-abc');
       const user = userEvent.setup();
       renderPage();
-
       await waitFor(() => {
         expect(screen.getByTestId('set-editor-toggle-add-coins')).toBeInTheDocument();
       });
-      expect(screen.queryByTestId('set-editor-add-coins-panel')).not.toBeInTheDocument();
-
       await user.click(screen.getByTestId('set-editor-toggle-add-coins'));
-      expect(screen.getByTestId('sheet')).toBeInTheDocument();
-      expect(screen.getByTestId('set-editor-add-coins-panel')).toBeInTheDocument();
+      return user;
+    }
 
-      await user.click(screen.getByTestId('sheet-close'));
+    it('mounts the new sheet only after clicking the toggle, and none of the old picker', async () => {
+      setStoredToken('tok-abc');
+      const user = userEvent.setup();
+      renderPage();
+      await waitFor(() => {
+        expect(screen.getByTestId('set-editor-toggle-add-coins')).toBeInTheDocument();
+      });
+      const toggle = screen.getByTestId('set-editor-toggle-add-coins');
+      expect(screen.queryByTestId('add-coins-sheet')).not.toBeInTheDocument();
+      expect(toggle).toHaveAttribute('aria-haspopup', 'dialog');
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+      await user.click(toggle);
+
+      const dialog = screen.getByTestId('add-coins-sheet');
+      expect(dialog).toHaveAttribute('role', 'dialog');
+      expect(dialog).toHaveAttribute('aria-modal', 'true');
+      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.queryByTestId('sheet')).not.toBeInTheDocument();
       expect(screen.queryByTestId('set-editor-add-coins-panel')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-add-coins-filter-form')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('set-editor-add-coins-filter-submit')).not.toBeInTheDocument();
     });
 
-    it('filters via useCatalog and adding a result calls usePatchSetCoins(id).mutate with { add: [coin.id] }', async () => {
-      setStoredToken('tok-abc');
-      const patchMutate = vi.fn();
-      usePatchSetCoinsMock.mockReturnValue({ mutate: patchMutate, isPending: false } as never);
-      const EXTRA_COIN = { ...BASE_COIN, id: 'coin-extra', year: 1972 };
+    it('shows the set name in the sheet subtitle and calls usePatchSetCoins with the route id', async () => {
+      await openSheet();
+
+      expect(screen.getByTestId('add-coins-subtitle')).toHaveTextContent(`to ${SET_NAME}`);
+      expect(usePatchSetCoinsMock).toHaveBeenCalledWith('set-1');
+    });
+
+    it('closes via Close, returns focus to the toggle and collapses aria-expanded', async () => {
+      const user = await openSheet();
+      expect(screen.getByTestId('add-coins-search')).toHaveFocus();
+
+      await user.click(screen.getByTestId('add-coins-close'));
+
+      expect(screen.queryByTestId('add-coins-sheet')).not.toBeInTheDocument();
+      expect(screen.getByTestId('set-editor-toggle-add-coins')).toHaveFocus();
+      expect(screen.getByTestId('set-editor-toggle-add-coins')).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('closes on Escape and on the footer Done, each returning focus to the toggle', async () => {
+      const user = await openSheet();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByTestId('add-coins-sheet')).not.toBeInTheDocument();
+      expect(screen.getByTestId('set-editor-toggle-add-coins')).toHaveFocus();
+
+      await user.click(screen.getByTestId('set-editor-toggle-add-coins'));
+      expect(screen.getByTestId('add-coins-sheet')).toBeInTheDocument();
+      await user.click(screen.getByTestId('add-coins-done'));
+      expect(screen.queryByTestId('add-coins-sheet')).not.toBeInTheDocument();
+      expect(screen.getByTestId('set-editor-toggle-add-coins')).toHaveFocus();
+    });
+
+    it('passes the set slots so set coins show "Already added" and others show Add', async () => {
+      useCatalogMock.mockReturnValue(
+        queryResult({ data: { items: [COIN_A, EXTRA_COIN], page: 1, limit: 20, total: 2 } }),
+      );
+      await openSheet();
+
+      const rows = screen.getAllByTestId('add-coins-row');
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toHaveAttribute('data-coin-id', 'coin-a');
+      expect(rows[0]).toHaveAttribute('data-action', 'already');
+      expect(rows[1]).toHaveAttribute('data-coin-id', 'coin-extra');
+      expect(rows[1]).toHaveAttribute('data-action', 'add');
+    });
+
+    it('adding a result calls usePatchSetCoins(id).mutateAsync with { add: [coin.id] } and shows Added', async () => {
+      const patch = mutationMock();
+      usePatchSetCoinsMock.mockReturnValue(patch);
       useCatalogMock.mockReturnValue(queryResult({ data: { items: [EXTRA_COIN], page: 1, limit: 20, total: 1 } }));
-      const user = userEvent.setup();
-      renderPage();
+      const user = await openSheet();
+
+      await user.click(screen.getByTestId('add-coins-row-add'));
+
+      const mutateAsync = (patch as unknown as { mutateAsync: ReturnType<typeof vi.fn> }).mutateAsync;
+      expect(mutateAsync).toHaveBeenCalledTimes(1);
+      expect(mutateAsync.mock.calls[0][0]).toEqual({ add: ['coin-extra'] });
+      await waitFor(() => {
+        expect(screen.getByTestId('add-coins-row')).toHaveAttribute('data-action', 'added');
+      });
+      expect(screen.getByTestId('add-coins-footer-count')).toHaveTextContent('1 coin added');
+    });
+
+    it('filters via useCatalog without a submit button', async () => {
+      const user = await openSheet();
+      expect((useCatalogMock.mock.calls[useCatalogMock.mock.calls.length - 1][0] as { name?: string }).name).toBe(
+        undefined,
+      );
+
+      await user.type(screen.getByTestId('add-coins-search'), 'odesa{Enter}');
 
       await waitFor(() => {
-        expect(screen.getByTestId('set-editor-toggle-add-coins')).toBeInTheDocument();
+        const last = useCatalogMock.mock.calls[useCatalogMock.mock.calls.length - 1][0] as { name?: string };
+        expect(last.name).toBe('odesa');
       });
+    });
+
+    it('resets search and the added count after closing and reopening', async () => {
+      useCatalogMock.mockReturnValue(queryResult({ data: { items: [EXTRA_COIN], page: 1, limit: 20, total: 1 } }));
+      const user = await openSheet();
+      await user.type(screen.getByTestId('add-coins-search'), 'abc');
+      await user.click(screen.getByTestId('add-coins-row-add'));
+      await waitFor(() => {
+        expect(screen.getByTestId('add-coins-footer-count')).toHaveTextContent('1 coin added');
+      });
+      expect(screen.getByTestId<HTMLInputElement>('add-coins-search').value).toBe('abc');
+
+      await user.click(screen.getByTestId('add-coins-done'));
+      expect(screen.queryByTestId('add-coins-sheet')).not.toBeInTheDocument();
       await user.click(screen.getByTestId('set-editor-toggle-add-coins'));
 
-      expect(screen.getByTestId('set-editor-add-coins-panel')).toBeInTheDocument();
-      expect(screen.getByTestId('set-editor-add-coins-filter-form')).toBeInTheDocument();
+      expect(screen.getByTestId<HTMLInputElement>('add-coins-search').value).toBe('');
+      expect(screen.getByTestId('add-coins-footer-count')).toHaveTextContent(
+        'Added coins appear in the set right away.',
+      );
+      expect(screen.getByTestId('add-coins-row')).toHaveAttribute('data-action', 'add');
+    });
 
-      const initialCallArgs = useCatalogMock.mock.calls[useCatalogMock.mock.calls.length - 1][0] as {
-        country?: string;
-      };
-      expect(initialCallArgs.country).toBeUndefined();
-
-      await user.type(screen.getByTestId('set-editor-add-coins-filter-country'), 'Ukraine');
-      await user.click(screen.getByTestId('set-editor-add-coins-filter-submit'));
-
-      await waitFor(() => {
-        const lastCallArgs = useCatalogMock.mock.calls[useCatalogMock.mock.calls.length - 1][0] as {
-          country?: string;
-        };
-        expect(lastCallArgs.country).toBe('Ukraine');
+    it('leaves the page behind (progress, toolbar) in place while the sheet is open', async () => {
+      await openSheet();
+      await act(async () => {
+        await Promise.resolve();
       });
 
-      const addButtons = screen.getAllByTestId('set-editor-add-coins-add-button');
-      await user.click(addButtons[0]);
-
-      expect(patchMutate).toHaveBeenCalledTimes(1);
-      expect(patchMutate.mock.calls[0][0]).toEqual({ add: ['coin-extra'] });
-      expect(usePatchSetCoinsMock).toHaveBeenCalledWith('set-1');
+      expect(screen.getByTestId('set-editor-owned-count').textContent).toBe('1 of 4 owned');
+      expect(screen.getByTestId('set-editor-name')).toHaveTextContent(SET_NAME);
     });
   });
 });
