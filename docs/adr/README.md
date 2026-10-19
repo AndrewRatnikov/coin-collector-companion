@@ -35,6 +35,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-10-18](2026-10-18-add-coins-sheet-membership-and-count-on-client.md) | The Add coins sheet derives set membership, ownership, hiding and the results count on the client, with no API change | Accepted |
 | [2026-10-19](2026-10-19-collection-filtered-and-grouped-on-client.md) | The Collection page filters, counts and groups one unfiltered GET /collection on the client | Accepted |
 | [2026-10-19](2026-10-19-removed-coins-stay-visible-via-page-local-list.md) | An un-owned coin stays on the Collection page as "Removed" through a page-local, display-only list | Accepted |
+| [2026-10-19](2026-10-19-catalog-badges-from-two-batched-queries.md) | GET /catalog adds `owned` and `inSetsCount` for signed-in callers with two batched queries keyed by the page's coin ids | Accepted |
 
 ## Where else decisions live
 
