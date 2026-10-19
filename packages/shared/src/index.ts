@@ -45,6 +45,13 @@ export interface SubmittedCoin extends CatalogCoin {
   rejectionReason: string | null;
 }
 
+// GET /catalog list item. `owned` and `inSetsCount` are present only when the caller is
+// signed in (signed-in redesign Phase 8); an anonymous response omits both keys.
+export interface CatalogListItem extends CatalogCoin {
+  owned?: boolean;
+  inSetsCount?: number;
+}
+
 // GET /admin/coins item minus duplicate info; also the PATCH /admin/coins/:id response.
 export interface AdminCoin extends CatalogCoin {
   rejectionReason: string | null;
