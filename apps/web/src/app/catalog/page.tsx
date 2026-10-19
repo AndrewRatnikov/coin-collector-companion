@@ -262,7 +262,11 @@ function CatalogPageContent() {
             </div>
           ) : (
             <>
-              <CatalogResultsList coins={data?.items ?? []} isLoading={isLoading && !data} />
+              <CatalogResultsList
+                coins={data?.items ?? []}
+                isLoading={isLoading && !data}
+                showOwnership={isLoggedIn}
+              />
               {data && data.items.length > 0 && (
                 <CatalogPagination page={view.page} totalPages={totalPages} onPageChange={handlePageChange} />
               )}
