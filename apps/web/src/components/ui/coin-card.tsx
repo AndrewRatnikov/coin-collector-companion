@@ -19,6 +19,10 @@ export interface CoinCardProps {
   onToggle?: () => void;
   onSelect?: () => void;
   hideEyebrow?: boolean;
+  /** Passed to the card's StatusToggle as ariaLabel. */
+  toggleLabel?: string;
+  /** coin-card-status text when not owned (idle). Default t('ui.coin.statusMissing'). */
+  missingStatusLabel?: string;
 }
 
 function noop() {}
@@ -38,6 +42,8 @@ export function CoinCard({
   onToggle = noop,
   onSelect = noop,
   hideEyebrow = false,
+  toggleLabel,
+  missingStatusLabel,
 }: CoinCardProps) {
   const { t } = useTranslation();
   const name = getCoinName(coin);
@@ -91,7 +97,7 @@ export function CoinCard({
     } else {
       statusLine = (
         <span data-testid="coin-card-status" className="text-neutral-700">
-          {t('ui.coin.statusMissing')}
+          {missingStatusLabel ?? t('ui.coin.statusMissing')}
         </span>
       );
     }
@@ -170,6 +176,7 @@ export function CoinCard({
           coinTitle={name.title}
           state={status}
           onToggle={onToggle}
+          ariaLabel={toggleLabel}
           className="absolute right-1 top-1 z-[3]"
         />
       )}

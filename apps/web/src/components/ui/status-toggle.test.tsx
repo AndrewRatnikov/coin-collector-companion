@@ -2,7 +2,9 @@
  * Tests for: StatusToggle and useDelayedPending
  * Contract source: runs/run_20261017_142658/plan.md § Interface Contract → Component: StatusToggle
  * Extended by: runs/run_20261017_210503/plan.md § Interface Contract → Component: StatusToggle (MODIFY)
- * Covers criteria: #9, #16 (run_20261017_142658); #14 (run_20261017_210503, collapseLabelOnMobile)
+ *              runs/run_20261019_073415/plan.md § Interface Contract → Component: StatusToggle (MODIFY, additive)
+ * Covers criteria: #9, #16 (run_20261017_142658); #14 (run_20261017_210503, collapseLabelOnMobile);
+ *                  #8, #10 (run_20261019_073415, ariaLabel and missingLabel)
  *
  * Fake timers drive the 150ms spinner delay. Events use fireEvent because userEvent and fake
  * timers do not mix well.
@@ -282,6 +284,109 @@ describe('StatusToggle', () => {
     it('has no such class on the label when the prop is false', () => {
       renderToggle({ variant: 'pill', owned: false, collapseLabelOnMobile: false });
       expect(screen.getByText('Missing').className).not.toContain('max-[899px]:sr-only');
+    });
+  });
+
+  describe('ariaLabel (run_20261019_073415)', () => {
+    it('replaces the idle accessible name when missing', () => {
+      renderToggle({ owned: false, ariaLabel: 'Add Odesa Oblast (2026) back to your collection' });
+      expect(screen.getByTestId('status-toggle')).toHaveAttribute(
+        'aria-label',
+        'Add Odesa Oblast (2026) back to your collection',
+      );
+    });
+
+    it('replaces the idle accessible name when owned', () => {
+      renderToggle({ owned: true, ariaLabel: 'Remove Odesa Oblast (2026) from your collection' });
+      expect(screen.getByTestId('status-toggle')).toHaveAttribute(
+        'aria-label',
+        'Remove Odesa Oblast (2026) from your collection',
+      );
+    });
+
+    it('applies to the pill variant too', () => {
+      renderToggle({ variant: 'pill', owned: true, ariaLabel: 'Remove Odesa Oblast (2026) from your collection' });
+      expect(screen.getByTestId('status-toggle')).toHaveAttribute(
+        'aria-label',
+        'Remove Odesa Oblast (2026) from your collection',
+      );
+      expect(screen.getByTestId('status-toggle')).toHaveTextContent('Owned');
+    });
+
+    it('follows the value it is given', () => {
+      const { rerender, onToggle } = renderToggle({ ariaLabel: 'First' });
+      expect(screen.getByTestId('status-toggle')).toHaveAttribute('aria-label', 'First');
+
+      rerender(
+        <StatusToggle variant="check" owned={false} coinTitle="Odesa Oblast" onToggle={onToggle} ariaLabel="Second" />,
+      );
+      expect(screen.getByTestId('status-toggle')).toHaveAttribute('aria-label', 'Second');
+    });
+
+    it('keeps the default name when the prop is absent', () => {
+      renderToggle({ owned: false });
+      expect(screen.getByTestId('status-toggle')).toHaveAttribute('aria-label', 'Mark Odesa Oblast as owned');
+    });
+
+    it('does not change the pending name', () => {
+      renderToggle({ state: 'pending', ariaLabel: 'Custom' });
+      expect(screen.getByTestId('status-toggle')).toHaveAttribute('aria-label', 'Saving Odesa Oblast');
+    });
+
+    it('does not change the failed name', () => {
+      renderToggle({ state: 'failed', ariaLabel: 'Custom' });
+      expect(screen.getByTestId('status-toggle')).toHaveAttribute(
+        'aria-label',
+        'Couldn’t save Odesa Oblast. Try again',
+      );
+    });
+
+    it('still calls onToggle on click', () => {
+      const { onToggle } = renderToggle({ owned: true, ariaLabel: 'Custom' });
+      fireEvent.click(screen.getByTestId('status-toggle'));
+      expect(onToggle).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('missingLabel (run_20261019_073415)', () => {
+    it('replaces the visible text of an idle missing pill', () => {
+      renderToggle({ variant: 'pill', owned: false, missingLabel: 'Removed' });
+      const button = screen.getByTestId('status-toggle');
+
+      expect(button).toHaveTextContent('Removed');
+      expect(button).not.toHaveTextContent('Missing');
+    });
+
+    it('follows the value it is given', () => {
+      renderToggle({ variant: 'pill', owned: false, missingLabel: 'Not here' });
+      expect(screen.getByTestId('status-toggle')).toHaveTextContent('Not here');
+    });
+
+    it('does not change an owned pill', () => {
+      renderToggle({ variant: 'pill', owned: true, missingLabel: 'Removed' });
+      expect(screen.getByTestId('status-toggle')).toHaveTextContent('Owned');
+      expect(screen.getByTestId('status-toggle')).not.toHaveTextContent('Removed');
+    });
+
+    it('does not change the failed pill', () => {
+      renderToggle({ variant: 'pill', owned: false, state: 'failed', missingLabel: 'Removed' });
+      expect(screen.getByTestId('status-toggle')).toHaveTextContent('Retry');
+      expect(screen.getByTestId('status-toggle')).not.toHaveTextContent('Removed');
+    });
+
+    it('keeps "Missing" when the prop is absent', () => {
+      renderToggle({ variant: 'pill', owned: false });
+      expect(screen.getByTestId('status-toggle')).toHaveTextContent('Missing');
+    });
+
+    it('does not rename the action: the accessible name stays the default', () => {
+      renderToggle({ variant: 'pill', owned: false, missingLabel: 'Removed' });
+      expect(screen.getByTestId('status-toggle')).toHaveAttribute('aria-label', 'Mark Odesa Oblast as owned');
+    });
+
+    it('adds no visible text to the check variant', () => {
+      renderToggle({ variant: 'check', owned: false, missingLabel: 'Removed' });
+      expect(screen.getByTestId('status-toggle')).not.toHaveTextContent('Removed');
     });
   });
 });
