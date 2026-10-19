@@ -3,11 +3,17 @@
  * Contract source: runs/run_20261006_215558/plan.md § Interface Contract → Page: SetEditorPage (modify)
  *                   runs/run_20261017_142658/plan.md § Approach §3 (variety is carried by the title and eyebrow)
  *                   runs/run_20261017_210503/plan.md § Interface Contract → Component: SetCoinList
- * Covers criteria: #1, #2, #3, #4 (run_20261006_215558), #6 (run_20261017_142658), #11 (run_20261017_210503)
+ *                   runs/run_20261018_161537/plan.md § Interface Contract → Component: AddCoinsSheet
+ * Covers criteria: #1, #2, #3, #4 (run_20261006_215558), #6 (run_20261017_142658), #11 (run_20261017_210503),
+ *                  #7 (run_20261018_161537)
  *
  * run_20261017_210503: the set-editor-gap-* rows are gone. The same expectations (variety as the title, type name
  * as the eyebrow, no stray separator, link to /catalog/{id}, controls outside the link) now target the
- * set-coin-row-* testids in List view (?view=list). The Add-coins picker block is unchanged.
+ * set-coin-row-* testids in List view (?view=list).
+ *
+ * run_20261018_161537: the Add-coins picker block now targets the AddCoinsSheet rows
+ * (add-coins-row-title / add-coins-row-subtitle) with the same expectations. Opening the sheet needs
+ * useCatalogFacets, useCollection and a usePatchSetCoins mock with mutateAsync.
  *
  * CONTRACT_GAPS: none
  */
@@ -25,8 +31,8 @@ import {
   useSetGaps,
   useUserSets,
 } from '@/lib/hooks/use-user-sets';
-import { useBulkSetOwnership, useSetOwnership } from '@/lib/hooks/use-collection';
-import { useCatalog } from '@/lib/hooks/use-catalog';
+import { useBulkSetOwnership, useCollection, useSetOwnership } from '@/lib/hooks/use-collection';
+import { useCatalog, useCatalogFacets } from '@/lib/hooks/use-catalog';
 import { setStoredToken } from '@/lib/auth-token';
 
 const pushMock = vi.fn();
@@ -52,10 +58,12 @@ vi.mock('@/lib/hooks/use-user-sets', () => ({
 vi.mock('@/lib/hooks/use-collection', () => ({
   useSetOwnership: vi.fn(),
   useBulkSetOwnership: vi.fn(),
+  useCollection: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/use-catalog', () => ({
   useCatalog: vi.fn(),
+  useCatalogFacets: vi.fn(),
 }));
 
 const usePublicSetMock = vi.mocked(usePublicSet);
@@ -67,14 +75,16 @@ const useRenameSetMock = vi.mocked(useRenameSet);
 const useDeleteSetMock = vi.mocked(useDeleteSet);
 const useSetOwnershipMock = vi.mocked(useSetOwnership);
 const useBulkSetOwnershipMock = vi.mocked(useBulkSetOwnership);
+const useCollectionMock = vi.mocked(useCollection);
 const useCatalogMock = vi.mocked(useCatalog);
+const useCatalogFacetsMock = vi.mocked(useCatalogFacets);
 
 function queryResult(overrides: Record<string, unknown> = {}) {
   return { data: undefined, isLoading: false, isError: false, refetch: vi.fn(), ...overrides } as never;
 }
 
 function mutationMock() {
-  return { mutate: vi.fn(), isPending: false } as never;
+  return { mutate: vi.fn(), mutateAsync: vi.fn(() => Promise.resolve(undefined)), isPending: false } as never;
 }
 
 function renderPage(id = 'set-1') {
@@ -161,7 +171,9 @@ describe('SetEditorPage: coin variety and link to coin page (List view)', () => 
       useDeleteSetMock,
       useSetOwnershipMock,
       useBulkSetOwnershipMock,
+      useCollectionMock,
       useCatalogMock,
+      useCatalogFacetsMock,
     ].forEach((m) => m.mockReset());
 
     usePublicSetMock.mockReturnValue(queryResult({ data: SET_DETAIL }));
@@ -174,6 +186,8 @@ describe('SetEditorPage: coin variety and link to coin page (List view)', () => 
     useSetOwnershipMock.mockReturnValue(mutationMock());
     useBulkSetOwnershipMock.mockReturnValue(mutationMock());
     useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
+    useCatalogFacetsMock.mockReturnValue(queryResult({ data: { countries: [], denominations: [] } }));
+    useCollectionMock.mockReturnValue(queryResult({ data: [] }));
     setStoredToken('tok-abc');
   });
 
@@ -270,7 +284,7 @@ describe('SetEditorPage: coin variety and link to coin page (List view)', () => 
     });
   });
 
-  describe('run_20261017_142658: Add-coins picker rows use the name block', () => {
+  describe('run_20261017_142658 / run_20261018_161537: Add-coins sheet rows use the name block', () => {
     it('shows the getCoinName title and subtitle for each catalog result, and the old label text is gone', async () => {
       const donetsk = {
         ...BASE_COIN,
@@ -293,15 +307,13 @@ describe('SetEditorPage: coin variety and link to coin page (List view)', () => 
       });
       await user.click(screen.getByTestId('set-editor-toggle-add-coins'));
 
-      const results = screen.getByTestId('set-editor-add-coins-results');
-      const rows = within(results).getAllByTestId('set-editor-add-coins-item');
+      const results = screen.getByTestId('add-coins-results');
+      const rows = within(results).getAllByTestId('add-coins-row');
       expect(rows).toHaveLength(2);
-      expect(within(rows[0]).getByTestId('set-editor-add-coins-item-title')).toHaveTextContent(/^DDO$/);
-      expect(within(rows[0]).getByTestId('set-editor-add-coins-item-subtitle')).toHaveTextContent(
-        /^USA · 1 Cent · 1909-S$/,
-      );
-      expect(within(rows[1]).getByTestId('set-editor-add-coins-item-title')).toHaveTextContent(/^Donetsk Oblast$/);
-      expect(within(rows[1]).getByTestId('set-editor-add-coins-item-subtitle')).toHaveTextContent(
+      expect(within(rows[0]).getByTestId('add-coins-row-title')).toHaveTextContent(/^DDO$/);
+      expect(within(rows[0]).getByTestId('add-coins-row-subtitle')).toHaveTextContent(/^USA · 1 Cent · 1909-S$/);
+      expect(within(rows[1]).getByTestId('add-coins-row-title')).toHaveTextContent(/^Donetsk Oblast$/);
+      expect(within(rows[1]).getByTestId('add-coins-row-subtitle')).toHaveTextContent(
         /^Ukraine · 10 Hryvnias · 2025$/,
       );
       expect(results).not.toHaveTextContent('USA 1 Cent (1909 S)');

@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { getCoinName } from '@coin-collector/shared';
 import type { GapSlot } from '@coin-collector/shared';
 import { RequireAuth } from '@/components/auth/require-auth';
-import CatalogFilterForm, { type CatalogFilterFormValues } from '@/components/catalog/catalog-filter-form';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import {
   useAddCoinsToSet,
@@ -17,15 +16,13 @@ import {
   useUserSets,
 } from '@/lib/hooks/use-user-sets';
 import { useBulkSetOwnership, useSetOwnership } from '@/lib/hooks/use-collection';
-import { useCatalog } from '@/lib/hooks/use-catalog';
 import { downloadMissingCsv } from '@/lib/missing-list';
-import type { CatalogFilters } from '@/lib/catalog-api';
 import { Badge } from '@/components/ui/badge';
 import type { CoinCardStatus } from '@/components/ui/coin-card';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Sheet } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UndoToastProvider, useUndoToast } from '@/components/ui/undo-toast';
+import { AddCoinsSheet } from '@/components/sets/add-coins-sheet';
 import { SelectionActionBar } from '@/components/sets/selection-action-bar';
 import { SetActionsMenu } from '@/components/sets/set-actions-menu';
 import { SetAlbum } from '@/components/sets/set-album';
@@ -40,7 +37,6 @@ import { useTranslation } from '@/lib/i18n/i18n-context';
 import type { MessageKey } from '@/lib/i18n/locales/en';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
-const ADD_COINS_LIMIT = 20;
 const PAGE_WRAPPER_CLASSNAME =
   'mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-6 px-[clamp(20px,5vw,48px)] py-10 max-[899px]:py-6';
 
@@ -194,11 +190,6 @@ function SetEditor({ id }: { id: string }) {
   const [selected, setSelected] = useState<ReadonlySet<string>>(() => new Set());
   const [pickerOpen, setPickerOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [addCoinsFilters, setAddCoinsFilters] = useState<CatalogFilters>({
-    page: 1,
-    limit: ADD_COINS_LIMIT,
-  });
-  const catalogQuery = useCatalog(addCoinsFilters);
 
   // Adjust the name state during render (React's "adjust state" pattern) rather than in an
   // effect, so the first render with `set` already shows the right name.
@@ -342,14 +333,6 @@ function SetEditor({ id }: { id: string }) {
       { setId, coinIds: [slot.coin.id] },
       { onSuccess: () => setLiveMessage(fill(t('setPage.liveAddedToSet'), { title, set: setName })) },
     );
-  }
-
-  function handleAdd(coinId: string) {
-    patchCoinsMutation.mutate({ add: [coinId] });
-  }
-
-  function handleAddCoinsFilterSubmit(values: CatalogFilterFormValues) {
-    setAddCoinsFilters({ ...values, page: 1, limit: ADD_COINS_LIMIT });
   }
 
   function startRename() {
@@ -671,6 +654,8 @@ function SetEditor({ id }: { id: string }) {
             <button
               type="button"
               data-testid="set-editor-toggle-add-coins"
+              aria-haspopup="dialog"
+              aria-expanded={pickerOpen}
               onClick={() => setPickerOpen(true)}
               className={`inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-[var(--radius-md)] bg-accent-700 px-4 text-sm font-medium text-white hover:bg-accent-800 max-[899px]:px-0 ${FOCUS_RING}`}
             >
@@ -712,38 +697,14 @@ function SetEditor({ id }: { id: string }) {
         {liveMessage}
       </p>
 
-      <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title={t('setEditor.addCoinsHeading')}>
-        <div data-testid="set-editor-add-coins-panel" className="flex flex-col gap-3">
-          <CatalogFilterForm testIdPrefix="set-editor-add-coins" onSubmit={handleAddCoinsFilterSubmit} />
-          <ul data-testid="set-editor-add-coins-results" className="flex flex-col gap-2">
-            {(catalogQuery.data?.items ?? []).map((coin) => {
-              const name = getCoinName(coin);
-              return (
-                <li
-                  key={coin.id}
-                  data-testid="set-editor-add-coins-item"
-                  className="flex items-center justify-between gap-4 rounded border border-gray-200 p-2"
-                >
-                  <span className="flex min-w-0 flex-col">
-                    <span data-testid="set-editor-add-coins-item-title">{name.title}</span>
-                    <span data-testid="set-editor-add-coins-item-subtitle" className="text-xs text-neutral-700">
-                      {name.subtitle}
-                    </span>
-                  </span>
-                  <button
-                    type="button"
-                    data-testid="set-editor-add-coins-add-button"
-                    onClick={() => handleAdd(coin.id)}
-                    className="rounded border border-gray-300 px-2 py-1 text-xs"
-                  >
-                    {t('setEditor.addButton')}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </Sheet>
+      {isOwner && pickerOpen && (
+        <AddCoinsSheet
+          setId={id}
+          setName={resolveLocalizedText(savedName, locale)}
+          slots={gaps.slots}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
 
       <ConfirmDialog
         open={deleteConfirmOpen}
