@@ -1,7 +1,9 @@
 /**
  * Tests for: CatalogResultsList, CatalogPagination
  * Contract source: runs/run_20261011_105146/plan.md § Interface Contract → Component: CatalogResultsList and CatalogPagination
- * Covers criteria: #13, #14, #15 (from prd.md)
+ *                   runs/run_20261019_221037/plan.md § Interface Contract → Component: CatalogResultsList (web, MODIFY)
+ * Covers criteria: #13, #14, #15 (from run_20261011_105146's prd.md),
+ *                  #7, #8, #9, #10 (from run_20261019_221037's prd.md)
  *
  * CONTRACT_GAP: none.
  */
@@ -9,10 +11,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { CatalogCoin } from '@coin-collector/shared';
+import type { CatalogListItem } from '@coin-collector/shared';
 import CatalogResultsList, { CatalogPagination } from '@/components/catalog/catalog-results-list';
 
-function makeCoin(overrides: Partial<CatalogCoin> = {}): CatalogCoin {
+function makeCoin(overrides: Partial<CatalogListItem> = {}): CatalogListItem {
   return {
     id: 'c1',
     country: 'Ukraine',
@@ -164,6 +166,163 @@ describe('CatalogResultsList', () => {
       const numerals = screen.getAllByTestId('catalog-item-numeral');
       expect(numerals.map((numeral) => numeral.textContent)).toEqual(['10', '1']);
       expect(screen.queryByTestId('catalog-item-image')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('ownership badges (run_20261019_221037 criteria #7, #8, #9, #10)', () => {
+    it('showOwnership with owned: true shows the Owned badge (criterion #7)', () => {
+      render(<CatalogResultsList coins={[makeCoin({ owned: true, inSetsCount: 0 })]} isLoading={false} showOwnership />);
+
+      const wrapper = screen.getByTestId('catalog-item-ownership');
+      const badges = within(wrapper).getAllByTestId('badge');
+      expect(badges).toHaveLength(1);
+      expect(badges[0]).toHaveAttribute('data-variant', 'owned');
+      expect(badges[0]).toHaveTextContent('✓ Owned');
+    });
+
+    it('inSetsCount 1 shows "In 1 set" (singular)', () => {
+      render(<CatalogResultsList coins={[makeCoin({ owned: false, inSetsCount: 1 })]} isLoading={false} showOwnership />);
+
+      const badges = within(screen.getByTestId('catalog-item-ownership')).getAllByTestId('badge');
+      expect(badges).toHaveLength(1);
+      expect(badges[0]).toHaveAttribute('data-variant', 'in-set');
+      expect(badges[0]).toHaveTextContent('In 1 set');
+      expect(badges[0]).not.toHaveTextContent('In 1 sets');
+    });
+
+    it('inSetsCount 3 shows "In 3 sets" (plural), and 2 shows "In 2 sets"', () => {
+      render(
+        <CatalogResultsList
+          coins={[makeCoin({ id: 'a', inSetsCount: 3 }), makeCoin({ id: 'b', inSetsCount: 2 })]}
+          isLoading={false}
+          showOwnership
+        />,
+      );
+
+      const wrappers = screen.getAllByTestId('catalog-item-ownership');
+      expect(wrappers[0]).toHaveTextContent('In 3 sets');
+      expect(wrappers[1]).toHaveTextContent('In 2 sets');
+    });
+
+    it('shows both badges at once, Owned first', () => {
+      render(<CatalogResultsList coins={[makeCoin({ owned: true, inSetsCount: 3 })]} isLoading={false} showOwnership />);
+
+      const badges = within(screen.getByTestId('catalog-item-ownership')).getAllByTestId('badge');
+      expect(badges.map((badge) => badge.getAttribute('data-variant'))).toEqual(['owned', 'in-set']);
+      expect(badges[1]).toHaveTextContent('In 3 sets');
+    });
+
+    it('puts the badges inside the row, next to the name', () => {
+      render(<CatalogResultsList coins={[makeCoin({ owned: true, inSetsCount: 1 })]} isLoading={false} showOwnership />);
+
+      const row = screen.getByTestId('catalog-item');
+      expect(within(row).getByTestId('catalog-item-ownership')).toBeInTheDocument();
+    });
+
+    it('owned: false and inSetsCount: 0 shows no ownership wrapper and no badge (criterion #8)', () => {
+      render(<CatalogResultsList coins={[makeCoin({ owned: false, inSetsCount: 0 })]} isLoading={false} showOwnership />);
+
+      expect(screen.queryByTestId('catalog-item-ownership')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('badge')).not.toBeInTheDocument();
+    });
+
+    it('absent owned / inSetsCount fields show no badges, even with showOwnership (criterion #8)', () => {
+      render(<CatalogResultsList coins={[makeCoin()]} isLoading={false} showOwnership />);
+
+      expect(screen.queryByTestId('catalog-item-ownership')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('badge')).not.toBeInTheDocument();
+    });
+
+    it('showOwnership false shows no badges even with owned: true and inSetsCount: 2', () => {
+      render(
+        <CatalogResultsList
+          coins={[makeCoin({ owned: true, inSetsCount: 2 })]}
+          isLoading={false}
+          showOwnership={false}
+        />,
+      );
+
+      expect(screen.queryByTestId('catalog-item-ownership')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('badge')).not.toBeInTheDocument();
+    });
+
+    it('showOwnership omitted shows no badges even with owned: true and inSetsCount: 2', () => {
+      render(<CatalogResultsList coins={[makeCoin({ owned: true, inSetsCount: 2 })]} isLoading={false} />);
+
+      expect(screen.queryByTestId('catalog-item-ownership')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('badge')).not.toBeInTheDocument();
+    });
+
+    it('renders badges per row: only the rows that have something to show', () => {
+      render(
+        <CatalogResultsList
+          coins={[
+            makeCoin({ id: 'a', owned: true, inSetsCount: 0 }),
+            makeCoin({ id: 'b', owned: false, inSetsCount: 0 }),
+            makeCoin({ id: 'c', owned: false, inSetsCount: 2 }),
+          ]}
+          isLoading={false}
+          showOwnership
+        />,
+      );
+
+      const rows = screen.getAllByTestId('catalog-item');
+      expect(within(rows[0]).getByTestId('catalog-item-ownership')).toHaveTextContent('✓ Owned');
+      expect(within(rows[1]).queryByTestId('catalog-item-ownership')).not.toBeInTheDocument();
+      expect(within(rows[2]).getByTestId('catalog-item-ownership')).toHaveTextContent('In 2 sets');
+      expect(within(rows[2]).getByTestId('catalog-item-ownership')).not.toHaveTextContent('Owned');
+    });
+
+    it('the key-date pill still renders alongside the ownership badges', () => {
+      render(
+        <CatalogResultsList
+          coins={[makeCoin({ isKeyDate: true, owned: true, inSetsCount: 1 })]}
+          isLoading={false}
+          showOwnership
+        />,
+      );
+
+      const row = screen.getByTestId('catalog-item');
+      expect(within(row).getByTestId('catalog-item-key-date')).toBeInTheDocument();
+      expect(within(row).getByTestId('catalog-item-ownership')).toBeInTheDocument();
+    });
+
+    it('a key-date coin with no ownership data still shows the key-date pill and no ownership wrapper', () => {
+      render(<CatalogResultsList coins={[makeCoin({ isKeyDate: true })]} isLoading={false} showOwnership />);
+
+      expect(screen.getByTestId('catalog-item-key-date')).toBeInTheDocument();
+      expect(screen.queryByTestId('catalog-item-ownership')).not.toBeInTheDocument();
+    });
+
+    it('rows contain no button and no [aria-pressed] control, with badges shown (criterion #10)', () => {
+      render(
+        <CatalogResultsList
+          coins={[makeCoin({ id: 'a', owned: true, inSetsCount: 2 }), makeCoin({ id: 'b', owned: false, inSetsCount: 0 })]}
+          isLoading={false}
+          showOwnership
+        />,
+      );
+
+      for (const row of screen.getAllByTestId('catalog-item')) {
+        expect(within(row).queryByRole('button')).not.toBeInTheDocument();
+        expect(row.querySelector('[aria-pressed]')).toBeNull();
+        expect(row.querySelector('button')).toBeNull();
+      }
+    });
+
+    it('keeps the row link, year and denomination cells when badges show (criterion #9)', () => {
+      render(
+        <CatalogResultsList
+          coins={[makeCoin({ id: 'coin-7', year: 1909, denomination: 'Cent', owned: true, inSetsCount: 4 })]}
+          isLoading={false}
+          showOwnership
+        />,
+      );
+
+      const row = screen.getByTestId('catalog-item');
+      expect(within(row).getByTestId('catalog-item-link')).toHaveAttribute('href', '/catalog/coin-7');
+      expect(within(row).getByTestId('catalog-item-year')).toHaveTextContent('1909');
+      expect(within(row).getByTestId('catalog-item-denomination')).toHaveTextContent('Cent');
     });
   });
 });

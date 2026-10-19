@@ -2,7 +2,13 @@
 // new value when something changes and the same reference when nothing does; none mutates
 // its input. The settle-time invalidation still refetches the real server state.
 
-import type { CatalogCoin, GapViewResponse, OwnershipItem, PaginatedResponse } from '@coin-collector/shared';
+import type {
+  CatalogCoin,
+  CatalogListItem,
+  GapViewResponse,
+  OwnershipItem,
+  PaginatedResponse,
+} from '@coin-collector/shared';
 import type { CatalogFilters } from '@/lib/catalog-api';
 import type { CollectionFilters } from '@/lib/collection-api';
 
@@ -58,20 +64,34 @@ export function applyOwnershipToCollection(
   return [{ coinId, coin, ownedAt }, ...items];
 }
 
-/** A hideOwned catalog list drops a coin that just became owned. Every other list is unchanged. */
-export function applyOwnershipToCatalogPage(
-  page: PaginatedResponse<CatalogCoin>,
+/**
+ * A hideOwned catalog list drops a coin that just became owned. Otherwise, a signed-in page
+ * whose item carries a boolean `owned` gets that one item's `owned` updated (`inSetsCount` is
+ * left to the refetch). Items without an `owned` key (signed-out pages) are left alone.
+ */
+export function applyOwnershipToCatalogPage<T extends CatalogListItem>(
+  page: PaginatedResponse<T>,
   coinId: string,
   owned: boolean,
   filters: CatalogFilters,
-): PaginatedResponse<CatalogCoin> {
-  if (filters.hideOwned !== true || !owned) return page;
-  if (!page.items.some((coin) => coin.id === coinId)) return page;
-  return {
-    ...page,
-    items: page.items.filter((coin) => coin.id !== coinId),
-    total: Math.max(0, page.total - 1),
-  };
+): PaginatedResponse<T> {
+  if (filters.hideOwned === true && owned) {
+    if (!page.items.some((coin) => coin.id === coinId)) return page;
+    return {
+      ...page,
+      items: page.items.filter((coin) => coin.id !== coinId),
+      total: Math.max(0, page.total - 1),
+    };
+  }
+
+  const index = page.items.findIndex((coin) => coin.id === coinId);
+  if (index === -1) return page;
+  const item = page.items[index];
+  if (typeof item.owned !== 'boolean' || item.owned === owned) return page;
+
+  const items = page.items.slice();
+  items[index] = { ...item, owned };
+  return { ...page, items };
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

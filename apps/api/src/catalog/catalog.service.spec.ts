@@ -5,17 +5,20 @@
  *                   runs/run_20260731_132040/plan.md § Interface Contract → Service: CatalogService.findAll (MODIFY)
  *                   runs/run_20261001_224939/plan.md § Interface Contract → Service: CatalogService (MODIFY)
  *                   runs/run_20261011_105146/plan.md § Interface Contract → Service: CatalogService (MODIFY)
+ *                   runs/run_20261019_221037/plan.md § Interface Contract → Service: CatalogService.findAll (API, MODIFY)
  * Covers criteria: #2, #3, #4, #5, #6, #7, #8, #9, #11 (from run_20260719_190933's prd.md),
  *                  #1, #2, #3, #4 (from run_20260725_140648's prd.md),
  *                  #1, #2, #3, #4, #5 (from run_20260731_132040's prd.md),
  *                  #13, #14 (from run_20261001_224939's prd.md),
- *                  #1, #2, #3, #4, #5 (from run_20261011_105146's prd.md)
+ *                  #1, #2, #3, #4, #5 (from run_20261011_105146's prd.md),
+ *                  #1, #2, #3, #4, #5 (from run_20261019_221037's prd.md)
  *
  * CONTRACT_GAP: none.
  *
  * PrismaService is mocked entirely (coin.findMany / coin.count / coin.findUnique /
- * coin.findFirst / coin.create) — no real DB or network call, per plan.md's "Prisma calls
- * the Tester's mock must cover exactly" list. FindCatalogQueryDto instances are built via
+ * coin.findFirst / coin.create, plus ownership.findMany and userSetCoin.findMany) — no real DB or
+ * network call, per plan.md's "Prisma calls the Tester's mock must cover exactly" list.
+ * FindCatalogQueryDto instances are built via
  * `new FindCatalogQueryDto()` + Object.assign so the class field defaults (page = 1, limit = 20)
  * documented in the Interface Contract are exercised the same way Nest's ValidationPipe would
  * produce them — no name/shape is invented beyond what plan.md's DTO field list already specifies.
@@ -38,6 +41,11 @@
  * run_20261011_105146: new describe blocks for multi-value denomination, keyDateOnly, hideOwned,
  * sort, and findFacets (distinct countries/denominations, scoping, ordering). The facets mock
  * tells the two findMany calls apart by `args.distinct[0]` ('country' vs 'denomination').
+ *
+ * run_20261019_221037: a signed-in findAll adds `owned` / `inSetsCount` to each item through two
+ * batched queries (ownership.findMany, userSetCoin.findMany). The mock gets those two models; the
+ * one exact-items assertion of the submittedByMe response-shape test changes on purpose. New
+ * describe block "findAll — viewer fields".
  */
 
 import { ConflictException, NotFoundException } from '@nestjs/common';
@@ -84,6 +92,8 @@ describe('CatalogService', () => {
       findFirst: jest.Mock;
       create: jest.Mock;
     };
+    ownership: { findMany: jest.Mock };
+    userSetCoin: { findMany: jest.Mock };
   };
 
   beforeEach(async () => {
@@ -95,6 +105,8 @@ describe('CatalogService', () => {
         findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn(),
       },
+      ownership: { findMany: jest.fn().mockResolvedValue([]) },
+      userSetCoin: { findMany: jest.fn().mockResolvedValue([]) },
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -287,8 +299,9 @@ describe('CatalogService', () => {
 
       const result = await service.findAll(makeQuery({ submittedByMe: true }), SUBMITTER_USER_ID);
 
+      // run_20261019_221037: a signed-in caller now also gets owned / inSetsCount on each item.
       expect(result).toEqual({
-        items: [{ id: 'pending-1', status: 'pending' }],
+        items: [{ id: 'pending-1', status: 'pending', owned: false, inSetsCount: 0 }],
         page: 1,
         limit: 20,
         total: 1,
@@ -610,6 +623,220 @@ describe('CatalogService', () => {
       await service.findAll(makeQuery({ sort: 'name_asc', keyDateOnly: true, denomination: ['a', 'b'] }));
 
       expect(mockPrismaService.coin.findMany.mock.calls[0][0].select).toEqual(CATALOG_COIN_SELECT);
+    });
+  });
+
+  describe('findAll — viewer fields (run_20261019_221037 criteria #1, #2, #3, #4, #5)', () => {
+    const PAGE = [{ id: 'coin-a' }, { id: 'coin-b' }, { id: 'coin-c' }];
+
+    function stubPage(items: Array<{ id: string }> = PAGE, total = items.length) {
+      mockPrismaService.coin.findMany.mockResolvedValue(items);
+      mockPrismaService.coin.count.mockResolvedValue(total);
+    }
+
+    it('adds owned and inSetsCount to every item for a signed-in caller, matched per coin (criterion #1)', async () => {
+      stubPage();
+      mockPrismaService.ownership.findMany.mockResolvedValue([{ coinId: 'coin-b' }]);
+      mockPrismaService.userSetCoin.findMany.mockResolvedValue([{ coinId: 'coin-a' }, { coinId: 'coin-c' }]);
+
+      const result = await service.findAll(makeQuery(), SUBMITTER_USER_ID);
+
+      expect(result.items).toEqual([
+        { id: 'coin-a', owned: false, inSetsCount: 1 },
+        { id: 'coin-b', owned: true, inSetsCount: 0 },
+        { id: 'coin-c', owned: false, inSetsCount: 1 },
+      ]);
+    });
+
+    it('a different ownership/membership result gives different fields (not hard-coded)', async () => {
+      stubPage();
+      mockPrismaService.ownership.findMany.mockResolvedValue([{ coinId: 'coin-a' }, { coinId: 'coin-c' }]);
+      mockPrismaService.userSetCoin.findMany.mockResolvedValue([]);
+
+      const result = await service.findAll(makeQuery(), SUBMITTER_USER_ID);
+
+      expect(result.items).toEqual([
+        { id: 'coin-a', owned: true, inSetsCount: 0 },
+        { id: 'coin-b', owned: false, inSetsCount: 0 },
+        { id: 'coin-c', owned: true, inSetsCount: 0 },
+      ]);
+    });
+
+    it('inSetsCount is the number of membership rows for the coin, one per set (criterion #3)', async () => {
+      stubPage([{ id: 'coin-a' }, { id: 'coin-b' }]);
+      mockPrismaService.userSetCoin.findMany.mockResolvedValue([
+        { coinId: 'coin-a' },
+        { coinId: 'coin-a' },
+        { coinId: 'coin-a' },
+        { coinId: 'coin-b' },
+      ]);
+
+      const result = await service.findAll(makeQuery(), SUBMITTER_USER_ID);
+
+      expect(result.items).toEqual([
+        { id: 'coin-a', owned: false, inSetsCount: 3 },
+        { id: 'coin-b', owned: false, inSetsCount: 1 },
+      ]);
+    });
+
+    it('keeps the item order, page, limit and total (criterion #5)', async () => {
+      stubPage([{ id: 'coin-z' }, { id: 'coin-a' }], 57);
+
+      const result = await service.findAll(makeQuery({ page: 3, limit: 2 }), SUBMITTER_USER_ID);
+
+      expect((result.items as Array<{ id: string }>).map((item) => item.id)).toEqual(['coin-z', 'coin-a']);
+      expect(result.page).toBe(3);
+      expect(result.limit).toBe(2);
+      expect(result.total).toBe(57);
+    });
+
+    it('keeps the original coin fields on each enriched item', async () => {
+      stubPage([{ id: 'coin-a' }]);
+      mockPrismaService.coin.findMany.mockResolvedValue([{ id: 'coin-a', name: 'Lincoln Wheat Cent', year: 1909 }]);
+
+      const result = await service.findAll(makeQuery(), SUBMITTER_USER_ID);
+
+      expect(result.items[0]).toMatchObject({ id: 'coin-a', name: 'Lincoln Wheat Cent', year: 1909 });
+    });
+
+    it('queries ownership with the exact args: caller, page coin ids in page order, select coinId only (criteria #1, #4)', async () => {
+      stubPage();
+
+      await service.findAll(makeQuery(), SUBMITTER_USER_ID);
+
+      expect(mockPrismaService.ownership.findMany).toHaveBeenCalledTimes(1);
+      expect(mockPrismaService.ownership.findMany).toHaveBeenCalledWith({
+        where: { userId: SUBMITTER_USER_ID, coinId: { in: ['coin-a', 'coin-b', 'coin-c'] } },
+        select: { coinId: true },
+      });
+    });
+
+    it('queries userSetCoin scoped to the caller\'s own user sets only (criterion #3)', async () => {
+      stubPage();
+
+      await service.findAll(makeQuery(), SUBMITTER_USER_ID);
+
+      expect(mockPrismaService.userSetCoin.findMany).toHaveBeenCalledTimes(1);
+      expect(mockPrismaService.userSetCoin.findMany).toHaveBeenCalledWith({
+        where: { coinId: { in: ['coin-a', 'coin-b', 'coin-c'] }, userSet: { userId: SUBMITTER_USER_ID } },
+        select: { coinId: true },
+      });
+    });
+
+    it('uses the calling user id in both queries, not a constant', async () => {
+      stubPage([{ id: 'coin-q' }]);
+
+      await service.findAll(makeQuery(), OTHER_USER_ID);
+
+      expect(mockPrismaService.ownership.findMany.mock.calls[0][0].where).toEqual({
+        userId: OTHER_USER_ID,
+        coinId: { in: ['coin-q'] },
+      });
+      expect(mockPrismaService.userSetCoin.findMany.mock.calls[0][0].where).toEqual({
+        coinId: { in: ['coin-q'] },
+        userSet: { userId: OTHER_USER_ID },
+      });
+    });
+
+    it('uses a fixed number of queries whatever the page size (criterion #4)', async () => {
+      stubPage([{ id: 'coin-a' }]);
+      await service.findAll(makeQuery(), SUBMITTER_USER_ID);
+      const small = {
+        coin: mockPrismaService.coin.findMany.mock.calls.length,
+        count: mockPrismaService.coin.count.mock.calls.length,
+        ownership: mockPrismaService.ownership.findMany.mock.calls.length,
+        sets: mockPrismaService.userSetCoin.findMany.mock.calls.length,
+      };
+
+      mockPrismaService.coin.findMany.mockClear();
+      mockPrismaService.coin.count.mockClear();
+      mockPrismaService.ownership.findMany.mockClear();
+      mockPrismaService.userSetCoin.findMany.mockClear();
+      const many = Array.from({ length: 50 }, (_, i) => ({ id: `coin-${i}` }));
+      stubPage(many);
+      await service.findAll(makeQuery({ limit: 50 }), SUBMITTER_USER_ID);
+
+      expect({
+        coin: mockPrismaService.coin.findMany.mock.calls.length,
+        count: mockPrismaService.coin.count.mock.calls.length,
+        ownership: mockPrismaService.ownership.findMany.mock.calls.length,
+        sets: mockPrismaService.userSetCoin.findMany.mock.calls.length,
+      }).toEqual(small);
+      expect(small).toEqual({ coin: 1, count: 1, ownership: 1, sets: 1 });
+      expect(mockPrismaService.ownership.findMany.mock.calls[0][0].where.coinId.in).toHaveLength(50);
+    });
+
+    it('makes no enrichment query for an empty page and returns it unchanged (edge case)', async () => {
+      stubPage([], 0);
+
+      const result = await service.findAll(makeQuery(), SUBMITTER_USER_ID);
+
+      expect(mockPrismaService.ownership.findMany).not.toHaveBeenCalled();
+      expect(mockPrismaService.userSetCoin.findMany).not.toHaveBeenCalled();
+      expect(result).toEqual({ items: [], page: 1, limit: 20, total: 0 });
+    });
+
+    it('anonymous caller: no enrichment queries and the items are passed through untouched (criterion #2)', async () => {
+      const rows = [{ id: 'coin-a' }, { id: 'coin-b' }];
+      stubPage(rows);
+
+      const result = await service.findAll(makeQuery());
+
+      expect(mockPrismaService.ownership.findMany).not.toHaveBeenCalled();
+      expect(mockPrismaService.userSetCoin.findMany).not.toHaveBeenCalled();
+      for (const item of result.items) {
+        expect(item).not.toHaveProperty('owned');
+        expect(item).not.toHaveProperty('inSetsCount');
+      }
+      expect(result.items).toEqual(rows);
+    });
+
+    it('a falsy (empty-string) userId is treated as anonymous', async () => {
+      stubPage();
+
+      const result = await service.findAll(makeQuery(), '');
+
+      expect(mockPrismaService.ownership.findMany).not.toHaveBeenCalled();
+      expect(result.items[0]).not.toHaveProperty('owned');
+    });
+
+    it('does not change the coin query or the count query for a signed-in caller (criteria #4, #5)', async () => {
+      stubPage();
+      await service.findAll(makeQuery({ country: 'USA', yearMin: 1909 }), SUBMITTER_USER_ID);
+      const signedIn = {
+        findMany: mockPrismaService.coin.findMany.mock.calls[0][0],
+        count: mockPrismaService.coin.count.mock.calls[0][0],
+      };
+
+      mockPrismaService.coin.findMany.mockClear();
+      mockPrismaService.coin.count.mockClear();
+      await service.findAll(makeQuery({ country: 'USA', yearMin: 1909 }));
+
+      expect(signedIn.findMany).toEqual(mockPrismaService.coin.findMany.mock.calls[0][0]);
+      expect(signedIn.count).toEqual(mockPrismaService.coin.count.mock.calls[0][0]);
+      expect(signedIn.findMany.select).toEqual(CATALOG_COIN_SELECT);
+    });
+
+    it('hideOwned: the ownership where on the coin query is kept and items are still enriched (criterion #5)', async () => {
+      stubPage([{ id: 'coin-a' }]);
+      mockPrismaService.userSetCoin.findMany.mockResolvedValue([{ coinId: 'coin-a' }, { coinId: 'coin-a' }]);
+
+      const result = await service.findAll(makeQuery({ hideOwned: true }), SUBMITTER_USER_ID);
+
+      expect(mockPrismaService.coin.findMany.mock.calls[0][0].where.ownerships).toEqual({
+        none: { userId: SUBMITTER_USER_ID },
+      });
+      expect(result.items).toEqual([{ id: 'coin-a', owned: false, inSetsCount: 2 }]);
+    });
+
+    it('submittedByMe: enriches the items and still selects exactly SUBMITTED_COIN_SELECT (criterion #5)', async () => {
+      stubPage([{ id: 'pending-1' }]);
+      mockPrismaService.ownership.findMany.mockResolvedValue([{ coinId: 'pending-1' }]);
+
+      const result = await service.findAll(makeQuery({ submittedByMe: true }), SUBMITTER_USER_ID);
+
+      expect(mockPrismaService.coin.findMany.mock.calls[0][0].select).toEqual(SUBMITTED_COIN_SELECT);
+      expect(result.items).toEqual([{ id: 'pending-1', owned: true, inSetsCount: 0 }]);
     });
   });
 
