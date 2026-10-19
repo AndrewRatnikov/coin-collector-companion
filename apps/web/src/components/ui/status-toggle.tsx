@@ -17,6 +17,10 @@ export interface StatusToggleProps {
   className?: string;
   /** Pill only: under 900px the text label becomes screen-reader-only, leaving just the disc. */
   collapseLabelOnMobile?: boolean;
+  /** Replaces the idle accessible name (owned or missing). Pending and failed names are unchanged. */
+  ariaLabel?: string;
+  /** Pill only: visible text in the idle missing state. Default t('ui.toggle.labelMissing'). */
+  missingLabel?: string;
 }
 
 /** A pending save shows its spinner only after this long, so fast saves never flash. */
@@ -71,6 +75,8 @@ export function StatusToggle({
   onRetry,
   className = '',
   collapseLabelOnMobile = false,
+  ariaLabel: idleAriaLabel,
+  missingLabel,
 }: StatusToggleProps) {
   const { t } = useTranslation();
   const pending = state === 'pending';
@@ -81,7 +87,10 @@ export function StatusToggle({
   if (pending) labelKey = 'ui.toggle.saving';
   else if (failed) labelKey = 'ui.toggle.failed';
   else labelKey = owned ? 'ui.toggle.markMissing' : 'ui.toggle.markOwned';
-  const ariaLabel = t(labelKey).split('{coin}').join(coinTitle);
+  const ariaLabel =
+    !pending && !failed && idleAriaLabel !== undefined
+      ? idleAriaLabel
+      : t(labelKey).split('{coin}').join(coinTitle);
 
   function handleClick() {
     if (pending) return;
@@ -126,6 +135,7 @@ export function StatusToggle({
 
     let disc: ReactNode;
     let label: MessageKey;
+    let labelText: string | undefined;
     if (showSpinner) {
       disc = <span data-testid="status-toggle-spinner" className={`size-6 rounded-full ${SPINNER_FACE}`} />;
       label = 'ui.toggle.labelSaving';
@@ -150,6 +160,7 @@ export function StatusToggle({
         </span>
       );
       label = 'ui.toggle.labelMissing';
+      labelText = missingLabel;
     }
 
     const collapse = collapseLabelOnMobile ? ' max-[899px]:h-9 max-[899px]:pr-2.5' : '';
@@ -157,7 +168,7 @@ export function StatusToggle({
     content = (
       <>
         {disc}
-        <span className={collapseLabelOnMobile ? 'max-[899px]:sr-only' : undefined}>{t(label)}</span>
+        <span className={collapseLabelOnMobile ? 'max-[899px]:sr-only' : undefined}>{labelText ?? t(label)}</span>
       </>
     );
   }
