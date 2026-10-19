@@ -1,7 +1,9 @@
 /**
  * Tests for: CoinCard
  * Contract source: runs/run_20261017_142658/plan.md § Interface Contract → Component: CoinCard
+ * Extended by: runs/run_20261019_073415/plan.md § Interface Contract → Component: CoinCard (MODIFY, additive)
  * Covers criteria: #8, #16 (from prd.md): owned, missing, pending, failed, key date, selected, visitor
+ *                  run_20261019_073415: #8, #10 (toggleLabel, missingStatusLabel)
  *
  * The pending status text waits 150ms (useDelayedPending), so that block uses fake timers.
  *
@@ -316,6 +318,86 @@ describe('CoinCard: select mode', () => {
   it('has no select button outside select mode', () => {
     renderCard();
     expect(screen.queryByTestId('coin-card-select')).not.toBeInTheDocument();
+  });
+});
+
+describe('CoinCard: toggleLabel (run_20261019_073415)', () => {
+  it('replaces the check\'s accessible name when missing', () => {
+    renderCard({ owned: false, toggleLabel: 'Add Donetsk Oblast (2025) back to your collection' });
+    expect(screen.getByTestId('status-toggle')).toHaveAttribute(
+      'aria-label',
+      'Add Donetsk Oblast (2025) back to your collection',
+    );
+  });
+
+  it('replaces the check\'s accessible name when owned', () => {
+    renderCard({ owned: true, toggleLabel: 'Remove Donetsk Oblast (2025) from your collection' });
+    expect(screen.getByTestId('status-toggle')).toHaveAttribute(
+      'aria-label',
+      'Remove Donetsk Oblast (2025) from your collection',
+    );
+  });
+
+  it('follows the value it is given', () => {
+    const { rerender, onToggle } = renderCard({ owned: true, toggleLabel: 'First label' });
+    expect(screen.getByTestId('status-toggle')).toHaveAttribute('aria-label', 'First label');
+
+    rerender(<CoinCard coin={BASE} owned toggleLabel="Second label" onToggle={onToggle} />);
+    expect(screen.getByTestId('status-toggle')).toHaveAttribute('aria-label', 'Second label');
+  });
+
+  it('keeps the default name when the prop is absent', () => {
+    renderCard({ owned: false });
+    expect(screen.getByTestId('status-toggle')).toHaveAttribute('aria-label', 'Mark Donetsk Oblast as owned');
+  });
+
+  it('leaves the pending and failed names alone', () => {
+    const { rerender, onToggle } = renderCard({ owned: true, status: 'pending', toggleLabel: 'Custom label' });
+    expect(screen.getByTestId('status-toggle')).toHaveAttribute('aria-label', 'Saving Donetsk Oblast');
+
+    rerender(<CoinCard coin={BASE} owned status="failed" toggleLabel="Custom label" onToggle={onToggle} />);
+    expect(screen.getByTestId('status-toggle')).toHaveAttribute(
+      'aria-label',
+      'Couldn’t save Donetsk Oblast. Try again',
+    );
+  });
+
+  it('still calls onToggle on click', () => {
+    const { onToggle } = renderCard({ owned: true, toggleLabel: 'Custom label' });
+    fireEvent.click(screen.getByTestId('status-toggle'));
+    expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('CoinCard: missingStatusLabel (run_20261019_073415)', () => {
+  it('replaces the status text of an idle missing card', () => {
+    renderCard({ owned: false, missingStatusLabel: 'Removed' });
+
+    expect(screen.getByTestId('coin-card-status')).toHaveTextContent(/^Removed$/);
+    expect(screen.getByTestId('coin-card-status')).not.toHaveTextContent('Missing');
+    expect(screen.getByTestId('coin-card')).toHaveAttribute('data-state', 'missing');
+  });
+
+  it('follows the value it is given', () => {
+    renderCard({ owned: false, missingStatusLabel: 'Not here' });
+    expect(screen.getByTestId('coin-card-status')).toHaveTextContent(/^Not here$/);
+  });
+
+  it('does not touch the owned status text', () => {
+    renderCard({ owned: true, missingStatusLabel: 'Removed' });
+    expect(screen.getByTestId('coin-card-status')).toHaveTextContent(/^In collection$/);
+  });
+
+  it('does not touch the failed status text', () => {
+    renderCard({ owned: false, status: 'failed', missingStatusLabel: 'Removed' });
+
+    expect(screen.getByTestId('coin-card-status')).toHaveTextContent('Couldn’t save');
+    expect(screen.getByTestId('coin-card-status')).not.toHaveTextContent('Removed');
+  });
+
+  it('keeps "Missing" when the prop is absent', () => {
+    renderCard({ owned: false });
+    expect(screen.getByTestId('coin-card-status')).toHaveTextContent(/^Missing$/);
   });
 });
 
