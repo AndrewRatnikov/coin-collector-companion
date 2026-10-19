@@ -1,15 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import type { CatalogCoin } from '@coin-collector/shared';
+import type { CatalogCoin, CatalogListItem } from '@coin-collector/shared';
+import { Badge } from '@/components/ui/badge';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { getDenominationNumeral } from '@/lib/album-layout';
 import { getCatalogRowText, getPaginationItems } from '@/lib/catalog-view';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 
 export interface CatalogResultsListProps {
-  coins: CatalogCoin[];
+  coins: CatalogListItem[];
   isLoading: boolean;
+  /** Show the Owned / In N sets badges. The catalog page passes its signed-in state. Default false. */
+  showOwnership?: boolean;
 }
 
 export interface CatalogPaginationProps {
@@ -45,9 +48,12 @@ function CoinThumbnail({ coin }: { coin: CatalogCoin }) {
   );
 }
 
-function CatalogRow({ coin }: { coin: CatalogCoin }) {
+function CatalogRow({ coin, showOwnership }: { coin: CatalogListItem; showOwnership: boolean }) {
   const { t } = useTranslation();
   const { title, subtitle, yearLabel } = getCatalogRowText(coin);
+  const showOwned = showOwnership && coin.owned === true;
+  const setsCount = showOwnership ? (coin.inSetsCount ?? 0) : 0;
+  const hasOwnershipBadges = showOwned || setsCount >= 1;
 
   return (
     <li
@@ -63,7 +69,7 @@ function CatalogRow({ coin }: { coin: CatalogCoin }) {
         >
           {title}
         </Link>
-        {(subtitle !== '' || coin.isKeyDate) && (
+        {(subtitle !== '' || coin.isKeyDate || hasOwnershipBadges) && (
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             {subtitle !== '' && (
               <span data-testid="catalog-item-variety" className="truncate text-xs text-neutral-700">
@@ -76,6 +82,12 @@ function CatalogRow({ coin }: { coin: CatalogCoin }) {
                 className="rounded-[4px] bg-accent-800 px-1.5 py-px text-[11px] text-accent-100"
               >
                 {t('catalog.keyDateBadge')}
+              </span>
+            )}
+            {hasOwnershipBadges && (
+              <span data-testid="catalog-item-ownership" className="flex flex-wrap items-center gap-1.5">
+                {showOwned && <Badge variant="owned" />}
+                {setsCount >= 1 && <Badge variant="in-set" count={setsCount} />}
               </span>
             )}
           </div>
@@ -94,7 +106,11 @@ function CatalogRow({ coin }: { coin: CatalogCoin }) {
   );
 }
 
-export default function CatalogResultsList({ coins, isLoading }: CatalogResultsListProps) {
+export default function CatalogResultsList({
+  coins,
+  isLoading,
+  showOwnership = false,
+}: CatalogResultsListProps) {
   const { t } = useTranslation();
 
   return (
@@ -115,7 +131,7 @@ export default function CatalogResultsList({ coins, isLoading }: CatalogResultsL
       ) : (
         <ul data-testid="catalog-results" className="flex flex-col">
           {coins.map((coin) => (
-            <CatalogRow key={coin.id} coin={coin} />
+            <CatalogRow key={coin.id} coin={coin} showOwnership={showOwnership} />
           ))}
         </ul>
       )}
