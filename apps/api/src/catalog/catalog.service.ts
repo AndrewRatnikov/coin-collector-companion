@@ -1,7 +1,14 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { compareDenominations } from '@coin-collector/shared';
-import type { CatalogCoin, CatalogFacets, CatalogSort, PaginatedResponse, SubmittedCoin } from '@coin-collector/shared';
+import type {
+  CatalogCoin,
+  CatalogFacets,
+  CatalogListItem,
+  CatalogSort,
+  PaginatedResponse,
+  SubmittedCoin,
+} from '@coin-collector/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { FindCatalogQueryDto } from './dto/find-catalog-query.dto';
 import { CreateCoinDto } from './dto/create-coin.dto';
@@ -71,7 +78,7 @@ export class CatalogService {
   async findAll(
     query: FindCatalogQueryDto,
     userId?: string,
-  ): Promise<PaginatedResponse<CatalogCoin | SubmittedCoin>> {
+  ): Promise<PaginatedResponse<CatalogListItem | SubmittedCoin>> {
     const page = query.page;
     const limit = Math.min(query.limit, MAX_LIMIT);
     const ownSubmissions = Boolean(query.submittedByMe && userId);
@@ -109,7 +116,47 @@ export class CatalogService {
 
     const [items, total] = await Promise.all([itemsQuery, this.prisma.coin.count({ where })]);
 
-    return { items, page, limit, total };
+    // Anonymous callers get the rows exactly as selected: no viewer keys at all.
+    if (!userId) {
+      return { items, page, limit, total };
+    }
+
+    return { items: await this.addViewerFields(items, userId), page, limit, total };
+  }
+
+  // Signed-in only: `owned` and `inSetsCount` for every item of the page, from two batched
+  // queries keyed by the page's coin ids, so the query count doesn't grow with the page size.
+  private async addViewerFields<T extends CatalogCoin>(
+    items: T[],
+    userId: string,
+  ): Promise<Array<T & { owned: boolean; inSetsCount: number }>> {
+    if (items.length === 0) return [];
+
+    const coinIds = items.map((coin) => coin.id);
+    const [ownedRows, membershipRows] = await Promise.all([
+      this.prisma.ownership.findMany({
+        where: { userId, coinId: { in: coinIds } },
+        select: { coinId: true },
+      }),
+      // Only the caller's own user sets; canonical sets live in CanonicalSetCoin. UserSetCoin
+      // is unique per (userSetId, coinId), so each row is one distinct set.
+      this.prisma.userSetCoin.findMany({
+        where: { coinId: { in: coinIds }, userSet: { userId } },
+        select: { coinId: true },
+      }),
+    ]);
+
+    const ownedIds = new Set(ownedRows.map((row) => row.coinId));
+    const setCounts = new Map<string, number>();
+    for (const row of membershipRows) {
+      setCounts.set(row.coinId, (setCounts.get(row.coinId) ?? 0) + 1);
+    }
+
+    return items.map((coin) => ({
+      ...coin,
+      owned: ownedIds.has(coin.id),
+      inSetsCount: setCounts.get(coin.id) ?? 0,
+    }));
   }
 
   // Option lists for the catalog sidebar. These selects return a single column each, never a
