@@ -1,6 +1,7 @@
 import type {
   CatalogCoin,
   CatalogFacets,
+  CatalogListItem,
   CatalogSort,
   CreateCoinRequest,
   PaginatedResponse,
@@ -22,7 +23,7 @@ export interface CatalogFilters {
   sort?: CatalogSort;
 }
 
-export async function getCatalog(filters: CatalogFilters = {}): Promise<PaginatedResponse<CatalogCoin>> {
+export async function getCatalog(filters: CatalogFilters = {}): Promise<PaginatedResponse<CatalogListItem>> {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(filters)) {
     if (Array.isArray(value)) {
@@ -35,7 +36,7 @@ export async function getCatalog(filters: CatalogFilters = {}): Promise<Paginate
     params.set(key, String(value));
   }
   const query = params.toString();
-  return apiFetch<PaginatedResponse<CatalogCoin>>(`/catalog${query ? `?${query}` : ''}`);
+  return apiFetch<PaginatedResponse<CatalogListItem>>(`/catalog${query ? `?${query}` : ''}`);
 }
 
 export async function getCatalogFacets(country?: string): Promise<CatalogFacets> {
