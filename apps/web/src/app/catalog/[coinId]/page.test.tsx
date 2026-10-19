@@ -823,7 +823,9 @@ describe('CoinDetailPage', () => {
       await waitFor(() => {
         expect(screen.getByTestId('coin-detail-ownership-panel')).toHaveAttribute('data-state', 'failed');
       });
-      expect(screen.getByTestId('coin-detail-ownership-title')).toHaveTextContent('Couldn’t save');
+      expect(
+        within(screen.getByTestId('coin-detail-ownership-panel')).getByTestId('coin-detail-ownership-title'),
+      ).toHaveTextContent('Couldn’t save');
       expect(screen.getByTestId('coin-detail-owned-toggle')).toHaveTextContent('Try again');
       expect(screen.getByTestId('coin-detail-mobile-bar')).toHaveAttribute('data-state', 'failed');
       unmount();
