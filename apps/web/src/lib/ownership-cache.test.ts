@@ -1,13 +1,20 @@
 /**
  * Tests for: ownership-cache (pure optimistic cache patchers)
  * Contract source: runs/run_20261017_142658/plan.md § Interface Contract → Module: ownership-cache
- * Covers criteria: #14 (from prd.md)
+ *                   runs/run_20261019_221037/plan.md § Interface Contract → Function: applyOwnershipToCatalogPage
+ * Covers criteria: #14 (from run_20261017_142658's prd.md), #11 (from run_20261019_221037's prd.md)
  *
  * CONTRACT_GAPS: none
  */
 
 import { describe, expect, it } from 'vitest';
-import type { CatalogCoin, GapViewResponse, OwnershipItem, PaginatedResponse } from '@coin-collector/shared';
+import type {
+  CatalogCoin,
+  CatalogListItem,
+  GapViewResponse,
+  OwnershipItem,
+  PaginatedResponse,
+} from '@coin-collector/shared';
 import {
   applyOwnershipToCatalogPage,
   applyOwnershipToCollection,
@@ -253,6 +260,91 @@ describe('applyOwnershipToCatalogPage', () => {
     const snapshot = JSON.stringify(page);
     applyOwnershipToCatalogPage(page, 'coin-2', true, { hideOwned: true });
     expect(JSON.stringify(page)).toBe(snapshot);
+  });
+
+  describe('owned patching on signed-in catalog pages (run_20261019_221037 criterion #11)', () => {
+    const L1: CatalogListItem = { ...COIN_1, owned: false, inSetsCount: 2 };
+    const L2: CatalogListItem = { ...COIN_2, owned: true, inSetsCount: 0 };
+    const L3: CatalogListItem = { ...COIN_3, owned: false, inSetsCount: 1 };
+    const listPage: PaginatedResponse<CatalogListItem> = { items: [L1, L2, L3], page: 2, limit: 20, total: 45 };
+
+    it('false to true: returns a new page with only that item updated, others identical by reference, same total', () => {
+      const result = applyOwnershipToCatalogPage(listPage, 'coin-1', true, {});
+
+      expect(result).not.toBe(listPage);
+      expect(result.items[0].owned).toBe(true);
+      expect(result.items[0].id).toBe('coin-1');
+      expect(result.items[1]).toBe(L2);
+      expect(result.items[2]).toBe(L3);
+      expect(result.total).toBe(45);
+      expect(result.page).toBe(2);
+      expect(result.limit).toBe(20);
+    });
+
+    it('true to false: the reverse patch on a different item', () => {
+      const result = applyOwnershipToCatalogPage(listPage, 'coin-2', false, {});
+
+      expect(result).not.toBe(listPage);
+      expect(result.items[1].owned).toBe(false);
+      expect(result.items[0]).toBe(L1);
+      expect(result.items[2]).toBe(L3);
+      expect(result.total).toBe(45);
+    });
+
+    it('preserves inSetsCount and the other coin fields on the patched item', () => {
+      const result = applyOwnershipToCatalogPage(listPage, 'coin-1', true, {});
+
+      expect(result.items[0]).toEqual({ ...L1, owned: true });
+      expect(result.items[0].inSetsCount).toBe(2);
+    });
+
+    it('returns the same reference when the item already has the requested owned value', () => {
+      expect(applyOwnershipToCatalogPage(listPage, 'coin-2', true, {})).toBe(listPage);
+      expect(applyOwnershipToCatalogPage(listPage, 'coin-1', false, {})).toBe(listPage);
+    });
+
+    it('returns the same reference when the coin is not on the page', () => {
+      expect(applyOwnershipToCatalogPage(listPage, 'coin-unknown', true, {})).toBe(listPage);
+    });
+
+    it('returns the same reference for an item without an owned key (signed-out page)', () => {
+      const signedOut: PaginatedResponse<CatalogListItem> = { items: [COIN_1, COIN_2], page: 1, limit: 20, total: 2 };
+
+      expect(applyOwnershipToCatalogPage(signedOut, 'coin-1', true, {})).toBe(signedOut);
+    });
+
+    it('patches only the item that has an owned key when others on the page lack it', () => {
+      const mixed: PaginatedResponse<CatalogListItem> = { items: [COIN_1, L2], page: 1, limit: 20, total: 2 };
+      const result = applyOwnershipToCatalogPage(mixed, 'coin-2', false, {});
+
+      expect(result.items[0]).toBe(COIN_1);
+      expect(result.items[1].owned).toBe(false);
+    });
+
+    it('hideOwned and now owned still removes the coin and decrements the total', () => {
+      const result = applyOwnershipToCatalogPage(listPage, 'coin-1', true, { hideOwned: true });
+
+      expect(result.items.map((c) => c.id)).toEqual(['coin-2', 'coin-3']);
+      expect(result.total).toBe(44);
+    });
+
+    it('hideOwned and now missing patches owned instead of removing', () => {
+      const result = applyOwnershipToCatalogPage(listPage, 'coin-2', false, { hideOwned: true });
+
+      expect(result.items.map((c) => c.id)).toEqual(['coin-1', 'coin-2', 'coin-3']);
+      expect(result.items[1].owned).toBe(false);
+      expect(result.total).toBe(45);
+    });
+
+    it('does not mutate its input', () => {
+      const snapshot = JSON.stringify(listPage);
+      applyOwnershipToCatalogPage(listPage, 'coin-1', true, {});
+      applyOwnershipToCatalogPage(listPage, 'coin-2', false, {});
+
+      expect(JSON.stringify(listPage)).toBe(snapshot);
+      expect(listPage.items[0]).toBe(L1);
+      expect(L1.owned).toBe(false);
+    });
   });
 });
 
