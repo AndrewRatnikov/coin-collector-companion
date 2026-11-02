@@ -56,7 +56,7 @@ describe('compareGrades (criterion #4)', () => {
   it('is antisymmetric', () => {
     for (const a of EXPECTED) {
       for (const b of EXPECTED) {
-        expect(Math.sign(compareGrades(a, b))).toBe(-Math.sign(compareGrades(b, a)));
+        expect(Math.sign(compareGrades(a, b)) + Math.sign(compareGrades(b, a))).toBe(0);
       }
     }
   });
