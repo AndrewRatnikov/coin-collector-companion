@@ -3,6 +3,23 @@
 
 export type CoinStatus = 'approved' | 'pending' | 'rejected';
 
+// Coin grade (condition): adjectival only, worst to best. Stored and sent as these neutral
+// values; only the web UI translates them.
+export const COIN_GRADES = ['G', 'VG', 'F', 'VF', 'XF', 'AU', 'UNC'] as const;
+export type CoinGrade = (typeof COIN_GRADES)[number];
+
+/** Negative when `a` is a lower grade than `b`, 0 when equal, positive when higher (COIN_GRADES order). */
+export function compareGrades(a: CoinGrade, b: CoinGrade): number {
+  return COIN_GRADES.indexOf(a) - COIN_GRADES.indexOf(b);
+}
+
+/** True when there is no minimum, or `grade` is at least `min`. An ungraded coin never meets a minimum. */
+export function meetsMinGrade(grade: CoinGrade | null, min: CoinGrade | null): boolean {
+  if (min === null) return true;
+  if (grade === null) return false;
+  return compareGrades(grade, min) >= 0;
+}
+
 // Any of these (case-insensitive, whitespace-trimmed) means "no value" — they all
 // must collapse to the same '' before reaching Prisma, or the Coin natural-key
 // unique constraint silently stops deduping (system-design_v2.md §4.1/§4.3).
@@ -133,8 +150,15 @@ export interface UserSetSummary {
   name: string;
   clonedFromCanonicalId: string | null;
   clonedFromUserSetId: string | null;
+  minGrade: CoinGrade | null; // owner's goal; null = none. Never copied by a clone.
   createdAt: Date;
   updatedAt: Date;
+}
+
+/** Body of `PATCH /sets/:id`. At least one key; `minGrade: null` clears it. */
+export interface UpdateSetRequest {
+  name?: string;
+  minGrade?: CoinGrade | null;
 }
 
 export interface CloneFromRequest {
@@ -222,16 +246,19 @@ export interface OwnershipItem {
   coinId: string;
   coin: CatalogCoin;
   ownedAt: Date;
+  grade: CoinGrade | null;
 }
 
 export interface SetOwnershipRequest {
   owned: boolean;
+  grade?: CoinGrade | null; // omit = keep the current grade; null = clear; ignored when owned is false
 }
 
 export interface SetOwnershipResponse {
   coinId: string;
   owned: boolean;
   ownedAt: Date | null;
+  grade: CoinGrade | null; // always null when owned is false
 }
 
 /** Body of `PATCH /collection`: set the same owned state for many coins in one request. */
@@ -246,18 +273,26 @@ export interface BulkSetOwnershipResponse {
   owned: boolean;
 }
 
+// Grade fields in the gap view: `grade` (per slot) and `minGrade` (per response) are always
+// present and nullable, like every nullable column. `needsUpgrade` (per slot) and `upgradeCount`
+// (per response) are present only when the set has a `minGrade`; otherwise both keys are absent
+// (not false/0), as with CatalogListItem's conditional `owned?`/`inSetsCount?`.
 export interface GapSlot {
   id: string;
   position: number;
   coin: CatalogCoin;
   owned: boolean;
+  grade: CoinGrade | null; // the caller's grade; null when not owned or ungraded
+  needsUpgrade?: boolean; // only when the set has a minGrade: owned && !meetsMinGrade(grade, minGrade)
 }
 
 export interface GapViewResponse {
   setId: string;
   ownedCount: number;
   totalCount: number;
-  completionPercent: number;
+  completionPercent: number; // grades never affect the counts or completion
+  minGrade: CoinGrade | null; // the set's minGrade
+  upgradeCount?: number; // only when minGrade is non-null: slots with needsUpgrade === true
   slots: GapSlot[];
 }
 
