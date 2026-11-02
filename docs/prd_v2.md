@@ -19,9 +19,9 @@ Andrew hit this gap directly while collecting and is building the tool he wishes
 - No marketplace, buying/selling, or trading between users.
 - No deeper social layer — no following collectors, no dedicated public profile pages, no comments/likes/activity feeds. (This is not "no sharing": user-created sets themselves are public and cloneable by default in v1 — see Requirement 18 — the cut is about not building social features on top of that, not about sets being private.)
 - No image recognition / scan-to-identify.
-- No per-coin notes (condition, purchase price, provenance) in v1.
+- No per-coin notes (purchase price, provenance) in v1. A coin's condition is recorded only as its optional grade (see below).
 - No duplicate tracking (owning multiple of the same coin).
-- No grading/condition fields (PCGS/NGC style grades).
+- Grading is limited to one optional adjectival grade per owned coin (G, VG, F, VF, XF, AU, UNC, worst to best) and an optional per-set minimum grade that marks lower-graded owned coins as "needs upgrade", never as a gap. No Sheldon 1–70 numbers, no third-party (PCGS/NGC) certification data, no per-set grades and no duplicates; "Proof" is a strike type, not a grade.
 - No premium/paid tier in v1 — noted as a future direction once free-tier infra limits (Neon/Render/Vercel free tiers) are approached, not a v1 requirement. See "v2 / Post-MVP Direction" below for the current thinking, captured now specifically so it isn't lost, not because any of it is scheduled.
 
 ## Target Users & Use Cases

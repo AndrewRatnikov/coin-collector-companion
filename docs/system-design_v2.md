@@ -18,7 +18,7 @@
 | Catalog sync | Offline, manually-run, resumable/idempotent import script only — no runtime external calls, no scheduled job, no request-time cache-fill (§4.3) |
 | Theme/subject tags | Cut from v1 entirely — no `tags`/`coin_tags` tables. Manual pick or cloning another user's set covers the "themed set" use case without them (§4.6) |
 | Set visibility | Public by default, no per-set flag in v1 — every `user_set` is viewable and cloneable by anyone (§4.6). `is_public` boolean deferred to post-MVP |
-| Grade enum | Scaffolded in `packages/shared` now, unused by any endpoint until v2 |
+| Grade enum | `CoinGrade` enum (G, VG, F, VF, XF, AU, UNC, worst to best) in Prisma and `packages/shared`; nullable `Ownership.grade` and `UserSet.minGrade` (§4.1), added 2026-11-02 |
 | Catalog contribution review | Manual, direct-to-DB status flip — no admin role, endpoint, or UI in v1 (§4.7) |
 
 ## 2. High-Level Design
@@ -41,7 +41,7 @@ coin-collector-companion/
 │           ├── sets/        # canonical + user sets, gap view
 │           └── collection/  # per-user ownership records
 ├── packages/
-│   └── shared/               # DTO shapes (incl. paginated catalog query), enums (denomination, grade [scaffold], mint mark), gap-view response types
+│   └── shared/               # DTO shapes (incl. paginated catalog query), enums (denomination, grade scale + helpers, mint mark), gap-view response types
 ├── scripts/
 │   └── import-catalog/      # offline, resumable/idempotent catalog import from open sources (see §4.3) — not part of the API's request path
 ├── seed/
@@ -99,7 +99,7 @@ The import script is a standalone offline tool, not a component of the running A
 
 **Set building:** `POST /sets` creates an empty set, or clones from a canonical set or from another user's public set (§4.6) — `cloneFrom` accepts either, since both resolve to the same "copy this set's coin list into a new `user_sets` row" operation. `PATCH /sets/:id/coins` adds/removes coin references (filter-matched or manually picked — both resolve to the same "add these coin IDs" operation client-side, so the API only needs one mutation shape).
 
-**Gap tracking:** `PATCH /collection/:coinId` sets owned status for the current user via an explicit `{ owned: boolean }` body — not a toggle, so retries and repeated clicks are safe (idempotent). Ownership itself is existence-based, not a boolean column (§4.1): `owned: true` upserts the `(user_id, coin_id)` row into `ownership`; `owned: false` deletes it if present. Both directions are naturally idempotent — upserting an already-owned coin or deleting an already-absent row is a no-op either way. `GET /sets/:id/gaps` returns the set's coin list left-joined against the user's `ownership` rows, with a computed `ownedCount / totalCount` — "owned" for a given slot is just "a matching row exists," not a flag to read off it.
+**Gap tracking:** `PATCH /collection/:coinId` sets owned status for the current user via an explicit `{ owned: boolean }` body — not a toggle, so retries and repeated clicks are safe (idempotent). Ownership itself is existence-based, not a boolean column (§4.1): `owned: true` upserts the `(user_id, coin_id)` row into `ownership`; `owned: false` deletes it if present. Both directions are naturally idempotent — upserting an already-owned coin or deleting an already-absent row is a no-op either way. `GET /sets/:id/gaps` returns the set's coin list left-joined against the user's `ownership` rows, with a computed `ownedCount / totalCount` — "owned" for a given slot is just "a matching row exists," not a flag to read off it. An optional `grade` on the same body is stored on that row (absent keeps it, `null` clears it); a set's optional `minGrade` adds a per-slot `needsUpgrade` flag to the gap view without changing which slots are gaps (§3, §4.1).
 
 ### 2.4 Storage choice
 
@@ -118,12 +118,12 @@ Single Neon Postgres project. No secondary datastore — at this scale (personal
 | `GET /sets/public/:id` | none | Public set detail with coin list (read-only; no ownership/gap data without auth, §4.6) |
 | `GET /sets` | required | Current user's sets |
 | `POST /sets` | required | Create set — empty, `{ cloneFrom: { type: 'canonical', id } }`, or `{ cloneFrom: { type: 'user', id } }` to clone another user's public set (§4.6) |
-| `PATCH /sets/:id` | required | Rename set, edit metadata — owner only |
+| `PATCH /sets/:id` | required | Rename set and/or set its minimum grade — owner only. Body `{ name?, minGrade? }` (at least one, else 400); `minGrade` is a `CoinGrade` or `null` to clear it. A clone never copies the source's `minGrade` (starts at `null`) |
 | `PATCH /sets/:id/coins` | required | Add/remove coin IDs from a set — owner only. Adds append at `max(position) + 1`, skip-on-conflict against `@@unique([<set>Id, coinId])` so re-adding an already-present coin is a no-op, not a duplicate row or an error (§4.1); no mid-set insertion/reordering in MVP |
 | `DELETE /sets/:id` | required | Delete a set — owner only. Cascades to its `user_set_coins` join rows only; never touches `ownership` (§4.1) — the coins stay owned everywhere else |
-| `GET /sets/:id/gaps` | required | Coins + owned/not-owned status + completion %, computed against the caller's own `ownership` rows — works for the caller's own sets and any public set, not owner-restricted (§4.6) |
-| `GET /collection` | required | User's full collection, filterable by country/year |
-| `PATCH /collection/:coinId` | required | Set owned status: `{ owned: boolean }` body — idempotent, not a toggle. `true` upserts an `ownership` row, `false` deletes it (§4.1) |
+| `GET /sets/:id/gaps` | required | Coins + owned/not-owned status + completion %, computed against the caller's own `ownership` rows — works for the caller's own sets and any public set, not owner-restricted (§4.6). Each slot carries the caller's `grade` (nullable); the response carries the set's `minGrade` (nullable). Only when the set has a `minGrade`, each slot also carries `needsUpgrade` (owned and graded below the minimum, or ungraded) and the summary carries `upgradeCount`; both keys are absent otherwise. Grades never change completion % — an upgrade is never a gap |
+| `GET /collection` | required | User's full collection, filterable by country/year. Each item carries its `grade` (nullable) |
+| `PATCH /collection/:coinId` | required | Set owned status: `{ owned: boolean, grade? }` body — idempotent, not a toggle. `true` upserts an `ownership` row, `false` deletes it (§4.1). `grade` (a `CoinGrade` or `null`): absent keeps the current grade, `null` clears it, and it is ignored on `owned: false` (the row is deleted, so re-owning starts ungraded). Bulk `PATCH /collection` takes no grade and never changes one |
 
 All shapes (request DTOs, `GapViewResponse`, enums) live in `packages/shared` and are imported by both apps — this is the main payoff of the shared package: the web app's TypeScript and the API's DTOs can't drift.
 
@@ -193,6 +193,7 @@ user_sets
   id (pk), user_id (FK → users.id, not yet wired — table doesn't exist yet), name,
   cloned_from_canonical_id (nullable, onDelete: SetNull),
   cloned_from_user_set_id (nullable, onDelete: SetNull),
+  min_grade (CoinGrade, nullable — the owner's personal goal, never copied by a clone),
   created_at, updated_at
 
 user_set_coins       (join: user_sets ↔ coins; position (int) — explicit sort order;
@@ -201,7 +202,8 @@ user_set_coins       (join: user_sets ↔ coins; position (int) — explicit sor
                      @@unique([userSetId, coinId])
 
 ownership
-  user_id (FK → users.id, not yet wired — table doesn't exist yet), coin_id (composite pk), owned_at
+  user_id (FK → users.id, not yet wired — table doesn't exist yet), coin_id (composite pk), owned_at,
+  grade (CoinGrade, nullable)
 ```
 
 Notes:
@@ -219,7 +221,7 @@ Notes:
 - **Ownership is existence-based, not a boolean column.** There is no `owned` flag anywhere in this table — owned = a `(user_id, coin_id)` row exists; not owned = no row. `owned_at` is metadata on that row (when it was marked owned), not a status field. This is why `PATCH /collection/:coinId`'s `{ owned: boolean }` body (§3) maps to an upsert-or-delete rather than a column write: `true` → upsert the row; `false` → delete it. It also means "not owned" needs no query-side `owned = false` filter — it falls out of a plain `LEFT JOIN`/anti-join against `ownership` returning no match, which is exactly how `GET /sets/:id/gaps` (§2.3) computes gaps already.
 - `variety`/`mint_mark` are plain columns, not a separate table — no extra join needed unless the data later shows meaningful variation within a single catalog coin.
 - `image_source`/`image_license` are recorded per coin, not assumed globally — see §4.3 for why (Wikimedia Commons hosts images under more than one license, and only some are usable without per-image attribution UI). Both nullable since not every coin will have a usable image.
-- `grade` enum exists in `packages/shared` as a deliberate scaffold, but no `grade` column is added to `ownership` yet — nothing references it until v2, so there's no dead schema to migrate around later.
+- **`ownership.grade` and `user_sets.min_grade` (added 2026-11-02, migration `20261102200000_add_coin_grades`)** are nullable `CoinGrade` columns (G, VG, F, VF, XF, AU, UNC, worst to best), added without a redesign. A grade is metadata on an existing ownership row, like `owned_at` — not part of ownership's existence semantics: owned is still "a row exists", and deleting the row (un-owning) drops its grade. At most one grade per row, so no duplicates and no per-set grades. `min_grade` only marks lower-graded or ungraded owned coins as "needs upgrade" in the gap view; it never turns them into gaps.
 - **`status`/`submitted_by_user_id`/`submitted_at` (added 2026-07-25 for PRD Requirement 19, user-submitted coins — full endpoint/review design in §4.7).** `status` defaults to `'approved'`, so the column is purely additive against the existing imported catalog — every pre-existing row is `'approved'` with no backfill needed; only a row created via the new `POST /catalog` endpoint ever starts at `'pending'`. The `@@unique([country, denomination, year, mintMark, variety])` constraint above is unchanged and still applies across every status value, not just `'approved'` — a `rejected` coin still occupies its natural key, which is deliberate (§4.7): a rejected submission is never deleted, so resubmitting the same natural key isn't possible, and the fix for a bad rejection is flipping that row's status back, not creating a second row beside it. `submitted_by_user_id` is nullable (`null` for every import-script row, same as always) and `onDelete: SetNull`, matching the same defensive-FK convention already used for `cloned_from_canonical_id`/`cloned_from_user_set_id` above — losing the submitter attribution if their account is ever removed is acceptable; silently cascading the coin itself away is not, especially once other users may have added it to their own sets.
 
 ### 4.2 Auth flow (hand-rolled JWT)
@@ -345,7 +347,7 @@ A submission form only realistically needs a free-text country/denomination the 
 | Catalog data source | Open data (Wikipedia/US Mint/Wikimedia Commons) | Numista API | Free, no ToS extraction restriction, no per-request quota to manage for v1; Numista remains available later as a permission-gated enrichment layer once genuinely needed, not blocked on, just deferred |
 | Catalog sync | Manual, offline, resumable import script | Scheduled bulk import / on-demand fetch + cache | Avoids needing a persistent worker process, which free-tier Render doesn't comfortably support, and avoids any runtime dependency on an external source at all — the catalog is either in Postgres or it isn't, with no cache-invalidation question to design for |
 | Ownership scope | Per-user, global (not per-set) | Per-set ownership records | Matches the PRD's "view full collection" requirement directly and avoids the same coin having contradictory owned/not-owned states across sets |
-| Grade field | Scaffolded, unused | Omitted entirely | Costs nothing to type now, saves a schema migration later; explicitly not wired into any endpoint so it can't leak into v1 behavior |
+| Grade field | One optional adjectival grade per ownership row (nullable enum column) | Separate grades table / Sheldon numeric | Adds condition without touching ownership's existence semantics, gap queries or completion %, as one additive nullable migration; a separate table is only needed for duplicates (still out of scope), and Sheldon 1–70 numbers are finer than circulation-coin collectors need |
 | Theme/subject tags | Cut from v1 entirely | Hand-tagged in canonical sets only | No free source covers it well, and it's not on either Success Metrics path (filter-built or canonical-set-derived); the "themed set" use case is still reachable via manual pick or cloning a public set (§4.6), so nothing is actually lost |
 | Set visibility | Public by default, no per-set flag | `is_public` flag from day one | A flag with no way to ever be `false` in practice (single real user, no other users to hide a set from yet) is schema/UI cost with zero v1 payoff; the migration to add it later is additive and non-breaking (§4.6), so nothing is lost by deferring it |
 | Set-editor position assignment | Append-only (`max(position) + 1`) | Full drag-and-drop reordering | Avoids a re-indexing transaction (or a fractional-position scheme) for a feature no one's validated wanting yet; a user can still fully control final order by building the set in the order they want, just not by reordering after the fact |
@@ -359,7 +361,7 @@ A submission form only realistically needs a free-text country/denomination the 
 - **Set-editor reordering:** if users actually want to reorder coins mid-set (not just append), add either a bulk re-index endpoint (rewrite all affected `position` values in one transaction — fine at v1's per-set row counts) or switch to fractional positions (insert between two existing values without touching anything else — worth it only if sets get large enough that a full re-index becomes noticeably slow). Don't build either preemptively (§6).
 - **Image hosting:** move off hotlinking Commons URLs (§4.3) and start downloading images into the app's own storage (e.g. Cloudflare R2, matching the storage choice already used for Phase 3 user-uploaded photos) once it's an actual problem, not on a schedule. The realistic trigger here is narrower than for a typical hotlinking decision — Wikimedia explicitly permits hotlinking from `upload.wikimedia.org`, so "Commons blocks our traffic" isn't a signal to watch for; what's actually worth watching is source links going stale/404ing as files get renamed or moved on Commons over time, or simply reaching the MVP-is-shipped polish phase where the trade-off is worth revisiting anyway.
 - **Catalog sync mechanism:** if the catalog needs to update more often than "occasionally re-run the import script by hand" (e.g. once real-time Numista enrichment is in play), revisit moving to a scheduled job — only relevant once Render is on a paid tier that can run a persistent worker/cron, since free-tier Render doesn't support one.
-- **Ownership model:** if duplicate tracking or per-set condition/grade ever comes in (both explicit non-goals today), the `ownership` table will need a redesign — likely moving from a `(user_id, coin_id)` composite key to a proper `ownership_id` with a quantity column, since the current existence-based model (§4.1: owned = row exists, not owned = row absent) can't represent "I own two of these."
+- **Ownership model:** coin grades were added (2026-11-02) as a nullable column on the existing row, without a redesign. If duplicate tracking or per-set grades ever come in (both still explicit non-goals), the `ownership` table will need a redesign — likely moving from a `(user_id, coin_id)` composite key to a proper `ownership_id` with a quantity column, since the current existence-based model (§4.1: owned = row exists, not owned = row absent) can't represent "I own two of these."
 - **Auth:** if the app opens to real multi-tenant usage, revisit rate limiting and abuse protection on write endpoints — none is in place for v1 since it's effectively single-user.
 - **Premium tier:** noted in the PRD as future-only; once it's real, it likely needs its own billing-state table and a plan-gating check in the API guards, not a redesign of the core data model above.
 - **Catalog contribution review:** if submission volume (or the number of people who'd need reviewer access) ever outgrows what's comfortable to handle directly in Prisma Studio, add a minimal `@Admin()`-guarded list/approve/reject API (§4.7) before reaching for a full review UI — the same incremental-build bias already applied to `is_public` and set-editor reordering above.
