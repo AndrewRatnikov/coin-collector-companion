@@ -14,6 +14,7 @@
  * The ownership hook is mocked, so nothing patches the cache. Optimistic removal is simulated by returning
  * `data` without the coin from useCollection and re-rendering; the hook-level onSettled is captured and
  * called by the test.
+ * Fixture-only change (run_20261102_194108): the OwnershipItem factory `own()` gains `grade: null`.
  *
  * CONTRACT_GAPS: none
  */
@@ -116,7 +117,7 @@ const CENT: CatalogCoin = { ...BASE, id: 'cent-1909' };
 const VDB: CatalogCoin = { ...BASE, id: 'vdb', mintMark: 'S', variety: 'VDB', isKeyDate: true };
 
 function own(coin: CatalogCoin): OwnershipItem {
-  return { coinId: coin.id, coin, ownedAt: new Date('2026-01-02T00:00:00.000Z') };
+  return { coinId: coin.id, coin, ownedAt: new Date('2026-01-02T00:00:00.000Z'), grade: null };
 }
 
 // Subgroups in page order: Ukraine/We Are Strong (2025, 2026), USA/Lincoln Wheat Cent (1909, 1909-S).

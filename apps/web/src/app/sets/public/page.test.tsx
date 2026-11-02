@@ -8,6 +8,7 @@
  * numbered public-sets-pagination-page assertions (REMOVE public-sets-page-prev/
  * -page-indicator/-page-next per plan.md, same pattern as Catalog's numbered
  * pagination). Every other assertion below is carried over unchanged.
+ * Fixture-only change (run_20261102_194108): the SETS literals gain `minGrade: null`.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -38,6 +39,7 @@ const SETS = [
     name: 'Alice Wheat Cents',
     clonedFromCanonicalId: null,
     clonedFromUserSetId: null,
+    minGrade: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     coinCount: 3,
@@ -48,6 +50,7 @@ const SETS = [
     name: 'Bob Key Dates',
     clonedFromCanonicalId: null,
     clonedFromUserSetId: null,
+    minGrade: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     coinCount: 3,

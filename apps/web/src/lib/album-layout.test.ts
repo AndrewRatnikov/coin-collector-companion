@@ -9,6 +9,7 @@
  * run_20261017_142658 removes the getAlbumCardText suite (the function is gone; getCoinName in
  * packages/shared replaces it and is tested in get-coin-name.test.ts) and re-states the
  * getSharedEyebrow expectations under the new naming rule. Every other test is unchanged.
+ * Fixture-only change (run_20261102_194108): the GapSlot factory gains `grade: null`.
  *
  * CONTRACT_GAPS: none
  */
@@ -53,6 +54,7 @@ function slot(
     id: `usc-${id}`,
     position,
     owned: over.owned ?? false,
+    grade: null,
     coin: {
       id: `coin-${id}`,
       country: over.country ?? 'USA',

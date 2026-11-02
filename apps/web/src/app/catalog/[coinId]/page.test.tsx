@@ -38,6 +38,9 @@
  * useAddCoinsToSet and the useSetOwnership mock gains failedCoinIds. New blocks cover the
  * breadcrumb, plate, ownership panel / bar, sets progress, add-to-set menu and specs table.
  *
+ * run_20261102_194108: fixture-only change. USER_SETS gain `minGrade: null`, OWNED_COLLECTION gains
+ * `grade: null`, and every gap view / slot literal gains `minGrade: null` / `grade: null`.
+ *
  * CONTRACT_GAPS: none
  */
 
@@ -174,6 +177,7 @@ const USER_SETS = [
     name: 'My Wheat Cents',
     clonedFromCanonicalId: null,
     clonedFromUserSetId: null,
+    minGrade: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -183,12 +187,13 @@ const USER_SETS = [
     name: 'My Key Dates',
     clonedFromCanonicalId: null,
     clonedFromUserSetId: null,
+    minGrade: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   },
 ];
 
-const OWNED_COLLECTION = [{ coinId: 'coin-1', coin: COIN_WITH_IMAGE, ownedAt: new Date() }];
+const OWNED_COLLECTION = [{ coinId: 'coin-1', coin: COIN_WITH_IMAGE, ownedAt: new Date(), grade: null }];
 
 /** set-a contains coin-1 (2 of 7, 29%); set-b does not. */
 function mockGapsSetAOnly() {
@@ -197,10 +202,11 @@ function mockGapsSetAOnly() {
     ownedCount: id === 'set-a' ? 2 : 5,
     totalCount: id === 'set-a' ? 7 : 10,
     completionPercent: id === 'set-a' ? 29 : 50,
+    minGrade: null,
     slots:
       id === 'set-a'
-        ? [{ id: 'slot-1', position: 0, coin: COIN_WITH_IMAGE, owned: true }]
-        : [{ id: 'slot-2', position: 0, coin: { ...COIN_WITH_IMAGE, id: 'other-coin' }, owned: false }],
+        ? [{ id: 'slot-1', position: 0, coin: COIN_WITH_IMAGE, owned: true, grade: null }]
+        : [{ id: 'slot-2', position: 0, coin: { ...COIN_WITH_IMAGE, id: 'other-coin' }, owned: false, grade: null }],
   }));
 }
 
@@ -229,7 +235,14 @@ describe('CoinDetailPage', () => {
       mutateAsync: mutateAsyncMock,
       isPending: false,
     } as unknown as ReturnType<typeof useAddCoinsToSet>);
-    getSetGapsMock.mockResolvedValue({ setId: '', ownedCount: 0, totalCount: 0, completionPercent: 0, slots: [] });
+    getSetGapsMock.mockResolvedValue({
+      setId: '',
+      ownedCount: 0,
+      totalCount: 0,
+      completionPercent: 0,
+      minGrade: null,
+      slots: [],
+    });
   });
 
   describe('criterion 5: shows a loading state while the coin query is loading', () => {
@@ -611,7 +624,8 @@ describe('CoinDetailPage', () => {
         ownedCount: 0,
         totalCount: 10,
         completionPercent: 0,
-        slots: [{ id: 'slot-2', position: 0, coin: { ...COIN_WITH_IMAGE, id: 'other-coin' }, owned: false }],
+        minGrade: null,
+        slots: [{ id: 'slot-2', position: 0, coin: { ...COIN_WITH_IMAGE, id: 'other-coin' }, owned: false, grade: null }],
       });
       renderPage('coin-1');
 
@@ -630,7 +644,8 @@ describe('CoinDetailPage', () => {
         ownedCount: 1,
         totalCount: 10,
         completionPercent: 10,
-        slots: [{ id: 'slot-1', position: 0, coin: COIN_WITH_IMAGE, owned: true }],
+        minGrade: null,
+        slots: [{ id: 'slot-1', position: 0, coin: COIN_WITH_IMAGE, owned: true, grade: null }],
       });
       renderPage('coin-1');
 
@@ -962,7 +977,8 @@ describe('CoinDetailPage', () => {
         ownedCount: id === 'set-a' ? 2 : 5,
         totalCount: id === 'set-a' ? 7 : 10,
         completionPercent: id === 'set-a' ? 29 : 50,
-        slots: [{ id: `${id}-slot`, position: 0, coin: COIN_WITH_IMAGE, owned: true }],
+        minGrade: null,
+        slots: [{ id: `${id}-slot`, position: 0, coin: COIN_WITH_IMAGE, owned: true, grade: null }],
       }));
       renderPage();
 
@@ -986,7 +1002,8 @@ describe('CoinDetailPage', () => {
         ownedCount: 0,
         totalCount: 3,
         completionPercent: 0,
-        slots: [{ id: 's', position: 0, coin: { ...COIN_WITH_IMAGE, id: 'other-coin' }, owned: false }],
+        minGrade: null,
+        slots: [{ id: 's', position: 0, coin: { ...COIN_WITH_IMAGE, id: 'other-coin' }, owned: false, grade: null }],
       });
       renderPage();
 

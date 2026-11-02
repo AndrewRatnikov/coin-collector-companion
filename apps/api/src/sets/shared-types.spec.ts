@@ -3,17 +3,19 @@
  * CanonicalSetSummary, CanonicalSetCoinItem, CanonicalSetDetail, UserSetCoinItem, UserSetDetail,
  * UserSetCoinSummary, PatchSetCoinsRequest, OwnershipItem, SetOwnershipRequest,
  * SetOwnershipResponse, GapSlot, GapViewResponse, PublicSetSummary, UserSetListItem,
- * SuggestedCanonicalSet, UserSetsSummaryResponse)
+ * SuggestedCanonicalSet, UserSetsSummaryResponse, UpdateSetRequest, CoinGrade)
  * Contract source: runs/run_20260719_200109/plan.md § Interface Contract (Shared types)
  *                   runs/run_20260720_070901/plan.md § Interface Contract (Shared types)
  *                   runs/run_20260720_142942/plan.md § Interface Contract (Shared types)
  *                   runs/run_20261013_062900/plan.md § Interface Contract (Shared types)
  *                   runs/run_20261018_105617/plan.md § Interface Contract (Shared types)
+ *                   runs/run_20261102_194108/plan.md § Interface Contract (Shared: widened types)
  * Covers criteria: #11 (from runs/run_20260719_200109/prd.md)
  *                   #17 (from runs/run_20260720_070901/prd.md)
  *                   #12 (from runs/run_20260720_142942/prd.md)
  *                   #18, #19 (from runs/run_20261013_062900/prd.md)
  *                   #2, #3, #7 (from runs/run_20261018_105617/prd.md)
+ *                   #3, #5, #10, #11, #12, #13 (from runs/run_20261102_194108/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -29,7 +31,9 @@
  * For run_20261013_062900 the `@ts-expect-error` lines pin the type shape: a CanonicalSetDetail
  * literal must NOT accept `coinCount` (it is `Omit<CanonicalSetSummary, 'coinCount'>`-based), and
  * a PublicSetSummary literal must require it. If the types drift, the directive becomes unused
- * and ts-jest fails the file. The same technique pins UserSetListItem (run_20261018_105617).
+ * and ts-jest fails the file. The same technique pins UserSetListItem (run_20261018_105617) and
+ * the coin grade fields (run_20261102_194108): grade / minGrade are required and nullable,
+ * needsUpgrade / upgradeCount are optional.
  */
 
 import type {
@@ -48,11 +52,13 @@ import type {
   UserSetCoinSummary,
   PatchSetCoinsRequest,
   CatalogCoin,
+  CoinGrade,
   OwnershipItem,
   SetOwnershipRequest,
   SetOwnershipResponse,
   GapSlot,
   GapViewResponse,
+  UpdateSetRequest,
 } from '@coin-collector/shared';
 
 const sampleCatalogCoin: CatalogCoin = {
@@ -86,6 +92,7 @@ describe('shared package: Sets types (criterion #11 from run_20260719_200109/prd
       name: 'My Set',
       clonedFromCanonicalId: null,
       clonedFromUserSetId: null,
+      minGrade: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -183,6 +190,21 @@ describe('shared package: new Day 2 types (criterion #17 from run_20260720_07090
     expect(detail.coins).toHaveLength(0);
   });
 
+  it('CanonicalSetDetail has no minGrade (canonical sets carry no goal)', () => {
+    const detail: CanonicalSetDetail = {
+      id: '66666666-6666-6666-6666-666666666666',
+      name: 'Lincoln Wheat Cents',
+      description: null,
+      source: 'admin',
+      templateVersion: '1',
+      // @ts-expect-error canonical sets have no minGrade
+      minGrade: null,
+      coins: [],
+    };
+
+    expect(detail.coins).toHaveLength(0);
+  });
+
   it('UserSetDetail extends UserSetSummary with an ordered coins array of UserSetCoinItem', () => {
     const coinItem: UserSetCoinItem = {
       id: '88888888-8888-8888-8888-888888888888',
@@ -195,6 +217,7 @@ describe('shared package: new Day 2 types (criterion #17 from run_20260720_07090
       name: 'A Public Set',
       clonedFromCanonicalId: null,
       clonedFromUserSetId: null,
+      minGrade: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       coins: [coinItem],
@@ -238,6 +261,7 @@ describe('shared package: PublicSetSummary (criterion #19 from run_20261013_0629
       name: "Bob's Set",
       clonedFromCanonicalId: null,
       clonedFromUserSetId: null,
+      minGrade: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       coinCount: 42,
@@ -256,6 +280,7 @@ describe('shared package: PublicSetSummary (criterion #19 from run_20261013_0629
       name: "Bob's Set",
       clonedFromCanonicalId: null,
       clonedFromUserSetId: null,
+      minGrade: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -270,6 +295,7 @@ describe('shared package: PublicSetSummary (criterion #19 from run_20261013_0629
       name: 'Own set',
       clonedFromCanonicalId: null,
       clonedFromUserSetId: null,
+      minGrade: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       // @ts-expect-error UserSetSummary itself is unchanged and has no coinCount
@@ -288,6 +314,7 @@ describe('shared package: UserSetListItem (criterion #2 from run_20261018_105617
       name: 'We Are Strong',
       clonedFromCanonicalId: null,
       clonedFromUserSetId: null,
+      minGrade: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       ownedCount: 11,
@@ -311,6 +338,7 @@ describe('shared package: UserSetListItem (criterion #2 from run_20261018_105617
       name: 'No progress',
       clonedFromCanonicalId: null,
       clonedFromUserSetId: null,
+      minGrade: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -325,6 +353,7 @@ describe('shared package: UserSetListItem (criterion #2 from run_20261018_105617
       name: 'Own set',
       clonedFromCanonicalId: null,
       clonedFromUserSetId: null,
+      minGrade: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       // @ts-expect-error UserSetSummary itself stays count-free (create and rename responses)
@@ -374,18 +403,20 @@ describe('shared package: UserSetsSummaryResponse (criteria #3, #7 from run_2026
 });
 
 describe('shared package: new Day 4 types — collection/ownership + gap view (criterion #12 from run_20260720_142942/prd.md)', () => {
-  it('OwnershipItem pairs a coinId/coin with an ownedAt timestamp', () => {
+  it('OwnershipItem pairs a coinId/coin with an ownedAt timestamp and a nullable grade', () => {
     const item: OwnershipItem = {
       coinId: sampleCatalogCoin.id,
       coin: sampleCatalogCoin,
       ownedAt: new Date('2026-01-01T00:00:00.000Z'),
+      grade: null,
     };
 
     expect(item.coin.name).toBe('Lincoln Wheat Cent');
     expect(item.ownedAt).toBeInstanceOf(Date);
+    expect(item.grade).toBeNull();
   });
 
-  it('SetOwnershipRequest is a bare { owned: boolean } body', () => {
+  it('SetOwnershipRequest is { owned: boolean } with an optional grade', () => {
     const trueBody: SetOwnershipRequest = { owned: true };
     const falseBody: SetOwnershipRequest = { owned: false };
 
@@ -398,42 +429,169 @@ describe('shared package: new Day 4 types — collection/ownership + gap view (c
       coinId: sampleCatalogCoin.id,
       owned: true,
       ownedAt: new Date('2026-01-01T00:00:00.000Z'),
+      grade: 'VF',
     };
     const notOwned: SetOwnershipResponse = {
       coinId: sampleCatalogCoin.id,
       owned: false,
       ownedAt: null,
+      grade: null,
     };
 
     expect(owned.ownedAt).not.toBeNull();
     expect(notOwned.ownedAt).toBeNull();
+    expect(owned.grade).not.toBe(notOwned.grade);
   });
 
-  it('GapSlot carries the UserSetCoin row id, position, coin, and a computed owned flag', () => {
+  it('GapSlot carries the UserSetCoin row id, position, coin, a computed owned flag and a nullable grade', () => {
     const slot: GapSlot = {
       id: 'ffffffff-ffff-ffff-ffff-ffffffffffff',
       position: 1,
       coin: sampleCatalogCoin,
       owned: true,
+      grade: null,
     };
 
     expect(slot.owned).toBe(true);
     expect(slot.coin).toBe(sampleCatalogCoin);
   });
 
-  it('GapViewResponse aggregates slots with ownedCount/totalCount/completionPercent', () => {
+  it('GapViewResponse aggregates slots with ownedCount/totalCount/completionPercent and a nullable minGrade', () => {
     const response: GapViewResponse = {
       setId: '11111111-1111-1111-1111-111111111111',
       ownedCount: 1,
       totalCount: 2,
       completionPercent: 50,
+      minGrade: null,
       slots: [
-        { id: 'usc-1', position: 1, coin: sampleCatalogCoin, owned: true },
-        { id: 'usc-2', position: 2, coin: sampleCatalogCoin, owned: false },
+        { id: 'usc-1', position: 1, coin: sampleCatalogCoin, owned: true, grade: null },
+        { id: 'usc-2', position: 2, coin: sampleCatalogCoin, owned: false, grade: null },
       ],
     };
 
     expect(response.slots).toHaveLength(2);
     expect(response.completionPercent).toBe(50);
+  });
+});
+
+describe('shared package: coin grades (criteria #3, #10, #11, #12, #13 from run_20261102_194108/prd.md)', () => {
+  it('CoinGrade accepts the seven scale values and rejects anything else', () => {
+    const all: CoinGrade[] = ['G', 'VG', 'F', 'VF', 'XF', 'AU', 'UNC'];
+    // @ts-expect-error "Proof" is a strike type, not a grade
+    const proof: CoinGrade = 'Proof';
+    // @ts-expect-error grades are upper-case
+    const lower: CoinGrade = 'vf';
+
+    expect(all).toHaveLength(7);
+    expect(proof).not.toBe(lower);
+  });
+
+  it('UserSetSummary requires a nullable minGrade', () => {
+    // @ts-expect-error minGrade is required on every user set summary
+    const missing: UserSetSummary = {
+      id: '11111111-1111-1111-1111-111111111111',
+      userId: '22222222-2222-2222-2222-222222222222',
+      name: 'No goal key',
+      clonedFromCanonicalId: null,
+      clonedFromUserSetId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const withGoal: UserSetSummary = { ...missing, minGrade: 'XF' };
+    const withoutGoal: UserSetSummary = { ...missing, minGrade: null };
+
+    expect(withGoal.minGrade).toBe('XF');
+    expect(withoutGoal.minGrade).toBeNull();
+  });
+
+  it('OwnershipItem requires grade', () => {
+    // @ts-expect-error grade is required on OwnershipItem
+    const missing: OwnershipItem = {
+      coinId: sampleCatalogCoin.id,
+      coin: sampleCatalogCoin,
+      ownedAt: new Date(),
+    };
+    const graded: OwnershipItem = { ...missing, grade: 'AU' };
+
+    expect(graded.grade).toBe('AU');
+  });
+
+  it('SetOwnershipResponse requires grade', () => {
+    // @ts-expect-error grade is required on SetOwnershipResponse
+    const missing: SetOwnershipResponse = {
+      coinId: sampleCatalogCoin.id,
+      owned: true,
+      ownedAt: new Date(),
+    };
+    const graded: SetOwnershipResponse = { ...missing, grade: 'G' };
+
+    expect(graded.grade).toBe('G');
+  });
+
+  it('SetOwnershipRequest accepts an absent grade, null and a scale value, but not "Proof"', () => {
+    const absent: SetOwnershipRequest = { owned: true };
+    const cleared: SetOwnershipRequest = { owned: true, grade: null };
+    const graded: SetOwnershipRequest = { owned: true, grade: 'VF' };
+    const invalid: SetOwnershipRequest = {
+      owned: true,
+      // @ts-expect-error "Proof" is not a grade
+      grade: 'Proof',
+    };
+
+    expect(absent.grade).toBeUndefined();
+    expect(cleared.grade).toBeNull();
+    expect(graded.grade).toBe('VF');
+    expect(invalid.owned).toBe(true);
+  });
+
+  it('GapSlot requires grade but not needsUpgrade', () => {
+    // @ts-expect-error grade is required on GapSlot
+    const withoutGrade: GapSlot = {
+      id: 'usc-1',
+      position: 1,
+      coin: sampleCatalogCoin,
+      owned: true,
+    };
+    const withoutUpgrade: GapSlot = { ...withoutGrade, grade: 'F' };
+    const withUpgrade: GapSlot = { ...withoutGrade, grade: 'F', needsUpgrade: true };
+
+    expect(withoutUpgrade.needsUpgrade).toBeUndefined();
+    expect(withUpgrade.needsUpgrade).toBe(true);
+  });
+
+  it('GapViewResponse requires minGrade but not upgradeCount', () => {
+    // @ts-expect-error minGrade is required on GapViewResponse
+    const withoutMinGrade: GapViewResponse = {
+      setId: '11111111-1111-1111-1111-111111111111',
+      ownedCount: 0,
+      totalCount: 0,
+      completionPercent: 0,
+      slots: [],
+    };
+    const noGoal: GapViewResponse = { ...withoutMinGrade, minGrade: null };
+    const goal: GapViewResponse = { ...withoutMinGrade, minGrade: 'VF', upgradeCount: 2 };
+
+    expect(noGoal.upgradeCount).toBeUndefined();
+    expect(goal.upgradeCount).toBe(2);
+    expect(goal.minGrade).not.toBe(noGoal.minGrade);
+  });
+
+  it('UpdateSetRequest takes name and/or minGrade, each optional', () => {
+    const empty: UpdateSetRequest = {};
+    const renameOnly: UpdateSetRequest = { name: 'Renamed' };
+    const goalOnly: UpdateSetRequest = { minGrade: 'XF' };
+    const clear: UpdateSetRequest = { minGrade: null };
+    const both: UpdateSetRequest = { name: 'Renamed', minGrade: 'AU' };
+    const invalid: UpdateSetRequest = {
+      // @ts-expect-error "Proof" is not a grade
+      minGrade: 'Proof',
+    };
+
+    expect(empty.name).toBeUndefined();
+    expect(renameOnly.minGrade).toBeUndefined();
+    expect(goalOnly.minGrade).toBe('XF');
+    expect(clear.minGrade).toBeNull();
+    expect(both.name).toBe('Renamed');
+    expect(invalid.name).toBeUndefined();
   });
 });

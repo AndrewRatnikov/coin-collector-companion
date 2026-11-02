@@ -7,6 +7,8 @@
  *
  * All earlier tests are kept unchanged. Added: optimistic remove in usePatchSetCoins, the extra
  * ['user-sets'] invalidation, useAddCoinsToSet, and useSetsSummary.
+ * Fixture-only change (run_20261102_194108): slots gain `grade: null`, gap views and the SET literal
+ * gain `minGrade: null`.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -104,6 +106,7 @@ function makeGaps(setId: string, ownedIds: string[]): GapViewResponse {
     position: i,
     coin,
     owned: ownedIds.includes(coin.id),
+    grade: null,
   }));
   const ownedCount = slots.filter((s) => s.owned).length;
   return {
@@ -111,6 +114,7 @@ function makeGaps(setId: string, ownedIds: string[]): GapViewResponse {
     ownedCount,
     totalCount: slots.length,
     completionPercent: Math.round((ownedCount / slots.length) * 100),
+    minGrade: null,
     slots,
   };
 }
@@ -121,6 +125,7 @@ const SET = {
   name: 'My Set',
   clonedFromCanonicalId: null,
   clonedFromUserSetId: null,
+  minGrade: null,
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   updatedAt: new Date('2026-01-01T00:00:00.000Z'),
 };
@@ -228,7 +233,7 @@ describe('use-user-sets hooks', () => {
 
   describe('criterion 2: useSetGaps wraps getSetGaps and is disabled for an empty id', () => {
     it('calls getSetGaps with the id and exposes the resolved GapViewResponse', async () => {
-      const gaps = { setId: 'u1', ownedCount: 1, totalCount: 2, completionPercent: 50, slots: [] };
+      const gaps = { setId: 'u1', ownedCount: 1, totalCount: 2, completionPercent: 50, minGrade: null, slots: [] };
       getSetGapsMock.mockResolvedValue(gaps as never);
       const { wrapper } = makeWrapper();
 

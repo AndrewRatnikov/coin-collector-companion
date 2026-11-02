@@ -6,6 +6,8 @@
  *                   runs/run_20260720_171320/plan.md § Interface Contract (Test addition: getGaps — no-coins-owned case)
  *                   runs/run_20261013_062900/plan.md § Interface Contract (API: SetsService — coinCount on list methods)
  *                   runs/run_20261018_105617/plan.md § Interface Contract (API: GET /sets, GET /sets/summary)
+ *                   runs/run_20261102_194108/plan.md § Interface Contract (API: PATCH /sets/:id, POST /sets clone,
+ *                   GET /sets/:id/gaps)
  * Covers criteria: #1, #3, #4, #5, #6, #7, #8, #9, #10 (from runs/run_20260719_200109/prd.md)
  *                   #1, #2 [validated in dto spec, not here], #3, #4, #5, #6, #7, #8, #9, #10,
  *                   #11, #12, #17 (from runs/run_20260720_070901/prd.md)
@@ -16,6 +18,8 @@
  *                   on findAllCanonical and findAllPublic, with no _count key leaking out)
  *                   #2, #3, #7 (from runs/run_20261018_105617/prd.md — findAllForUser progress fields,
  *                   getSummary unique-missing dedupe / no sets / suggestion)
+ *                   #10, #11, #12, #13, #14, #15 (from runs/run_20261102_194108/prd.md — minGrade update,
+ *                   clone does not copy it, gap view grade / needsUpgrade / upgradeCount)
  *
  * CONTRACT_GAP: none.
  *
@@ -32,12 +36,13 @@
  * Prisma nested include (`coins.coin.ownerships` filtered to `where: { userId: callerId }`
  * at the DB layer) — the mock's `coins[].coin.ownerships` array is pre-shaped as if that
  * filter already ran, since a mocked Prisma client cannot itself apply a WHERE clause.
+ * Every getGaps fixture carries `minGrade` (null when the set has no goal), as the real row does.
  *
  * The same holds for findAllForUser and getSummary (run_20261018_105617): the mocked rows are
  * pre-shaped as if the WHERE / include filters already ran.
  */
 
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { SetsService } from './sets.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -165,6 +170,7 @@ describe('SetsService', () => {
         name,
         clonedFromCanonicalId: null,
         clonedFromUserSetId: null,
+        minGrade: null,
         createdAt: new Date('2026-01-01T00:00:00.000Z'),
         updatedAt: new Date('2026-01-02T00:00:00.000Z'),
         coins,
@@ -187,7 +193,7 @@ describe('SetsService', () => {
       expect(mockPrismaService.ownership.findMany).not.toHaveBeenCalled();
     });
 
-    it('adds ownedCount, totalCount and firstMissing and keeps the existing set fields', async () => {
+    it('adds ownedCount, totalCount and firstMissing and keeps the existing set fields (minGrade included)', async () => {
       mockPrismaService.userSet.findMany.mockResolvedValue([
         makeRow('set-1', 'We Are Strong', [
           makeCoin('Kyiv Oblast', true),
@@ -206,6 +212,7 @@ describe('SetsService', () => {
           name: 'We Are Strong',
           clonedFromCanonicalId: null,
           clonedFromUserSetId: null,
+          minGrade: null,
           createdAt: new Date('2026-01-01T00:00:00.000Z'),
           updatedAt: new Date('2026-01-02T00:00:00.000Z'),
           ownedCount: 2,
@@ -213,6 +220,17 @@ describe('SetsService', () => {
           firstMissing: 'Odesa Oblast',
         },
       ]);
+    });
+
+    it('carries the stored minGrade through to the list item', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([
+        { ...makeRow('set-1', 'Goal', [makeCoin('Kyiv Oblast', true)]), minGrade: 'XF' },
+        makeRow('set-2', 'No goal', [makeCoin('Odesa Oblast', true)]),
+      ]);
+
+      const result = await service.findAllForUser('user-1');
+
+      expect(result.map((r) => r.minGrade)).toEqual(['XF', null]);
     });
 
     it('does not leak the coins key into the response', async () => {
@@ -503,6 +521,15 @@ describe('SetsService', () => {
       expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
       expect(result).toBe(created);
     });
+
+    it('never names minGrade in the create data (criterion #14 from run_20261102_194108)', async () => {
+      mockPrismaService.userSet.create.mockResolvedValue({ id: 'set-new' });
+
+      await service.create('user-1', { name: 'Blank Set' } as never);
+
+      const createArgs = mockPrismaService.userSet.create.mock.calls[0][0];
+      expect(createArgs.data).not.toHaveProperty('minGrade');
+    });
   });
 
   describe('create — clone from canonical set (criteria #4, #6, #7 from run_20260719_200109/prd.md)', () => {
@@ -544,6 +571,20 @@ describe('SetsService', () => {
       );
       expect(result).toBe(created);
     });
+
+    it('never names minGrade in the create data (criterion #14 from run_20261102_194108)', async () => {
+      const sourceId = '33333333-3333-3333-3333-333333333333';
+      mockPrismaService.canonicalSetCoin.findMany.mockResolvedValue([]);
+      mockPrismaService.userSet.create.mockResolvedValue({ id: 'set-clone' });
+
+      await service.create('user-1', {
+        name: 'Cloned Set',
+        cloneFrom: { type: 'canonical', id: sourceId },
+      } as never);
+
+      const createArgs = mockPrismaService.userSet.create.mock.calls[0][0];
+      expect(createArgs.data).not.toHaveProperty('minGrade');
+    });
   });
 
   describe('create — clone from user set (criteria #5, #6, #7 from run_20260719_200109/prd.md)', () => {
@@ -577,6 +618,25 @@ describe('SetsService', () => {
         ]),
       );
       expect(result).toBe(created);
+    });
+
+    it('does not copy the source set minGrade: create data never names it (criterion #14 from run_20261102_194108)', async () => {
+      const sourceId = '44444444-4444-4444-4444-444444444444';
+      mockPrismaService.userSetCoin.findMany.mockResolvedValue([
+        { id: 'usc-1', userSetId: sourceId, coinId: 'coin-c', position: 2 },
+      ]);
+      // Even if the source set carried a goal, only its coin rows are read by the clone.
+      mockPrismaService.userSet.findUnique.mockResolvedValue({ id: sourceId, minGrade: 'XF' });
+      mockPrismaService.userSet.create.mockResolvedValue({ id: 'set-clone-2' });
+
+      await service.create('user-1', {
+        name: 'Cloned From User',
+        cloneFrom: { type: 'user', id: sourceId },
+      } as never);
+
+      const createArgs = mockPrismaService.userSet.create.mock.calls[0][0];
+      expect(createArgs.data).not.toHaveProperty('minGrade');
+      expect(JSON.stringify(createArgs)).not.toContain('XF');
     });
 
     it('succeeds without throwing when the source set has zero coins', async () => {
@@ -626,6 +686,111 @@ describe('SetsService', () => {
         data: { name: 'Renamed' },
       });
       expect(result).toBe(updated);
+    });
+  });
+
+  describe('update — minGrade (criteria #12, #13 from run_20261102_194108/prd.md)', () => {
+    const id = '66666666-6666-6666-6666-666666666666';
+
+    it('sets minGrade for the owner with data { minGrade } only', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue({ id, userId: 'user-1' });
+      const updated = { id, userId: 'user-1', name: 'S', minGrade: 'XF' };
+      mockPrismaService.userSet.update.mockResolvedValue(updated);
+
+      const result = await service.update('user-1', id, { minGrade: 'XF' } as never);
+
+      expect(mockPrismaService.userSet.update).toHaveBeenCalledWith({
+        where: { id },
+        data: { minGrade: 'XF' },
+      });
+      expect(result).toBe(updated);
+    });
+
+    it('writes whichever grade was sent (not hard-coded)', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue({ id, userId: 'user-1' });
+      mockPrismaService.userSet.update.mockResolvedValue({ id });
+
+      await service.update('user-1', id, { minGrade: 'G' } as never);
+      await service.update('user-1', id, { minGrade: 'UNC' } as never);
+
+      expect(mockPrismaService.userSet.update).toHaveBeenNthCalledWith(1, {
+        where: { id },
+        data: { minGrade: 'G' },
+      });
+      expect(mockPrismaService.userSet.update).toHaveBeenNthCalledWith(2, {
+        where: { id },
+        data: { minGrade: 'UNC' },
+      });
+    });
+
+    it('clears minGrade with minGrade: null', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue({ id, userId: 'user-1' });
+      mockPrismaService.userSet.update.mockResolvedValue({ id, minGrade: null });
+
+      await service.update('user-1', id, { minGrade: null } as never);
+
+      expect(mockPrismaService.userSet.update).toHaveBeenCalledWith({
+        where: { id },
+        data: { minGrade: null },
+      });
+    });
+
+    it('sends name and minGrade together when both are given', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue({ id, userId: 'user-1' });
+      mockPrismaService.userSet.update.mockResolvedValue({ id });
+
+      await service.update('user-1', id, { name: 'Both', minGrade: 'VF' } as never);
+
+      expect(mockPrismaService.userSet.update).toHaveBeenCalledWith({
+        where: { id },
+        data: { name: 'Both', minGrade: 'VF' },
+      });
+    });
+
+    it('a rename-only call does not touch minGrade', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue({ id, userId: 'user-1' });
+      mockPrismaService.userSet.update.mockResolvedValue({ id });
+
+      await service.update('user-1', id, { name: 'Just a name' } as never);
+
+      const data = mockPrismaService.userSet.update.mock.calls[0][0].data;
+      expect(data).toEqual({ name: 'Just a name' });
+      expect(data).not.toHaveProperty('minGrade');
+    });
+
+    it('rejects a non-owner with ForbiddenException and never updates', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue({ id, userId: 'someone-else' });
+
+      await expect(service.update('user-1', id, { minGrade: 'XF' } as never)).rejects.toThrow(
+        ForbiddenException,
+      );
+      await expect(service.update('user-1', id, { minGrade: 'XF' } as never)).rejects.toThrow(
+        'You do not own this set',
+      );
+      expect(mockPrismaService.userSet.update).not.toHaveBeenCalled();
+    });
+
+    it('throws NotFoundException for an unknown id (this includes canonical set ids)', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue(null);
+
+      await expect(service.update('user-1', id, { minGrade: 'XF' } as never)).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockPrismaService.userSet.update).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException for an empty body, before any Prisma call', async () => {
+      await expect(service.update('user-1', id, {} as never)).rejects.toThrow(BadRequestException);
+
+      expect(mockPrismaService.userSet.findUnique).not.toHaveBeenCalled();
+      expect(mockPrismaService.userSet.update).not.toHaveBeenCalled();
+    });
+
+    it('does not treat minGrade: null as an empty body', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue({ id, userId: 'user-1' });
+      mockPrismaService.userSet.update.mockResolvedValue({ id });
+
+      await expect(service.update('user-1', id, { minGrade: null } as never)).resolves.toBeDefined();
     });
   });
 
@@ -1024,6 +1189,18 @@ describe('SetsService', () => {
       ]);
       result.items.forEach((item) => expect(item).not.toHaveProperty('_count'));
     });
+
+    it('keeps minGrade on each item (criterion #13 from run_20261102_194108)', async () => {
+      mockPrismaService.userSet.findMany.mockResolvedValue([
+        { id: 'u1', userId: 'user-2', name: 'Goal', minGrade: 'VF', _count: { coins: 1 } },
+        { id: 'u2', userId: 'user-3', name: 'No goal', minGrade: null, _count: { coins: 2 } },
+      ]);
+      mockPrismaService.userSet.count.mockResolvedValue(2);
+
+      const result = await service.findAllPublic(makePublicQuery());
+
+      expect(result.items.map((item) => item.minGrade)).toEqual(['VF', null]);
+    });
   });
 
   describe('findPublicById (criteria #11, #12 from run_20260720_070901/prd.md)', () => {
@@ -1040,6 +1217,7 @@ describe('SetsService', () => {
         name: 'A Public Set',
         clonedFromCanonicalId: null,
         clonedFromUserSetId: null,
+        minGrade: 'XF',
         coins: [{ id: 'usc-1', position: 1, coin: { id: 'coin-a' } }],
       };
       mockPrismaService.userSet.findUnique.mockResolvedValue(detail);
@@ -1051,6 +1229,7 @@ describe('SetsService', () => {
         include: { coins: { orderBy: { position: 'asc' }, include: { coin: true } } },
       });
       expect(result).toBe(detail);
+      expect(result.minGrade).toBe('XF');
     });
   });
 
@@ -1067,6 +1246,7 @@ describe('SetsService', () => {
       const detail = {
         id: uuidC,
         userId: 'someone-else',
+        minGrade: null,
         coins: [{ id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [] } }],
       };
       mockPrismaService.userSet.findUnique.mockResolvedValue(detail);
@@ -1075,7 +1255,7 @@ describe('SetsService', () => {
     });
 
     it('fetches with the coins relation joined, ordered by position, and ownerships filtered to the caller', async () => {
-      const detail = { id: uuidC, userId: 'someone-else', coins: [] };
+      const detail = { id: uuidC, userId: 'someone-else', minGrade: null, coins: [] };
       mockPrismaService.userSet.findUnique.mockResolvedValue(detail);
 
       await service.getGaps('user-1', uuidC);
@@ -1094,6 +1274,7 @@ describe('SetsService', () => {
     it('is a single query — no per-slot/N+1 lookups against userSetCoin or ownership', async () => {
       const detail = {
         id: uuidC,
+        minGrade: null,
         coins: [
           { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [{ userId: 'user-1' }] } },
           { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] } },
@@ -1120,6 +1301,7 @@ describe('SetsService', () => {
     it('marks a slot owned when the caller has a matching ownership row, not owned when the array is empty', async () => {
       const detail = {
         id: uuidC,
+        minGrade: null,
         coins: [
           { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [{ userId: 'user-1', coinId: 'coin-a' }] } },
           { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] } },
@@ -1130,14 +1312,21 @@ describe('SetsService', () => {
       const result = await service.getGaps('user-1', uuidC);
 
       expect(result.slots).toEqual([
-        { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [{ userId: 'user-1', coinId: 'coin-a' }] }, owned: true },
-        { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] }, owned: false },
+        {
+          id: 'usc-1',
+          position: 1,
+          coin: { id: 'coin-a', ownerships: [{ userId: 'user-1', coinId: 'coin-a' }] },
+          owned: true,
+          grade: null,
+        },
+        { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] }, owned: false, grade: null },
       ]);
     });
 
     it('computes ownedCount, totalCount, and completionPercent rounded to the nearest integer', async () => {
       const detail = {
         id: uuidC,
+        minGrade: null,
         coins: [
           { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [{ userId: 'user-1' }] } },
           { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] } },
@@ -1156,7 +1345,7 @@ describe('SetsService', () => {
     });
 
     it('returns completionPercent: 0 for a set with zero coins, without dividing by zero', async () => {
-      const detail = { id: uuidC, coins: [] };
+      const detail = { id: uuidC, minGrade: null, coins: [] };
       mockPrismaService.userSet.findUnique.mockResolvedValue(detail);
 
       const result = await service.getGaps('user-1', uuidC);
@@ -1170,6 +1359,7 @@ describe('SetsService', () => {
     it('returns completionPercent: 100 when every coin is owned by the caller', async () => {
       const detail = {
         id: uuidC,
+        minGrade: null,
         coins: [
           { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [{ userId: 'user-1' }] } },
           { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [{ userId: 'user-1' }] } },
@@ -1185,6 +1375,7 @@ describe('SetsService', () => {
     it("returns completionPercent: 0 when the caller owns none of the set's coins", async () => {
       const detail = {
         id: uuidC,
+        minGrade: null,
         coins: [
           { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [] } },
           { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] } },
@@ -1197,6 +1388,138 @@ describe('SetsService', () => {
       expect(result.ownedCount).toBe(0);
       expect(result.totalCount).toBe(2);
       expect(result.completionPercent).toBe(0);
+    });
+  });
+
+  describe('getGaps — grades and upgrades (criteria #10, #11, #15 from run_20261102_194108/prd.md)', () => {
+    const own = (coinId: string, grade: string | null) => [
+      { userId: 'user-1', coinId, ownedAt: new Date('2026-01-01T00:00:00.000Z'), grade },
+    ];
+
+    function makeDetail(minGrade: string | null) {
+      return {
+        id: uuidC,
+        userId: 'someone-else',
+        minGrade,
+        coins: [
+          { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: own('coin-a', 'XF') } },
+          { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: own('coin-b', 'F') } },
+          { id: 'usc-3', position: 3, coin: { id: 'coin-c', ownerships: own('coin-c', null) } },
+          { id: 'usc-4', position: 4, coin: { id: 'coin-d', ownerships: [] } },
+        ],
+      };
+    }
+
+    it('with minGrade VF flags lower-graded and ungraded owned coins, never an unowned one', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue(makeDetail('VF'));
+
+      const result = await service.getGaps('user-1', uuidC);
+
+      expect(result.minGrade).toBe('VF');
+      expect(result.slots.map((s) => s.grade)).toEqual(['XF', 'F', null, null]);
+      expect(result.slots.map((s) => s.owned)).toEqual([true, true, true, false]);
+      expect(result.slots.map((s) => s.needsUpgrade)).toEqual([false, true, true, false]);
+      expect(result.upgradeCount).toBe(2);
+    });
+
+    it('a coin graded exactly at the minimum does not need an upgrade', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue(makeDetail('XF'));
+
+      const result = await service.getGaps('user-1', uuidC);
+
+      expect(result.slots.map((s) => s.needsUpgrade)).toEqual([false, true, true, false]);
+      expect(result.upgradeCount).toBe(2);
+    });
+
+    it('a higher minimum flags more coins (different input gives a different upgradeCount)', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue(makeDetail('G'));
+      const low = await service.getGaps('user-1', uuidC);
+
+      mockPrismaService.userSet.findUnique.mockResolvedValue(makeDetail('UNC'));
+      const high = await service.getGaps('user-1', uuidC);
+
+      // With minGrade G only the ungraded owned coin fails; with UNC every owned coin fails.
+      expect(low.upgradeCount).toBe(1);
+      expect(high.upgradeCount).toBe(3);
+      expect(low.slots.map((s) => s.needsUpgrade)).toEqual([false, false, true, false]);
+      expect(high.slots.map((s) => s.needsUpgrade)).toEqual([true, true, true, false]);
+    });
+
+    it('does not change ownedCount, totalCount or completionPercent (same set with and without a minGrade)', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue(makeDetail(null));
+      const without = await service.getGaps('user-1', uuidC);
+
+      mockPrismaService.userSet.findUnique.mockResolvedValue(makeDetail('UNC'));
+      const withGoal = await service.getGaps('user-1', uuidC);
+
+      expect(without.ownedCount).toBe(3);
+      expect(without.totalCount).toBe(4);
+      expect(without.completionPercent).toBe(75);
+      expect(withGoal.ownedCount).toBe(without.ownedCount);
+      expect(withGoal.totalCount).toBe(without.totalCount);
+      expect(withGoal.completionPercent).toBe(without.completionPercent);
+    });
+
+    it('with minGrade null every slot has a grade but no needsUpgrade key, and the response has no upgradeCount key', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue(makeDetail(null));
+
+      const result = await service.getGaps('user-1', uuidC);
+
+      expect(result.minGrade).toBeNull();
+      expect(result.slots.map((s) => s.grade)).toEqual(['XF', 'F', null, null]);
+      for (const slot of result.slots) {
+        expect(slot).not.toHaveProperty('needsUpgrade');
+      }
+      expect(result).not.toHaveProperty('upgradeCount');
+    });
+
+    it('an empty set with a minGrade has upgradeCount 0 and no slots', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue({
+        id: uuidC,
+        userId: 'someone-else',
+        minGrade: 'VF',
+        coins: [],
+      });
+
+      const result = await service.getGaps('user-1', uuidC);
+
+      expect(result.upgradeCount).toBe(0);
+      expect(result.slots).toEqual([]);
+      expect(result.minGrade).toBe('VF');
+    });
+
+    it('a caller who owns nothing in a set with a minGrade gets upgradeCount 0 and every needsUpgrade false', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue({
+        id: uuidC,
+        userId: 'someone-else',
+        minGrade: 'XF',
+        coins: [
+          { id: 'usc-1', position: 1, coin: { id: 'coin-a', ownerships: [] } },
+          { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] } },
+        ],
+      });
+
+      const result = await service.getGaps('user-1', uuidC);
+
+      expect(result.upgradeCount).toBe(0);
+      expect(result.slots.map((s) => s.needsUpgrade)).toEqual([false, false]);
+      expect(result.completionPercent).toBe(0);
+    });
+
+    it('still filters ownerships by the caller id, so the grades are the caller\'s own', async () => {
+      mockPrismaService.userSet.findUnique.mockResolvedValue(makeDetail('VF'));
+
+      await service.getGaps('user-9', uuidC);
+
+      expect(mockPrismaService.userSet.findUnique).toHaveBeenCalledWith({
+        where: { id: uuidC },
+        include: {
+          coins: {
+            orderBy: { position: 'asc' },
+            include: { coin: { include: { ownerships: { where: { userId: 'user-9' } } } } },
+          },
+        },
+      });
     });
   });
 });

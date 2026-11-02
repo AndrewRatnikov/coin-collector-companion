@@ -9,6 +9,7 @@
  * updated for Album-first order.
  *
  * Expected card text is computed with getCoinName so the tests do not hard-code the formatter.
+ * Fixture-only change (run_20261102_194108): the GapSlot factory gains `grade: null`.
  *
  * CONTRACT_GAPS: none
  */
@@ -35,6 +36,7 @@ function slot(
     id: `usc-${id}`,
     position,
     owned: over.owned ?? false,
+    grade: null,
     coin: {
       id: `coin-${id}`,
       country: 'Ukraine',
