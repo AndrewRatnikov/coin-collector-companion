@@ -6,6 +6,8 @@
  * A real QueryClient is seeded with setQueryData, and only the network wrapper
  * (@/lib/collection-api) is mocked. Requests are deferred promises so the tests can look at the
  * caches while the request is in flight.
+ * Fixture-only change (run_20261102_194108): OwnershipItem literals and gap slots gain `grade: null`,
+ * gap views gain `minGrade: null`.
  *
  * CONTRACT_GAPS: none
  */
@@ -64,6 +66,7 @@ function makeGaps(setId: string, coins: CatalogCoin[], ownedIds: string[] = []):
     position: i,
     coin,
     owned: ownedIds.includes(coin.id),
+    grade: null,
   }));
   const ownedCount = slots.filter((s) => s.owned).length;
   return {
@@ -71,6 +74,7 @@ function makeGaps(setId: string, coins: CatalogCoin[], ownedIds: string[] = []):
     ownedCount,
     totalCount: slots.length,
     completionPercent: Math.round((ownedCount / slots.length) * 100),
+    minGrade: null,
     slots,
   };
 }
@@ -250,9 +254,9 @@ describe('useBulkSetOwnership: optimistic update', () => {
     queryClient.setQueryData(
       ['collection', {}],
       [
-        { coinId: 'coin-1', coin: COIN_1, ownedAt: new Date('2026-01-02') },
-        { coinId: 'coin-2', coin: COIN_2, ownedAt: new Date('2026-01-03') },
-        { coinId: 'coin-3', coin: COIN_3, ownedAt: new Date('2026-01-04') },
+        { coinId: 'coin-1', coin: COIN_1, ownedAt: new Date('2026-01-02'), grade: null },
+        { coinId: 'coin-2', coin: COIN_2, ownedAt: new Date('2026-01-03'), grade: null },
+        { coinId: 'coin-3', coin: COIN_3, ownedAt: new Date('2026-01-04'), grade: null },
       ] as OwnershipItem[],
     );
 

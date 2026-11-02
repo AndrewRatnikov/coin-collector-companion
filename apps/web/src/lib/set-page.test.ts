@@ -2,6 +2,8 @@
  * Tests for: set-page (pure helpers)
  * Contract source: runs/run_20261017_210503/plan.md § Interface Contract → Pure module: set-page.ts
  * Covers criteria: #2, #5, #12, #13
+ * Fixture-only change (run_20261102_194108): GapSlot fixtures gain `grade: null` and the
+ * GapViewResponse factory gains `minGrade: null`.
  *
  * CONTRACT_GAPS: none
  */
@@ -20,6 +22,7 @@ function makeSlot(
     id: `usc-${id}`,
     position,
     owned,
+    grade: null,
     coin: {
       id: `coin-${id}`,
       country: 'Ukraine',
@@ -53,6 +56,7 @@ function makeGaps(slots: GapSlot[]): GapViewResponse {
     ownedCount,
     totalCount: slots.length,
     completionPercent: slots.length === 0 ? 0 : Math.round((ownedCount / slots.length) * 100),
+    minGrade: null,
     slots,
   };
 }

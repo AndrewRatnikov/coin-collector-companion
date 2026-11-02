@@ -9,6 +9,7 @@
  *
  * Mutations: the sheet must call usePatchSetCoins(setId).mutateAsync (never mutate). The mock returns
  * controllable promises so "Adding…" and the independent resolution of several rows can be observed.
+ * Fixture-only change (run_20261102_194108): GapSlot fixtures and the collection rows gain `grade: null`.
  *
  * CONTRACT_GAPS: none
  */
@@ -94,8 +95,8 @@ const OTHER_SET_COIN = coin({
 });
 
 const SLOTS: GapSlot[] = [
-  { id: 'usc-1', position: 0, coin: IN_SET, owned: false },
-  { id: 'usc-2', position: 1, coin: OTHER_SET_COIN, owned: false },
+  { id: 'usc-1', position: 0, coin: IN_SET, owned: false, grade: null },
+  { id: 'usc-2', position: 1, coin: OTHER_SET_COIN, owned: false, grade: null },
 ];
 
 const FACETS = { countries: ['Ukraine', 'Poland'], denominations: ['10 Hryvnias', '1 Hryvnia'] };
@@ -718,12 +719,14 @@ describe('AddCoinsSheet', () => {
 
     it('shows Owned for coins in the collection, and for owned set slots, but not for others', () => {
       useCollectionMock.mockReturnValue(
-        queryResult({ data: [{ coinId: 'coin-luhansk', coin: LUHANSK, ownedAt: new Date('2026-01-01') }] }),
+        queryResult({
+          data: [{ coinId: 'coin-luhansk', coin: LUHANSK, ownedAt: new Date('2026-01-01'), grade: null }],
+        }),
       );
       renderSheet({
         slots: [
-          { id: 'usc-1', position: 0, coin: IN_SET, owned: true },
-          { id: 'usc-2', position: 1, coin: OTHER_SET_COIN, owned: false },
+          { id: 'usc-1', position: 0, coin: IN_SET, owned: true, grade: null },
+          { id: 'usc-2', position: 1, coin: OTHER_SET_COIN, owned: false, grade: null },
         ],
       });
 

@@ -2,7 +2,8 @@
  * Tests for: CollectionController
  * Contract source: runs/run_20260720_142942/plan.md § Interface Contract (Controller: CollectionController)
  * Extended by: runs/run_20261017_210503/plan.md § Interface Contract (API: PATCH /collection)
- * Covers criteria: #1, #7 (run_20260720_142942); #10 (run_20261017_210503)
+ *              runs/run_20261102_194108/plan.md § Interface Contract (API: PATCH /collection/:coinId)
+ * Covers criteria: #1, #7 (run_20260720_142942); #10 (run_20261017_210503); #5 (run_20261102_194108)
  *
  * CONTRACT_GAP: none.
  *
@@ -11,6 +12,10 @@
  * arg on every handler, and that no handler carries @Public() metadata (all require
  * auth per the Interface Contract). It does not re-test upsert/deleteMany/filter logic, which
  * belongs to collection.service.spec.ts. No real network/DB call anywhere in this file.
+ *
+ * setOwnership is always called with FOUR arguments (userId, coinId, owned, grade): jest's
+ * toHaveBeenCalledWith('u', id, true) fails against a call of (..., true, undefined), so an
+ * absent grade is asserted as an explicit trailing `undefined`.
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
@@ -72,6 +77,7 @@ describe('CollectionController', () => {
           coinId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
           coin: { id: '3fa85f64-5717-4562-b3fc-2c963f66afa6', country: 'USA' },
           ownedAt: new Date('2026-01-01T00:00:00.000Z'),
+          grade: 'VF',
         },
       ];
       mockCollectionService.findAll.mockResolvedValue(serviceResult);
@@ -91,25 +97,84 @@ describe('CollectionController', () => {
         coinId,
         owned: true,
         ownedAt: new Date('2026-01-01T00:00:00.000Z'),
+        grade: null,
       };
       mockCollectionService.setOwnership.mockResolvedValue(serviceResult);
 
       const result = await controller.setOwnership(user, coinId, dto);
 
-      expect(mockCollectionService.setOwnership).toHaveBeenCalledWith('user-1', coinId, true);
+      expect(mockCollectionService.setOwnership).toHaveBeenCalledWith(
+        'user-1',
+        coinId,
+        true,
+        undefined,
+      );
       expect(result).toBe(serviceResult);
     });
 
     it('passes owned: false through unchanged', async () => {
       const coinId = 'e2c56db5-dffb-48d3-b1c4-63c7981a9b46';
       const dto = Object.assign(new SetOwnershipDto(), { owned: false });
-      const serviceResult = { coinId, owned: false, ownedAt: null };
+      const serviceResult = { coinId, owned: false, ownedAt: null, grade: null };
       mockCollectionService.setOwnership.mockResolvedValue(serviceResult);
 
       const result = await controller.setOwnership(user, coinId, dto);
 
-      expect(mockCollectionService.setOwnership).toHaveBeenCalledWith('user-1', coinId, false);
+      expect(mockCollectionService.setOwnership).toHaveBeenCalledWith(
+        'user-1',
+        coinId,
+        false,
+        undefined,
+      );
       expect(result).toBe(serviceResult);
+    });
+
+    it('passes dto.grade through as the fourth argument', async () => {
+      const coinId = '7c9e6679-7425-40de-944b-e07fc1f90ae7';
+      const dto = Object.assign(new SetOwnershipDto(), { owned: true, grade: 'VF' as const });
+      const serviceResult = { coinId, owned: true, ownedAt: new Date(), grade: 'VF' };
+      mockCollectionService.setOwnership.mockResolvedValue(serviceResult);
+
+      const result = await controller.setOwnership(user, coinId, dto);
+
+      expect(mockCollectionService.setOwnership).toHaveBeenCalledWith('user-1', coinId, true, 'VF');
+      expect(result).toBe(serviceResult);
+    });
+
+    it('passes an explicit null grade through as null, not undefined', async () => {
+      const coinId = '7c9e6679-7425-40de-944b-e07fc1f90ae7';
+      const dto = Object.assign(new SetOwnershipDto(), { owned: true, grade: null });
+      mockCollectionService.setOwnership.mockResolvedValue({
+        coinId,
+        owned: true,
+        ownedAt: new Date(),
+        grade: null,
+      });
+
+      await controller.setOwnership(user, coinId, dto);
+
+      const args = mockCollectionService.setOwnership.mock.calls[0] as unknown[];
+      expect(args).toHaveLength(4);
+      expect(args[3]).toBeNull();
+    });
+
+    it('passes a different grade value when the dto carries a different one', async () => {
+      const coinId = '7c9e6679-7425-40de-944b-e07fc1f90ae7';
+      mockCollectionService.setOwnership.mockResolvedValue({});
+
+      await controller.setOwnership(
+        user,
+        coinId,
+        Object.assign(new SetOwnershipDto(), { owned: true, grade: 'UNC' as const }),
+      );
+      await controller.setOwnership(
+        user,
+        coinId,
+        Object.assign(new SetOwnershipDto(), { owned: true, grade: 'G' as const }),
+      );
+
+      expect(mockCollectionService.setOwnership).toHaveBeenNthCalledWith(1, 'user-1', coinId, true, 'UNC');
+      expect(mockCollectionService.setOwnership).toHaveBeenNthCalledWith(2, 'user-1', coinId, true, 'G');
     });
   });
 

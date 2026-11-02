@@ -2,7 +2,9 @@
  * Tests for: CollectionService
  * Contract source: runs/run_20260720_142942/plan.md § Interface Contract (Service: CollectionService)
  * Extended by: runs/run_20261017_210503/plan.md § Interface Contract (API: PATCH /collection)
- * Covers criteria: #3, #4, #5, #6, #8 (run_20260720_142942); #10 (run_20261017_210503)
+ *              runs/run_20261102_194108/plan.md § Interface Contract (API: PATCH /collection/:coinId)
+ * Covers criteria: #3, #4, #5, #6, #8 (run_20260720_142942); #10 (run_20261017_210503);
+ *                  #5, #6, #7, #9 (run_20261102_194108)
  *
  * CONTRACT_GAP: none.
  *
@@ -74,7 +76,7 @@ describe('CollectionService', () => {
   describe('setOwnership — owned: true (criterion #3)', () => {
     it('upserts with the composite key, create, and an empty update object', async () => {
       const ownedAt = new Date('2026-01-01T00:00:00.000Z');
-      mockPrismaService.ownership.upsert.mockResolvedValue({ userId, coinId, ownedAt });
+      mockPrismaService.ownership.upsert.mockResolvedValue({ userId, coinId, ownedAt, grade: null });
 
       await service.setOwnership(userId, coinId, true);
 
@@ -86,13 +88,13 @@ describe('CollectionService', () => {
       expect(mockPrismaService.ownership.deleteMany).not.toHaveBeenCalled();
     });
 
-    it('returns { coinId, owned: true, ownedAt } from the upsert result', async () => {
+    it('returns { coinId, owned: true, ownedAt, grade } from the upsert result', async () => {
       const ownedAt = new Date('2026-01-01T00:00:00.000Z');
-      mockPrismaService.ownership.upsert.mockResolvedValue({ userId, coinId, ownedAt });
+      mockPrismaService.ownership.upsert.mockResolvedValue({ userId, coinId, ownedAt, grade: null });
 
       const result = await service.setOwnership(userId, coinId, true);
 
-      expect(result).toEqual({ coinId, owned: true, ownedAt });
+      expect(result).toEqual({ coinId, owned: true, ownedAt, grade: null });
     });
 
     it('re-upserting an already-owned coin preserves the original ownedAt (no error, same timestamp both times)', async () => {
@@ -104,6 +106,7 @@ describe('CollectionService', () => {
         userId,
         coinId,
         ownedAt: originalOwnedAt,
+        grade: null,
       });
 
       const first = await service.setOwnership(userId, coinId, true);
@@ -132,6 +135,81 @@ describe('CollectionService', () => {
     });
   });
 
+  describe('setOwnership — grade on owned: true (criteria #5, #6 from run_20261102_194108)', () => {
+    const ownedAt = new Date('2026-01-01T00:00:00.000Z');
+
+    it('treats an explicit undefined grade like an absent one: create { userId, coinId }, update {}', async () => {
+      mockPrismaService.ownership.upsert.mockResolvedValue({ userId, coinId, ownedAt, grade: 'XF' });
+
+      await service.setOwnership(userId, coinId, true, undefined);
+
+      const arg = mockPrismaService.ownership.upsert.mock.calls[0][0];
+      expect(arg.create).toEqual({ userId, coinId });
+      expect(arg.create).not.toHaveProperty('grade');
+      expect(arg.update).toEqual({});
+    });
+
+    it('a grade sets it on create and on update', async () => {
+      mockPrismaService.ownership.upsert.mockResolvedValue({ userId, coinId, ownedAt, grade: 'VF' });
+
+      await service.setOwnership(userId, coinId, true, 'VF');
+
+      expect(mockPrismaService.ownership.upsert).toHaveBeenCalledWith({
+        where: { userId_coinId: { userId, coinId } },
+        create: { userId, coinId, grade: 'VF' },
+        update: { grade: 'VF' },
+      });
+    });
+
+    it('a different grade writes that grade (the value is not hard-coded)', async () => {
+      mockPrismaService.ownership.upsert.mockResolvedValue({ userId, coinId, ownedAt, grade: 'UNC' });
+
+      await service.setOwnership(userId, coinId, true, 'UNC');
+
+      const arg = mockPrismaService.ownership.upsert.mock.calls[0][0];
+      expect(arg.create).toEqual({ userId, coinId, grade: 'UNC' });
+      expect(arg.update).toEqual({ grade: 'UNC' });
+    });
+
+    it('grade: null clears the stored grade on update', async () => {
+      mockPrismaService.ownership.upsert.mockResolvedValue({ userId, coinId, ownedAt, grade: null });
+
+      await service.setOwnership(userId, coinId, true, null);
+
+      const arg = mockPrismaService.ownership.upsert.mock.calls[0][0];
+      expect(arg.update).toEqual({ grade: null });
+      expect(arg.create).toEqual({ userId, coinId, grade: null });
+    });
+
+    it('returns the grade from the upsert row', async () => {
+      mockPrismaService.ownership.upsert.mockResolvedValue({ userId, coinId, ownedAt, grade: 'VF' });
+      const withGrade = await service.setOwnership(userId, coinId, true, 'VF');
+
+      mockPrismaService.ownership.upsert.mockResolvedValue({ userId, coinId, ownedAt, grade: null });
+      const cleared = await service.setOwnership(userId, coinId, true, null);
+
+      expect(withGrade).toEqual({ coinId, owned: true, ownedAt, grade: 'VF' });
+      expect(cleared).toEqual({ coinId, owned: true, ownedAt, grade: null });
+    });
+
+    it('re-marking owned without a grade returns the kept grade from the existing row', async () => {
+      mockPrismaService.ownership.upsert.mockResolvedValue({ userId, coinId, ownedAt, grade: 'XF' });
+
+      const result = await service.setOwnership(userId, coinId, true);
+
+      expect(result.grade).toBe('XF');
+      expect(mockPrismaService.ownership.upsert.mock.calls[0][0].update).toEqual({});
+    });
+
+    it('returns grade null when the upsert row has no grade value (undefined from a bare row)', async () => {
+      mockPrismaService.ownership.upsert.mockResolvedValue({ userId, coinId, ownedAt });
+
+      const result = await service.setOwnership(userId, coinId, true);
+
+      expect(result.grade).toBeNull();
+    });
+  });
+
   describe('setOwnership — owned: false (criterion #4)', () => {
     it('calls deleteMany scoped to userId and coinId, never upsert', async () => {
       await service.setOwnership(userId, coinId, false);
@@ -142,10 +220,10 @@ describe('CollectionService', () => {
       expect(mockPrismaService.ownership.upsert).not.toHaveBeenCalled();
     });
 
-    it('returns { coinId, owned: false, ownedAt: null }', async () => {
+    it('returns { coinId, owned: false, ownedAt: null, grade: null }', async () => {
       const result = await service.setOwnership(userId, coinId, false);
 
-      expect(result).toEqual({ coinId, owned: false, ownedAt: null });
+      expect(result).toEqual({ coinId, owned: false, ownedAt: null, grade: null });
     });
 
     it('does not throw when the coin was never owned (deleteMany matches zero rows)', async () => {
@@ -155,7 +233,18 @@ describe('CollectionService', () => {
         coinId,
         owned: false,
         ownedAt: null,
+        grade: null,
       });
+    });
+
+    it('ignores a grade argument: only deleteMany runs and the response grade is null (criterion #5 from run_20261102_194108)', async () => {
+      const result = await service.setOwnership(userId, coinId, false, 'VF');
+
+      expect(mockPrismaService.ownership.deleteMany).toHaveBeenCalledWith({
+        where: { userId, coinId },
+      });
+      expect(mockPrismaService.ownership.upsert).not.toHaveBeenCalled();
+      expect(result).toEqual({ coinId, owned: false, ownedAt: null, grade: null });
     });
   });
 
@@ -177,6 +266,21 @@ describe('CollectionService', () => {
         skipDuplicates: true,
       });
       expect(mockPrismaService.ownership.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('never writes a grade and never upserts, so existing grades survive (criterion #7 from run_20261102_194108)', async () => {
+      mockPrismaService.coin.count.mockResolvedValue(2);
+
+      await service.setOwnershipBulk(userId, [coinId, coinIdB], true);
+
+      const arg = mockPrismaService.ownership.createMany.mock.calls[0][0] as {
+        data: Record<string, unknown>[];
+      };
+      for (const row of arg.data) {
+        expect(Object.keys(row).sort()).toEqual(['coinId', 'userId']);
+        expect(row).not.toHaveProperty('grade');
+      }
+      expect(mockPrismaService.ownership.upsert).not.toHaveBeenCalled();
     });
 
     it('returns { coinIds, owned: true }', async () => {
@@ -296,12 +400,19 @@ describe('CollectionService', () => {
       expect(call.include).toEqual({ coin: true });
     });
 
-    it('returns whatever prisma resolves', async () => {
+    it('returns whatever prisma resolves, grade included (criterion #9 from run_20261102_194108)', async () => {
       const rows = [
         {
           coinId,
           coin: { id: coinId, country: 'USA', year: 1943 },
           ownedAt: new Date('2026-01-01T00:00:00.000Z'),
+          grade: 'VF',
+        },
+        {
+          coinId: coinIdB,
+          coin: { id: coinIdB, country: 'USA', year: 1944 },
+          ownedAt: new Date('2026-01-02T00:00:00.000Z'),
+          grade: null,
         },
       ];
       mockPrismaService.ownership.findMany.mockResolvedValue(rows);
@@ -309,6 +420,7 @@ describe('CollectionService', () => {
       const result = await service.findAll(userId, makeQuery());
 
       expect(result).toBe(rows);
+      expect(result.map((r) => r.grade)).toEqual(['VF', null]);
     });
   });
 
@@ -338,7 +450,12 @@ describe('CollectionService', () => {
 
     it('only returns rows matching the filter (simulated at the mock boundary — the real filtering happens in Postgres)', async () => {
       const matching = [
-        { coinId, coin: { id: coinId, country: 'USA', year: 1943 }, ownedAt: new Date() },
+        {
+          coinId,
+          coin: { id: coinId, country: 'USA', year: 1943 },
+          ownedAt: new Date(),
+          grade: null,
+        },
       ];
       mockPrismaService.ownership.findMany.mockResolvedValue(matching);
 

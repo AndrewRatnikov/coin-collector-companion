@@ -46,6 +46,6 @@ export class CollectionController {
     @Param('coinId', ParseUUIDPipe) coinId: string,
     @Body() dto: SetOwnershipDto,
   ): Promise<SetOwnershipResponse> {
-    return this.collectionService.setOwnership(user.userId, coinId, dto.owned);
+    return this.collectionService.setOwnership(user.userId, coinId, dto.owned, dto.grade);
   }
 }

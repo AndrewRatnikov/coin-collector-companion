@@ -1,9 +1,15 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { UserSet } from '@prisma/client';
-import { getCoinName } from '@coin-collector/shared';
+import { getCoinName, meetsMinGrade } from '@coin-collector/shared';
 import type {
   CanonicalSetDetail,
   CanonicalSetSummary,
+  GapSlot,
   GapViewResponse,
   PaginatedResponse,
   PublicSetSummary,
@@ -168,8 +174,18 @@ export class SetsService {
   }
 
   async update(userId: string, id: string, dto: UpdateSetDto): Promise<UserSetSummary> {
+    // Empty body: 400 before any Prisma call (the DTO allows {}; at least one key is required).
+    if (dto.name === undefined && dto.minGrade === undefined) {
+      throw new BadRequestException('Send name and/or minGrade');
+    }
     await this.getOwnedSetOrThrow(userId, id);
-    return this.prisma.userSet.update({ where: { id }, data: { name: dto.name } });
+    return this.prisma.userSet.update({
+      where: { id },
+      data: {
+        ...(dto.name !== undefined ? { name: dto.name } : {}),
+        ...(dto.minGrade !== undefined ? { minGrade: dto.minGrade } : {}),
+      },
+    });
   }
 
   async remove(userId: string, id: string): Promise<void> {
@@ -281,16 +297,36 @@ export class SetsService {
     }
 
     const totalCount = set.coins.length;
-    const slots = set.coins.map((usc) => ({
-      id: usc.id,
-      position: usc.position,
-      coin: usc.coin,
-      owned: usc.coin.ownerships.length > 0,
-    }));
+    const minGrade = set.minGrade;
+    // needsUpgrade/upgradeCount are present only when the set has a minGrade (shared GapSlot docs).
+    const slots: GapSlot[] = set.coins.map((usc) => {
+      const ownership = usc.coin.ownerships[0];
+      const owned = ownership !== undefined;
+      const grade = ownership?.grade ?? null;
+      return {
+        id: usc.id,
+        position: usc.position,
+        coin: usc.coin,
+        owned,
+        grade,
+        ...(minGrade !== null ? { needsUpgrade: owned && !meetsMinGrade(grade, minGrade) } : {}),
+      };
+    });
+    // Grades never affect the counts or completion.
     const ownedCount = slots.filter((s) => s.owned).length;
     const completionPercent = totalCount === 0 ? 0 : Math.round((ownedCount / totalCount) * 100);
 
-    return { setId, ownedCount, totalCount, completionPercent, slots };
+    return {
+      setId,
+      ownedCount,
+      totalCount,
+      completionPercent,
+      minGrade,
+      ...(minGrade !== null
+        ? { upgradeCount: slots.filter((s) => s.needsUpgrade === true).length }
+        : {}),
+      slots,
+    };
   }
 
   private async getOwnedSetOrThrow(userId: string, id: string): Promise<UserSet> {

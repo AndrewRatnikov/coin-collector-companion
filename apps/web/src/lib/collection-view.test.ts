@@ -2,6 +2,7 @@
  * Tests for: lib/collection-view (pure filter, chip-count, grouping, subgroup-open and session-merge logic)
  * Contract source: runs/run_20261019_073415/plan.md § Interface Contract → Module: collection-view
  * Covers criteria: #2, #3, #4, #5, #6, #8 (from prd.md)
+ * Fixture-only change (run_20261102_194108): the OwnershipItem factory gains `grade: null`.
  *
  * CONTRACT_GAPS: none
  */
@@ -52,7 +53,7 @@ function coin(over: Partial<CatalogCoin> & { id: string }): CatalogCoin {
 }
 
 function item(c: CatalogCoin, ownedAt = '2026-01-02T00:00:00.000Z'): OwnershipItem {
-  return { coinId: c.id, coin: c, ownedAt: new Date(ownedAt) };
+  return { coinId: c.id, coin: c, ownedAt: new Date(ownedAt), grade: null };
 }
 
 function ids(items: readonly OwnershipItem[]): string[] {

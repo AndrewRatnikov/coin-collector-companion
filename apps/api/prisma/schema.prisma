@@ -26,6 +26,17 @@ enum CoinStatus {
   rejected
 }
 
+// Adjectival coin grade (condition), worst to best. Neutral values; the web app translates them.
+enum CoinGrade {
+  G
+  VG
+  F
+  VF
+  XF
+  AU
+  UNC
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -134,7 +145,9 @@ model UserSet {
   name                  String
   clonedFromCanonicalId String?
   clonedFromUserSetId   String?
-  createdAt             DateTime @default(now())
+  // The owner's personal minimum-grade goal; never copied by a clone.
+  minGrade              CoinGrade?
+  createdAt            DateTime @default(now())
   updatedAt             DateTime @updatedAt
 
   user                User          @relation(fields: [userId], references: [id])
@@ -161,6 +174,8 @@ model Ownership {
   userId  String
   coinId  String
   ownedAt DateTime @default(now())
+  // Optional, at most one per row; written only by PATCH /collection/:coinId.
+  grade   CoinGrade?
 
   user User @relation(fields: [userId], references: [id])
   coin Coin @relation(fields: [coinId], references: [id])

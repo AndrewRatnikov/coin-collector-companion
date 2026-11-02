@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type {
   BulkSetOwnershipResponse,
+  CoinGrade,
   OwnershipItem,
   SetOwnershipResponse,
 } from '@coin-collector/shared';
@@ -16,15 +17,17 @@ export class CollectionService {
     userId: string,
     coinId: string,
     owned: boolean,
+    grade?: CoinGrade | null,
   ): Promise<SetOwnershipResponse> {
     if (owned) {
       try {
+        // An absent grade (undefined) keeps the stored one; null clears it.
         const row = await this.prisma.ownership.upsert({
           where: { userId_coinId: { userId, coinId } },
-          create: { userId, coinId },
-          update: {},
+          create: { userId, coinId, ...(grade !== undefined ? { grade } : {}) },
+          update: grade !== undefined ? { grade } : {},
         });
-        return { coinId, owned: true, ownedAt: row.ownedAt };
+        return { coinId, owned: true, ownedAt: row.ownedAt, grade: row.grade ?? null };
       } catch (err) {
         if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
           throw new NotFoundException('Coin not found');
@@ -33,8 +36,9 @@ export class CollectionService {
       }
     }
 
+    // Un-owning deletes the row, and its grade with it; any grade argument is ignored.
     await this.prisma.ownership.deleteMany({ where: { userId, coinId } });
-    return { coinId, owned: false, ownedAt: null };
+    return { coinId, owned: false, ownedAt: null, grade: null };
   }
 
   /**

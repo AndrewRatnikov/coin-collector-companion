@@ -2,6 +2,7 @@
  * Tests for: MySetsSummary
  * Contract source: runs/run_20261018_105617/plan.md § Interface Contract → Component: MySetsSummary
  * Covers criteria: #4 (three tiles, closest excludes complete, complete state) (from prd.md)
+ * Fixture-only change (run_20261102_194108): the UserSetListItem factory gains `minGrade: null`.
  *
  * CONTRACT_GAPS: none
  */
@@ -16,6 +17,7 @@ function makeSet(over: Partial<UserSetListItem> & Pick<UserSetListItem, 'id' | '
     userId: 'user-1',
     clonedFromCanonicalId: null,
     clonedFromUserSetId: null,
+    minGrade: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     ownedCount: 0,

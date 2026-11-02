@@ -88,7 +88,7 @@ export class SetsController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Rename a set (owner only)' })
+  @ApiOperation({ summary: 'Rename a set and/or set its minimum grade (owner only)' })
   @ApiOkResponse({ description: 'The updated set' })
   update(
     @CurrentUser() user: AuthenticatedUser,

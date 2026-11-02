@@ -2,6 +2,8 @@
  * Tests for: coin-page helpers
  * Contract source: runs/run_20261019_205931/plan.md § Interface Contract → Module: coin-page helpers
  * Covers criteria: #1 (country href), #6 (panel state), #9 (set rows), #12 (spec rows)
+ * Fixture-only change (run_20261102_194108): the GapViewResponse factory gains `minGrade: null` and
+ * its slots gain `grade: null`.
  *
  * CONTRACT_GAPS: none
  */
@@ -31,7 +33,14 @@ function gap(setId: string, coinIds: string[], owned: number, total: number, per
     ownedCount: owned,
     totalCount: total,
     completionPercent: percent,
-    slots: coinIds.map((id, i) => ({ id: `${setId}-slot-${i}`, position: i, coin: { id } as never, owned: false })),
+    minGrade: null,
+    slots: coinIds.map((id, i) => ({
+      id: `${setId}-slot-${i}`,
+      position: i,
+      coin: { id } as never,
+      owned: false,
+      grade: null,
+    })),
   };
 }
 

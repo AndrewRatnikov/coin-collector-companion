@@ -2,7 +2,9 @@
  * Tests for: ownership-cache (pure optimistic cache patchers)
  * Contract source: runs/run_20261017_142658/plan.md § Interface Contract → Module: ownership-cache
  *                   runs/run_20261019_221037/plan.md § Interface Contract → Function: applyOwnershipToCatalogPage
- * Covers criteria: #14 (from run_20261017_142658's prd.md), #11 (from run_20261019_221037's prd.md)
+ *                   runs/run_20261102_194108/plan.md § Interface Contract → Web: applyOwnershipToCollection
+ * Covers criteria: #14 (from run_20261017_142658's prd.md), #11 (from run_20261019_221037's prd.md),
+ *                  #5, #6 (from run_20261102_194108's prd.md: a new optimistic row is ungraded)
  *
  * CONTRACT_GAPS: none
  */
@@ -59,10 +61,11 @@ function makeGaps(): GapViewResponse {
     ownedCount: 1,
     totalCount: 3,
     completionPercent: 33,
+    minGrade: null,
     slots: [
-      { id: 'slot-1', position: 0, coin: COIN_1, owned: false },
-      { id: 'slot-2', position: 1, coin: COIN_2, owned: true },
-      { id: 'slot-3', position: 2, coin: COIN_3, owned: false },
+      { id: 'slot-1', position: 0, coin: COIN_1, owned: false, grade: null },
+      { id: 'slot-2', position: 1, coin: COIN_2, owned: true, grade: null },
+      { id: 'slot-3', position: 2, coin: COIN_3, owned: false, grade: null },
     ],
   };
 }
@@ -112,9 +115,9 @@ describe('applyOwnershipToGaps', () => {
       totalCount: 3,
       completionPercent: 0,
       slots: [
-        { id: 'slot-1', position: 0, coin: COIN_1, owned: false },
-        { id: 'slot-2', position: 1, coin: COIN_2, owned: false },
-        { id: 'slot-3', position: 2, coin: COIN_1, owned: false },
+        { id: 'slot-1', position: 0, coin: COIN_1, owned: false, grade: null },
+        { id: 'slot-2', position: 1, coin: COIN_2, owned: false, grade: null },
+        { id: 'slot-3', position: 2, coin: COIN_1, owned: false, grade: null },
       ],
     };
     const result = applyOwnershipToGaps(gaps, 'coin-1', true);
@@ -134,7 +137,14 @@ describe('applyOwnershipToGaps', () => {
   });
 
   it('returns the same reference for an empty set', () => {
-    const empty: GapViewResponse = { setId: 'set-0', ownedCount: 0, totalCount: 0, completionPercent: 0, slots: [] };
+    const empty: GapViewResponse = {
+      setId: 'set-0',
+      ownedCount: 0,
+      totalCount: 0,
+      completionPercent: 0,
+      minGrade: null,
+      slots: [],
+    };
     expect(applyOwnershipToGaps(empty, 'coin-1', true)).toBe(empty);
   });
 
@@ -150,15 +160,26 @@ describe('applyOwnershipToCollection', () => {
   const OWNED_AT = new Date('2026-10-17T10:00:00.000Z');
   const EARLIER = new Date('2026-01-02T00:00:00.000Z');
   const items: OwnershipItem[] = [
-    { coinId: 'coin-2', coin: COIN_2, ownedAt: EARLIER },
-    { coinId: 'coin-3', coin: COIN_3, ownedAt: EARLIER },
+    { coinId: 'coin-2', coin: COIN_2, ownedAt: EARLIER, grade: null },
+    { coinId: 'coin-3', coin: COIN_3, ownedAt: EARLIER, grade: null },
   ];
 
   it('prepends a newly owned coin that matches empty filters (the API orders by ownedAt desc)', () => {
     const result = applyOwnershipToCollection(items, 'coin-1', true, COIN_1, {}, OWNED_AT);
 
     expect(result.map((i) => i.coinId)).toEqual(['coin-1', 'coin-2', 'coin-3']);
-    expect(result[0]).toEqual({ coinId: 'coin-1', coin: COIN_1, ownedAt: OWNED_AT });
+    expect(result[0]).toEqual({ coinId: 'coin-1', coin: COIN_1, ownedAt: OWNED_AT, grade: null });
+  });
+
+  it('prepends the new row ungraded even when the existing rows carry grades', () => {
+    const graded: OwnershipItem[] = [
+      { coinId: 'coin-2', coin: COIN_2, ownedAt: EARLIER, grade: 'XF' },
+      { coinId: 'coin-3', coin: COIN_3, ownedAt: EARLIER, grade: 'G' },
+    ];
+    const result = applyOwnershipToCollection(graded, 'coin-1', true, COIN_1, {}, OWNED_AT);
+
+    expect(result[0].grade).toBeNull();
+    expect(result.slice(1).map((i) => i.grade)).toEqual(['XF', 'G']);
   });
 
   it('treats an undefined or empty-string filter value as matching everything', () => {

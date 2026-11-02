@@ -61,7 +61,8 @@ export function applyOwnershipToCollection(
   if (coin === null) return items;
   if (items.some((item) => item.coinId === coinId)) return items;
   if (!matchesCollectionFilters(coin, filters)) return items;
-  return [{ coinId, coin, ownedAt }, ...items];
+  // Prepended only for a coin with no Ownership row, so it starts ungraded.
+  return [{ coinId, coin, ownedAt, grade: null }, ...items];
 }
 
 /**

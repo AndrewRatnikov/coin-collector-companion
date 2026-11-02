@@ -13,6 +13,7 @@
  *
  * The page now takes its data from useUserSets() and useSetsSummary() (both mocked here) and
  * MySetsEmpty calls useCanonicalSets() (mocked as well), so no QueryClientProvider is needed.
+ * Fixture-only change (run_20261102_194108): the UserSetListItem factory gains `minGrade: null`.
  *
  * CONTRACT_GAPS: none
  */
@@ -80,6 +81,7 @@ function makeSet(over: Partial<UserSetListItem> & Pick<UserSetListItem, 'id' | '
     userId: 'user-1',
     clonedFromCanonicalId: null,
     clonedFromUserSetId: null,
+    minGrade: null,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
     updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     ownedCount: 0,

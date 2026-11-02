@@ -6,6 +6,9 @@
  * A real QueryClient is seeded with setQueryData, and only the network wrapper
  * (@/lib/collection-api) is mocked. Each request is a deferred promise so the tests can look at
  * the caches while the request is still in flight.
+ * Fixture changes (run_20261102_194108): OwnershipItem literals gain `grade: null`, gap slots gain
+ * `grade: null`, gap views gain `minGrade: null`, and the optimistically prepended collection row is
+ * expected to carry `grade: null` (a coin that was not in the list had no Ownership row).
  *
  * CONTRACT_GAPS: none
  */
@@ -61,6 +64,7 @@ function makeGaps(setId: string, coins = [COIN_1, COIN_2], ownedIds: string[] = 
     position: i,
     coin,
     owned: ownedIds.includes(coin.id),
+    grade: null,
   }));
   const ownedCount = slots.filter((s) => s.owned).length;
   return {
@@ -68,6 +72,7 @@ function makeGaps(setId: string, coins = [COIN_1, COIN_2], ownedIds: string[] = 
     ownedCount,
     totalCount: slots.length,
     completionPercent: Math.round((ownedCount / slots.length) * 100),
+    minGrade: null,
     slots,
   };
 }
@@ -123,12 +128,12 @@ describe('useSetOwnership: optimistic update', () => {
     });
     expect(setOwnershipMock).toHaveBeenCalledWith('coin-1', true);
     const all = queryClient.getQueryData<OwnershipItem[]>(['collection', {}]);
-    expect(all?.[0]).toEqual({ coinId: 'coin-1', coin: COIN_1, ownedAt: expect.any(Date) });
+    expect(all?.[0]).toEqual({ coinId: 'coin-1', coin: COIN_1, ownedAt: expect.any(Date), grade: null });
     expect(queryClient.getQueryData<OwnershipItem[]>(['collection', { country: 'USA' }])).toHaveLength(1);
     expect(queryClient.getQueryData<OwnershipItem[]>(['collection', { country: 'Canada' }])).toEqual([]);
     expect(result.current.isPending).toBe(true);
 
-    request.resolve({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+    request.resolve({ coinId: 'coin-1', owned: true, ownedAt: new Date(), grade: null } as never);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 
@@ -139,8 +144,8 @@ describe('useSetOwnership: optimistic update', () => {
     queryClient.setQueryData(
       ['collection', {}],
       [
-        { coinId: 'coin-1', coin: COIN_1, ownedAt: new Date('2026-01-02T00:00:00.000Z') },
-        { coinId: 'coin-2', coin: COIN_2, ownedAt: new Date('2026-01-03T00:00:00.000Z') },
+        { coinId: 'coin-1', coin: COIN_1, ownedAt: new Date('2026-01-02T00:00:00.000Z'), grade: null },
+        { coinId: 'coin-2', coin: COIN_2, ownedAt: new Date('2026-01-03T00:00:00.000Z'), grade: null },
       ] as OwnershipItem[],
     );
 
@@ -153,7 +158,7 @@ describe('useSetOwnership: optimistic update', () => {
       expect(queryClient.getQueryData<OwnershipItem[]>(['collection', {}])?.map((i) => i.coinId)).toEqual(['coin-2']);
     });
 
-    request.resolve({ coinId: 'coin-1', owned: false, ownedAt: null } as never);
+    request.resolve({ coinId: 'coin-1', owned: false, ownedAt: null, grade: null } as never);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 
@@ -174,7 +179,7 @@ describe('useSetOwnership: optimistic update', () => {
     });
     expect(queryClient.getQueryData<OwnershipItem[]>(['collection', {}])?.[0].coin).toEqual(COIN_2);
 
-    request.resolve({ coinId: 'coin-2', owned: true, ownedAt: new Date() } as never);
+    request.resolve({ coinId: 'coin-2', owned: true, ownedAt: new Date(), grade: null } as never);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 
@@ -209,7 +214,7 @@ describe('useSetOwnership: optimistic update', () => {
     // a set that does not contain the coin is untouched
     expect(queryClient.getQueryData<GapViewResponse>(['user-sets', 'set-3', 'gaps'])).toEqual(setThree);
 
-    request.resolve({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+    request.resolve({ coinId: 'coin-1', owned: true, ownedAt: new Date(), grade: null } as never);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 
@@ -247,7 +252,7 @@ describe('useSetOwnership: optimistic update', () => {
       denominations: ['1 Cent'],
     });
 
-    request.resolve({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+    request.resolve({ coinId: 'coin-1', owned: true, ownedAt: new Date(), grade: null } as never);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
   });
 });
@@ -269,7 +274,7 @@ describe('useSetOwnership: success', () => {
     act(() => {
       result.current.mutate({ coinId: 'coin-1', owned: true, coin: COIN_1 });
     });
-    request.resolve({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+    request.resolve({ coinId: 'coin-1', owned: true, ownedAt: new Date(), grade: null } as never);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
     expect(queryClient.getQueryData<OwnershipItem[]>(['collection', {}])).toHaveLength(1);
@@ -280,7 +285,7 @@ describe('useSetOwnership: success', () => {
   });
 
   it('still invalidates the user-sets and collection prefixes and the hideOwned catalog lists on settle', async () => {
-    setOwnershipMock.mockResolvedValue({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+    setOwnershipMock.mockResolvedValue({ coinId: 'coin-1', owned: true, ownedAt: new Date(), grade: null } as never);
     const { queryClient, wrapper } = makeWrapper();
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
@@ -299,7 +304,7 @@ describe('useSetOwnership: success', () => {
   });
 
   it('limits the catalog invalidation to list queries with hideOwned on', async () => {
-    setOwnershipMock.mockResolvedValue({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+    setOwnershipMock.mockResolvedValue({ coinId: 'coin-1', owned: true, ownedAt: new Date(), grade: null } as never);
     const { queryClient, wrapper } = makeWrapper();
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
@@ -322,7 +327,7 @@ describe('useSetOwnership: success', () => {
   });
 
   it('calls the onSettled option with null and the variables after a success', async () => {
-    setOwnershipMock.mockResolvedValue({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+    setOwnershipMock.mockResolvedValue({ coinId: 'coin-1', owned: true, ownedAt: new Date(), grade: null } as never);
     const onSettled = vi.fn();
     const { wrapper } = makeWrapper();
 
@@ -348,7 +353,9 @@ describe('useSetOwnership: rollback on error', () => {
     const request = deferred<never>();
     setOwnershipMock.mockReturnValue(request.promise);
     const { queryClient, wrapper } = makeWrapper();
-    const collectionBefore: OwnershipItem[] = [{ coinId: 'coin-2', coin: COIN_2, ownedAt: new Date('2026-01-02') }];
+    const collectionBefore: OwnershipItem[] = [
+      { coinId: 'coin-2', coin: COIN_2, ownedAt: new Date('2026-01-02'), grade: null },
+    ];
     const gapsBefore = makeGaps('set-1');
     const catalogBefore = makeCatalogPage();
     queryClient.setQueryData(['collection', {}], collectionBefore);
@@ -379,8 +386,8 @@ describe('useSetOwnership: rollback on error', () => {
     setOwnershipMock.mockReturnValue(request.promise);
     const { queryClient, wrapper } = makeWrapper();
     const before: OwnershipItem[] = [
-      { coinId: 'coin-1', coin: COIN_1, ownedAt: new Date('2026-01-02') },
-      { coinId: 'coin-2', coin: COIN_2, ownedAt: new Date('2026-01-03') },
+      { coinId: 'coin-1', coin: COIN_1, ownedAt: new Date('2026-01-02'), grade: null },
+      { coinId: 'coin-2', coin: COIN_2, ownedAt: new Date('2026-01-03'), grade: null },
     ];
     queryClient.setQueryData(['collection', {}], before);
 
@@ -442,7 +449,7 @@ describe('useSetOwnership: rollback on error', () => {
     });
     await waitFor(() => expect(result.current.failedCoinIds.has('coin-1')).toBe(false));
 
-    second.resolve({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+    second.resolve({ coinId: 'coin-1', owned: true, ownedAt: new Date(), grade: null } as never);
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(result.current.failedCoinIds.has('coin-1')).toBe(false);
   });
