@@ -4,6 +4,7 @@ import { useId } from 'react';
 import Link from 'next/link';
 import { getCoinName, type OwnershipItem } from '@coin-collector/shared';
 import { CoinCard, type CoinCardStatus } from '@/components/ui/coin-card';
+import { GradeChip } from '@/components/ui/grade-chip';
 import { PlaceholderCoin } from '@/components/ui/placeholder-coin';
 import { StatusToggle } from '@/components/ui/status-toggle';
 import type { CollectionLayout, CollectionSubgroup } from '@/lib/collection-view';
@@ -98,6 +99,7 @@ export function CollectionSubgroupSection({
                   <CoinCard
                     coin={item.coin}
                     owned={isOwned(item.coinId)}
+                    grade={item.grade}
                     status={statusFor(item.coinId)}
                     onToggle={() => onToggleOwned(item)}
                     toggleLabel={labelsFor(item).toggle}
@@ -140,18 +142,27 @@ export function CollectionSubgroupSection({
                           {name.eyebrow}
                         </span>
                       )}
-                      <Link
-                        data-testid="collection-row-link"
-                        href={`/catalog/${item.coinId}`}
-                        className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-accent-700 group-hover:underline"
-                      >
-                        <span
-                          data-testid="collection-row-title"
-                          className="text-[15px] font-semibold leading-[1.3] text-text [overflow-wrap:anywhere]"
+                      <div className="flex min-w-0 items-center gap-1.5">
+                        <Link
+                          data-testid="collection-row-link"
+                          href={`/catalog/${item.coinId}`}
+                          className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-accent-700 group-hover:underline"
                         >
-                          {name.title}
-                        </span>
-                      </Link>
+                          <span
+                            data-testid="collection-row-title"
+                            className="text-[15px] font-semibold leading-[1.3] text-text [overflow-wrap:anywhere]"
+                          >
+                            {name.title}
+                          </span>
+                        </Link>
+                        {owned && item.grade !== null && (
+                          <GradeChip
+                            grade={item.grade}
+                            testId="collection-row-grade"
+                            className="relative z-[3]"
+                          />
+                        )}
+                      </div>
                       <span data-testid="collection-row-subtitle" className="text-xs text-neutral-700">
                         {name.subtitle}
                       </span>

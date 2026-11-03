@@ -8,6 +8,7 @@ import type { CoinCardStatus } from '@/components/ui/coin-card';
 import { PlaceholderCoin } from '@/components/ui/placeholder-coin';
 import { StatusToggle } from '@/components/ui/status-toggle';
 import { CoinRowMenu } from '@/components/sets/coin-row-menu';
+import { GradeChip } from '@/components/ui/grade-chip';
 
 export interface SetCoinListProps {
   slots: GapSlot[];
@@ -71,18 +72,23 @@ export function SetCoinList({ slots, visitor, statusFor, onToggle, otherSets, on
                     {name.eyebrow}
                   </span>
                 )}
-                <Link
-                  data-testid="set-coin-row-link"
-                  href={`/catalog/${slot.coin.id}`}
-                  className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-accent-700 group-hover:underline"
-                >
-                  <span
-                    data-testid="set-coin-row-title"
-                    className="text-[15px] font-semibold leading-[1.3] text-text [overflow-wrap:anywhere]"
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <Link
+                    data-testid="set-coin-row-link"
+                    href={`/catalog/${slot.coin.id}`}
+                    className="after:absolute after:inset-0 after:content-[''] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-accent-700 group-hover:underline"
                   >
-                    {name.title}
-                  </span>
-                </Link>
+                    <span
+                      data-testid="set-coin-row-title"
+                      className="text-[15px] font-semibold leading-[1.3] text-text [overflow-wrap:anywhere]"
+                    >
+                      {name.title}
+                    </span>
+                  </Link>
+                  {!visitor && slot.owned && slot.grade !== null && (
+                    <GradeChip grade={slot.grade} testId="set-coin-row-grade" className="relative z-[3]" />
+                  )}
+                </div>
                 <span
                   data-testid="set-coin-row-subtitle"
                   className={`text-xs ${failed ? 'font-medium text-danger' : 'text-neutral-700'}`}

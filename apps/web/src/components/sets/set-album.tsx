@@ -30,6 +30,7 @@ export function SetAlbum({ slots, visitor, selectMode, selectedCoinIds, statusFo
           <CoinCard
             coin={slot.coin}
             owned={slot.owned}
+            grade={slot.grade}
             status={visitor ? 'idle' : statusFor(slot.coin.id)}
             visitor={visitor}
             selectMode={selectMode}
