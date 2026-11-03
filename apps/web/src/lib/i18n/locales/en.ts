@@ -256,6 +256,28 @@ const enShape = {
   'coinDetail.newSetWithCoin': 'New set with this coin',
   'coinDetail.specifications': 'Specifications',
   'coinDetail.notRecorded': 'Not recorded',
+  'coinDetail.liveGradeSaved': 'Grade saved for {title}.',
+  'coinDetail.liveGradeFailed': 'Couldn’t save the grade for {title}.',
+
+  // coin grades (picker on the coin page, chips on set and collection pages)
+  'grade.label': 'Grade',
+  'grade.notSet': 'Not set',
+  'grade.optionLabel': '{short} · {name}',
+  'grade.saveFailed': 'Couldn’t save the grade. It was changed back.',
+  'grade.short.G': 'G',
+  'grade.short.VG': 'VG',
+  'grade.short.F': 'F',
+  'grade.short.VF': 'VF',
+  'grade.short.XF': 'XF',
+  'grade.short.AU': 'AU',
+  'grade.short.UNC': 'UNC',
+  'grade.name.G': 'Good',
+  'grade.name.VG': 'Very Good',
+  'grade.name.F': 'Fine',
+  'grade.name.VF': 'Very Fine',
+  'grade.name.XF': 'Extremely Fine',
+  'grade.name.AU': 'About Uncirculated',
+  'grade.name.UNC': 'Uncirculated',
 
   // submit coin form
   'submitCoinForm.submit': 'Submit coin',
