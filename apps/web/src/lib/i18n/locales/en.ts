@@ -318,6 +318,11 @@ const enShape = {
   'setEditor.viewSwitchLabel': 'View',
   'setEditor.viewList': 'List',
   'setEditor.viewAlbum': 'Album',
+  'setEditor.minGradeLabel': 'Minimum grade',
+  'setEditor.minGradeNone': 'None',
+  'setEditor.minGradeSaved': 'Minimum grade set to {grade}.',
+  'setEditor.minGradeCleared': 'Minimum grade cleared.',
+  'setEditor.minGradeSaveFailed': 'Couldn’t save the minimum grade. It was changed back.',
 
   // set album
   'setAlbum.legendLabel': 'Legend',
@@ -610,6 +615,8 @@ const enShape = {
   // shared ui components (components/ui): coin card, status toggle, badges, set card, undo toast
   'ui.coin.statusOwned': 'In collection',
   'ui.coin.statusMissing': 'Missing',
+  'ui.coin.statusUpgrade': 'Upgrade',
+  'ui.coin.upgradeHint': 'Owned, below your minimum grade',
   'ui.coin.statusPending': 'Saving…',
   'ui.coin.statusFailed': 'Couldn’t save',
   'ui.coin.retry': 'Retry',
@@ -647,6 +654,9 @@ const enShape = {
   'setPage.kindOwn': 'Custom set',
   'setPage.showAll': 'All',
   'setPage.showMissing': 'Missing',
+  'setPage.showNeedsUpgrade': 'Needs upgrade',
+  'setPage.upgradeCount': '{n} to upgrade',
+  'setPage.upgradeEmptyTitle': 'No coins need an upgrade.',
   'setPage.select': 'Select',
   'setPage.doneSelecting': 'Done selecting',
   'setPage.selectHint': 'Tap coins to select them, then mark them all at once.',
