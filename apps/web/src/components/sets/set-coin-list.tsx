@@ -9,6 +9,7 @@ import { PlaceholderCoin } from '@/components/ui/placeholder-coin';
 import { StatusToggle } from '@/components/ui/status-toggle';
 import { CoinRowMenu } from '@/components/sets/coin-row-menu';
 import { GradeChip } from '@/components/ui/grade-chip';
+import { UpgradeBadge } from '@/components/ui/upgrade-badge';
 
 export interface SetCoinListProps {
   slots: GapSlot[];
@@ -50,6 +51,7 @@ export function SetCoinList({ slots, visitor, statusFor, onToggle, otherSets, on
           const status: CoinCardStatus = visitor ? 'idle' : statusFor(slot.coin.id);
           const failed = status === 'failed';
           const name = getCoinName(slot.coin);
+          const upgrade = !visitor && slot.owned && slot.needsUpgrade === true;
 
           return (
             <li
@@ -57,6 +59,7 @@ export function SetCoinList({ slots, visitor, statusFor, onToggle, otherSets, on
               data-testid="set-coin-row"
               data-coin-id={slot.coin.id}
               data-status={status}
+              data-upgrade={upgrade ? 'true' : 'false'}
               className={`${ROW_GRID} group relative min-h-[60px] border-b border-neutral-200 py-2 last:border-b-0 hover:bg-neutral-100 ${failed ? 'bg-danger-bg' : ''}`.trimEnd()}
             >
               <PlaceholderCoin
@@ -88,6 +91,7 @@ export function SetCoinList({ slots, visitor, statusFor, onToggle, otherSets, on
                   {!visitor && slot.owned && slot.grade !== null && (
                     <GradeChip grade={slot.grade} testId="set-coin-row-grade" className="relative z-[3]" />
                   )}
+                  {upgrade && <UpgradeBadge testId="set-coin-row-upgrade" className="relative z-[3]" />}
                 </div>
                 <span
                   data-testid="set-coin-row-subtitle"

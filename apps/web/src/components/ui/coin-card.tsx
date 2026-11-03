@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { GradeChip } from '@/components/ui/grade-chip';
 import { PlaceholderCoin } from '@/components/ui/placeholder-coin';
 import { StatusToggle, useDelayedPending } from '@/components/ui/status-toggle';
+import { UpgradeBadge } from '@/components/ui/upgrade-badge';
 
 export type CoinCardStatus = 'idle' | 'pending' | 'failed';
 
@@ -26,6 +27,8 @@ export interface CoinCardProps {
   missingStatusLabel?: string;
   /** The owner's grade; a chip shows after the status text when owned and graded. Default null. */
   grade?: CoinGrade | null;
+  /** API's needsUpgrade for this slot; shows the Upgrade state when owned and not a visitor. Default false. */
+  needsUpgrade?: boolean;
 }
 
 function noop() {}
@@ -48,6 +51,7 @@ export function CoinCard({
   toggleLabel,
   missingStatusLabel,
   grade = null,
+  needsUpgrade = false,
 }: CoinCardProps) {
   const { t } = useTranslation();
   const name = getCoinName(coin);
@@ -55,6 +59,7 @@ export function CoinCard({
 
   const ownedLook = owned && !visitor;
   const failed = status === 'failed';
+  const upgrade = needsUpgrade && owned && !visitor;
   const dataState = visitor ? 'visitor' : owned ? 'owned' : 'missing';
 
   const rootClasses = [
@@ -63,7 +68,13 @@ export function CoinCard({
     'motion-safe:hover:-translate-y-0.5 motion-safe:focus-within:-translate-y-0.5',
     'hover:shadow-md focus-within:shadow-md hover:border-accent focus-within:border-accent',
     ownedLook ? 'bg-accent-100 shadow-sm' : 'bg-neutral-100',
-    failed ? 'border-danger' : ownedLook ? 'border-accent-400' : 'border-neutral-300',
+    failed
+      ? 'border-danger'
+      : upgrade
+        ? 'border-dashed border-accent-700'
+        : ownedLook
+          ? 'border-accent-400'
+          : 'border-neutral-300',
     selected ? 'outline-3 outline-accent-700 -outline-offset-2' : '',
   ]
     .filter((part) => part !== '')
@@ -92,6 +103,12 @@ export function CoinCard({
           {t('ui.coin.statusFailed')}
         </span>
       );
+    } else if (owned && upgrade) {
+      statusLine = (
+        <span data-testid="coin-card-status" className="flex items-center">
+          <UpgradeBadge testId="coin-card-upgrade" />
+        </span>
+      );
     } else if (owned) {
       statusLine = (
         <span data-testid="coin-card-status" className="font-medium text-accent-700">
@@ -115,6 +132,7 @@ export function CoinCard({
       data-status={status}
       data-selected={selected ? 'true' : 'false'}
       data-key-date={coin.isKeyDate ? 'true' : 'false'}
+      data-upgrade={upgrade ? 'true' : 'false'}
       className={rootClasses}
     >
       <div
