@@ -17,6 +17,8 @@ export interface YearGroup {
 
 export interface BuildYearGroupsOptions {
   missingOnly?: boolean;
+  /** Only slots the API flagged `needsUpgrade: true` (plus busy ones). Wins over `missingOnly`. */
+  needsUpgradeOnly?: boolean;
   /** Coins with a pending or failed save. */
   busyCoinIds?: ReadonlySet<string>;
 }
@@ -26,10 +28,11 @@ const NO_BUSY: ReadonlySet<string> = new Set();
 /**
  * Groups slots by the coin's year (ascending), slots by position inside each group. Under
  * `missingOnly` only missing slots stay visible, plus busy ones so a coin doesn't vanish
- * mid-save; groups left with nothing visible are dropped.
+ * mid-save; groups left with nothing visible are dropped. `needsUpgradeOnly` works the same
+ * way on the API's `needsUpgrade` flag (never recomputed here) and takes precedence.
  */
 export function buildYearGroups(slots: GapSlot[], options: BuildYearGroupsOptions = {}): YearGroup[] {
-  const { missingOnly = false, busyCoinIds = NO_BUSY } = options;
+  const { missingOnly = false, needsUpgradeOnly = false, busyCoinIds = NO_BUSY } = options;
 
   const byYear = new Map<number, GapSlot[]>();
   for (const slot of slots) {
@@ -41,9 +44,11 @@ export function buildYearGroups(slots: GapSlot[], options: BuildYearGroupsOption
   const groups: YearGroup[] = [];
   for (const year of [...byYear.keys()].sort((a, b) => a - b)) {
     const yearSlots = [...(byYear.get(year) ?? [])].sort((a, b) => a.position - b.position);
-    const visible = missingOnly
-      ? yearSlots.filter((slot) => !slot.owned || busyCoinIds.has(slot.coin.id))
-      : yearSlots;
+    const visible = needsUpgradeOnly
+      ? yearSlots.filter((slot) => slot.needsUpgrade === true || busyCoinIds.has(slot.coin.id))
+      : missingOnly
+        ? yearSlots.filter((slot) => !slot.owned || busyCoinIds.has(slot.coin.id))
+        : yearSlots;
     if (visible.length === 0) continue;
 
     groups.push({

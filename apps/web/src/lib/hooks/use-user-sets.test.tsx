@@ -3,12 +3,15 @@
  * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Module: use-user-sets.ts (MODIFY)
  * Extended by: runs/run_20261017_210503/plan.md § Interface Contract → Hooks in use-user-sets.ts
  *              runs/run_20261018_105617/plan.md § Interface Contract → Module: use-user-sets.ts (MODIFY)
- * Covers criteria: #1, #2 (run_20260721_171115); #12 (run_20261017_210503); #3, #10 (run_20261018_105617)
+ *              runs/run_20261103_192441/plan.md § Interface Contract → Hook: useUpdateSetMinGrade
+ * Covers criteria: #1, #2 (run_20260721_171115); #12 (run_20261017_210503); #3, #10 (run_20261018_105617);
+ *                  #3, #9 (run_20261103_192441)
  *
  * All earlier tests are kept unchanged. Added: optimistic remove in usePatchSetCoins, the extra
  * ['user-sets'] invalidation, useAddCoinsToSet, and useSetsSummary.
  * Fixture-only change (run_20261102_194108): slots gain `grade: null`, gap views and the SET literal
  * gain `minGrade: null`.
+ * run_20261103_192441 adds useUpdateSetMinGrade (non-optimistic, pending until the gap view refetched).
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -24,6 +27,7 @@ import {
   useRenameSet,
   useSetGaps,
   useSetsSummary,
+  useUpdateSetMinGrade,
   useUserSets,
 } from '@/lib/hooks/use-user-sets';
 import {
@@ -34,6 +38,7 @@ import {
   getUserSets,
   patchSetCoins,
   renameSet,
+  updateSetMinGrade,
 } from '@/lib/user-sets-api';
 
 vi.mock('@/lib/user-sets-api', () => ({
@@ -41,6 +46,7 @@ vi.mock('@/lib/user-sets-api', () => ({
   getSetsSummary: vi.fn(),
   createSet: vi.fn(),
   renameSet: vi.fn(),
+  updateSetMinGrade: vi.fn(),
   deleteSet: vi.fn(),
   getSetGaps: vi.fn(),
   patchSetCoins: vi.fn(),
@@ -50,6 +56,7 @@ const getUserSetsMock = vi.mocked(getUserSets);
 const getSetsSummaryMock = vi.mocked(getSetsSummary);
 const createSetMock = vi.mocked(createSet);
 const renameSetMock = vi.mocked(renameSet);
+const updateSetMinGradeMock = vi.mocked(updateSetMinGrade);
 const deleteSetMock = vi.mocked(deleteSet);
 const getSetGapsMock = vi.mocked(getSetGaps);
 const patchSetCoinsMock = vi.mocked(patchSetCoins);
@@ -136,6 +143,7 @@ describe('use-user-sets hooks', () => {
     getSetsSummaryMock.mockReset();
     createSetMock.mockReset();
     renameSetMock.mockReset();
+    updateSetMinGradeMock.mockReset();
     deleteSetMock.mockReset();
     getSetGapsMock.mockReset();
     patchSetCoinsMock.mockReset();
@@ -285,6 +293,171 @@ describe('use-user-sets hooks', () => {
       });
       expect(renameSetMock).toHaveBeenCalledWith('u1', 'Renamed');
       expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['user-sets'] });
+    });
+  });
+
+  describe('run_20261103_192441 criterion 2/3/9: useUpdateSetMinGrade', () => {
+    it('calls updateSetMinGrade with the id and the grade code', async () => {
+      updateSetMinGradeMock.mockResolvedValue({ ...SET, minGrade: 'VF' } as never);
+      const { wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useUpdateSetMinGrade(), { wrapper });
+      act(() => {
+        result.current.mutate({ id: 'u1', minGrade: 'VF' });
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(updateSetMinGradeMock).toHaveBeenCalledTimes(1);
+      expect(updateSetMinGradeMock).toHaveBeenCalledWith('u1', 'VF');
+    });
+
+    it('passes null through to clear the minimum grade, and uses the id it is given', async () => {
+      updateSetMinGradeMock.mockResolvedValue(SET as never);
+      const { wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useUpdateSetMinGrade(), { wrapper });
+      act(() => {
+        result.current.mutate({ id: 'u9', minGrade: null });
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(updateSetMinGradeMock).toHaveBeenCalledWith('u9', null);
+    });
+
+    it('invalidates ["user-sets"] and ["public-sets", id] on success', async () => {
+      updateSetMinGradeMock.mockResolvedValue({ ...SET, minGrade: 'XF' } as never);
+      const { queryClient, wrapper } = makeWrapper();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const { result } = renderHook(() => useUpdateSetMinGrade(), { wrapper });
+      act(() => {
+        result.current.mutate({ id: 'u1', minGrade: 'XF' });
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['user-sets'] });
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['public-sets', 'u1'] });
+    });
+
+    it('invalidates the public-set key of the mutated id, not a fixed one', async () => {
+      updateSetMinGradeMock.mockResolvedValue(SET as never);
+      const { queryClient, wrapper } = makeWrapper();
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const { result } = renderHook(() => useUpdateSetMinGrade(), { wrapper });
+      act(() => {
+        result.current.mutate({ id: 'u7', minGrade: 'G' });
+      });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['public-sets', 'u7'] });
+      expect(invalidateSpy).not.toHaveBeenCalledWith({ queryKey: ['public-sets', 'u1'] });
+    });
+
+    it('stays pending until the gap view has been refetched', async () => {
+      const firstGaps = { ...makeGaps('u1', ['coin-1']), minGrade: null };
+      const secondGaps = { ...makeGaps('u1', ['coin-1']), minGrade: 'VF' as const, upgradeCount: 1 };
+      const refetch = deferred<GapViewResponse>();
+      getSetGapsMock.mockResolvedValueOnce(firstGaps as never);
+      getSetGapsMock.mockReturnValueOnce(refetch.promise as never);
+      updateSetMinGradeMock.mockResolvedValue({ ...SET, minGrade: 'VF' } as never);
+      const { wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => ({ gaps: useSetGaps('u1'), save: useUpdateSetMinGrade() }), { wrapper });
+      await waitFor(() => expect(result.current.gaps.data).toEqual(firstGaps));
+
+      act(() => {
+        result.current.save.mutate({ id: 'u1', minGrade: 'VF' });
+      });
+
+      // the PATCH has resolved and the refetch has started, but the mutation is not done yet
+      await waitFor(() => expect(getSetGapsMock).toHaveBeenCalledTimes(2));
+      expect(updateSetMinGradeMock).toHaveBeenCalledTimes(1);
+      expect(result.current.save.isPending).toBe(true);
+      expect(result.current.save.isSuccess).toBe(false);
+
+      await act(async () => {
+        refetch.resolve(secondGaps as never);
+      });
+
+      await waitFor(() => expect(result.current.save.isSuccess).toBe(true));
+      expect(result.current.save.isPending).toBe(false);
+      expect(result.current.gaps.data?.minGrade).toBe('VF');
+    });
+
+    it('exposes the variables while pending (the page shows the pending value from them)', async () => {
+      const request = deferred<never>();
+      updateSetMinGradeMock.mockReturnValue(request.promise);
+      const { wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useUpdateSetMinGrade(), { wrapper });
+      act(() => {
+        result.current.mutate({ id: 'u1', minGrade: 'AU' });
+      });
+
+      await waitFor(() => expect(result.current.isPending).toBe(true));
+      expect(result.current.variables).toEqual({ id: 'u1', minGrade: 'AU' });
+
+      request.resolve(SET as never);
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    });
+
+    it('is not optimistic: the cached gap view is untouched while the request is in flight', async () => {
+      const request = deferred<never>();
+      updateSetMinGradeMock.mockReturnValue(request.promise);
+      const { queryClient, wrapper } = makeWrapper();
+      const before = makeGaps('u1', ['coin-1']);
+      queryClient.setQueryData(['user-sets', 'u1', 'gaps'], before);
+
+      const { result } = renderHook(() => useUpdateSetMinGrade(), { wrapper });
+      act(() => {
+        result.current.mutate({ id: 'u1', minGrade: 'VF' });
+      });
+      await waitFor(() => expect(updateSetMinGradeMock).toHaveBeenCalledTimes(1));
+
+      expect(queryClient.getQueryData(['user-sets', 'u1', 'gaps'])).toEqual(before);
+
+      request.resolve(SET as never);
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    });
+
+    it('on failure: surfaces the error, invalidates nothing and leaves the cached gap view as it was', async () => {
+      updateSetMinGradeMock.mockRejectedValue(new ApiError(500, 'Internal server error'));
+      const { queryClient, wrapper } = makeWrapper();
+      const before = makeGaps('u1', ['coin-1']);
+      queryClient.setQueryData(['user-sets', 'u1', 'gaps'], before);
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      const { result } = renderHook(() => useUpdateSetMinGrade(), { wrapper });
+      act(() => {
+        result.current.mutate({ id: 'u1', minGrade: 'VF' });
+      });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
+      expect(invalidateSpy).not.toHaveBeenCalled();
+      expect(queryClient.getQueryData(['user-sets', 'u1', 'gaps'])).toEqual(before);
+      expect(result.current.isPending).toBe(false);
+    });
+
+    it('calls the per-call onError callback on failure and onSuccess on success', async () => {
+      const { wrapper } = makeWrapper();
+      const { result } = renderHook(() => useUpdateSetMinGrade(), { wrapper });
+
+      updateSetMinGradeMock.mockRejectedValueOnce(new ApiError(403, 'Forbidden'));
+      const onError = vi.fn();
+      const onSuccess = vi.fn();
+      act(() => {
+        result.current.mutate({ id: 'u1', minGrade: 'VF' }, { onError, onSuccess });
+      });
+      await waitFor(() => expect(onError).toHaveBeenCalledTimes(1));
+      expect(onSuccess).not.toHaveBeenCalled();
+
+      updateSetMinGradeMock.mockResolvedValueOnce({ ...SET, minGrade: 'VF' } as never);
+      act(() => {
+        result.current.mutate({ id: 'u1', minGrade: 'VF' }, { onError, onSuccess });
+      });
+      await waitFor(() => expect(onSuccess).toHaveBeenCalledTimes(1));
+      expect(onError).toHaveBeenCalledTimes(1);
     });
   });
 

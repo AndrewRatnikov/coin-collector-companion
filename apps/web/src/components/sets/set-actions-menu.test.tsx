@@ -2,7 +2,9 @@
  * Tests for: SetActionsMenu (owner-only ⋯ menu)
  * Contract source: runs/run_20261011_095624/plan.md § Interface Contract → Component: SetActionsMenu
  * Extended by: runs/run_20261017_210503/plan.md § Interface Contract → Component: SetActionsMenu (MODIFY)
- * Covers criteria: #11 (run_20261011_095624); #14 (run_20261017_210503, mobile Select / Mark all items)
+ *              runs/run_20261103_192441/plan.md § Interface Contract → Component: SetActionsMenu (MODIFY)
+ * Covers criteria: #11 (run_20261011_095624); #14 (run_20261017_210503, mobile Select / Mark all items);
+ *                  #1, #2, #4 (run_20261103_192441, Minimum grade select)
  *
  * jsdom loads no Tailwind, so the min-[900px]:hidden items are visible to tests at every width.
  *
@@ -10,7 +12,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SetActionsMenu } from '@/components/sets/set-actions-menu';
 
@@ -379,5 +381,205 @@ describe('SetActionsMenu: mobile Select and Mark all items (criterion 14)', () =
     expect(screen.getByTestId('set-editor-select-item')).toHaveFocus();
     await user.keyboard('{ArrowDown}');
     expect(screen.getByTestId('set-editor-rename-item')).toHaveFocus();
+  });
+});
+
+describe('SetActionsMenu: Minimum grade select (run_20261103_192441 criteria 1, 2, 4)', () => {
+  const GRADE_CODES = ['G', 'VG', 'F', 'VF', 'XF', 'AU', 'UNC'];
+
+  it('renders neither the section nor the select without onMinGradeChange', async () => {
+    renderMenu();
+    await openMenu();
+
+    expect(screen.queryByTestId('set-editor-min-grade')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('set-editor-min-grade-select')).not.toBeInTheDocument();
+  });
+
+  it('renders neither when only minGrade is given (the handler decides)', async () => {
+    renderMenu({ minGrade: 'VF' });
+    await openMenu();
+
+    expect(screen.queryByTestId('set-editor-min-grade')).not.toBeInTheDocument();
+  });
+
+  it('renders a labelled group with a native select inside the menu when onMinGradeChange is given', async () => {
+    renderMenu({ minGrade: null, onMinGradeChange: vi.fn() });
+    await openMenu();
+
+    const section = screen.getByTestId('set-editor-min-grade');
+    expect(screen.getByTestId('set-editor-actions-menu')).toContainElement(section);
+    expect(section).toHaveAttribute('role', 'group');
+    const select = within(section).getByTestId('set-editor-min-grade-select');
+    expect(select.tagName).toBe('SELECT');
+    expect(within(section).getByText('Minimum grade')).toBeInTheDocument();
+  });
+
+  it('names the select "Minimum grade" through its visible label', async () => {
+    renderMenu({ minGrade: null, onMinGradeChange: vi.fn() });
+    await openMenu();
+
+    expect(screen.getByRole('combobox', { name: 'Minimum grade' })).toBe(
+      screen.getByTestId('set-editor-min-grade-select'),
+    );
+  });
+
+  it('has exactly 8 options: None first, then the grade codes G to UNC as values', async () => {
+    renderMenu({ minGrade: null, onMinGradeChange: vi.fn() });
+    await openMenu();
+
+    const options = within(screen.getByTestId('set-editor-min-grade-select')).getAllByRole('option');
+    expect(options).toHaveLength(8);
+    expect(options.map((o) => o.getAttribute('value'))).toEqual(['', ...GRADE_CODES]);
+    expect(options[0]).toHaveTextContent('None');
+  });
+
+  it('labels each grade option as "short · name" with the full name as its tooltip', async () => {
+    renderMenu({ minGrade: null, onMinGradeChange: vi.fn() });
+    await openMenu();
+
+    const options = within(screen.getByTestId('set-editor-min-grade-select')).getAllByRole('option');
+    expect(options[4]).toHaveTextContent('VF · Very Fine');
+    expect(options[4]).toHaveAttribute('title', 'Very Fine');
+    expect(options[7]).toHaveTextContent('UNC · Uncirculated');
+    expect(options[7]).toHaveAttribute('title', 'Uncirculated');
+    expect(options[1]).toHaveTextContent('G · Good');
+  });
+
+  it('shows None for a null minGrade and for an absent one', async () => {
+    const { unmount } = renderMenu({ minGrade: null, onMinGradeChange: vi.fn() });
+    await openMenu();
+    expect(screen.getByTestId('set-editor-min-grade-select')).toHaveValue('');
+    unmount();
+
+    renderMenu({ onMinGradeChange: vi.fn() });
+    await openMenu();
+    expect(screen.getByTestId('set-editor-min-grade-select')).toHaveValue('');
+  });
+
+  it('preselects the given minGrade (different grades give different values)', async () => {
+    const { unmount } = renderMenu({ minGrade: 'VF', onMinGradeChange: vi.fn() });
+    await openMenu();
+    expect(screen.getByTestId('set-editor-min-grade-select')).toHaveValue('VF');
+    unmount();
+
+    renderMenu({ minGrade: 'AU', onMinGradeChange: vi.fn() });
+    await openMenu();
+    expect(screen.getByTestId('set-editor-min-grade-select')).toHaveValue('AU');
+  });
+
+  it('sits after Print missing list and before Delete in the menu', async () => {
+    renderMenu({ minGrade: null, onMinGradeChange: vi.fn() });
+    await openMenu();
+
+    const section = screen.getByTestId('set-editor-min-grade');
+    const print = screen.getByTestId('set-editor-print-missing');
+    const del = screen.getByTestId('set-editor-delete-button');
+    expect(print.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(section.compareDocumentPosition(del) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('leaves the menuitems unchanged (the select is not a menuitem)', async () => {
+    renderMenu({ minGrade: null, onMinGradeChange: vi.fn() });
+    await openMenu();
+
+    expect(screen.getAllByRole('menuitem').map((i) => i.getAttribute('data-testid'))).toEqual([
+      'set-editor-rename-item',
+      'set-editor-download-missing',
+      'set-editor-print-missing',
+      'set-editor-delete-button',
+    ]);
+  });
+
+  it('calls onMinGradeChange once with the picked code', async () => {
+    const onMinGradeChange = vi.fn();
+    renderMenu({ minGrade: null, onMinGradeChange });
+    const user = await openMenu();
+
+    await user.selectOptions(screen.getByTestId('set-editor-min-grade-select'), 'VF');
+
+    expect(onMinGradeChange).toHaveBeenCalledTimes(1);
+    expect(onMinGradeChange).toHaveBeenCalledWith('VF');
+  });
+
+  it('passes the untranslated code for another pick', async () => {
+    const onMinGradeChange = vi.fn();
+    renderMenu({ minGrade: 'VF', onMinGradeChange });
+    const user = await openMenu();
+
+    await user.selectOptions(screen.getByTestId('set-editor-min-grade-select'), 'UNC');
+
+    expect(onMinGradeChange).toHaveBeenCalledTimes(1);
+    expect(onMinGradeChange).toHaveBeenCalledWith('UNC');
+  });
+
+  it('calls onMinGradeChange with null when None is picked', async () => {
+    const onMinGradeChange = vi.fn();
+    renderMenu({ minGrade: 'VF', onMinGradeChange });
+    await openMenu();
+
+    fireEvent.change(screen.getByTestId('set-editor-min-grade-select'), { target: { value: '' } });
+
+    expect(onMinGradeChange).toHaveBeenCalledTimes(1);
+    expect(onMinGradeChange).toHaveBeenCalledWith(null);
+  });
+
+  it('keeps the menu open after a change and runs no other action', async () => {
+    const onMinGradeChange = vi.fn();
+    const { onRename, onDelete, onDownloadMissing } = renderMenu({ minGrade: null, onMinGradeChange });
+    const user = await openMenu();
+
+    await user.selectOptions(screen.getByTestId('set-editor-min-grade-select'), 'F');
+
+    expect(screen.getByTestId('set-editor-actions-menu')).toBeInTheDocument();
+    expect(screen.getByTestId('set-editor-actions-trigger')).toHaveAttribute('aria-expanded', 'true');
+    expect(onRename).not.toHaveBeenCalled();
+    expect(onDelete).not.toHaveBeenCalled();
+    expect(onDownloadMissing).not.toHaveBeenCalled();
+  });
+
+  it('marks the select aria-busy only while minGradePending', async () => {
+    const { unmount } = renderMenu({ minGrade: 'VF', onMinGradeChange: vi.fn(), minGradePending: true });
+    await openMenu();
+    expect(screen.getByTestId('set-editor-min-grade-select')).toHaveAttribute('aria-busy', 'true');
+    unmount();
+
+    renderMenu({ minGrade: 'VF', onMinGradeChange: vi.fn(), minGradePending: false });
+    await openMenu();
+    expect(screen.getByTestId('set-editor-min-grade-select')).not.toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('is reachable with the arrow keys: ArrowDown from Print goes to the select, then Delete', async () => {
+    renderMenu({ minGrade: null, onMinGradeChange: vi.fn() });
+    const user = await openMenu();
+
+    await user.keyboard('{ArrowDown}{ArrowDown}');
+    expect(screen.getByTestId('set-editor-print-missing')).toHaveFocus();
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByTestId('set-editor-min-grade-select')).toHaveFocus();
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByTestId('set-editor-delete-button')).toHaveFocus();
+  });
+
+  it('leaves arrow keys to the select once it has focus (menu focus does not move)', async () => {
+    renderMenu({ minGrade: null, onMinGradeChange: vi.fn() });
+    const user = await openMenu();
+    const select = screen.getByTestId('set-editor-min-grade-select');
+
+    select.focus();
+    await user.keyboard('{ArrowDown}');
+
+    expect(select).toHaveFocus();
+    expect(screen.getByTestId('set-editor-actions-menu')).toBeInTheDocument();
+  });
+
+  it('closes on Escape from inside the select and returns focus to the trigger', async () => {
+    renderMenu({ minGrade: null, onMinGradeChange: vi.fn() });
+    const user = await openMenu();
+
+    screen.getByTestId('set-editor-min-grade-select').focus();
+    await user.keyboard('{Escape}');
+
+    expect(screen.queryByTestId('set-editor-actions-menu')).not.toBeInTheDocument();
+    expect(screen.getByTestId('set-editor-actions-trigger')).toHaveFocus();
   });
 });

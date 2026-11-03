@@ -313,6 +313,11 @@ const esShape: Record<MessageKey, string> = {
   'setEditor.viewSwitchLabel': 'Vista',
   'setEditor.viewList': 'Lista',
   'setEditor.viewAlbum': 'Álbum',
+  'setEditor.minGradeLabel': 'Conservación mínima',
+  'setEditor.minGradeNone': 'Ninguna',
+  'setEditor.minGradeSaved': 'Conservación mínima: {grade}.',
+  'setEditor.minGradeCleared': 'Conservación mínima eliminada.',
+  'setEditor.minGradeSaveFailed': 'No se pudo guardar la conservación mínima. Se ha restaurado la anterior.',
 
   // set album
   'setAlbum.legendLabel': 'Leyenda',
@@ -606,6 +611,8 @@ const esShape: Record<MessageKey, string> = {
   // shared ui components (components/ui): coin card, status toggle, badges, set card, undo toast
   'ui.coin.statusOwned': 'En tu colección',
   'ui.coin.statusMissing': 'Falta',
+  'ui.coin.statusUpgrade': 'Mejorar',
+  'ui.coin.upgradeHint': 'En tu colección, por debajo de tu conservación mínima',
   'ui.coin.statusPending': 'Guardando…',
   'ui.coin.statusFailed': 'No se pudo guardar',
   'ui.coin.retry': 'Reintentar',
@@ -643,6 +650,9 @@ const esShape: Record<MessageKey, string> = {
   'setPage.kindOwn': 'Colección propia',
   'setPage.showAll': 'Todas',
   'setPage.showMissing': 'Faltantes',
+  'setPage.showNeedsUpgrade': 'Por mejorar',
+  'setPage.upgradeCount': '{n} por mejorar',
+  'setPage.upgradeEmptyTitle': 'Ninguna moneda necesita mejora.',
   'setPage.select': 'Seleccionar',
   'setPage.doneSelecting': 'Terminar selección',
   'setPage.selectHint': 'Toca las monedas para seleccionarlas y márcalas todas a la vez.',

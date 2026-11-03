@@ -4,7 +4,7 @@ import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getCoinName } from '@coin-collector/shared';
-import type { GapSlot } from '@coin-collector/shared';
+import type { CoinGrade, GapSlot } from '@coin-collector/shared';
 import { RequireAuth } from '@/components/auth/require-auth';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import {
@@ -13,6 +13,7 @@ import {
   usePatchSetCoins,
   useRenameSet,
   useSetGaps,
+  useUpdateSetMinGrade,
   useUserSets,
 } from '@/lib/hooks/use-user-sets';
 import { useBulkSetOwnership, useSetOwnership } from '@/lib/hooks/use-collection';
@@ -29,6 +30,8 @@ import { SetAlbum } from '@/components/sets/set-album';
 import { SetCoinList } from '@/components/sets/set-coin-list';
 import { SEGMENT_BUTTON_CLASSNAME, SEGMENT_GROUP_CLASSNAME, SetViewSwitch } from '@/components/sets/set-view-switch';
 import { SetYearGroup } from '@/components/sets/set-year-group';
+import { UpgradeIcon } from '@/components/ui/upgrade-badge';
+import { gradeShortLabel } from '@/lib/grades';
 import { formatOwnedOfTotal } from '@/lib/album-layout';
 import { markSetDeleted } from '@/lib/set-deleted-notice';
 import { buildYearGroups, getSetKind, getSetSharedParts, type SetKind } from '@/lib/set-page';
@@ -47,6 +50,8 @@ const KIND_LABEL: Record<SetKind, MessageKey> = {
 };
 
 const FOCUS_RING = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-700';
+
+type SetFilter = 'all' | 'missing' | 'upgrade';
 
 function fill(template: string, values: Record<string, string | number>): string {
   let text = template;
@@ -78,6 +83,21 @@ function OwnedOfTotal({ template, owned, total }: { template: string; owned: num
         }
         return <Fragment key={index}>{part}</Fragment>;
       })}
+    </>
+  );
+}
+
+/** "{n} to upgrade" with the number in mono; the text content stays the plain sentence. */
+function UpgradeCountText({ template, n }: { template: string; n: number }) {
+  const parts = template.split('{n}');
+  return (
+    <>
+      {parts.map((part, index) => (
+        <Fragment key={index}>
+          {index > 0 && <span className="font-mono tabular-nums">{n}</span>}
+          {part}
+        </Fragment>
+      ))}
     </>
   );
 }
@@ -173,6 +193,8 @@ function SetEditor({ id }: { id: string }) {
   const addCoinsToSetMutation = useAddCoinsToSet();
   const renameMutation = useRenameSet();
   const deleteMutation = useDeleteSet();
+  const minGradeMutation = useUpdateSetMinGrade();
+  const [minGradeFailed, setMinGradeFailed] = useState(false);
 
   const [nameValue, setNameValue] = useState('');
   const [savedName, setSavedName] = useState('');
@@ -181,7 +203,7 @@ function SetEditor({ id }: { id: string }) {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const syncedSetRef = useRef<typeof set>(undefined);
 
-  const [missingOnly, setMissingOnly] = useState(false);
+  const [filter, setFilter] = useState<SetFilter>('all');
   // Reading window here is safe: SetEditor only mounts on the client (after the params
   // effect sets `id`, inside RequireAuth), and a lazy initializer avoids an Album->List flash.
   const [view, setView] = useState<SetView>(() => parseSetView(window.location.search));
@@ -430,12 +452,44 @@ function SetEditor({ id }: { id: string }) {
     return <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME} />;
   }
 
+  // Upgrade states come only from the API (upgradeCount is present only when the set has a
+  // minimum grade), and only the owner sees them.
+  const showUpgrades = isOwner && gaps.upgradeCount !== undefined;
+  // Adjust state during render: the upgrade filter can't outlive the minimum it filters by.
+  if (filter === 'upgrade' && !showUpgrades) setFilter('all');
+  const activeFilter: SetFilter = filter === 'upgrade' && !showUpgrades ? 'all' : filter;
+  const upgradeCount = gaps.upgradeCount ?? 0;
+
+  const shownMinGrade: CoinGrade | null =
+    minGradeMutation.isPending && minGradeMutation.variables ? minGradeMutation.variables.minGrade : gaps.minGrade;
+
+  function handleMinGradeChange(next: CoinGrade | null) {
+    if (next === shownMinGrade) return;
+    setMinGradeFailed(false);
+    minGradeMutation.mutate(
+      { id, minGrade: next },
+      {
+        onSuccess: () =>
+          setLiveMessage(
+            next === null
+              ? t('setEditor.minGradeCleared')
+              : fill(t('setEditor.minGradeSaved'), { grade: gradeShortLabel(t, next) }),
+          ),
+        onError: () => setMinGradeFailed(true),
+      },
+    );
+  }
+
   const busyCoinIds = new Set<string>([...pendingCoinIds, ...failedCoinIds]);
   const isAlbum = view === 'album';
   const selecting = isAlbum && selectMode;
   const missingCount = gaps.slots.filter((slot) => !slot.owned).length;
   const nothingMissing = missingCount === 0;
-  const groups = buildYearGroups(gaps.slots, { missingOnly, busyCoinIds });
+  const groups = buildYearGroups(gaps.slots, {
+    missingOnly: activeFilter === 'missing',
+    needsUpgradeOnly: activeFilter === 'upgrade',
+    busyCoinIds,
+  });
   const wholeSetMarkable = [...gaps.slots]
     .filter((slot) => !slot.owned && !busyCoinIds.has(slot.coin.id))
     .sort((a, b) => a.position - b.position)
@@ -470,6 +524,23 @@ function SetEditor({ id }: { id: string }) {
         )}
       </div>
     );
+  } else if (groups.length === 0 && activeFilter === 'upgrade') {
+    body = (
+      <div
+        data-testid="set-editor-upgrade-empty"
+        className="flex flex-col items-center gap-3 rounded-[var(--radius-lg)] bg-surface px-5 py-10 text-center"
+      >
+        <p className="text-base font-semibold text-text">{t('setPage.upgradeEmptyTitle')}</p>
+        <button
+          type="button"
+          data-testid="set-editor-upgrade-show-all"
+          onClick={() => setFilter('all')}
+          className={`min-h-11 cursor-pointer rounded-[var(--radius-md)] px-2 text-sm font-medium text-accent-700 underline hover:text-accent-800 ${FOCUS_RING}`}
+        >
+          {t('setPage.showAllCoins')}
+        </button>
+      </div>
+    );
   } else if (groups.length === 0) {
     body = (
       <div
@@ -481,7 +552,7 @@ function SetEditor({ id }: { id: string }) {
         <button
           type="button"
           data-testid="set-editor-show-all-coins"
-          onClick={() => setMissingOnly(false)}
+          onClick={() => setFilter('all')}
           className={`min-h-11 cursor-pointer rounded-[var(--radius-md)] px-2 text-sm font-medium text-accent-700 underline hover:text-accent-800 ${FOCUS_RING}`}
         >
           {t('setPage.showAllCoins')}
@@ -499,7 +570,9 @@ function SetEditor({ id }: { id: string }) {
             totalCount={group.totalCount}
             markAllCount={group.markableCoinIds.length}
             onMarkAll={
-              isOwner && !selecting ? () => handleMarkYear(group.year, group.markableCoinIds) : undefined
+              isOwner && !selecting && activeFilter !== 'upgrade'
+                ? () => handleMarkYear(group.year, group.markableCoinIds)
+                : undefined
             }
           >
             {isAlbum ? (
@@ -595,8 +668,19 @@ function SetEditor({ id }: { id: string }) {
             <span data-testid="set-editor-owned-count" className="text-sm text-neutral-800">
               <OwnedOfTotal template={t('setEditor.ownedOfTotal')} owned={gaps.ownedCount} total={gaps.totalCount} />
             </span>
-            <span data-testid="set-editor-completion" className="font-mono text-sm tabular-nums text-accent-700">
-              {gaps.completionPercent}%
+            <span className="flex items-baseline gap-3">
+              {showUpgrades && (
+                <span
+                  data-testid="set-editor-upgrade-count"
+                  className="inline-flex items-baseline gap-1 text-sm text-accent-800"
+                >
+                  <UpgradeIcon className="self-center" />
+                  <UpgradeCountText template={t('setPage.upgradeCount')} n={upgradeCount} />
+                </span>
+              )}
+              <span data-testid="set-editor-completion" className="font-mono text-sm tabular-nums text-accent-700">
+                {gaps.completionPercent}%
+              </span>
             </span>
           </div>
           <div
@@ -619,8 +703,8 @@ function SetEditor({ id }: { id: string }) {
             <button
               type="button"
               data-testid="set-editor-show-all-toggle"
-              aria-pressed={!missingOnly}
-              onClick={() => setMissingOnly(false)}
+              aria-pressed={activeFilter === 'all'}
+              onClick={() => setFilter('all')}
               className={SEGMENT_BUTTON_CLASSNAME}
             >
               {t('setPage.showAll')} <span className="font-mono tabular-nums">{gaps.totalCount}</span>
@@ -628,12 +712,23 @@ function SetEditor({ id }: { id: string }) {
             <button
               type="button"
               data-testid="set-editor-show-missing-toggle"
-              aria-pressed={missingOnly}
-              onClick={() => setMissingOnly(true)}
+              aria-pressed={activeFilter === 'missing'}
+              onClick={() => setFilter('missing')}
               className={SEGMENT_BUTTON_CLASSNAME}
             >
               {t('setPage.showMissing')} <span className="font-mono tabular-nums">{missingCount}</span>
             </button>
+            {showUpgrades && (
+              <button
+                type="button"
+                data-testid="set-editor-show-upgrade-toggle"
+                aria-pressed={activeFilter === 'upgrade'}
+                onClick={() => setFilter('upgrade')}
+                className={SEGMENT_BUTTON_CLASSNAME}
+              >
+                {t('setPage.showNeedsUpgrade')} <span className="font-mono tabular-nums">{upgradeCount}</span>
+              </button>
+            )}
           </div>
           <SetViewSwitch view={view} onChange={handleViewChange} />
         </div>
@@ -671,10 +766,19 @@ function SetEditor({ id }: { id: string }) {
               onSelectCoins={isAlbum ? enterSelectMode : undefined}
               onMarkAllOwned={() => handleMarkWholeSet(wholeSetMarkable)}
               markAllCount={wholeSetMarkable.length}
+              minGrade={shownMinGrade}
+              minGradePending={minGradeMutation.isPending}
+              onMinGradeChange={handleMinGradeChange}
             />
           </div>
         )}
       </header>
+
+      {isOwner && minGradeFailed && (
+        <p role="alert" data-testid="set-editor-min-grade-error" className="text-[13px] font-medium text-danger">
+          {t('setEditor.minGradeSaveFailed')}
+        </p>
+      )}
 
       {selecting && (
         <p data-testid="set-editor-select-hint" className="text-sm text-neutral-700">

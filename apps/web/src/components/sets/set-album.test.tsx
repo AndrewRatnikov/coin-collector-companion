@@ -3,7 +3,9 @@
  * Contract source: runs/run_20261017_210503/plan.md § Interface Contract → Component: SetAlbum (rewritten),
  *                  Component: SetViewSwitch (MODIFY)
  *                  runs/run_20261102_220909/plan.md § Interface Contract → Component: SetAlbum, CoinCard
- * Covers criteria: #1, #7, #8, #9, #14, #17 (earlier run); #6, #7 (run_20261102_220909)
+ *                  runs/run_20261103_192441/plan.md § Interface Contract → Component: SetAlbum (MODIFY)
+ * Covers criteria: #1, #7, #8, #9, #14, #17 (earlier run); #6, #7 (run_20261102_220909);
+ *                  #5, #6, #10, #11 (run_20261103_192441)
  *
  * The previous SetAlbum (country/denomination pages with mint-mark tables, legend, decade/year
  * summaries) is gone in this run, so its tests are replaced. The SetViewSwitch tests are kept and
@@ -13,6 +15,8 @@
  * Fixture-only change (run_20261102_194108): the GapSlot factory gains `grade: null`.
  * run_20261102_220909: the factory gains an optional `grade`; a new block covers the album card
  * grade chip (`coin-card-grade`): present for owned + graded, absent for ungraded, unowned, visitor.
+ * run_20261103_192441: the factory gains an optional `needsUpgrade` (key absent when not given); a
+ * new block covers the Upgrade state on cards (`coin-card-upgrade`).
  *
  * CONTRACT_GAPS: none
  */
@@ -34,6 +38,7 @@ function slot(
     owned?: boolean;
     isKeyDate?: boolean;
     grade?: CoinGrade | null;
+    needsUpgrade?: boolean;
   },
 ): GapSlot {
   return {
@@ -41,6 +46,7 @@ function slot(
     position,
     owned: over.owned ?? false,
     grade: over.grade ?? null,
+    ...(over.needsUpgrade === undefined ? {} : { needsUpgrade: over.needsUpgrade }),
     coin: {
       id: `coin-${id}`,
       country: 'Ukraine',
@@ -349,6 +355,66 @@ describe('SetAlbum: grade chip (run_20261102_220909 criteria 6, 7)', () => {
 
     expect(within(itemFor('coin-donetsk')).getByTestId('coin-card-grade')).toHaveTextContent(/^VF$/);
     expect(within(itemFor('coin-odesa')).queryByTestId('coin-card-grade')).not.toBeInTheDocument();
+  });
+});
+
+describe('SetAlbum: Upgrade state (run_20261103_192441 criteria 5, 6, 10, 11)', () => {
+  const BELOW = slot(0, 'donetsk', { year: 2025, variety: DONETSK.coin.variety, owned: true, grade: 'F', needsUpgrade: true });
+  const MEETS = slot(1, 'luhansk', { year: 2025, variety: LUHANSK.coin.variety, owned: true, grade: 'XF', needsUpgrade: false });
+  const NO_FLAG = slot(2, 'odesa', { year: 2025, variety: ODESA.coin.variety, owned: true, grade: 'VF' });
+  const MISSING_FLAGGED = slot(3, 'ghost', { year: 2025, owned: false, needsUpgrade: true });
+
+  it('shows the Upgrade badge only on owned cards whose slot has needsUpgrade true', () => {
+    renderAlbum({ slots: [BELOW, MEETS, NO_FLAG] });
+
+    expect(within(itemFor('coin-donetsk')).getByTestId('coin-card-upgrade')).toHaveTextContent('Upgrade');
+    expect(within(itemFor('coin-luhansk')).queryByTestId('coin-card-upgrade')).not.toBeInTheDocument();
+    expect(within(itemFor('coin-odesa')).queryByTestId('coin-card-upgrade')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('coin-card-upgrade')).toHaveLength(1);
+  });
+
+  it('sets data-upgrade per card from the slot flag', () => {
+    renderAlbum({ slots: [BELOW, MEETS, NO_FLAG] });
+
+    expect(within(itemFor('coin-donetsk')).getByTestId('coin-card')).toHaveAttribute('data-upgrade', 'true');
+    expect(within(itemFor('coin-luhansk')).getByTestId('coin-card')).toHaveAttribute('data-upgrade', 'false');
+    expect(within(itemFor('coin-odesa')).getByTestId('coin-card')).toHaveAttribute('data-upgrade', 'false');
+  });
+
+  it('keeps the card owned and the grade chip alongside the badge', () => {
+    renderAlbum({ slots: [BELOW] });
+    const item = within(itemFor('coin-donetsk'));
+
+    expect(item.getByTestId('coin-card')).toHaveAttribute('data-state', 'owned');
+    expect(item.getByTestId('status-toggle')).toHaveAttribute('aria-pressed', 'true');
+    expect(item.getByTestId('coin-card-grade')).toHaveTextContent(/^F$/);
+  });
+
+  it('shows no badge on a missing card even when the slot says needsUpgrade', () => {
+    renderAlbum({ slots: [BELOW, MISSING_FLAGGED] });
+
+    expect(within(itemFor('coin-ghost')).queryByTestId('coin-card-upgrade')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('coin-card-upgrade')).toHaveLength(1);
+  });
+
+  it('shows no badge for a visitor', () => {
+    renderAlbum({ slots: [BELOW, MEETS], visitor: true });
+
+    expect(screen.queryAllByTestId('coin-card-upgrade')).toHaveLength(0);
+    expect(within(itemFor('coin-donetsk')).getByTestId('coin-card')).toHaveAttribute('data-upgrade', 'false');
+  });
+
+  it('shows no badge anywhere when no slot carries the flag (set without a minimum grade)', () => {
+    renderAlbum({ slots: [NO_FLAG, DONETSK] });
+
+    expect(screen.queryAllByTestId('coin-card-upgrade')).toHaveLength(0);
+  });
+
+  it('still shows the badge in select mode on an owned, flagged card', () => {
+    renderAlbum({ slots: [BELOW, MEETS], selectMode: true });
+
+    expect(within(itemFor('coin-donetsk')).getByTestId('coin-card-upgrade')).toBeInTheDocument();
+    expect(within(itemFor('coin-luhansk')).queryByTestId('coin-card-upgrade')).not.toBeInTheDocument();
   });
 });
 

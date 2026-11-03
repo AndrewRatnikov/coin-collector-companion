@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { COIN_GRADES, type CoinGrade } from '@coin-collector/shared';
 import { useTranslation } from '@/lib/i18n/i18n-context';
+import { gradeName, gradeOptionLabel, parseGradeValue } from '@/lib/grades';
 
 export interface SetActionsMenuProps {
   onRename: () => void;
@@ -16,6 +18,12 @@ export interface SetActionsMenuProps {
   /** Mobile only (hidden from 900px): marks every idle missing coin owned. Renders only when given. */
   onMarkAllOwned?: () => void;
   markAllCount?: number;
+  /** The value the Minimum grade select shows (null = None). */
+  minGrade?: CoinGrade | null;
+  /** Renders the Minimum grade section when given; called with the picked code or null for None. */
+  onMinGradeChange?: (minGrade: CoinGrade | null) => void;
+  /** Marks the select aria-busy while a save is in flight. */
+  minGradePending?: boolean;
 }
 
 // Text colour is kept out of the base so the Delete item's `text-danger` never competes with `text-text`.
@@ -91,9 +99,10 @@ function MarkAllIcon() {
 
 // Enabled, visible menu items in DOM order (disabled buttons, aria-disabled links and items
 // hidden by CSS at this breakpoint, such as the mobile-only ones on desktop, are skipped).
+// The Minimum grade <select> is not a menuitem, but the menu's arrow keys reach it too.
 function enabledItems(menu: HTMLElement | null): HTMLElement[] {
   if (!menu) return [];
-  return Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"]')).filter(
+  return Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"], select')).filter(
     (item) =>
       !item.hasAttribute('disabled') &&
       item.getAttribute('aria-disabled') !== 'true' &&
@@ -113,12 +122,22 @@ export function SetActionsMenu({
   onSelectCoins,
   onMarkAllOwned,
   markAllCount = 0,
+  minGrade = null,
+  onMinGradeChange,
+  minGradePending = false,
 }: SetActionsMenuProps) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const selectRef = useRef<HTMLSelectElement>(null);
+  // The group carries no name of its own: the select's visible <label> names it, and a second
+  // "Minimum grade" name on the group would make the label ambiguous to label queries.
+  // True while the select holds focus because the menu's arrow keys moved it there: arrows then
+  // keep walking the menu. Focused any other way (click, Tab, a pointer), arrows stay native.
+  const selectReachedByArrowRef = useRef(false);
+  const minGradeSelectId = useId();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -152,6 +171,7 @@ export function SetActionsMenu({
   }, [isOpen]);
 
   function handleMenuKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.target === selectRef.current && !selectReachedByArrowRef.current) return;
     const items = enabledItems(menuRef.current);
     if (items.length === 0) return;
     const current = items.indexOf(document.activeElement as HTMLElement);
@@ -173,6 +193,7 @@ export function SetActionsMenu({
         return;
     }
     event.preventDefault();
+    if (items[next] === selectRef.current) selectReachedByArrowRef.current = true;
     items[next].focus();
   }
 
@@ -289,6 +310,42 @@ export function SetActionsMenu({
               <PrintIcon />
               {t('setEditor.printMissing')}
             </Link>
+          )}
+          {onMinGradeChange && (
+            <>
+              <span aria-hidden="true" className="mx-1 my-1.5 h-px bg-neutral-200" />
+              <div
+                data-testid="set-editor-min-grade"
+                role="group"
+                className="flex flex-col gap-1 px-3 py-1.5"
+              >
+                <label htmlFor={minGradeSelectId} className="text-xs font-medium text-neutral-700">
+                  {t('setEditor.minGradeLabel')}
+                </label>
+                <select
+                  ref={selectRef}
+                  id={minGradeSelectId}
+                  data-testid="set-editor-min-grade-select"
+                  value={minGrade ?? ''}
+                  aria-busy={minGradePending ? true : undefined}
+                  onChange={(e) => onMinGradeChange(parseGradeValue(e.target.value))}
+                  onMouseDown={() => {
+                    selectReachedByArrowRef.current = false;
+                  }}
+                  onBlur={() => {
+                    selectReachedByArrowRef.current = false;
+                  }}
+                  className="min-h-10 w-full rounded-[var(--radius-md)] border border-neutral-400 bg-white px-2 text-sm text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-700"
+                >
+                  <option value="">{t('setEditor.minGradeNone')}</option>
+                  {COIN_GRADES.map((code) => (
+                    <option key={code} value={code} title={gradeName(t, code)}>
+                      {gradeOptionLabel(t, code)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </>
           )}
           <span aria-hidden="true" className="mx-1 my-1.5 h-px bg-neutral-200" />
           <button

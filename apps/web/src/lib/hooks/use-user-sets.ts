@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import type {
+  CoinGrade,
   CreateSetRequestBody,
   GapViewResponse,
   PatchSetCoinsRequest,
@@ -16,6 +17,7 @@ import {
   getUserSets,
   patchSetCoins,
   renameSet,
+  updateSetMinGrade,
 } from '@/lib/user-sets-api';
 
 // `enabled` lets a public page skip this authenticated call for an anonymous visitor
@@ -62,6 +64,27 @@ export function useRenameSet() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-sets'] });
     },
+  });
+}
+
+/**
+ * Saves the set's minimum grade. Not optimistic: `needsUpgrade` and `upgradeCount` come from
+ * the server, so `onSuccess` returns the invalidation promise and the mutation stays pending
+ * until the gap view (under ['user-sets']) has been refetched. On error the cache is untouched.
+ */
+export function useUpdateSetMinGrade(): UseMutationResult<
+  UserSetSummary,
+  ApiError,
+  { id: string; minGrade: CoinGrade | null }
+> {
+  const queryClient = useQueryClient();
+  return useMutation<UserSetSummary, ApiError, { id: string; minGrade: CoinGrade | null }>({
+    mutationFn: ({ id, minGrade }) => updateSetMinGrade(id, minGrade),
+    onSuccess: (_data, { id }) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['user-sets'] }),
+        queryClient.invalidateQueries({ queryKey: ['public-sets', id] }),
+      ]),
   });
 }
 

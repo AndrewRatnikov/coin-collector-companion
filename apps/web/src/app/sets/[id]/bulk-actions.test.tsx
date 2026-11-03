@@ -4,6 +4,9 @@
  *                  § Behaviour the tests pin
  * Covers criteria: #6, #8, #9, #10 (web side: one bulk mutate call), #12, #14 (mobile ⋯ items)
  *
+ * run_20261103_192441: the page now imports useUpdateSetMinGrade, so the use-user-sets mock lists it and
+ * beforeEach gives it a default return. Nothing else changes here.
+ *
  * Mutation hooks are mocked as `mutate(variables, options)`. The page shows its toast from the call's
  * `options.onSuccess`, and updates pending / failed / live state from the hook-level `onSettled(error,
  * variables)` it passes to useSetOwnership / useBulkSetOwnership. Both are captured here and fired by hand
@@ -27,6 +30,7 @@ import {
   usePatchSetCoins,
   useRenameSet,
   useSetGaps,
+  useUpdateSetMinGrade,
   useUserSets,
 } from '@/lib/hooks/use-user-sets';
 import {
@@ -54,6 +58,7 @@ vi.mock('@/lib/hooks/use-user-sets', () => ({
   useAddCoinsToSet: vi.fn(),
   useRenameSet: vi.fn(),
   useDeleteSet: vi.fn(),
+  useUpdateSetMinGrade: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/use-collection', () => ({
@@ -72,6 +77,7 @@ const usePatchSetCoinsMock = vi.mocked(usePatchSetCoins);
 const useAddCoinsToSetMock = vi.mocked(useAddCoinsToSet);
 const useRenameSetMock = vi.mocked(useRenameSet);
 const useDeleteSetMock = vi.mocked(useDeleteSet);
+const useUpdateSetMinGradeMock = vi.mocked(useUpdateSetMinGrade);
 const useSetOwnershipMock = vi.mocked(useSetOwnership);
 const useBulkSetOwnershipMock = vi.mocked(useBulkSetOwnership);
 const useCatalogMock = vi.mocked(useCatalog);
@@ -259,6 +265,7 @@ describe('SetEditorPage: bulk actions', () => {
       useAddCoinsToSetMock,
       useRenameSetMock,
       useDeleteSetMock,
+      useUpdateSetMinGradeMock,
       useSetOwnershipMock,
       useBulkSetOwnershipMock,
       useCatalogMock,
@@ -269,6 +276,7 @@ describe('SetEditorPage: bulk actions', () => {
     useUserSetsMock.mockReturnValue(queryResult({ data: MY_SETS }));
     useRenameSetMock.mockReturnValue({ mutate: vi.fn(), isPending: false } as never);
     useDeleteSetMock.mockReturnValue({ mutate: vi.fn(), isPending: false } as never);
+    useUpdateSetMinGradeMock.mockReturnValue({ mutate: vi.fn(), isPending: false, variables: undefined } as never);
     useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
     h = installMocks();
     setStoredToken('tok-abc');

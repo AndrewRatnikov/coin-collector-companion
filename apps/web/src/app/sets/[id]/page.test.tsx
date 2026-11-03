@@ -17,6 +17,9 @@
  * "Add coins sheet" block is rewritten; every test that opens the sheet needs useCatalogFacets, useCollection
  * and a usePatchSetCoins mock with mutateAsync.
  *
+ * run_20261103_192441: the page now imports useUpdateSetMinGrade, so the use-user-sets mock lists it and
+ * beforeEach gives it a default return. Nothing else changes here (see min-grade.test.tsx).
+ *
  * Unwraps `params` via the useEffect/useState pattern (documented gotcha: use() in Suspense never
  * re-renders in this repo's jsdom+vitest setup), so no <Suspense> is needed around renderPage().
  *
@@ -38,6 +41,7 @@ import {
   usePatchSetCoins,
   useRenameSet,
   useSetGaps,
+  useUpdateSetMinGrade,
   useUserSets,
 } from '@/lib/hooks/use-user-sets';
 import { useBulkSetOwnership, useCollection, useSetOwnership } from '@/lib/hooks/use-collection';
@@ -62,6 +66,7 @@ vi.mock('@/lib/hooks/use-user-sets', () => ({
   useAddCoinsToSet: vi.fn(),
   useRenameSet: vi.fn(),
   useDeleteSet: vi.fn(),
+  useUpdateSetMinGrade: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/use-collection', () => ({
@@ -82,6 +87,7 @@ const usePatchSetCoinsMock = vi.mocked(usePatchSetCoins);
 const useAddCoinsToSetMock = vi.mocked(useAddCoinsToSet);
 const useRenameSetMock = vi.mocked(useRenameSet);
 const useDeleteSetMock = vi.mocked(useDeleteSet);
+const useUpdateSetMinGradeMock = vi.mocked(useUpdateSetMinGrade);
 const useSetOwnershipMock = vi.mocked(useSetOwnership);
 const useBulkSetOwnershipMock = vi.mocked(useBulkSetOwnership);
 const useCollectionMock = vi.mocked(useCollection);
@@ -204,6 +210,7 @@ function setDefaultMocks() {
   useAddCoinsToSetMock.mockReturnValue(mutationMock());
   useRenameSetMock.mockReturnValue(mutationMock());
   useDeleteSetMock.mockReturnValue(mutationMock());
+  useUpdateSetMinGradeMock.mockReturnValue({ mutate: vi.fn(), isPending: false, variables: undefined } as never);
   useSetOwnershipMock.mockReturnValue(mutationMock());
   useBulkSetOwnershipMock.mockReturnValue(mutationMock());
   useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
@@ -240,6 +247,7 @@ describe('SetEditorPage', () => {
       useAddCoinsToSetMock,
       useRenameSetMock,
       useDeleteSetMock,
+      useUpdateSetMinGradeMock,
       useSetOwnershipMock,
       useBulkSetOwnershipMock,
       useCollectionMock,
