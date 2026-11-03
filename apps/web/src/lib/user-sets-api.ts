@@ -1,4 +1,5 @@
 import type {
+  CoinGrade,
   CreateSetRequestBody,
   GapViewResponse,
   PatchSetCoinsRequest,
@@ -28,6 +29,14 @@ export async function renameSet(id: string, name: string): Promise<UserSetSummar
   return apiFetch<UserSetSummary>(`/sets/${id}`, {
     method: 'PATCH',
     body: JSON.stringify({ name }),
+  });
+}
+
+/** Sets or clears (null) the owner's minimum grade goal. The body holds the neutral code only. */
+export async function updateSetMinGrade(id: string, minGrade: CoinGrade | null): Promise<UserSetSummary> {
+  return apiFetch<UserSetSummary>(`/sets/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ minGrade }),
   });
 }
 
