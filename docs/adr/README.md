@@ -39,6 +39,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-02](2026-11-02-one-optional-adjectival-grade-per-ownership-row.md) | A coin's condition is one optional adjectival grade on the ownership row, with an optional per-set minimum grade | Accepted |
 | [2026-11-02](2026-11-02-grade-gap-fields-conditional-on-min-grade.md) | In the gap view, grade and minGrade are always present and nullable, while needsUpgrade and upgradeCount appear only when the set has a minGrade | Accepted |
 | [2026-11-03](2026-11-03-grade-saves-use-separate-optimistic-hook.md) | Grade edits go through a separate `useSetGrade` hook that shares the cache helpers of `useSetOwnership` | Accepted |
+| [2026-11-03](2026-11-03-min-grade-save-waits-for-gap-view-refetch.md) | Saving a set's minimum grade is not optimistic: the mutation stays pending until the gap view is refetched | Accepted |
 
 ## Where else decisions live
 
