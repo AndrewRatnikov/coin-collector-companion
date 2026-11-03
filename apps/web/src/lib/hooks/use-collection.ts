@@ -10,6 +10,7 @@ import {
 import type {
   BulkSetOwnershipResponse,
   CatalogCoin,
+  CoinGrade,
   GapViewResponse,
   OwnershipItem,
   PaginatedResponse,
@@ -24,6 +25,8 @@ import {
   type CollectionFilters,
 } from '@/lib/collection-api';
 import {
+  applyGradeToCollection,
+  applyGradeToGaps,
   applyOwnershipToCatalogPage,
   applyOwnershipToCollection,
   applyOwnershipToGaps,
@@ -77,6 +80,20 @@ export type UseBulkSetOwnershipResult = UseMutationResult<
   SetOwnershipContext
 > & { failedCoinIds: ReadonlySet<string> };
 
+export type SetGradeVariables = { coinId: string; grade: CoinGrade | null };
+
+export interface UseSetGradeOptions {
+  // Hook-level, like UseSetOwnershipOptions.onSettled.
+  onSettled?: (error: ApiError | null, variables: SetGradeVariables) => void;
+}
+
+export type UseSetGradeResult = UseMutationResult<
+  SetOwnershipResponse,
+  ApiError,
+  SetGradeVariables,
+  SetOwnershipContext
+> & { failedCoinIds: ReadonlySet<string> };
+
 interface OwnershipChange {
   coinId: string;
   owned: boolean;
@@ -103,6 +120,15 @@ function findCachedCoin(queryClient: QueryClient, coinId: string): CatalogCoin |
   return queryClient.getQueryData<CatalogCoin>(['catalog', 'coin', coinId]) ?? null;
 }
 
+/** Cancels in-flight refetches that could overwrite an optimistic patch (ownership and grade). */
+function cancelOwnershipQueries(queryClient: QueryClient) {
+  return Promise.all([
+    queryClient.cancelQueries({ queryKey: ['collection'] }),
+    queryClient.cancelQueries({ queryKey: ['user-sets'] }),
+    queryClient.cancelQueries({ queryKey: ['catalog'] }),
+  ]);
+}
+
 /**
  * The optimistic step shared by useSetOwnership and useBulkSetOwnership: cancels in-flight
  * refetches, snapshots every affected cache, then applies the ownership-cache patchers once per
@@ -112,11 +138,7 @@ async function applyOptimisticOwnership(
   queryClient: QueryClient,
   changes: readonly OwnershipChange[],
 ): Promise<SetOwnershipContext> {
-  await Promise.all([
-    queryClient.cancelQueries({ queryKey: ['collection'] }),
-    queryClient.cancelQueries({ queryKey: ['user-sets'] }),
-    queryClient.cancelQueries({ queryKey: ['catalog'] }),
-  ]);
+  await cancelOwnershipQueries(queryClient);
 
   const collections = queryClient.getQueriesData<OwnershipItem[]>({ queryKey: ['collection'] });
   const gapViews = queryClient.getQueriesData<GapViewResponse>({
@@ -163,6 +185,41 @@ async function applyOptimisticOwnership(
       page = applyOwnershipToCatalogPage(page, coinId, owned, key[1] as CatalogFilters);
     }
     if (page !== initial) queryClient.setQueryData(key, page);
+  }
+
+  return { snapshots };
+}
+
+/**
+ * useSetGrade's optimistic step: same cancel and snapshot as applyOptimisticOwnership, then the
+ * grade patchers on collection lists and gap views. Catalog lists carry no grade.
+ */
+async function applyOptimisticGrade(
+  queryClient: QueryClient,
+  coinId: string,
+  grade: CoinGrade | null,
+): Promise<SetOwnershipContext> {
+  await cancelOwnershipQueries(queryClient);
+
+  const collections = queryClient.getQueriesData<OwnershipItem[]>({ queryKey: ['collection'] });
+  const gapViews = queryClient.getQueriesData<GapViewResponse>({
+    queryKey: ['user-sets'],
+    predicate: (query) => isGapsKey(query.queryKey),
+  });
+
+  const snapshots: Array<[QueryKey, unknown]> = [...collections, ...gapViews].filter(
+    ([, data]) => data !== undefined,
+  );
+
+  for (const [key, items] of collections) {
+    if (items === undefined) continue;
+    const next = applyGradeToCollection(items, coinId, grade);
+    if (next !== items) queryClient.setQueryData(key, next);
+  }
+  for (const [key, gaps] of gapViews) {
+    if (gaps === undefined) continue;
+    const next = applyGradeToGaps(gaps, coinId, grade);
+    if (next !== gaps) queryClient.setQueryData(key, next);
   }
 
   return { snapshots };
@@ -267,6 +324,38 @@ export function useBulkSetOwnership({ onSettled }: UseBulkSetOwnershipOptions = 
     onError: (_error, { coinIds }, context) => {
       restoreSnapshots(queryClient, context);
       markFailed(coinIds, true);
+    },
+
+    onSettled: async (_data, error, variables) => {
+      await invalidateOwnershipQueries(queryClient);
+      onSettled?.(error ?? null, variables);
+    },
+  });
+
+  return { ...mutation, failedCoinIds };
+}
+
+/**
+ * Saves an owned coin's grade (`null` clears it) with `PATCH /collection/:coinId`
+ * `{ owned: true, grade }`. Optimistic like useSetOwnership: cached collection lists and owned
+ * gap slots show the new grade before the request, are restored if it fails (the coin then
+ * appears in this hook's own `failedCoinIds`), and are refetched on settle either way.
+ */
+export function useSetGrade({ onSettled }: UseSetGradeOptions = {}): UseSetGradeResult {
+  const queryClient = useQueryClient();
+  const { failedCoinIds, markFailed } = useFailedCoinIds();
+
+  const mutation = useMutation<SetOwnershipResponse, ApiError, SetGradeVariables, SetOwnershipContext>({
+    mutationFn: ({ coinId, grade }) => setOwnership(coinId, true, grade),
+
+    onMutate: async ({ coinId, grade }) => {
+      markFailed([coinId], false);
+      return applyOptimisticGrade(queryClient, coinId, grade);
+    },
+
+    onError: (_error, { coinId }, context) => {
+      restoreSnapshots(queryClient, context);
+      markFailed([coinId], true);
     },
 
     onSettled: async (_data, error, variables) => {

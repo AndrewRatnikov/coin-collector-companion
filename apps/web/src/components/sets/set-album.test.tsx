@@ -2,7 +2,8 @@
  * Tests for: SetAlbum (one year group's grid of CoinCards) and SetViewSwitch
  * Contract source: runs/run_20261017_210503/plan.md § Interface Contract → Component: SetAlbum (rewritten),
  *                  Component: SetViewSwitch (MODIFY)
- * Covers criteria: #1, #7, #8, #9, #14, #17
+ *                  runs/run_20261102_220909/plan.md § Interface Contract → Component: SetAlbum, CoinCard
+ * Covers criteria: #1, #7, #8, #9, #14, #17 (earlier run); #6, #7 (run_20261102_220909)
  *
  * The previous SetAlbum (country/denomination pages with mint-mark tables, legend, decade/year
  * summaries) is gone in this run, so its tests are replaced. The SetViewSwitch tests are kept and
@@ -10,6 +11,8 @@
  *
  * Expected card text is computed with getCoinName so the tests do not hard-code the formatter.
  * Fixture-only change (run_20261102_194108): the GapSlot factory gains `grade: null`.
+ * run_20261102_220909: the factory gains an optional `grade`; a new block covers the album card
+ * grade chip (`coin-card-grade`): present for owned + graded, absent for ungraded, unowned, visitor.
  *
  * CONTRACT_GAPS: none
  */
@@ -17,7 +20,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { getCoinName, type GapSlot } from '@coin-collector/shared';
+import { getCoinName, type CoinGrade, type GapSlot } from '@coin-collector/shared';
 import { SetAlbum } from '@/components/sets/set-album';
 import { SetViewSwitch } from '@/components/sets/set-view-switch';
 
@@ -30,13 +33,14 @@ function slot(
     variety?: string;
     owned?: boolean;
     isKeyDate?: boolean;
+    grade?: CoinGrade | null;
   },
 ): GapSlot {
   return {
     id: `usc-${id}`,
     position,
     owned: over.owned ?? false,
-    grade: null,
+    grade: over.grade ?? null,
     coin: {
       id: `coin-${id}`,
       country: 'Ukraine',
@@ -295,6 +299,56 @@ describe('SetAlbum: select mode (criterion 9)', () => {
     expect(within(itemFor('coin-donetsk')).getByTestId('coin-card').className).not.toContain(
       'outline-accent-700',
     );
+  });
+});
+
+describe('SetAlbum: grade chip (run_20261102_220909 criteria 6, 7)', () => {
+  const GRADED_OWNED = slot(0, 'donetsk', { year: 2025, variety: DONETSK.coin.variety, owned: true, grade: 'VF' });
+  const GRADED_OWNED_UNC = slot(1, 'luhansk', { year: 2025, variety: LUHANSK.coin.variety, owned: true, grade: 'UNC' });
+  const UNGRADED_OWNED = slot(2, 'odesa', { year: 2025, variety: ODESA.coin.variety, owned: true });
+  const GRADED_UNOWNED = slot(3, 'ghost', { year: 2025, owned: false, grade: 'XF' });
+
+  it('shows the short grade code with the full name as title on an owned, graded card', () => {
+    renderAlbum({ slots: [GRADED_OWNED] });
+
+    const chip = within(itemFor('coin-donetsk')).getByTestId('coin-card-grade');
+    expect(chip).toHaveTextContent(/^VF$/);
+    expect(chip).toHaveAttribute('title', 'Very Fine');
+  });
+
+  it('shows each card its own grade (different grades give different text)', () => {
+    renderAlbum({ slots: [GRADED_OWNED, GRADED_OWNED_UNC] });
+
+    expect(within(itemFor('coin-donetsk')).getByTestId('coin-card-grade')).toHaveTextContent(/^VF$/);
+    expect(within(itemFor('coin-luhansk')).getByTestId('coin-card-grade')).toHaveTextContent(/^UNC$/);
+    expect(within(itemFor('coin-luhansk')).getByTestId('coin-card-grade')).toHaveAttribute('title', 'Uncirculated');
+  });
+
+  it('is absent on an owned card with no grade', () => {
+    renderAlbum({ slots: [GRADED_OWNED, UNGRADED_OWNED] });
+
+    expect(within(itemFor('coin-odesa')).queryByTestId('coin-card-grade')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('coin-card-grade')).toHaveLength(1);
+  });
+
+  it('is absent on an unowned card even if the slot carries a grade', () => {
+    renderAlbum({ slots: [GRADED_OWNED, GRADED_UNOWNED] });
+
+    expect(within(itemFor('coin-ghost')).queryByTestId('coin-card-grade')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('coin-card-grade')).toHaveLength(1);
+  });
+
+  it('is absent for a visitor', () => {
+    renderAlbum({ slots: [GRADED_OWNED, GRADED_OWNED_UNC], visitor: true });
+
+    expect(screen.queryAllByTestId('coin-card-grade')).toHaveLength(0);
+  });
+
+  it('is still shown in select mode for an owned, graded card', () => {
+    renderAlbum({ slots: [GRADED_OWNED, UNGRADED_OWNED], selectMode: true });
+
+    expect(within(itemFor('coin-donetsk')).getByTestId('coin-card-grade')).toHaveTextContent(/^VF$/);
+    expect(within(itemFor('coin-odesa')).queryByTestId('coin-card-grade')).not.toBeInTheDocument();
   });
 });
 

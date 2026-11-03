@@ -1,11 +1,14 @@
 /**
  * Tests for: SetCoinList (list rows for one year group)
  * Contract source: runs/run_20261017_210503/plan.md § Interface Contract → Component: SetCoinList
- * Covers criteria: #11, #12, #14
+ *                  runs/run_20261102_220909/plan.md § Interface Contract → Component: SetCoinList
+ * Covers criteria: #11, #12, #14 (earlier run); #6, #7 (run_20261102_220909)
  *
  * Expected text is computed with getCoinName and formatCollectorNotation, so the formatter is not
  * hard-coded here.
  * Fixture-only change (run_20261102_194108): the GapSlot factory gains `grade: null`.
+ * run_20261102_220909: the factory gains an optional `grade`; a new block covers the row grade chip
+ * (`set-coin-row-grade`): present for owned + graded, absent for ungraded, unowned and visitor.
  *
  * CONTRACT_GAPS: none
  */
@@ -13,20 +16,27 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { getCoinName, type GapSlot } from '@coin-collector/shared';
+import { getCoinName, type CoinGrade, type GapSlot } from '@coin-collector/shared';
 import { formatCollectorNotation } from '@/lib/album-layout';
 import { SetCoinList } from '@/components/sets/set-coin-list';
 
 function slot(
   position: number,
   id: string,
-  over: { year?: number; mintMark?: string; variety?: string; owned?: boolean; name?: string },
+  over: {
+    year?: number;
+    mintMark?: string;
+    variety?: string;
+    owned?: boolean;
+    name?: string;
+    grade?: CoinGrade | null;
+  },
 ): GapSlot {
   return {
     id: `usc-${id}`,
     position,
     owned: over.owned ?? false,
-    grade: null,
+    grade: over.grade ?? null,
     coin: {
       id: `coin-${id}`,
       country: 'Ukraine',
@@ -334,5 +344,66 @@ describe('SetCoinList: visitor', () => {
     expect(within(rowFor('coin-donetsk')).getByTestId('set-coin-row-title')).toHaveTextContent(
       getCoinName(DONETSK.coin).title,
     );
+  });
+});
+
+describe('SetCoinList: grade chip (run_20261102_220909 criteria 6, 7)', () => {
+  const GRADED_OWNED = slot(0, 'donetsk', { variety: DONETSK.coin.variety, owned: true, grade: 'VF' });
+  const GRADED_OWNED_AU = slot(1, 'luhansk', { variety: LUHANSK.coin.variety, owned: true, grade: 'AU' });
+  const UNGRADED_OWNED = slot(2, 'plain', { year: 1992, mintMark: 'S', name: 'Ukraine 25 Kopiyok', owned: true });
+  const GRADED_UNOWNED = slot(3, 'ghost', { owned: false, grade: 'XF' });
+
+  it('shows the short grade code with the full name as title on an owned, graded row', () => {
+    renderList({ slots: [GRADED_OWNED] });
+
+    const chip = within(rowFor('coin-donetsk')).getByTestId('set-coin-row-grade');
+    expect(chip).toHaveTextContent(/^VF$/);
+    expect(chip).toHaveAttribute('title', 'Very Fine');
+  });
+
+  it('shows each row its own grade (different grades give different text)', () => {
+    renderList({ slots: [GRADED_OWNED, GRADED_OWNED_AU] });
+
+    expect(within(rowFor('coin-donetsk')).getByTestId('set-coin-row-grade')).toHaveTextContent(/^VF$/);
+    expect(within(rowFor('coin-luhansk')).getByTestId('set-coin-row-grade')).toHaveTextContent(/^AU$/);
+    expect(within(rowFor('coin-luhansk')).getByTestId('set-coin-row-grade')).toHaveAttribute(
+      'title',
+      'About Uncirculated',
+    );
+  });
+
+  it('is absent on an owned row with no grade', () => {
+    renderList({ slots: [GRADED_OWNED, UNGRADED_OWNED] });
+
+    expect(within(rowFor('coin-plain')).queryByTestId('set-coin-row-grade')).not.toBeInTheDocument();
+    expect(within(rowFor('coin-donetsk')).getByTestId('set-coin-row-grade')).toBeInTheDocument();
+    expect(screen.getAllByTestId('set-coin-row-grade')).toHaveLength(1);
+  });
+
+  it('is absent on an unowned row even if the slot carries a grade', () => {
+    renderList({ slots: [GRADED_OWNED, GRADED_UNOWNED] });
+
+    expect(within(rowFor('coin-ghost')).queryByTestId('set-coin-row-grade')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('set-coin-row-grade')).toHaveLength(1);
+  });
+
+  it('is absent for a visitor', () => {
+    renderList({ slots: [GRADED_OWNED, GRADED_OWNED_AU], visitor: true });
+
+    expect(screen.queryAllByTestId('set-coin-row-grade')).toHaveLength(0);
+  });
+
+  it('is a sibling of the title link, not inside it', () => {
+    renderList({ slots: [GRADED_OWNED] });
+
+    const row = within(rowFor('coin-donetsk'));
+    expect(row.getByTestId('set-coin-row-link')).not.toContainElement(row.getByTestId('set-coin-row-grade'));
+  });
+
+  it('leaves the link accessible name as the coin title', () => {
+    renderList({ slots: [GRADED_OWNED] });
+
+    const link = within(rowFor('coin-donetsk')).getByTestId('set-coin-row-link');
+    expect(link).not.toHaveTextContent('VF');
   });
 });

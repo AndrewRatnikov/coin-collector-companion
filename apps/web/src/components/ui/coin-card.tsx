@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { getCoinName, type CatalogCoin } from '@coin-collector/shared';
+import { getCoinName, type CatalogCoin, type CoinGrade } from '@coin-collector/shared';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { Badge } from '@/components/ui/badge';
+import { GradeChip } from '@/components/ui/grade-chip';
 import { PlaceholderCoin } from '@/components/ui/placeholder-coin';
 import { StatusToggle, useDelayedPending } from '@/components/ui/status-toggle';
 
@@ -23,6 +24,8 @@ export interface CoinCardProps {
   toggleLabel?: string;
   /** coin-card-status text when not owned (idle). Default t('ui.coin.statusMissing'). */
   missingStatusLabel?: string;
+  /** The owner's grade; a chip shows after the status text when owned and graded. Default null. */
+  grade?: CoinGrade | null;
 }
 
 function noop() {}
@@ -44,6 +47,7 @@ export function CoinCard({
   hideEyebrow = false,
   toggleLabel,
   missingStatusLabel,
+  grade = null,
 }: CoinCardProps) {
   const { t } = useTranslation();
   const name = getCoinName(coin);
@@ -154,7 +158,14 @@ export function CoinCard({
 
         {statusLine && (
           <div className="mt-1.5 flex min-h-5 items-center justify-between gap-1.5 text-xs">
-            {statusLine}
+            {owned && !visitor && grade !== null ? (
+              <span className="flex min-w-0 items-center gap-1.5">
+                {statusLine}
+                <GradeChip grade={grade} testId="coin-card-grade" className="relative z-[3]" />
+              </span>
+            ) : (
+              statusLine
+            )}
             {failed && (
               <button
                 type="button"

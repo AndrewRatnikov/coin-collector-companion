@@ -1,7 +1,9 @@
 /**
  * Tests for: CoinOwnershipPanel
  * Contract source: runs/run_20261019_205931/plan.md § Interface Contract → Component: CoinOwnershipPanel
- * Covers criteria: #4, #5, #6, #7, #13
+ *                   runs/run_20261102_220909/plan.md § Interface Contract → Component: CoinOwnershipPanel (MODIFY)
+ * Covers criteria: #4, #5, #6, #7, #13 (from run_20261019_205931's prd.md)
+ *                  #1, #2, #5, #6 (from run_20261102_220909's prd.md: picker only when owned, both layouts)
  *
  * CONTRACT_GAPS: none
  */
@@ -198,5 +200,167 @@ describe('CoinOwnershipPanel: bar layout', () => {
     renderPanel({ layout: 'bar', state: 'pending' });
     expect(screen.getByTestId('coin-detail-mobile-bar')).toHaveAttribute('data-state', 'pending');
     expect(screen.getByTestId('coin-detail-mobile-bar-toggle')).toBeDisabled();
+  });
+});
+
+describe('CoinOwnershipPanel: grade picker, panel layout', () => {
+  it('shows the picker inside the panel when owned and onGradeChange is given', () => {
+    renderPanel({ owned: true, onGradeChange: vi.fn() });
+
+    const panel = screen.getByTestId('coin-detail-ownership-panel');
+    const select = within(panel).getByTestId('coin-detail-grade-select');
+    expect(select).toBeInTheDocument();
+    expect(within(panel).getByLabelText('Grade')).toBe(select);
+    expect(screen.queryByTestId('coin-detail-mobile-bar-grade-select')).not.toBeInTheDocument();
+  });
+
+  it('hides the picker when not owned, even with onGradeChange', () => {
+    renderPanel({ owned: false, onGradeChange: vi.fn() });
+    expect(screen.queryByTestId('coin-detail-grade-select')).not.toBeInTheDocument();
+  });
+
+  it('hides the picker when owned but no onGradeChange is given', () => {
+    renderPanel({ owned: true });
+    expect(screen.queryByTestId('coin-detail-grade-select')).not.toBeInTheDocument();
+  });
+
+  it('shows the Not set option for a null grade and the given grade otherwise', () => {
+    const { rerender } = renderPanel({ owned: true, grade: null, onGradeChange: vi.fn() });
+    expect(screen.getByTestId('coin-detail-grade-select')).toHaveValue('');
+
+    rerender(
+      <CoinOwnershipPanel
+        layout="panel"
+        coinTitle="Type 2"
+        owned
+        state="idle"
+        onToggle={vi.fn()}
+        onRetry={vi.fn()}
+        grade="XF"
+        onGradeChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId('coin-detail-grade-select')).toHaveValue('XF');
+  });
+
+  it('defaults to Not set when the grade prop is omitted', () => {
+    renderPanel({ owned: true, onGradeChange: vi.fn() });
+    expect(screen.getByTestId('coin-detail-grade-select')).toHaveValue('');
+  });
+
+  it('calls onGradeChange with the chosen grade code, and with null for Not set', async () => {
+    const onGradeChange = vi.fn();
+    renderPanel({ owned: true, grade: 'F', onGradeChange });
+    const user = userEvent.setup();
+
+    await user.selectOptions(screen.getByTestId('coin-detail-grade-select'), 'VF');
+    expect(onGradeChange).toHaveBeenLastCalledWith('VF');
+
+    await user.selectOptions(screen.getByTestId('coin-detail-grade-select'), 'UNC');
+    expect(onGradeChange).toHaveBeenLastCalledWith('UNC');
+
+    await user.selectOptions(screen.getByTestId('coin-detail-grade-select'), '');
+    expect(onGradeChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it('picking a grade does not trigger the ownership toggle or retry', async () => {
+    const { onToggle, onRetry } = renderPanel({ owned: true, onGradeChange: vi.fn() });
+    await userEvent.setup().selectOptions(screen.getByTestId('coin-detail-grade-select'), 'AU');
+    expect(onToggle).not.toHaveBeenCalled();
+    expect(onRetry).not.toHaveBeenCalled();
+  });
+
+  it('shows the grade error alert only when gradeState is failed', () => {
+    const { rerender } = renderPanel({ owned: true, gradeState: 'idle', onGradeChange: vi.fn() });
+    expect(screen.queryByTestId('coin-detail-grade-error')).not.toBeInTheDocument();
+
+    rerender(
+      <CoinOwnershipPanel
+        layout="panel"
+        coinTitle="Type 2"
+        owned
+        state="idle"
+        onToggle={vi.fn()}
+        onRetry={vi.fn()}
+        gradeState="failed"
+        onGradeChange={vi.fn()}
+      />,
+    );
+    const alert = screen.getByTestId('coin-detail-grade-error');
+    expect(alert).toHaveAttribute('role', 'alert');
+    expect(alert).toHaveTextContent('Couldn’t save the grade. It was changed back.');
+  });
+
+  it('a grade failure does not change the ownership data-state', () => {
+    renderPanel({ owned: true, state: 'idle', gradeState: 'failed', onGradeChange: vi.fn() });
+    expect(screen.getByTestId('coin-detail-ownership-panel')).toHaveAttribute('data-state', 'owned');
+    expect(screen.getByTestId('coin-detail-ownership-title')).toHaveTextContent('In your collection');
+  });
+
+  it('keeps the ownership toggle working with the picker present', async () => {
+    const { onToggle } = renderPanel({ owned: true, onGradeChange: vi.fn() });
+    await userEvent.setup().click(screen.getByTestId('coin-detail-owned-toggle'));
+    expect(onToggle).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('CoinOwnershipPanel: grade picker, bar layout', () => {
+  it('shows the bar picker inside the bar when owned and onGradeChange is given', () => {
+    renderPanel({ layout: 'bar', owned: true, onGradeChange: vi.fn() });
+
+    const bar = screen.getByTestId('coin-detail-mobile-bar');
+    const select = within(bar).getByTestId('coin-detail-mobile-bar-grade-select');
+    expect(within(bar).getByLabelText('Grade')).toBe(select);
+    expect(screen.queryByTestId('coin-detail-grade-select')).not.toBeInTheDocument();
+  });
+
+  it('hides the bar picker when not owned', () => {
+    renderPanel({ layout: 'bar', owned: false, onGradeChange: vi.fn() });
+    expect(screen.queryByTestId('coin-detail-mobile-bar-grade-select')).not.toBeInTheDocument();
+  });
+
+  it('hides the bar picker when owned but no onGradeChange is given', () => {
+    renderPanel({ layout: 'bar', owned: true });
+    expect(screen.queryByTestId('coin-detail-mobile-bar-grade-select')).not.toBeInTheDocument();
+  });
+
+  it('reflects the grade and reports changes', async () => {
+    const onGradeChange = vi.fn();
+    renderPanel({ layout: 'bar', owned: true, grade: 'VG', onGradeChange });
+    const select = screen.getByTestId('coin-detail-mobile-bar-grade-select');
+    expect(select).toHaveValue('VG');
+
+    const user = userEvent.setup();
+    await user.selectOptions(select, 'XF');
+    expect(onGradeChange).toHaveBeenLastCalledWith('XF');
+    await user.selectOptions(select, '');
+    expect(onGradeChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it('shows the bar grade error only when gradeState is failed', () => {
+    const { rerender } = renderPanel({ layout: 'bar', owned: true, onGradeChange: vi.fn() });
+    expect(screen.queryByTestId('coin-detail-mobile-bar-grade-error')).not.toBeInTheDocument();
+
+    rerender(
+      <CoinOwnershipPanel
+        layout="bar"
+        coinTitle="Type 2"
+        owned
+        state="idle"
+        onToggle={vi.fn()}
+        onRetry={vi.fn()}
+        gradeState="failed"
+        onGradeChange={vi.fn()}
+      />,
+    );
+    const alert = screen.getByTestId('coin-detail-mobile-bar-grade-error');
+    expect(alert).toHaveAttribute('role', 'alert');
+    expect(screen.queryByTestId('coin-detail-grade-error')).not.toBeInTheDocument();
+  });
+
+  it('keeps the bar toggle working with the picker present', async () => {
+    const { onToggle } = renderPanel({ layout: 'bar', owned: true, onGradeChange: vi.fn() });
+    await userEvent.setup().click(screen.getByTestId('coin-detail-mobile-bar-toggle'));
+    expect(onToggle).toHaveBeenCalledTimes(1);
   });
 });
