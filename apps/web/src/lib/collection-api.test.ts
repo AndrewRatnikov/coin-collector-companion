@@ -2,7 +2,8 @@
  * Tests for: collection-api
  * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Module: collection-api.ts (CREATE)
  * Extended by: runs/run_20261017_210503/plan.md § Interface Contract → Web API client
- * Covers criteria: #6 (run_20260721_171115); #10 (run_20261017_210503)
+ * Extended by: runs/run_20261102_220909/plan.md § Interface Contract → Function: setOwnership (MODIFY)
+ * Covers criteria: #6 (run_20260721_171115); #10 (run_20261017_210503); #3 (run_20261102_220909)
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -106,6 +107,41 @@ describe('collection-api', () => {
     it('propagates a rejection when the request fails', async () => {
       stubFetchResolving(404, { message: 'Coin not found' });
       await expect(setOwnership('missing', true)).rejects.toThrow();
+    });
+  });
+
+  describe('run_20261102_220909 criterion 3: setOwnership grade argument', () => {
+    it('sends exactly { owned } with no grade key when grade is undefined', async () => {
+      const fetchMock = stubFetchResolving(200, { coinId: 'coin-1', owned: true, ownedAt: null });
+      await setOwnership('coin-1', true);
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(init.body).toBe(JSON.stringify({ owned: true }));
+      expect(init.body as string).not.toContain('grade');
+    });
+
+    it('sends { owned, grade } for a grade', async () => {
+      const fetchMock = stubFetchResolving(200, { coinId: 'coin-1', owned: true, ownedAt: null });
+      await setOwnership('coin-1', true, 'VF');
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url.endsWith('/collection/coin-1')).toBe(true);
+      expect(init.method).toBe('PATCH');
+      expect(JSON.parse(init.body as string)).toEqual({ owned: true, grade: 'VF' });
+    });
+
+    it('sends a different grade code for a different argument', async () => {
+      const fetchMock = stubFetchResolving(200, { coinId: 'coin-1', owned: true, ownedAt: null });
+      await setOwnership('coin-1', true, 'UNC');
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(JSON.parse(init.body as string)).toEqual({ owned: true, grade: 'UNC' });
+    });
+
+    it('keeps an explicit null grade in the body', async () => {
+      const fetchMock = stubFetchResolving(200, { coinId: 'coin-1', owned: true, ownedAt: null });
+      await setOwnership('coin-1', true, null);
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(init.body as string) as Record<string, unknown>;
+      expect(body).toEqual({ owned: true, grade: null });
+      expect('grade' in body).toBe(true);
     });
   });
 

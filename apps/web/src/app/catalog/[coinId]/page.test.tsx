@@ -6,10 +6,12 @@
  *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/catalog/[coinId]/page.tsx
  *                   runs/run_20261017_142658/plan.md § Approach §3 and §4 (name block via getCoinName; Skeleton testid)
  *                   runs/run_20261019_205931/plan.md § Interface Contract → Page: CoinDetailPage
+ *                   runs/run_20261102_220909/plan.md § Interface Contract → Page: CoinDetailPage, Component: CoinGradePicker
  * Covers criteria: #5 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md),
  *                  #7 (from run_20260725_140648's prd.md), #5 (from run_20260728_071525's prd.md),
  *                  #6, #13 (from run_20261017_142658's prd.md),
- *                  #1-#14 (from run_20261019_205931's prd.md)
+ *                  #1-#14 (from run_20261019_205931's prd.md),
+ *                  #1, #2, #3, #5, #6 (from run_20261102_220909's prd.md)
  *
  * CoinDetailPage unwraps its `params` prop (a Promise, per the Next.js 16 App Router
  * contract) via React's `use()`, which suspends on first render. Rendering it directly
@@ -41,6 +43,11 @@
  * run_20261102_194108: fixture-only change. USER_SETS gain `minGrade: null`, OWNED_COLLECTION gains
  * `grade: null`, and every gap view / slot literal gains `minGrade: null` / `grade: null`.
  *
+ * run_20261102_220909 (coin grades, Phase 2): the use-collection mock gains `useSetGrade` with a
+ * default return `{ mutate, isPending: false, failedCoinIds: new Set() }`. A new block covers the
+ * grade picker wiring. Both layouts are in the DOM under jsdom, so every picker query is scoped
+ * with within(...) to the panel or the bar (or uses the layout-specific testids).
+ *
  * CONTRACT_GAPS: none
  */
 
@@ -51,11 +58,11 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CoinDetailPage from '@/app/catalog/[coinId]/page';
 import { useCoin } from '@/lib/hooks/use-catalog';
-import { useCollection, useSetOwnership } from '@/lib/hooks/use-collection';
+import { useCollection, useSetGrade, useSetOwnership } from '@/lib/hooks/use-collection';
 import { useAddCoinsToSet, useUserSets } from '@/lib/hooks/use-user-sets';
 import { getSetGaps } from '@/lib/user-sets-api';
 import { getStoredToken } from '@/lib/auth-token';
-import type { CatalogCoin } from '@coin-collector/shared';
+import type { CatalogCoin, CoinGrade } from '@coin-collector/shared';
 
 vi.mock('@/lib/hooks/use-catalog', () => ({
   useCoin: vi.fn(),
@@ -64,6 +71,7 @@ vi.mock('@/lib/hooks/use-catalog', () => ({
 vi.mock('@/lib/hooks/use-collection', () => ({
   useCollection: vi.fn(),
   useSetOwnership: vi.fn(),
+  useSetGrade: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/use-user-sets', () => ({
@@ -82,16 +90,22 @@ vi.mock('@/lib/auth-token', () => ({
 const useCoinMock = vi.mocked(useCoin);
 const useCollectionMock = vi.mocked(useCollection);
 const useSetOwnershipMock = vi.mocked(useSetOwnership);
+const useSetGradeMock = vi.mocked(useSetGrade);
 const useUserSetsMock = vi.mocked(useUserSets);
 const useAddCoinsToSetMock = vi.mocked(useAddCoinsToSet);
 const getSetGapsMock = vi.mocked(getSetGaps);
 const getStoredTokenMock = vi.mocked(getStoredToken);
 
 const mutateMock = vi.fn();
+const gradeMutateMock = vi.fn();
 const mutateAsyncMock = vi.fn();
 
 type OwnershipOptions = {
   onSettled?: (error: Error | null, vars: { coinId: string; owned: boolean }) => void;
+};
+
+type GradeOptions = {
+  onSettled?: (error: Error | null, vars: { coinId: string; grade: CoinGrade | null }) => void;
 };
 
 function ownershipResult(overrides: { isPending?: boolean; failedCoinIds?: Set<string> } = {}) {
@@ -103,8 +117,21 @@ function ownershipResult(overrides: { isPending?: boolean; failedCoinIds?: Set<s
   } as unknown as ReturnType<typeof useSetOwnership>;
 }
 
+function gradeResult(overrides: { isPending?: boolean; failedCoinIds?: Set<string> } = {}) {
+  return {
+    mutate: gradeMutateMock,
+    isPending: false,
+    failedCoinIds: new Set<string>(),
+    ...overrides,
+  } as unknown as ReturnType<typeof useSetGrade>;
+}
+
 function lastOwnershipOptions(): OwnershipOptions {
   return useSetOwnershipMock.mock.calls.at(-1)?.[0] as unknown as OwnershipOptions;
+}
+
+function lastGradeOptions(): GradeOptions {
+  return useSetGradeMock.mock.calls.at(-1)?.[0] as unknown as GradeOptions;
 }
 
 function queryResult(overrides: Partial<ReturnType<typeof useCoin>> = {}) {
@@ -195,6 +222,10 @@ const USER_SETS = [
 
 const OWNED_COLLECTION = [{ coinId: 'coin-1', coin: COIN_WITH_IMAGE, ownedAt: new Date(), grade: null }];
 
+function ownedWithGrade(grade: CoinGrade | null) {
+  return [{ coinId: 'coin-1', coin: COIN_WITH_IMAGE, ownedAt: new Date(), grade }];
+}
+
 /** set-a contains coin-1 (2 of 7, 29%); set-b does not. */
 function mockGapsSetAOnly() {
   getSetGapsMock.mockImplementation(async (id: string) => ({
@@ -219,17 +250,20 @@ describe('CoinDetailPage', () => {
     useCoinMock.mockReset();
     useCollectionMock.mockReset();
     useSetOwnershipMock.mockReset();
+    useSetGradeMock.mockReset();
     useUserSetsMock.mockReset();
     useAddCoinsToSetMock.mockReset();
     getSetGapsMock.mockReset();
     getStoredTokenMock.mockReset();
     mutateMock.mockClear();
+    gradeMutateMock.mockClear();
     mutateAsyncMock.mockReset();
     mutateAsyncMock.mockResolvedValue([]);
 
     getStoredTokenMock.mockReturnValue(null);
     useCollectionMock.mockReturnValue(collectionResult());
     useSetOwnershipMock.mockReturnValue(ownershipResult());
+    useSetGradeMock.mockReturnValue(gradeResult());
     useUserSetsMock.mockReturnValue(userSetsResult());
     useAddCoinsToSetMock.mockReturnValue({
       mutateAsync: mutateAsyncMock,
@@ -1148,6 +1182,306 @@ describe('CoinDetailPage', () => {
       expect(within(attribution).getByRole('link')).toBeInTheDocument();
       const table = screen.getByTestId('coin-detail-specs');
       expect(table.compareDocumentPosition(attribution) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+  });
+
+  describe('run_20261102_220909: grade picker wiring', () => {
+    async function renderOwned(grade: CoinGrade | null) {
+      signIn();
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+      useCollectionMock.mockReturnValue(collectionResult({ data: ownedWithGrade(grade) as never }));
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByTestId('coin-detail-ownership-panel');
+      return user;
+    }
+
+    function panelSelect() {
+      return within(screen.getByTestId('coin-detail-ownership-panel')).getByTestId('coin-detail-grade-select');
+    }
+
+    function barSelect() {
+      return within(screen.getByTestId('coin-detail-mobile-bar')).getByTestId('coin-detail-mobile-bar-grade-select');
+    }
+
+    describe('presence (criteria 1, 2, 6)', () => {
+      it('renders a labelled picker in both the panel and the bar when the coin is owned', async () => {
+        await renderOwned(null);
+
+        const panel = within(screen.getByTestId('coin-detail-ownership-panel'));
+        const bar = within(screen.getByTestId('coin-detail-mobile-bar'));
+        expect(panel.getByLabelText('Grade')).toBe(panelSelect());
+        expect(bar.getByLabelText('Grade')).toBe(barSelect());
+        expect(panel.getByRole('combobox', { name: 'Grade' })).toBeInTheDocument();
+      });
+
+      it('renders no picker anywhere when the coin is not owned', async () => {
+        signIn();
+        useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+        useCollectionMock.mockReturnValue(collectionResult({ data: [] }));
+        renderPage();
+
+        await screen.findByTestId('coin-detail-ownership-panel');
+        expect(screen.queryByTestId('coin-detail-grade-select')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('coin-detail-mobile-bar-grade-select')).not.toBeInTheDocument();
+      });
+
+      it('renders no picker for a signed-out visitor', async () => {
+        useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+        renderPage();
+
+        await screen.findByTestId('coin-detail-login-prompt');
+        expect(screen.queryByTestId('coin-detail-grade-select')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('coin-detail-mobile-bar-grade-select')).not.toBeInTheDocument();
+      });
+
+      it('has exactly 8 options in the panel picker: Not set first, then the seven grades in order', async () => {
+        await renderOwned(null);
+
+        const options = within(panelSelect()).getAllByRole('option');
+        expect(options.map((o) => o.getAttribute('value'))).toEqual(['', 'G', 'VG', 'F', 'VF', 'XF', 'AU', 'UNC']);
+        expect(options[0]).toHaveTextContent('Not set');
+        expect(options[4]).toHaveTextContent('VF · Very Fine');
+      });
+    });
+
+    describe('value follows the collection item (criteria 1, 2)', () => {
+      it('shows Not set when the owned item has no grade', async () => {
+        await renderOwned(null);
+
+        expect(panelSelect()).toHaveValue('');
+        expect(barSelect()).toHaveValue('');
+      });
+
+      it('shows the stored grade in both pickers', async () => {
+        await renderOwned('XF');
+
+        expect(panelSelect()).toHaveValue('XF');
+        expect(barSelect()).toHaveValue('XF');
+      });
+
+      it('shows a different stored grade when the item has a different grade', async () => {
+        await renderOwned('G');
+
+        expect(panelSelect()).toHaveValue('G');
+        expect(panelSelect()).not.toHaveValue('XF');
+      });
+    });
+
+    describe('ownership toggles send no grade (criterion 3)', () => {
+      it('un-owning from the panel calls only the ownership mutate, without a grade key', async () => {
+        const user = await renderOwned('VF');
+
+        await user.click(screen.getByTestId('coin-detail-owned-toggle'));
+
+        expect(mutateMock).toHaveBeenCalledTimes(1);
+        expect(mutateMock).toHaveBeenCalledWith({ coinId: 'coin-1', owned: false });
+        expect(mutateMock.mock.calls[0][0]).not.toHaveProperty('grade');
+        expect(gradeMutateMock).not.toHaveBeenCalled();
+      });
+
+      it('marking owned from the bar calls only the ownership mutate, without a grade key', async () => {
+        signIn();
+        useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+        useCollectionMock.mockReturnValue(collectionResult({ data: [] }));
+        const user = userEvent.setup();
+        renderPage();
+
+        await user.click(await screen.findByTestId('coin-detail-mobile-bar-toggle'));
+
+        expect(mutateMock).toHaveBeenCalledTimes(1);
+        expect(mutateMock).toHaveBeenCalledWith({ coinId: 'coin-1', owned: true });
+        expect(mutateMock.mock.calls[0][0]).not.toHaveProperty('grade');
+        expect(gradeMutateMock).not.toHaveBeenCalled();
+      });
+
+      it('Try again after a failed ownership save still sends no grade', async () => {
+        signIn();
+        useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+        useCollectionMock.mockReturnValue(collectionResult({ data: ownedWithGrade('AU') as never }));
+        useSetOwnershipMock.mockReturnValue(ownershipResult({ failedCoinIds: new Set(['coin-1']) }));
+        const user = userEvent.setup();
+        renderPage();
+
+        await user.click(await screen.findByTestId('coin-detail-owned-toggle'));
+
+        expect(mutateMock).toHaveBeenCalledWith({ coinId: 'coin-1', owned: false });
+        expect(mutateMock.mock.calls[0][0]).not.toHaveProperty('grade');
+        expect(gradeMutateMock).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('changing the grade calls useSetGrade().mutate (criterion 3)', () => {
+      it('sends { coinId, grade } when a grade is picked in the panel', async () => {
+        const user = await renderOwned(null);
+
+        await user.selectOptions(panelSelect(), 'VF');
+
+        expect(gradeMutateMock).toHaveBeenCalledTimes(1);
+        expect(gradeMutateMock).toHaveBeenCalledWith({ coinId: 'coin-1', grade: 'VF' });
+        expect(mutateMock).not.toHaveBeenCalled();
+      });
+
+      it('sends the grade that was picked (a different choice gives a different payload)', async () => {
+        const user = await renderOwned(null);
+
+        await user.selectOptions(panelSelect(), 'AU');
+
+        expect(gradeMutateMock).toHaveBeenLastCalledWith({ coinId: 'coin-1', grade: 'AU' });
+        expect(gradeMutateMock).not.toHaveBeenCalledWith({ coinId: 'coin-1', grade: 'VF' });
+      });
+
+      it('sends { coinId, grade } when a grade is picked in the mobile bar', async () => {
+        const user = await renderOwned(null);
+
+        await user.selectOptions(barSelect(), 'UNC');
+
+        expect(gradeMutateMock).toHaveBeenCalledTimes(1);
+        expect(gradeMutateMock).toHaveBeenCalledWith({ coinId: 'coin-1', grade: 'UNC' });
+      });
+
+      it('sends grade null when Not set is picked', async () => {
+        const user = await renderOwned('XF');
+
+        await user.selectOptions(panelSelect(), '');
+
+        expect(gradeMutateMock).toHaveBeenCalledTimes(1);
+        expect(gradeMutateMock).toHaveBeenCalledWith({ coinId: 'coin-1', grade: null });
+      });
+
+      it('passes an onSettled option to useSetGrade', async () => {
+        await renderOwned(null);
+
+        expect(typeof lastGradeOptions().onSettled).toBe('function');
+      });
+    });
+
+    describe('grade save state (criterion 5)', () => {
+      it('shows no alert when idle', async () => {
+        await renderOwned('VF');
+
+        expect(screen.queryByTestId('coin-detail-grade-error')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('coin-detail-mobile-bar-grade-error')).not.toBeInTheDocument();
+      });
+
+      it('shows the localized save-failed alert in both layouts when failedCoinIds has this coin', async () => {
+        signIn();
+        useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+        useCollectionMock.mockReturnValue(collectionResult({ data: ownedWithGrade('VF') as never }));
+        useSetGradeMock.mockReturnValue(gradeResult({ failedCoinIds: new Set(['coin-1']) }));
+        renderPage();
+
+        const panelAlert = await within(await screen.findByTestId('coin-detail-ownership-panel')).findByTestId(
+          'coin-detail-grade-error',
+        );
+        expect(panelAlert).toHaveAttribute('role', 'alert');
+        expect(panelAlert).toHaveTextContent('Couldn’t save the grade. It was changed back.');
+        expect(
+          within(screen.getByTestId('coin-detail-mobile-bar')).getByTestId('coin-detail-mobile-bar-grade-error'),
+        ).toHaveTextContent('Couldn’t save the grade. It was changed back.');
+      });
+
+      it('does not mark the ownership panel as failed when only the grade save failed', async () => {
+        signIn();
+        useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+        useCollectionMock.mockReturnValue(collectionResult({ data: ownedWithGrade('VF') as never }));
+        useSetGradeMock.mockReturnValue(gradeResult({ failedCoinIds: new Set(['coin-1']) }));
+        renderPage();
+
+        await screen.findByTestId('coin-detail-grade-error');
+        expect(screen.getByTestId('coin-detail-ownership-panel')).toHaveAttribute('data-state', 'owned');
+        expect(screen.getByTestId('coin-detail-owned-toggle')).not.toHaveTextContent('Try again');
+      });
+
+      it('shows no alert when the failed coin is a different coin', async () => {
+        signIn();
+        useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+        useCollectionMock.mockReturnValue(collectionResult({ data: ownedWithGrade('VF') as never }));
+        useSetGradeMock.mockReturnValue(gradeResult({ failedCoinIds: new Set(['other-coin']) }));
+        renderPage();
+
+        await screen.findByTestId('coin-detail-ownership-panel');
+        expect(screen.queryByTestId('coin-detail-grade-error')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('coin-detail-mobile-bar-grade-error')).not.toBeInTheDocument();
+      });
+
+      it('marks the pickers busy while the grade mutation is pending, and leaves them enabled', async () => {
+        signIn();
+        useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+        useCollectionMock.mockReturnValue(collectionResult({ data: ownedWithGrade('VF') as never }));
+        useSetGradeMock.mockReturnValue(gradeResult({ isPending: true }));
+        renderPage();
+
+        await screen.findByTestId('coin-detail-ownership-panel');
+        expect(panelSelect()).toHaveAttribute('aria-busy', 'true');
+        expect(barSelect()).toHaveAttribute('aria-busy', 'true');
+        expect(panelSelect()).toBeEnabled();
+      });
+
+      it('is not busy when idle', async () => {
+        await renderOwned('VF');
+
+        expect(panelSelect()).not.toHaveAttribute('aria-busy', 'true');
+      });
+    });
+
+    describe('live region announcements', () => {
+      async function renderForLive() {
+        await renderOwned('VF');
+        return screen.getByTestId('coin-detail-live');
+      }
+
+      it('announces a saved grade with the coin title', async () => {
+        const live = await renderForLive();
+        act(() => {
+          lastGradeOptions().onSettled?.(null, { coinId: 'coin-1', grade: 'XF' });
+        });
+        expect(live).toHaveTextContent('Grade saved for Type 2.');
+      });
+
+      it('announces a failed grade save with the coin title', async () => {
+        const live = await renderForLive();
+        act(() => {
+          lastGradeOptions().onSettled?.(new Error('boom'), { coinId: 'coin-1', grade: 'XF' });
+        });
+        expect(live).toHaveTextContent('Couldn’t save the grade for Type 2.');
+        expect(live).not.toHaveTextContent('Grade saved');
+      });
+
+      it('announces a cleared grade (null) as saved too', async () => {
+        const live = await renderForLive();
+        act(() => {
+          lastGradeOptions().onSettled?.(null, { coinId: 'coin-1', grade: null });
+        });
+        expect(live).toHaveTextContent('Grade saved for Type 2.');
+      });
+
+      it('ignores grade settles for other coins', async () => {
+        const live = await renderForLive();
+        act(() => {
+          lastGradeOptions().onSettled?.(null, { coinId: 'other-coin', grade: 'XF' });
+        });
+        expect(live).toHaveTextContent(/^$/);
+      });
+
+      it('does not use the ownership messages for grade settles', async () => {
+        const live = await renderForLive();
+        act(() => {
+          lastGradeOptions().onSettled?.(null, { coinId: 'coin-1', grade: 'VF' });
+        });
+        expect(live).not.toHaveTextContent('marked as owned');
+        expect(live).not.toHaveTextContent('removed from your collection');
+      });
+
+      it('does not steal focus from the grade select', async () => {
+        await renderForLive();
+        const select = panelSelect();
+        select.focus();
+        act(() => {
+          lastGradeOptions().onSettled?.(null, { coinId: 'coin-1', grade: 'XF' });
+        });
+        expect(select).toHaveFocus();
+      });
     });
   });
 });

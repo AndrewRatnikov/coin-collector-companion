@@ -3,8 +3,10 @@
  * Contract source: runs/run_20261017_142658/plan.md § Interface Contract → Module: ownership-cache
  *                   runs/run_20261019_221037/plan.md § Interface Contract → Function: applyOwnershipToCatalogPage
  *                   runs/run_20261102_194108/plan.md § Interface Contract → Web: applyOwnershipToCollection
+ *                   runs/run_20261102_220909/plan.md § Interface Contract → Functions: grade cache patchers
  * Covers criteria: #14 (from run_20261017_142658's prd.md), #11 (from run_20261019_221037's prd.md),
  *                  #5, #6 (from run_20261102_194108's prd.md: a new optimistic row is ungraded)
+ *                  #4, #6, #11 (from run_20261102_220909's prd.md: grade patchers, un-own clears grade, counts untouched)
  *
  * CONTRACT_GAPS: none
  */
@@ -18,6 +20,8 @@ import type {
   PaginatedResponse,
 } from '@coin-collector/shared';
 import {
+  applyGradeToCollection,
+  applyGradeToGaps,
   applyOwnershipToCatalogPage,
   applyOwnershipToCollection,
   applyOwnershipToGaps,
@@ -154,6 +158,226 @@ describe('applyOwnershipToGaps', () => {
     applyOwnershipToGaps(gaps, 'coin-1', true);
     expect(JSON.stringify(gaps)).toBe(snapshot);
   });
+
+  describe('un-own clears the slot grade (run_20261102_220909 criterion #6)', () => {
+    function gradedGaps(): GapViewResponse {
+      return {
+        ...makeGaps(),
+        ownedCount: 2,
+        completionPercent: 67,
+        slots: [
+          { id: 'slot-1', position: 0, coin: COIN_1, owned: true, grade: 'VF' },
+          { id: 'slot-2', position: 1, coin: COIN_2, owned: true, grade: 'AU' },
+          { id: 'slot-3', position: 2, coin: COIN_3, owned: false, grade: null },
+        ],
+      };
+    }
+
+    it('sets grade to null on the slot that becomes un-owned, leaving other grades alone', () => {
+      const result = applyOwnershipToGaps(gradedGaps(), 'coin-1', false);
+
+      expect(result.slots[0].owned).toBe(false);
+      expect(result.slots[0].grade).toBeNull();
+      expect(result.slots[1].owned).toBe(true);
+      expect(result.slots[1].grade).toBe('AU');
+    });
+
+    it('clears a different slot grade for a different coin', () => {
+      const result = applyOwnershipToGaps(gradedGaps(), 'coin-2', false);
+
+      expect(result.slots[1].grade).toBeNull();
+      expect(result.slots[0].grade).toBe('VF');
+    });
+
+    it('does not invent a grade when a slot becomes owned', () => {
+      const result = applyOwnershipToGaps(gradedGaps(), 'coin-3', true);
+      expect(result.slots[2].owned).toBe(true);
+      expect(result.slots[2].grade).toBeNull();
+    });
+
+    it('with minGrade null adds no upgrade keys when un-owning', () => {
+      const result = applyOwnershipToGaps(gradedGaps(), 'coin-1', false);
+      expect(result.slots[0]).not.toHaveProperty('needsUpgrade');
+      expect(result).not.toHaveProperty('upgradeCount');
+    });
+
+    it('with a minGrade, an un-owned slot no longer needs an upgrade and upgradeCount is recomputed', () => {
+      const gaps: GapViewResponse = {
+        ...gradedGaps(),
+        minGrade: 'XF',
+        upgradeCount: 1,
+        slots: [
+          { id: 'slot-1', position: 0, coin: COIN_1, owned: true, grade: 'VF', needsUpgrade: true },
+          { id: 'slot-2', position: 1, coin: COIN_2, owned: true, grade: 'AU', needsUpgrade: false },
+          { id: 'slot-3', position: 2, coin: COIN_3, owned: false, grade: null, needsUpgrade: false },
+        ],
+      };
+      const result = applyOwnershipToGaps(gaps, 'coin-1', false);
+
+      expect(result.slots[0].grade).toBeNull();
+      expect(result.slots[0].needsUpgrade).toBe(false);
+      expect(result.slots[1].needsUpgrade).toBe(false);
+      expect(result.upgradeCount).toBe(0);
+    });
+  });
+});
+
+describe('applyGradeToGaps', () => {
+  function gradedGaps(): GapViewResponse {
+    return {
+      setId: 'set-1',
+      ownedCount: 2,
+      totalCount: 3,
+      completionPercent: 67,
+      minGrade: null,
+      slots: [
+        { id: 'slot-1', position: 0, coin: COIN_1, owned: true, grade: 'F' },
+        { id: 'slot-2', position: 1, coin: COIN_2, owned: true, grade: null },
+        { id: 'slot-3', position: 2, coin: COIN_3, owned: false, grade: null },
+      ],
+    };
+  }
+
+  function gapsWithMin(): GapViewResponse {
+    return {
+      setId: 'set-1',
+      ownedCount: 2,
+      totalCount: 3,
+      completionPercent: 67,
+      minGrade: 'VF',
+      upgradeCount: 1,
+      slots: [
+        { id: 'slot-1', position: 0, coin: COIN_1, owned: true, grade: 'F', needsUpgrade: true },
+        { id: 'slot-2', position: 1, coin: COIN_2, owned: true, grade: 'XF', needsUpgrade: false },
+        { id: 'slot-3', position: 2, coin: COIN_3, owned: false, grade: null, needsUpgrade: false },
+      ],
+    };
+  }
+
+  it('sets the grade on the owned slot of that coin only', () => {
+    const result = applyGradeToGaps(gradedGaps(), 'coin-1', 'XF');
+
+    expect(result.slots.map((s) => s.grade)).toEqual(['XF', null, null]);
+  });
+
+  it('sets a different grade on a different coin', () => {
+    const result = applyGradeToGaps(gradedGaps(), 'coin-2', 'UNC');
+
+    expect(result.slots.map((s) => s.grade)).toEqual(['F', 'UNC', null]);
+  });
+
+  it('can clear a grade with null', () => {
+    const result = applyGradeToGaps(gradedGaps(), 'coin-1', null);
+
+    expect(result.slots[0].grade).toBeNull();
+    expect(result.slots[0].owned).toBe(true);
+  });
+
+  it('leaves slots with owned false alone', () => {
+    const gaps = gradedGaps();
+    const result = applyGradeToGaps(gaps, 'coin-3', 'VF');
+
+    expect(result.slots[2]).toEqual(gaps.slots[2]);
+    expect(result.slots[2].grade).toBeNull();
+    expect(result).toBe(gaps);
+  });
+
+  it('updates every owned slot that holds the coin', () => {
+    const gaps: GapViewResponse = {
+      ...gradedGaps(),
+      slots: [
+        { id: 'slot-1', position: 0, coin: COIN_1, owned: true, grade: null },
+        { id: 'slot-2', position: 1, coin: COIN_2, owned: true, grade: null },
+        { id: 'slot-3', position: 2, coin: COIN_1, owned: true, grade: 'G' },
+      ],
+    };
+    const result = applyGradeToGaps(gaps, 'coin-1', 'AU');
+
+    expect(result.slots.map((s) => s.grade)).toEqual(['AU', null, 'AU']);
+  });
+
+  it('never touches ownedCount, totalCount or completionPercent', () => {
+    const before = gradedGaps();
+    const result = applyGradeToGaps(before, 'coin-1', 'UNC');
+
+    expect(result.ownedCount).toBe(before.ownedCount);
+    expect(result.totalCount).toBe(before.totalCount);
+    expect(result.completionPercent).toBe(before.completionPercent);
+    expect(result.setId).toBe('set-1');
+    expect(result.slots[1]).toBe(before.slots[1]);
+  });
+
+  it('returns the same reference when the coin is not in the set', () => {
+    const gaps = gradedGaps();
+    expect(applyGradeToGaps(gaps, 'coin-unknown', 'VF')).toBe(gaps);
+  });
+
+  it('returns the same reference when the owned slot already has that grade', () => {
+    const gaps = gradedGaps();
+    expect(applyGradeToGaps(gaps, 'coin-1', 'F')).toBe(gaps);
+    expect(applyGradeToGaps(gaps, 'coin-2', null)).toBe(gaps);
+  });
+
+  it('returns the same reference for an empty set', () => {
+    const empty: GapViewResponse = {
+      setId: 'set-0',
+      ownedCount: 0,
+      totalCount: 0,
+      completionPercent: 0,
+      minGrade: null,
+      slots: [],
+    };
+    expect(applyGradeToGaps(empty, 'coin-1', 'VF')).toBe(empty);
+  });
+
+  it('with minGrade null adds neither needsUpgrade nor upgradeCount', () => {
+    const result = applyGradeToGaps(gradedGaps(), 'coin-1', 'XF');
+
+    expect(result.slots[0]).not.toHaveProperty('needsUpgrade');
+    expect(result).not.toHaveProperty('upgradeCount');
+  });
+
+  it('with a minGrade, an upgrade below the minimum keeps needsUpgrade true', () => {
+    const result = applyGradeToGaps(gapsWithMin(), 'coin-1', 'VG');
+
+    expect(result.slots[0].grade).toBe('VG');
+    expect(result.slots[0].needsUpgrade).toBe(true);
+    expect(result.upgradeCount).toBe(1);
+  });
+
+  it('with a minGrade, reaching the minimum clears needsUpgrade and recomputes upgradeCount', () => {
+    const result = applyGradeToGaps(gapsWithMin(), 'coin-1', 'VF');
+
+    expect(result.slots[0].needsUpgrade).toBe(false);
+    expect(result.upgradeCount).toBe(0);
+  });
+
+  it('with a minGrade, dropping below the minimum sets needsUpgrade and raises upgradeCount', () => {
+    const result = applyGradeToGaps(gapsWithMin(), 'coin-2', 'G');
+
+    expect(result.slots[1].grade).toBe('G');
+    expect(result.slots[1].needsUpgrade).toBe(true);
+    expect(result.slots[0].needsUpgrade).toBe(true);
+    expect(result.upgradeCount).toBe(2);
+  });
+
+  it('with a minGrade, counts and completion are still untouched', () => {
+    const before = gapsWithMin();
+    const result = applyGradeToGaps(before, 'coin-1', 'UNC');
+
+    expect(result.ownedCount).toBe(before.ownedCount);
+    expect(result.totalCount).toBe(before.totalCount);
+    expect(result.completionPercent).toBe(before.completionPercent);
+    expect(result.minGrade).toBe('VF');
+  });
+
+  it('does not mutate its input', () => {
+    const gaps = gapsWithMin();
+    const snapshot = JSON.stringify(gaps);
+    applyGradeToGaps(gaps, 'coin-1', 'UNC');
+    applyGradeToGaps(gaps, 'coin-2', null);
+    expect(JSON.stringify(gaps)).toBe(snapshot);
+  });
 });
 
 describe('applyOwnershipToCollection', () => {
@@ -245,6 +469,59 @@ describe('applyOwnershipToCollection', () => {
     applyOwnershipToCollection(items, 'coin-1', true, COIN_1, {}, OWNED_AT);
     applyOwnershipToCollection(items, 'coin-2', false, null, {}, OWNED_AT);
     expect(JSON.stringify(items)).toBe(snapshot);
+  });
+});
+
+describe('applyGradeToCollection', () => {
+  const EARLIER = new Date('2026-01-02T00:00:00.000Z');
+  const ITEM_2: OwnershipItem = { coinId: 'coin-2', coin: COIN_2, ownedAt: EARLIER, grade: null };
+  const ITEM_3: OwnershipItem = { coinId: 'coin-3', coin: COIN_3, ownedAt: EARLIER, grade: 'G' };
+  const items: OwnershipItem[] = [ITEM_2, ITEM_3];
+
+  it('sets the grade on the matching item and keeps the others by reference', () => {
+    const result = applyGradeToCollection(items, 'coin-2', 'VF');
+
+    expect(result).not.toBe(items);
+    expect(result[0]).toEqual({ ...ITEM_2, grade: 'VF' });
+    expect(result[1]).toBe(ITEM_3);
+  });
+
+  it('sets a different grade on a different item', () => {
+    const result = applyGradeToCollection(items, 'coin-3', 'UNC');
+
+    expect(result[0]).toBe(ITEM_2);
+    expect(result[1].grade).toBe('UNC');
+    expect(result.map((i) => i.coinId)).toEqual(['coin-2', 'coin-3']);
+  });
+
+  it('can clear a grade with null', () => {
+    const result = applyGradeToCollection(items, 'coin-3', null);
+
+    expect(result[1].grade).toBeNull();
+    expect(result[1].coinId).toBe('coin-3');
+  });
+
+  it('returns the same reference when the coin is not listed', () => {
+    expect(applyGradeToCollection(items, 'coin-unknown', 'VF')).toBe(items);
+  });
+
+  it('returns the same reference when the item already has that grade', () => {
+    expect(applyGradeToCollection(items, 'coin-3', 'G')).toBe(items);
+    expect(applyGradeToCollection(items, 'coin-2', null)).toBe(items);
+  });
+
+  it('returns the same reference for an empty list', () => {
+    const empty: OwnershipItem[] = [];
+    expect(applyGradeToCollection(empty, 'coin-1', 'VF')).toBe(empty);
+  });
+
+  it('does not mutate its input', () => {
+    const snapshot = JSON.stringify(items);
+    applyGradeToCollection(items, 'coin-2', 'AU');
+    applyGradeToCollection(items, 'coin-3', null);
+    expect(JSON.stringify(items)).toBe(snapshot);
+    expect(items[0]).toBe(ITEM_2);
+    expect(ITEM_2.grade).toBeNull();
   });
 });
 
