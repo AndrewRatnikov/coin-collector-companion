@@ -2,12 +2,15 @@
 // new value when something changes and the same reference when nothing does; none mutates
 // its input. The settle-time invalidation still refetches the real server state.
 
-import type {
-  CatalogCoin,
-  CatalogListItem,
-  GapViewResponse,
-  OwnershipItem,
-  PaginatedResponse,
+import {
+  meetsMinGrade,
+  type CatalogCoin,
+  type CatalogListItem,
+  type CoinGrade,
+  type GapSlot,
+  type GapViewResponse,
+  type OwnershipItem,
+  type PaginatedResponse,
 } from '@coin-collector/shared';
 import type { CatalogFilters } from '@/lib/catalog-api';
 import type { CollectionFilters } from '@/lib/collection-api';
@@ -17,23 +20,69 @@ function completionPercent(ownedCount: number, totalCount: number): number {
   return totalCount === 0 ? 0 : Math.round((ownedCount / totalCount) * 100);
 }
 
-/** Sets `owned` on every slot holding the coin and recounts the set's progress. */
+/**
+ * A changed slot's `needsUpgrade`, only when the set has a minGrade (the API adds the key only
+ * then): owned && !meetsMinGrade(grade, minGrade). With no minGrade the slot is returned as is.
+ */
+function withNeedsUpgrade(slot: GapSlot, minGrade: CoinGrade | null): GapSlot {
+  if (minGrade === null) return slot;
+  return { ...slot, needsUpgrade: slot.owned && !meetsMinGrade(slot.grade, minGrade) };
+}
+
+/** `upgradeCount` (slots with needsUpgrade === true), present only when the set has a minGrade. */
+function withUpgradeCount(gaps: GapViewResponse): GapViewResponse {
+  if (gaps.minGrade === null) return gaps;
+  return { ...gaps, upgradeCount: gaps.slots.filter((slot) => slot.needsUpgrade === true).length };
+}
+
+/**
+ * Sets `owned` on every slot holding the coin and recounts the set's progress. A slot that
+ * becomes un-owned also loses its grade (the API deletes the row and its grade).
+ */
 export function applyOwnershipToGaps(gaps: GapViewResponse, coinId: string, owned: boolean): GapViewResponse {
   let changed = false;
   const slots = gaps.slots.map((slot) => {
     if (slot.coin.id !== coinId || slot.owned === owned) return slot;
     changed = true;
-    return { ...slot, owned };
+    return withNeedsUpgrade(owned ? { ...slot, owned } : { ...slot, owned, grade: null }, gaps.minGrade);
   });
   if (!changed) return gaps;
 
   const ownedCount = slots.filter((slot) => slot.owned).length;
-  return {
+  return withUpgradeCount({
     ...gaps,
     slots,
     ownedCount,
     completionPercent: completionPercent(ownedCount, gaps.totalCount),
-  };
+  });
+}
+
+/**
+ * Sets `grade` on every owned slot holding the coin. Counts and completion never change;
+ * `needsUpgrade` / `upgradeCount` are recomputed only when the set has a minGrade.
+ */
+export function applyGradeToGaps(gaps: GapViewResponse, coinId: string, grade: CoinGrade | null): GapViewResponse {
+  let changed = false;
+  const slots = gaps.slots.map((slot) => {
+    if (slot.coin.id !== coinId || !slot.owned || slot.grade === grade) return slot;
+    changed = true;
+    return withNeedsUpgrade({ ...slot, grade }, gaps.minGrade);
+  });
+  if (!changed) return gaps;
+  return withUpgradeCount({ ...gaps, slots });
+}
+
+/** Sets `grade` on the coin's collection item; same reference when unlisted or unchanged. */
+export function applyGradeToCollection(
+  items: OwnershipItem[],
+  coinId: string,
+  grade: CoinGrade | null,
+): OwnershipItem[] {
+  const index = items.findIndex((item) => item.coinId === coinId);
+  if (index === -1 || items[index].grade === grade) return items;
+  const next = items.slice();
+  next[index] = { ...items[index], grade };
+  return next;
 }
 
 function matchesCollectionFilters(coin: CatalogCoin, filters: CollectionFilters): boolean {

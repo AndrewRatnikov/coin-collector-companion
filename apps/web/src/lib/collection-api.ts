@@ -1,5 +1,6 @@
 import type {
   BulkSetOwnershipResponse,
+  CoinGrade,
   OwnershipItem,
   SetOwnershipResponse,
 } from '@coin-collector/shared';
@@ -20,10 +21,18 @@ export async function getCollection(filters: CollectionFilters = {}): Promise<Ow
   return apiFetch<OwnershipItem[]>(`/collection${query ? `?${query}` : ''}`);
 }
 
-export async function setOwnership(coinId: string, owned: boolean): Promise<SetOwnershipResponse> {
+/**
+ * `grade` undefined sends exactly `{ owned }` (ownership toggles never send a grade key);
+ * otherwise `{ owned, grade }`, with `null` kept to clear the grade.
+ */
+export async function setOwnership(
+  coinId: string,
+  owned: boolean,
+  grade?: CoinGrade | null,
+): Promise<SetOwnershipResponse> {
   return apiFetch<SetOwnershipResponse>(`/collection/${coinId}`, {
     method: 'PATCH',
-    body: JSON.stringify({ owned }),
+    body: JSON.stringify(grade === undefined ? { owned } : { owned, grade }),
   });
 }
 
