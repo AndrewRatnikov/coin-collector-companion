@@ -1,6 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import type { CoinGrade } from '@coin-collector/shared';
+import { CoinGradePicker } from '@/components/catalog/coin-grade-picker';
 import { useDelayedPending, type StatusToggleState } from '@/components/ui/status-toggle';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import type { MessageKey } from '@/lib/i18n/locales/en';
@@ -16,6 +18,12 @@ export interface CoinOwnershipPanelProps {
   onRetry: () => void;
   /** Extra classes on the root, e.g. the page's negative margin that bleeds the bar to the edges. */
   className?: string;
+  /** The owned coin's grade. Default null (Not set). */
+  grade?: CoinGrade | null;
+  /** The grade save's state. Default 'idle'; it never changes the ownership styling. */
+  gradeState?: StatusToggleState;
+  /** When given (and the coin is owned), the grade picker renders. */
+  onGradeChange?: (grade: CoinGrade | null) => void;
 }
 
 function TickIcon({ className }: { className: string }) {
@@ -51,6 +59,9 @@ export function CoinOwnershipPanel({
   onToggle,
   onRetry,
   className = '',
+  grade = null,
+  gradeState = 'idle',
+  onGradeChange,
 }: CoinOwnershipPanelProps) {
   const { t } = useTranslation();
   const pending = state === 'pending';
@@ -150,6 +161,11 @@ export function CoinOwnershipPanel({
     </button>
   );
 
+  const gradePicker =
+    owned && onGradeChange !== undefined ? (
+      <CoinGradePicker layout={layout} grade={grade} state={gradeState} onChange={onGradeChange} />
+    ) : null;
+
   const title = (
     <p data-testid="coin-detail-ownership-title" className="text-[15px] font-semibold text-text">
       {t(titleKey)}
@@ -164,11 +180,12 @@ export function CoinOwnershipPanel({
         aria-label={t('coinDetail.ownershipLabel')}
         data-testid="coin-detail-mobile-bar"
         data-state={panelState}
-        className={`sticky bottom-16 z-[8] flex items-center gap-3 border-t border-[var(--color-divider)] py-3 pl-[max(16px,env(safe-area-inset-left))] pr-[max(16px,env(safe-area-inset-right))] min-[900px]:hidden ${barTone} ${className}`.trimEnd()}
+        className={`sticky bottom-16 z-[8] flex flex-wrap items-center gap-3 border-t border-[var(--color-divider)] py-3 pl-[max(16px,env(safe-area-inset-left))] pr-[max(16px,env(safe-area-inset-right))] min-[900px]:hidden ${barTone} ${className}`.trimEnd()}
       >
         {disc}
         <div className="min-w-0 flex-1">{title}</div>
         {button}
+        {gradePicker}
       </div>
     );
   }
@@ -191,6 +208,7 @@ export function CoinOwnershipPanel({
         <p data-testid="coin-detail-ownership-note" className="text-[13px] text-neutral-700">
           {t(noteKey)}
         </p>
+        {gradePicker}
       </div>
       {button}
     </section>

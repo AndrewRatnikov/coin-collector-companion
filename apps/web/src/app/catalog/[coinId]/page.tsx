@@ -3,9 +3,15 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useQueries } from '@tanstack/react-query';
-import { formatCoinLabel, getCoinName } from '@coin-collector/shared';
+import { formatCoinLabel, getCoinName, type CoinGrade } from '@coin-collector/shared';
 import { useCoin } from '@/lib/hooks/use-catalog';
-import { useCollection, useSetOwnership, type SetOwnershipVariables } from '@/lib/hooks/use-collection';
+import {
+  useCollection,
+  useSetGrade,
+  useSetOwnership,
+  type SetGradeVariables,
+  type SetOwnershipVariables,
+} from '@/lib/hooks/use-collection';
 import { useAddCoinsToSet, useUserSets } from '@/lib/hooks/use-user-sets';
 import { getSetGaps } from '@/lib/user-sets-api';
 import { getStoredToken } from '@/lib/auth-token';
@@ -84,7 +90,7 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
   const coinName = coin ? getCoinName(coin) : null;
   const coinTitle = coinName?.title ?? '';
 
-  // One polite live region for the page: ownership saves and set adds both announce here.
+  // One polite live region for the page: ownership saves, grade saves and set adds announce here.
   const [liveMessage, setLiveMessage] = useState('');
 
   // Both are authenticated endpoints: gate them on isLoggedIn so an anonymous visitor
@@ -96,6 +102,13 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
       let key: MessageKey;
       if (error) key = 'coinDetail.liveFailed';
       else key = vars.owned ? 'coinDetail.liveOwned' : 'coinDetail.liveRemoved';
+      setLiveMessage(fill(t(key), { title: coinTitle }));
+    },
+  });
+  const gradeMutation = useSetGrade({
+    onSettled: (error: Error | null, vars: SetGradeVariables) => {
+      if (vars.coinId !== coinId) return;
+      const key: MessageKey = error ? 'coinDetail.liveGradeFailed' : 'coinDetail.liveGradeSaved';
       setLiveMessage(fill(t(key), { title: coinTitle }));
     },
   });
@@ -121,7 +134,15 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
   }
   const currentCoinId = coinId;
 
-  const owned = collection?.some((item) => item.coinId === currentCoinId) ?? false;
+  const ownedItem = collection?.find((item) => item.coinId === currentCoinId);
+  const owned = ownedItem !== undefined;
+  // Follows the collection cache, which useSetGrade patches optimistically.
+  const grade: CoinGrade | null = ownedItem?.grade ?? null;
+  const gradeState: StatusToggleState = gradeMutation.isPending
+    ? 'pending'
+    : gradeMutation.failedCoinIds.has(currentCoinId)
+      ? 'failed'
+      : 'idle';
   const pending = ownership.isPending;
   const failed = ownership.failedCoinIds.has(currentCoinId);
   const ownershipState: StatusToggleState = pending ? 'pending' : failed ? 'failed' : 'idle';
@@ -135,6 +156,10 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
 
   function handleRetry() {
     ownership.mutate({ coinId: currentCoinId, owned: lastTargetRef.current ?? !owned });
+  }
+
+  function handleGradeChange(next: CoinGrade | null) {
+    gradeMutation.mutate({ coinId: currentCoinId, grade: next });
   }
 
   const setRows = getCoinSetRows(
@@ -313,6 +338,9 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
                 state={ownershipState}
                 onToggle={handleToggle}
                 onRetry={handleRetry}
+                grade={grade}
+                gradeState={gradeState}
+                onGradeChange={handleGradeChange}
               />
             ) : (
               <p data-testid="coin-detail-login-prompt" className="text-sm text-neutral-700">
@@ -443,6 +471,9 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
           state={ownershipState}
           onToggle={handleToggle}
           onRetry={handleRetry}
+          grade={grade}
+          gradeState={gradeState}
+          onGradeChange={handleGradeChange}
           className={BAR_BLEED}
         />
       )}
