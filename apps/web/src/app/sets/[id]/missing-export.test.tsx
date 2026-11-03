@@ -7,6 +7,9 @@
  * run_20261017_210503: the page now also calls useBulkSetOwnership and useAddCoinsToSet, so the module
  * mock factories return them too. Nothing else changes in this file.
  *
+ * run_20261103_192441: the page now imports useUpdateSetMinGrade, so the use-user-sets mock lists it and
+ * setDefaultMocks gives it a default return. Nothing else changes here.
+ *
  * CONTRACT_GAPs: none
  */
 
@@ -21,6 +24,7 @@ import {
   usePatchSetCoins,
   useRenameSet,
   useSetGaps,
+  useUpdateSetMinGrade,
   useUserSets,
 } from '@/lib/hooks/use-user-sets';
 import { useBulkSetOwnership, useSetOwnership } from '@/lib/hooks/use-collection';
@@ -45,6 +49,7 @@ vi.mock('@/lib/hooks/use-user-sets', () => ({
   useAddCoinsToSet: vi.fn(),
   useRenameSet: vi.fn(),
   useDeleteSet: vi.fn(),
+  useUpdateSetMinGrade: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/use-collection', () => ({
@@ -63,6 +68,7 @@ const usePatchSetCoinsMock = vi.mocked(usePatchSetCoins);
 const useAddCoinsToSetMock = vi.mocked(useAddCoinsToSet);
 const useRenameSetMock = vi.mocked(useRenameSet);
 const useDeleteSetMock = vi.mocked(useDeleteSet);
+const useUpdateSetMinGradeMock = vi.mocked(useUpdateSetMinGrade);
 const useSetOwnershipMock = vi.mocked(useSetOwnership);
 const useBulkSetOwnershipMock = vi.mocked(useBulkSetOwnership);
 const useCatalogMock = vi.mocked(useCatalog);
@@ -161,6 +167,7 @@ function setDefaultMocks(gaps: unknown = GAPS) {
   useAddCoinsToSetMock.mockReturnValue(mutationMock());
   useRenameSetMock.mockReturnValue(mutationMock());
   useDeleteSetMock.mockReturnValue(mutationMock());
+  useUpdateSetMinGradeMock.mockReturnValue({ mutate: vi.fn(), isPending: false, variables: undefined } as never);
   useSetOwnershipMock.mockReturnValue(mutationMock());
   useBulkSetOwnershipMock.mockReturnValue(mutationMock());
   useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));
@@ -202,6 +209,7 @@ describe('SetEditorPage missing-list controls', () => {
       useAddCoinsToSetMock,
       useRenameSetMock,
       useDeleteSetMock,
+      useUpdateSetMinGradeMock,
       useSetOwnershipMock,
       useBulkSetOwnershipMock,
       useCatalogMock,

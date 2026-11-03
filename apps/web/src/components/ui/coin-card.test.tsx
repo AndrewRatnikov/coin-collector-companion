@@ -2,8 +2,10 @@
  * Tests for: CoinCard
  * Contract source: runs/run_20261017_142658/plan.md § Interface Contract → Component: CoinCard
  * Extended by: runs/run_20261019_073415/plan.md § Interface Contract → Component: CoinCard (MODIFY, additive)
+ *              runs/run_20261103_192441/plan.md § Interface Contract → Component: CoinCard (MODIFY)
  * Covers criteria: #8, #16 (from prd.md): owned, missing, pending, failed, key date, selected, visitor
  *                  run_20261019_073415: #8, #10 (toggleLabel, missingStatusLabel)
+ *                  run_20261103_192441: #5, #6, #10 (needsUpgrade state)
  *
  * The pending status text waits 150ms (useDelayedPending), so that block uses fake timers.
  *
@@ -398,6 +400,103 @@ describe('CoinCard: missingStatusLabel (run_20261019_073415)', () => {
   it('keeps "Missing" when the prop is absent', () => {
     renderCard({ owned: false });
     expect(screen.getByTestId('coin-card-status')).toHaveTextContent(/^Missing$/);
+  });
+});
+
+describe('CoinCard: needsUpgrade (run_20261103_192441 criteria 5, 6, 10)', () => {
+  it('owned + needsUpgrade: the status line holds the Upgrade badge instead of "In collection"', () => {
+    renderCard({ owned: true, needsUpgrade: true });
+    const status = screen.getByTestId('coin-card-status');
+
+    expect(within(status).getByTestId('coin-card-upgrade')).toBeInTheDocument();
+    expect(within(status).getByTestId('coin-card-upgrade')).toHaveTextContent('Upgrade');
+    expect(status).not.toHaveTextContent('In collection');
+    expect(screen.queryByTestId('upgrade-badge')).not.toBeInTheDocument();
+  });
+
+  it('sets data-upgrade="true" on the root, and "false" without needsUpgrade', () => {
+    const { unmount } = renderCard({ owned: true, needsUpgrade: true });
+    expect(screen.getByTestId('coin-card')).toHaveAttribute('data-upgrade', 'true');
+    unmount();
+
+    renderCard({ owned: true });
+    expect(screen.getByTestId('coin-card')).toHaveAttribute('data-upgrade', 'false');
+    expect(screen.queryByTestId('coin-card-upgrade')).not.toBeInTheDocument();
+    expect(screen.getByTestId('coin-card-status')).toHaveTextContent(/^In collection$/);
+  });
+
+  it('is still owned: data-state owned, check pressed, accent background', () => {
+    renderCard({ owned: true, needsUpgrade: true });
+    const card = screen.getByTestId('coin-card');
+
+    expect(card).toHaveAttribute('data-state', 'owned');
+    expect(card.className).toContain('bg-accent-100');
+    expect(screen.getByTestId('status-toggle')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('gets a dashed accent border', () => {
+    const { unmount } = renderCard({ owned: true, needsUpgrade: true });
+    const cls = screen.getByTestId('coin-card').className;
+    expect(cls).toContain('border-dashed');
+    expect(cls).toContain('border-accent-700');
+    unmount();
+
+    renderCard({ owned: true });
+    expect(screen.getByTestId('coin-card').className).not.toContain('border-dashed');
+  });
+
+  it('keeps the grade chip next to the Upgrade badge when graded', () => {
+    renderCard({ owned: true, needsUpgrade: true, grade: 'F' });
+
+    expect(screen.getByTestId('coin-card-upgrade')).toBeInTheDocument();
+    expect(screen.getByTestId('coin-card-grade')).toHaveTextContent(/^F$/);
+  });
+
+  it('has no effect on a missing card', () => {
+    renderCard({ owned: false, needsUpgrade: true });
+
+    expect(screen.queryByTestId('coin-card-upgrade')).not.toBeInTheDocument();
+    expect(screen.getByTestId('coin-card')).toHaveAttribute('data-upgrade', 'false');
+    expect(screen.getByTestId('coin-card-status')).toHaveTextContent(/^Missing$/);
+  });
+
+  it('has no effect for a visitor, even when owned', () => {
+    renderCard({ owned: true, needsUpgrade: true, visitor: true });
+
+    expect(screen.queryByTestId('coin-card-upgrade')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('coin-card-status')).not.toBeInTheDocument();
+    expect(screen.getByTestId('coin-card')).toHaveAttribute('data-upgrade', 'false');
+    expect(screen.getByTestId('coin-card')).toHaveAttribute('data-state', 'visitor');
+  });
+
+  it('failed status text wins over the Upgrade badge, and the danger border wins', () => {
+    renderCard({ owned: true, needsUpgrade: true, status: 'failed' });
+    const card = screen.getByTestId('coin-card');
+
+    expect(screen.getByTestId('coin-card-status')).toHaveTextContent('Couldn’t save');
+    expect(screen.queryByTestId('coin-card-upgrade')).not.toBeInTheDocument();
+    expect(card.className).toContain('border-danger');
+    expect(card.className).not.toContain('border-accent-700');
+  });
+
+  it('the pending "Saving…" text takes precedence over the Upgrade badge', () => {
+    vi.useFakeTimers();
+    try {
+      renderCard({ owned: true, needsUpgrade: true, status: 'pending' });
+      act(() => {
+        vi.advanceTimersByTime(150);
+      });
+      expect(screen.getByTestId('coin-card-status')).toHaveTextContent(/^Saving…$/);
+      expect(screen.queryByTestId('coin-card-upgrade')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('still calls onToggle from the check in the Upgrade state', () => {
+    const { onToggle } = renderCard({ owned: true, needsUpgrade: true });
+    fireEvent.click(screen.getByTestId('status-toggle'));
+    expect(onToggle).toHaveBeenCalledTimes(1);
   });
 });
 

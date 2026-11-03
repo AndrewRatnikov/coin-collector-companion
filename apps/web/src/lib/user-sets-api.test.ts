@@ -2,11 +2,14 @@
  * Tests for: user-sets-api
  * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Module: user-sets-api.ts (MODIFY)
  *                   runs/run_20261018_105617/plan.md § Interface Contract → Module: user-sets-api.ts (MODIFY)
- * Covers criteria: #1 (from prd.md); #2, #3 (from run_20261018_105617's prd.md)
+ *                   runs/run_20261103_192441/plan.md § Interface Contract → Module: user-sets-api (MODIFY)
+ * Covers criteria: #1 (from prd.md); #2, #3 (from run_20261018_105617's prd.md);
+ *                  #2 (run_20261103_192441: updateSetMinGrade payloads, untranslated codes)
  *
  * This file supersedes the prior run's version of the same file, adding
  * patchSetCoins coverage alongside the existing getUserSets/createSet/renameSet/
  * deleteSet/getSetGaps tests (all unchanged from before), and getSetsSummary.
+ * run_20261103_192441 adds updateSetMinGrade.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -19,6 +22,7 @@ import {
   getUserSets,
   patchSetCoins,
   renameSet,
+  updateSetMinGrade,
 } from '@/lib/user-sets-api';
 
 function stubFetchResolving(status: number, body: unknown) {
@@ -147,6 +151,60 @@ describe('user-sets-api', () => {
       expect(init.method).toBe('PATCH');
       expect(JSON.parse(init.body as string)).toEqual({ name: 'Renamed' });
       expect(result).toEqual(updated);
+    });
+
+    it('still sends { name } only (no minGrade key)', async () => {
+      const fetchMock = stubFetchResolving(200, SUMMARY);
+      await renameSet('u1', 'Renamed');
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(Object.keys(JSON.parse(init.body as string) as object)).toEqual(['name']);
+    });
+  });
+
+  describe('run_20261103_192441 criterion 2: updateSetMinGrade calls PATCH /sets/:id with { minGrade }', () => {
+    it('sends the neutral grade code and returns the updated set', async () => {
+      const updated = { ...SUMMARY, minGrade: 'VF' };
+      const fetchMock = stubFetchResolving(200, updated);
+      const result = await updateSetMinGrade('u1', 'VF');
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url.endsWith('/sets/u1')).toBe(true);
+      expect(init.method).toBe('PATCH');
+      expect(init.body).toBe('{"minGrade":"VF"}');
+      expect(result).toEqual(updated);
+    });
+
+    it('sends a different code for a different grade', async () => {
+      const fetchMock = stubFetchResolving(200, { ...SUMMARY, minGrade: 'UNC' });
+      await updateSetMinGrade('u1', 'UNC');
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(JSON.parse(init.body as string)).toEqual({ minGrade: 'UNC' });
+    });
+
+    it('sends null (not a missing key) to clear the minimum grade', async () => {
+      const fetchMock = stubFetchResolving(200, { ...SUMMARY, minGrade: null });
+      await updateSetMinGrade('u1', null);
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(init.body).toBe('{"minGrade":null}');
+    });
+
+    it('targets the id it is given', async () => {
+      const fetchMock = stubFetchResolving(200, SUMMARY);
+      await updateSetMinGrade('other-set', 'AU');
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url.endsWith('/sets/other-set')).toBe(true);
+      expect(url.endsWith('/sets/u1')).toBe(false);
+    });
+
+    it('sends only the minGrade key', async () => {
+      const fetchMock = stubFetchResolving(200, SUMMARY);
+      await updateSetMinGrade('u1', 'F');
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(Object.keys(JSON.parse(init.body as string) as object)).toEqual(['minGrade']);
+    });
+
+    it('propagates a rejection when the request fails', async () => {
+      stubFetchResolving(403, { message: 'Forbidden' });
+      await expect(updateSetMinGrade('u1', 'VF')).rejects.toThrow();
     });
   });
 

@@ -8,6 +8,9 @@
  * Failures now show on the card (data-status="failed" + Retry), on the list row (failed subtitle) and in the
  * polite live region set-editor-live.
  *
+ * run_20261103_192441: the page now imports useUpdateSetMinGrade, so the use-user-sets mock lists it and
+ * beforeEach gives it a default return. Nothing else changes here.
+ *
  * useSetOwnership is mocked so the test controls when each request settles: the mock captures the hook-level
  * onSettled the page passes in, and `settle()` fires it the way TanStack Query does for every mutation
  * (per-mutate() callbacks only fire for the latest call, which is why the page uses the hook-level option).
@@ -28,6 +31,7 @@ import {
   usePatchSetCoins,
   useRenameSet,
   useSetGaps,
+  useUpdateSetMinGrade,
   useUserSets,
 } from '@/lib/hooks/use-user-sets';
 import {
@@ -54,6 +58,7 @@ vi.mock('@/lib/hooks/use-user-sets', () => ({
   useAddCoinsToSet: vi.fn(),
   useRenameSet: vi.fn(),
   useDeleteSet: vi.fn(),
+  useUpdateSetMinGrade: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/use-collection', () => ({
@@ -72,6 +77,7 @@ const usePatchSetCoinsMock = vi.mocked(usePatchSetCoins);
 const useAddCoinsToSetMock = vi.mocked(useAddCoinsToSet);
 const useRenameSetMock = vi.mocked(useRenameSet);
 const useDeleteSetMock = vi.mocked(useDeleteSet);
+const useUpdateSetMinGradeMock = vi.mocked(useUpdateSetMinGrade);
 const useSetOwnershipMock = vi.mocked(useSetOwnership);
 const useBulkSetOwnershipMock = vi.mocked(useBulkSetOwnership);
 const useCatalogMock = vi.mocked(useCatalog);
@@ -222,6 +228,7 @@ describe('SetEditorPage: edge cases', () => {
       useAddCoinsToSetMock,
       useRenameSetMock,
       useDeleteSetMock,
+      useUpdateSetMinGradeMock,
       useSetOwnershipMock,
       useBulkSetOwnershipMock,
       useCatalogMock,
@@ -234,6 +241,7 @@ describe('SetEditorPage: edge cases', () => {
     useAddCoinsToSetMock.mockReturnValue(mutationMock());
     useRenameSetMock.mockReturnValue(mutationMock());
     useDeleteSetMock.mockReturnValue(mutationMock());
+    useUpdateSetMinGradeMock.mockReturnValue({ mutate: vi.fn(), isPending: false, variables: undefined } as never);
     useSetOwnershipMock.mockReturnValue(mutationMock());
     useBulkSetOwnershipMock.mockReturnValue(mutationMock());
     useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));

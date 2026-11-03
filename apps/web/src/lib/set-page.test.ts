@@ -1,9 +1,11 @@
 /**
  * Tests for: set-page (pure helpers)
  * Contract source: runs/run_20261017_210503/plan.md § Interface Contract → Pure module: set-page.ts
- * Covers criteria: #2, #5, #12, #13
+ *                  runs/run_20261103_192441/plan.md § Interface Contract → Function: buildYearGroups (MODIFY)
+ * Covers criteria: #2, #5, #12, #13; #6, #8, #9 (run_20261103_192441, needsUpgradeOnly)
  * Fixture-only change (run_20261102_194108): GapSlot fixtures gain `grade: null` and the
  * GapViewResponse factory gains `minGrade: null`.
+ * run_20261103_192441: makeSlot gains an optional `needsUpgrade` (key absent when not given).
  *
  * CONTRACT_GAPS: none
  */
@@ -15,14 +17,15 @@ import { buildYearGroups, getSetKind, getSetSharedParts, removeCoinsFromGaps } f
 function makeSlot(
   id: string,
   position: number,
-  over: Partial<CatalogCoin> & { owned?: boolean } = {},
+  over: Partial<CatalogCoin> & { owned?: boolean; needsUpgrade?: boolean } = {},
 ): GapSlot {
-  const { owned = false, ...coinOver } = over;
+  const { owned = false, needsUpgrade, ...coinOver } = over;
   return {
     id: `usc-${id}`,
     position,
     owned,
     grade: null,
+    ...(needsUpgrade === undefined ? {} : { needsUpgrade }),
     coin: {
       id: `coin-${id}`,
       country: 'Ukraine',
@@ -171,6 +174,126 @@ describe('buildYearGroups', () => {
     const snapshot = slots.map((s) => s.id);
 
     buildYearGroups(slots, { missingOnly: true });
+
+    expect(slots.map((s) => s.id)).toEqual(snapshot);
+  });
+});
+
+describe('buildYearGroups: needsUpgradeOnly (run_20261103_192441 criteria 6, 8, 9)', () => {
+  it('shows only the slots the API flagged needsUpgrade true', () => {
+    const slots = [
+      makeSlot('a', 0, { owned: true, needsUpgrade: true }),
+      makeSlot('b', 1, { owned: true, needsUpgrade: false }),
+      makeSlot('c', 2, { owned: false }),
+      makeSlot('d', 3, { owned: true, needsUpgrade: true }),
+    ];
+
+    const [group] = buildYearGroups(slots, { needsUpgradeOnly: true });
+
+    expect(group.slots.map((s) => s.coin.id)).toEqual(['coin-a', 'coin-d']);
+  });
+
+  it('shows different slots when different slots are flagged (reads the flag, not position or ownership)', () => {
+    const slots = [
+      makeSlot('a', 0, { owned: true, needsUpgrade: false }),
+      makeSlot('b', 1, { owned: true, needsUpgrade: true }),
+      makeSlot('c', 2, { owned: true, needsUpgrade: false }),
+    ];
+
+    const [group] = buildYearGroups(slots, { needsUpgradeOnly: true });
+
+    expect(group.slots.map((s) => s.coin.id)).toEqual(['coin-b']);
+  });
+
+  it('treats a slot with the key absent as not visible', () => {
+    const slots = [makeSlot('a', 0, { owned: true }), makeSlot('b', 1, { owned: true, needsUpgrade: true })];
+
+    const [group] = buildYearGroups(slots, { needsUpgradeOnly: true });
+
+    expect(group.slots.map((s) => s.coin.id)).toEqual(['coin-b']);
+  });
+
+  it('keeps ownedCount and totalCount whole-year', () => {
+    const slots = [
+      makeSlot('a', 0, { owned: true, needsUpgrade: true }),
+      makeSlot('b', 1, { owned: true, needsUpgrade: false }),
+      makeSlot('c', 2, { owned: false }),
+    ];
+
+    const [group] = buildYearGroups(slots, { needsUpgradeOnly: true });
+
+    expect(group.ownedCount).toBe(2);
+    expect(group.totalCount).toBe(3);
+  });
+
+  it('leaves markableCoinIds unchanged (the missing coins of the year)', () => {
+    const slots = [
+      makeSlot('a', 0, { owned: true, needsUpgrade: true }),
+      makeSlot('b', 1, { owned: false }),
+      makeSlot('c', 2, { owned: false }),
+    ];
+
+    const [group] = buildYearGroups(slots, { needsUpgradeOnly: true });
+    const [plain] = buildYearGroups(slots);
+
+    expect(group.markableCoinIds).toEqual(['coin-b', 'coin-c']);
+    expect(group.markableCoinIds).toEqual(plain.markableCoinIds);
+  });
+
+  it('drops years that have nothing to upgrade', () => {
+    const slots = [
+      makeSlot('a', 0, { year: 2024, owned: true, needsUpgrade: false }),
+      makeSlot('b', 1, { year: 2025, owned: true, needsUpgrade: true }),
+      makeSlot('c', 2, { year: 2026, owned: false }),
+    ];
+
+    expect(buildYearGroups(slots, { needsUpgradeOnly: true }).map((g) => g.year)).toEqual([2025]);
+    expect(buildYearGroups(slots).map((g) => g.year)).toEqual([2024, 2025, 2026]);
+  });
+
+  it('returns no groups when no slot needs an upgrade', () => {
+    const slots = [makeSlot('a', 0, { owned: true, needsUpgrade: false }), makeSlot('b', 1, { owned: false })];
+    expect(buildYearGroups(slots, { needsUpgradeOnly: true })).toEqual([]);
+  });
+
+  it('keeps a busy coin visible even when it does not need an upgrade', () => {
+    const slots = [
+      makeSlot('a', 0, { owned: true, needsUpgrade: true }),
+      makeSlot('b', 1, { owned: false }),
+      makeSlot('c', 2, { owned: true, needsUpgrade: false }),
+    ];
+
+    const [group] = buildYearGroups(slots, { needsUpgradeOnly: true, busyCoinIds: new Set(['coin-b']) });
+
+    expect(group.slots.map((s) => s.coin.id)).toEqual(['coin-a', 'coin-b']);
+  });
+
+  it('takes precedence over missingOnly', () => {
+    const slots = [
+      makeSlot('a', 0, { owned: true, needsUpgrade: true }),
+      makeSlot('b', 1, { owned: false }),
+    ];
+
+    const [group] = buildYearGroups(slots, { missingOnly: true, needsUpgradeOnly: true });
+
+    expect(group.slots.map((s) => s.coin.id)).toEqual(['coin-a']);
+  });
+
+  it('shows every slot when the option is false or absent', () => {
+    const slots = [makeSlot('a', 0, { owned: true, needsUpgrade: true }), makeSlot('b', 1, { owned: false })];
+
+    expect(buildYearGroups(slots, { needsUpgradeOnly: false })[0].slots).toHaveLength(2);
+    expect(buildYearGroups(slots)[0].slots).toHaveLength(2);
+  });
+
+  it('does not mutate its input', () => {
+    const slots = [
+      makeSlot('b', 1, { year: 2026, owned: true, needsUpgrade: true }),
+      makeSlot('a', 0, { year: 2025 }),
+    ];
+    const snapshot = slots.map((s) => s.id);
+
+    buildYearGroups(slots, { needsUpgradeOnly: true });
 
     expect(slots.map((s) => s.id)).toEqual(snapshot);
   });

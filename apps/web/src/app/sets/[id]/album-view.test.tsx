@@ -8,6 +8,9 @@
  * album was country pages with mint-mark tables. Now Album is the default, ?view=list selects List, and both
  * views are grouped by year.
  *
+ * run_20261103_192441: the page now imports useUpdateSetMinGrade, so the use-user-sets mock lists it and
+ * beforeEach gives it a default return. Nothing else changes here.
+ *
  * jsdom loads no CSS, so owner-only and breakpoint-only elements are all present; tests use specific testids.
  *
  * CONTRACT_GAPS: none
@@ -25,6 +28,7 @@ import {
   usePatchSetCoins,
   useRenameSet,
   useSetGaps,
+  useUpdateSetMinGrade,
   useUserSets,
 } from '@/lib/hooks/use-user-sets';
 import { useBulkSetOwnership, useSetOwnership } from '@/lib/hooks/use-collection';
@@ -49,6 +53,7 @@ vi.mock('@/lib/hooks/use-user-sets', () => ({
   useAddCoinsToSet: vi.fn(),
   useRenameSet: vi.fn(),
   useDeleteSet: vi.fn(),
+  useUpdateSetMinGrade: vi.fn(),
 }));
 
 vi.mock('@/lib/hooks/use-collection', () => ({
@@ -67,6 +72,7 @@ const usePatchSetCoinsMock = vi.mocked(usePatchSetCoins);
 const useAddCoinsToSetMock = vi.mocked(useAddCoinsToSet);
 const useRenameSetMock = vi.mocked(useRenameSet);
 const useDeleteSetMock = vi.mocked(useDeleteSet);
+const useUpdateSetMinGradeMock = vi.mocked(useUpdateSetMinGrade);
 const useSetOwnershipMock = vi.mocked(useSetOwnership);
 const useBulkSetOwnershipMock = vi.mocked(useBulkSetOwnership);
 const useCatalogMock = vi.mocked(useCatalog);
@@ -199,6 +205,7 @@ describe('SetEditorPage: Album default, views and year groups', () => {
       useAddCoinsToSetMock,
       useRenameSetMock,
       useDeleteSetMock,
+      useUpdateSetMinGradeMock,
       useSetOwnershipMock,
       useBulkSetOwnershipMock,
       useCatalogMock,
@@ -211,6 +218,7 @@ describe('SetEditorPage: Album default, views and year groups', () => {
     useAddCoinsToSetMock.mockReturnValue(mutationMock());
     useRenameSetMock.mockReturnValue(mutationMock());
     useDeleteSetMock.mockReturnValue(mutationMock());
+    useUpdateSetMinGradeMock.mockReturnValue({ mutate: vi.fn(), isPending: false, variables: undefined } as never);
     useSetOwnershipMock.mockReturnValue(mutationMock());
     useBulkSetOwnershipMock.mockReturnValue(mutationMock());
     useCatalogMock.mockReturnValue(queryResult({ data: { items: [], page: 1, limit: 20, total: 0 } }));

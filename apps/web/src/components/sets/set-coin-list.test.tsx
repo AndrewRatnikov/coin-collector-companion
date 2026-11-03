@@ -2,13 +2,17 @@
  * Tests for: SetCoinList (list rows for one year group)
  * Contract source: runs/run_20261017_210503/plan.md § Interface Contract → Component: SetCoinList
  *                  runs/run_20261102_220909/plan.md § Interface Contract → Component: SetCoinList
- * Covers criteria: #11, #12, #14 (earlier run); #6, #7 (run_20261102_220909)
+ *                  runs/run_20261103_192441/plan.md § Interface Contract → Component: SetCoinList (MODIFY)
+ * Covers criteria: #11, #12, #14 (earlier run); #6, #7 (run_20261102_220909);
+ *                  #5, #6, #10, #11 (run_20261103_192441)
  *
  * Expected text is computed with getCoinName and formatCollectorNotation, so the formatter is not
  * hard-coded here.
  * Fixture-only change (run_20261102_194108): the GapSlot factory gains `grade: null`.
  * run_20261102_220909: the factory gains an optional `grade`; a new block covers the row grade chip
  * (`set-coin-row-grade`): present for owned + graded, absent for ungraded, unowned and visitor.
+ * run_20261103_192441: the factory gains an optional `needsUpgrade` (key absent when not given); a
+ * new block covers the Upgrade badge on rows (`set-coin-row-upgrade`).
  *
  * CONTRACT_GAPS: none
  */
@@ -30,6 +34,7 @@ function slot(
     owned?: boolean;
     name?: string;
     grade?: CoinGrade | null;
+    needsUpgrade?: boolean;
   },
 ): GapSlot {
   return {
@@ -37,6 +42,7 @@ function slot(
     position,
     owned: over.owned ?? false,
     grade: over.grade ?? null,
+    ...(over.needsUpgrade === undefined ? {} : { needsUpgrade: over.needsUpgrade }),
     coin: {
       id: `coin-${id}`,
       country: 'Ukraine',
@@ -405,5 +411,85 @@ describe('SetCoinList: grade chip (run_20261102_220909 criteria 6, 7)', () => {
 
     const link = within(rowFor('coin-donetsk')).getByTestId('set-coin-row-link');
     expect(link).not.toHaveTextContent('VF');
+  });
+});
+
+describe('SetCoinList: Upgrade badge (run_20261103_192441 criteria 5, 6, 10, 11)', () => {
+  const BELOW = slot(0, 'donetsk', { variety: DONETSK.coin.variety, owned: true, grade: 'F', needsUpgrade: true });
+  const MEETS = slot(1, 'luhansk', { variety: LUHANSK.coin.variety, owned: true, grade: 'XF', needsUpgrade: false });
+  const NO_FLAG = slot(2, 'plain', { year: 1992, mintMark: 'S', name: 'Ukraine 25 Kopiyok', owned: true, grade: 'VF' });
+  const MISSING_FLAGGED = slot(3, 'ghost', { owned: false, needsUpgrade: true });
+  const UNGRADED_BELOW = slot(4, 'bare', { owned: true, needsUpgrade: true });
+
+  it('shows the badge only on owned rows whose slot has needsUpgrade true', () => {
+    renderList({ slots: [BELOW, MEETS, NO_FLAG] });
+
+    expect(within(rowFor('coin-donetsk')).getByTestId('set-coin-row-upgrade')).toHaveTextContent('Upgrade');
+    expect(within(rowFor('coin-luhansk')).queryByTestId('set-coin-row-upgrade')).not.toBeInTheDocument();
+    expect(within(rowFor('coin-plain')).queryByTestId('set-coin-row-upgrade')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('set-coin-row-upgrade')).toHaveLength(1);
+  });
+
+  it('sets data-upgrade on each row from the slot flag', () => {
+    renderList({ slots: [BELOW, MEETS, NO_FLAG] });
+
+    expect(rowFor('coin-donetsk')).toHaveAttribute('data-upgrade', 'true');
+    expect(rowFor('coin-luhansk')).toHaveAttribute('data-upgrade', 'false');
+    expect(rowFor('coin-plain')).toHaveAttribute('data-upgrade', 'false');
+  });
+
+  it('keeps the Owned pill (the coin is still owned) and shows the badge next to the grade chip', () => {
+    renderList({ slots: [BELOW] });
+    const row = within(rowFor('coin-donetsk'));
+
+    expect(row.getByTestId('status-toggle')).toHaveAttribute('aria-pressed', 'true');
+    expect(row.getByTestId('status-toggle')).toHaveTextContent('Owned');
+    expect(row.getByTestId('set-coin-row-grade')).toHaveTextContent(/^F$/);
+    expect(row.getByTestId('set-coin-row-upgrade')).toBeInTheDocument();
+  });
+
+  it('puts the badge after the grade chip in document order', () => {
+    renderList({ slots: [BELOW] });
+    const row = within(rowFor('coin-donetsk'));
+    const chip = row.getByTestId('set-coin-row-grade');
+    const badge = row.getByTestId('set-coin-row-upgrade');
+
+    expect(chip.compareDocumentPosition(badge) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('shows the badge on an owned, ungraded row that needs an upgrade', () => {
+    renderList({ slots: [UNGRADED_BELOW] });
+    const row = within(rowFor('coin-bare'));
+
+    expect(row.getByTestId('set-coin-row-upgrade')).toBeInTheDocument();
+    expect(row.queryByTestId('set-coin-row-grade')).not.toBeInTheDocument();
+  });
+
+  it('is a sibling of the title link, not inside it', () => {
+    renderList({ slots: [BELOW] });
+    const row = within(rowFor('coin-donetsk'));
+
+    expect(row.getByTestId('set-coin-row-link')).not.toContainElement(row.getByTestId('set-coin-row-upgrade'));
+  });
+
+  it('shows no badge on a missing row even when the slot says needsUpgrade', () => {
+    renderList({ slots: [BELOW, MISSING_FLAGGED] });
+
+    expect(within(rowFor('coin-ghost')).queryByTestId('set-coin-row-upgrade')).not.toBeInTheDocument();
+    expect(rowFor('coin-ghost')).toHaveAttribute('data-upgrade', 'false');
+    expect(screen.getAllByTestId('set-coin-row-upgrade')).toHaveLength(1);
+  });
+
+  it('shows no badge for a visitor', () => {
+    renderList({ slots: [BELOW, UNGRADED_BELOW], visitor: true });
+
+    expect(screen.queryAllByTestId('set-coin-row-upgrade')).toHaveLength(0);
+    expect(rowFor('coin-donetsk')).toHaveAttribute('data-upgrade', 'false');
+  });
+
+  it('shows no badge anywhere when no slot carries the flag (set without a minimum grade)', () => {
+    renderList({ slots: [NO_FLAG, DONETSK] });
+
+    expect(screen.queryAllByTestId('set-coin-row-upgrade')).toHaveLength(0);
   });
 });
