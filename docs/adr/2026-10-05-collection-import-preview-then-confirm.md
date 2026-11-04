@@ -1,6 +1,6 @@
 # Collection import is a stateless preview-then-confirm flow that only adds ownership
 
-- **Status:** Accepted
+- **Status:** Superseded by [2026-11-04-csv-import-confirm-sets-grades](2026-11-04-csv-import-confirm-sets-grades.md)
 - **Date:** 2026-10-05
 - **Source:** orchestrator run `run_20261005_212015` (CSV collection import, the first major post-MVP feature in `docs/prd_v2.md`)
 - **Code:** `apps/api/src/collection-import/` (`csv-parser.ts`, `column-mapping.ts`, `import-matcher.ts`, `import-aliases.ts`, service, controller, DTOs), `packages/shared` import types, `apps/web/src/app/collection/import/`, `apps/web/src/lib/import-selection.ts`

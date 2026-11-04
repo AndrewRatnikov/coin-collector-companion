@@ -1,7 +1,8 @@
 /**
  * Tests for: use-collection-import hooks (usePreviewImport, useConfirmImport)
  * Contract source: runs/run_20261005_212015/plan.md § Interface Contract (Web: use-collection-import.ts)
- * Covers criteria: #27 (cache invalidation), #3 (from runs/run_20261005_212015/prd.md)
+ *                   and runs/run_20261104_064643/plan.md § Interface Contract (Web: lib/hooks/use-collection-import.ts)
+ * Covers criteria: #27 (cache invalidation), #3 (from runs/run_20261005_212015/prd.md); #8, #11 (from runs/run_20261104_064643/prd.md)
  *
  * CONTRACT_GAP: none.
  */
@@ -46,6 +47,7 @@ const PREVIEW_RESPONSE: ImportPreviewResponse = {
     invalid: 0,
     toImport: 0,
   },
+  warnings: [],
 };
 
 const CONFIRM_RESPONSE: ImportConfirmResponse = { requested: 1, created: 1, alreadyOwned: 0 };
@@ -121,20 +123,47 @@ describe('useConfirmImport', () => {
     confirmImportMock.mockReset();
   });
 
-  it('calls confirmImport with the coin ids and exposes the response', async () => {
+  it('calls confirmImport with the coin ids (and no grades) and exposes the response', async () => {
     confirmImportMock.mockResolvedValue(CONFIRM_RESPONSE);
     const { wrapper } = makeWrapper();
     const { result } = renderHook(() => useConfirmImport(), { wrapper });
 
     await act(async () => {
-      await result.current.mutateAsync(['coin-1', 'coin-2']);
+      await result.current.mutateAsync({ coinIds: ['coin-1', 'coin-2'] });
     });
 
     expect(confirmImportMock).toHaveBeenCalledTimes(1);
-    expect(confirmImportMock).toHaveBeenCalledWith(['coin-1', 'coin-2']);
+    expect(confirmImportMock).toHaveBeenCalledWith(['coin-1', 'coin-2'], []);
     await waitFor(() => {
       expect(result.current.data).toEqual(CONFIRM_RESPONSE);
     });
+  });
+
+  it('passes the grades through to confirmImport', async () => {
+    confirmImportMock.mockResolvedValue(CONFIRM_RESPONSE);
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useConfirmImport(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({
+        coinIds: ['coin-1', 'coin-2'],
+        grades: [{ coinId: 'coin-2', grade: 'XF' }],
+      });
+    });
+
+    expect(confirmImportMock).toHaveBeenCalledWith(['coin-1', 'coin-2'], [{ coinId: 'coin-2', grade: 'XF' }]);
+  });
+
+  it('passes different grades for a different call', async () => {
+    confirmImportMock.mockResolvedValue(CONFIRM_RESPONSE);
+    const { wrapper } = makeWrapper();
+    const { result } = renderHook(() => useConfirmImport(), { wrapper });
+
+    await act(async () => {
+      await result.current.mutateAsync({ coinIds: ['coin-9'], grades: [{ coinId: 'coin-9', grade: 'UNC' }] });
+    });
+
+    expect(confirmImportMock).toHaveBeenCalledWith(['coin-9'], [{ coinId: 'coin-9', grade: 'UNC' }]);
   });
 
   it('invalidates collection, user-sets, public-sets and canonical-sets on success', async () => {
@@ -144,7 +173,7 @@ describe('useConfirmImport', () => {
     const { result } = renderHook(() => useConfirmImport(), { wrapper });
 
     await act(async () => {
-      await result.current.mutateAsync(['coin-1']);
+      await result.current.mutateAsync({ coinIds: ['coin-1'] });
     });
 
     const keys = spy.mock.calls.map(([filters]) => (filters as { queryKey?: unknown[] } | undefined)?.queryKey);
@@ -164,7 +193,7 @@ describe('useConfirmImport', () => {
     const { result } = renderHook(() => useConfirmImport(), { wrapper });
 
     await act(async () => {
-      await result.current.mutateAsync(['coin-1']);
+      await result.current.mutateAsync({ coinIds: ['coin-1'], grades: [{ coinId: 'coin-1', grade: 'F' }] });
     });
 
     expect(queryClient.getQueryState(['collection', {}])?.isInvalidated).toBe(true);
@@ -182,7 +211,7 @@ describe('useConfirmImport', () => {
     const { result } = renderHook(() => useConfirmImport(), { wrapper });
 
     await act(async () => {
-      await result.current.mutateAsync(['coin-1']).catch(() => undefined);
+      await result.current.mutateAsync({ coinIds: ['coin-1'] }).catch(() => undefined);
     });
 
     expect(spy).not.toHaveBeenCalled();

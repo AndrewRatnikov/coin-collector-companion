@@ -12,6 +12,7 @@ import {
 import { RequireAuth } from '@/components/auth/require-auth';
 import { ImportMappingForm } from '@/components/collection-import/import-mapping-form';
 import { ImportPreviewTable } from '@/components/collection-import/import-preview-table';
+import { ImportWarnings } from '@/components/collection-import/import-warnings';
 import { useConfirmImport, usePreviewImport } from '@/lib/hooks/use-collection-import';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import type { MessageKey } from '@/lib/i18n/locales/en';
@@ -20,6 +21,7 @@ import {
   countToImport,
   importErrorKey,
   selectedCoinIds,
+  selectedGrades,
   type ImportDecisions,
   type RowDecision,
 } from '@/lib/import-selection';
@@ -89,7 +91,10 @@ function CollectionImportFlow() {
     setConfirmError(null);
     const skipped = countSkipped(preview.rows, decisions);
     try {
-      const response = await confirmMutation.mutateAsync(selectedCoinIds(preview.rows, decisions));
+      const response = await confirmMutation.mutateAsync({
+        coinIds: selectedCoinIds(preview.rows, decisions),
+        grades: selectedGrades(preview.rows, decisions),
+      });
       setResult(response);
       setSkippedAtConfirm(skipped);
       setStep('result');
@@ -112,6 +117,7 @@ function CollectionImportFlow() {
   }
 
   const toImport = preview ? countToImport(preview.rows, decisions) : 0;
+  const gradesToSet = preview ? selectedGrades(preview.rows, decisions) : [];
 
   const uploadErrorElement = uploadError && (
     <p data-testid="import-upload-error" role="alert" className="text-sm text-red-700">
@@ -234,6 +240,14 @@ function CollectionImportFlow() {
                 {toImport}
               </dd>
             </div>
+            {preview.mapping.grade !== undefined && (
+              <div className="flex flex-col">
+                <dt className={labelClassName}>{t('import.summary.grades')}</dt>
+                <dd data-testid="import-summary-grades" className="text-[22px] tabular-nums">
+                  {gradesToSet.length}
+                </dd>
+              </div>
+            )}
           </dl>
 
           <div className="flex flex-wrap items-center gap-4">
@@ -241,7 +255,7 @@ function CollectionImportFlow() {
               type="button"
               data-testid="import-confirm"
               onClick={() => void handleConfirm()}
-              disabled={toImport === 0 || confirmMutation.isPending}
+              disabled={(toImport === 0 && gradesToSet.length === 0) || confirmMutation.isPending}
               className={primaryButtonClassName}
             >
               {t('import.confirm')}
@@ -261,11 +275,14 @@ function CollectionImportFlow() {
             </p>
           )}
 
+          <ImportWarnings warnings={preview.warnings} />
+
           <ImportPreviewTable
             key={`table-${previewVersion}`}
             rows={preview.rows}
             decisions={decisions}
             onDecisionChange={handleDecisionChange}
+            warnings={preview.warnings}
           />
         </>
       )}

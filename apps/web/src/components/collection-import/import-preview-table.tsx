@@ -1,8 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import type { ImportCoinSummary, ImportPreviewRow } from '@coin-collector/shared';
+import type {
+  ImportCoinSummary,
+  ImportPreviewRow,
+  ImportPreviewWarning,
+} from '@coin-collector/shared';
 import { CoinSearchPicker } from '@/components/collection-import/coin-search-picker';
+import { GradeChip } from '@/components/ui/grade-chip';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import type { MessageKey } from '@/lib/i18n/locales/en';
 import {
@@ -16,6 +21,7 @@ export interface ImportPreviewTableProps {
   rows: ImportPreviewRow[];
   decisions: ImportDecisions;
   onDecisionChange: (line: number, decision: RowDecision) => void;
+  warnings?: ImportPreviewWarning[];
 }
 
 const AUTO: RowDecision = { kind: 'auto' };
@@ -47,10 +53,12 @@ function ImportPreviewRowItem({
   row,
   decision,
   onDecisionChange,
+  hasGradeWarning,
 }: {
   row: ImportPreviewRow;
   decision: RowDecision;
   onDecisionChange: (line: number, decision: RowDecision) => void;
+  hasGradeWarning: boolean;
 }) {
   const { t } = useTranslation();
   const [searching, setSearching] = useState(false);
@@ -122,6 +130,15 @@ function ImportPreviewRowItem({
             {t('import.flag.duplicate')} ({row.duplicateOfLine})
           </span>
         )}
+        {row.grade !== null && <GradeChip grade={row.grade} testId="import-row-grade" />}
+        {hasGradeWarning && (
+          <span
+            data-testid="import-row-grade-warning"
+            className="rounded-[2px] bg-[var(--color-neutral-100)] px-2 py-[2px] text-[11px] uppercase tracking-[0.1em]"
+          >
+            {t('import.flag.gradeNotRecognised')}
+          </span>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -188,7 +205,13 @@ function ImportPreviewRowItem({
   );
 }
 
-export function ImportPreviewTable({ rows, decisions, onDecisionChange }: ImportPreviewTableProps) {
+export function ImportPreviewTable({
+  rows,
+  decisions,
+  onDecisionChange,
+  warnings = [],
+}: ImportPreviewTableProps) {
+  const warnedLines = new Set(warnings.map((warning) => warning.line));
   return (
     <ul
       data-testid="import-preview-table"
@@ -200,6 +223,7 @@ export function ImportPreviewTable({ rows, decisions, onDecisionChange }: Import
           row={row}
           decision={decisions[row.line] ?? AUTO}
           onDecisionChange={onDecisionChange}
+          hasGradeWarning={warnedLines.has(row.line)}
         />
       ))}
     </ul>

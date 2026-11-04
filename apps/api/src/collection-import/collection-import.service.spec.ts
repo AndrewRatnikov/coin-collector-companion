@@ -1,12 +1,15 @@
 /**
  * Tests for: CollectionImportService
  * Contract source: runs/run_20261005_212015/plan.md § Interface Contract (Service: collection-import.service.ts)
- * Covers criteria: #2, #3, #4, #5, #6, #9, #11, #13, #22 (from runs/run_20261005_212015/prd.md)
+ *                   and runs/run_20261104_064643/plan.md § Approach 5 and § Interface Contract (CollectionImportService)
+ * Covers criteria: #2, #3, #4, #5, #6, #9, #11, #13, #22 (from runs/run_20261005_212015/prd.md);
+ *                  #5, #6, #7, #8, #9, #10, #11, #12 (from runs/run_20261104_064643/prd.md)
  *
  * CONTRACT_GAP: none.
  *
  * PrismaService is mocked entirely. Every write method the plan lists is provided as a jest.fn() so the
- * tests can prove that preview() calls none of them and confirm() calls only ownership.createMany.
+ * tests can prove that preview() calls none of them and confirm() without grades calls only
+ * ownership.createMany. For graded confirm, $transaction runs its callback with the same mock as `tx`.
  * No real DB or network.
  */
 
@@ -19,6 +22,7 @@ import { PrismaService } from '../prisma/prisma.service';
 const COIN_1909_S_VDB = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
 const COIN_1909_S = '9b2e5c1a-7d4f-4b8e-9a3c-1f2e3d4c5b6a';
 const COIN_1950_D = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+const COIN_UNLISTED = '7c9e6679-7425-40de-944b-e07fc1f90ae7';
 
 function catalogRow(
   id: string,
@@ -155,6 +159,7 @@ describe('CollectionImportService', () => {
     prisma = makePrismaMock();
     prisma.coin.findMany.mockResolvedValue(CATALOG_ROWS);
     prisma.ownership.findMany.mockResolvedValue([]);
+    prisma.$transaction.mockImplementation(async (fn: (tx: PrismaMock) => Promise<unknown>) => fn(prisma));
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [CollectionImportService, { provide: PrismaService, useValue: prisma }],
@@ -221,6 +226,12 @@ describe('CollectionImportService', () => {
         await expect(promise).rejects.toMatchObject({ message: 'IMPORT_INVALID_MAPPING' });
       },
     );
+
+    it('rejects a grade mapped to the same column as another field', async () => {
+      const file = csvFile('Year,Country,Denomination,Grade\n1950,USA,Cent,VF\n');
+      const promise = service.preview('user-1', file, '{"year":0,"country":1,"denomination":2,"grade":0}');
+      await expect(promise).rejects.toMatchObject({ message: 'IMPORT_INVALID_MAPPING' });
+    });
   });
 
   describe('preview: result (criteria #13, #22)', () => {
@@ -291,6 +302,90 @@ describe('CollectionImportService', () => {
       expect(Object.keys(result.rows[0].coin ?? {}).sort()).toEqual(
         ['country', 'denomination', 'id', 'mintMark', 'name', 'owned', 'variety', 'year'].sort(),
       );
+    });
+  });
+
+  describe('preview: grades (criteria #2, #4, #5, #6, #7, #10)', () => {
+    const header = 'Year,Country,Denomination,Mint Mark,Grade\n';
+
+    it('suggests the Grade column and returns the normalised grade on every row', async () => {
+      const file = csvFile(
+        header + '1950,USA,Cent,D,mbc\n' + '1909,USA,Cent,S,EF\n' + '1960,USA,Cent,D,SC\n',
+      );
+      const result = await service.preview('user-1', file, undefined);
+
+      expect(result.mapping).toEqual({ year: 0, country: 1, denomination: 2, mintMark: 3, grade: 4 });
+      expect(result.rows.map((r) => r.grade)).toEqual(['VF', 'XF', 'UNC']);
+      expect(result.rows.map((r) => r.status)).toEqual(['matched', 'matched', 'unmatched']);
+      expect(result.warnings).toEqual([]);
+    });
+
+    it('normalises Spanish values, aliases, case and whitespace', async () => {
+      const file = csvFile(
+        header +
+          '1950,USA,Cent,D,RC\n' +
+          '1950,USA,Cent,D,BC-\n' +
+          '1950,USA,Cent,D,BC\n' +
+          '1950,USA,Cent,D,EBC+\n' +
+          '1950,USA,Cent,D,  bu  \n' +
+          '1950,USA,Cent,D,aUNC\n',
+      );
+      const result = await service.preview('user-1', file, undefined);
+      expect(result.rows.map((r) => r.grade)).toEqual(['G', 'VG', 'F', 'AU', 'UNC', 'AU']);
+    });
+
+    it('gives grade null for empty cells without a warning', async () => {
+      const file = csvFile(header + '1950,USA,Cent,D,\n' + '1909,USA,Cent,S,   \n');
+      const result = await service.preview('user-1', file, undefined);
+      expect(result.rows.map((r) => r.grade)).toEqual([null, null]);
+      expect(result.warnings).toEqual([]);
+    });
+
+    it('warns about unrecognised values with the row line and the trimmed original value, keeping the status', async () => {
+      const file = csvFile(
+        header + '1950,USA,Cent,D,VF\n' + '1909,USA,Cent,S,shiny\n' + '1960,USA,Cent,D, MS-65 \n',
+      );
+      const result = await service.preview('user-1', file, undefined);
+
+      expect(result.rows.map((r) => r.grade)).toEqual(['VF', null, null]);
+      expect(result.rows.map((r) => r.status)).toEqual(['matched', 'matched', 'unmatched']);
+      expect(result.warnings).toEqual([
+        { line: 3, code: 'grade_not_recognised', value: 'shiny' },
+        { line: 4, code: 'grade_not_recognised', value: 'MS-65' },
+      ]);
+      expect(result.summary.toImport).toBe(2);
+    });
+
+    it('uses an explicit mapping for the grade column', async () => {
+      const file = csvFile('a,b,c,d\n1950,USA,Cent,xf\n');
+      const result = await service.preview('user-1', file, JSON.stringify({ year: 0, country: 1, denomination: 2, grade: 3 }));
+      expect(result.mapping.grade).toBe(3);
+      expect(result.rows[0].grade).toBe('XF');
+    });
+
+    it('treats a Grade column set to unmapped as no grades and no warnings', async () => {
+      const file = csvFile(header + '1950,USA,Cent,D,VF\n' + '1909,USA,Cent,S,shiny\n');
+      const mapping = JSON.stringify({ year: 0, country: 1, denomination: 2, mintMark: 3, grade: null });
+      const result = await service.preview('user-1', file, mapping);
+
+      expect(result.mapping).toEqual({ year: 0, country: 1, denomination: 2, mintMark: 3 });
+      expect(result.rows.map((r) => r.grade)).toEqual([null, null]);
+      expect(result.warnings).toEqual([]);
+    });
+
+    it('returns grade null and warnings [] for a file without a Grade column', async () => {
+      const file = csvFile('Year,Country,Denomination\n1950,USA,Cent\n');
+      const result = await service.preview('user-1', file, undefined);
+      expect(result.rows[0].grade).toBeNull();
+      expect(result.warnings).toEqual([]);
+    });
+
+    it('shows the grade of an already-owned row too, and still writes nothing', async () => {
+      prisma.ownership.findMany.mockResolvedValue([{ coinId: COIN_1950_D }]);
+      const file = csvFile(header + '1950,USA,Cent,D,AU\n');
+      const result = await service.preview('user-1', file, undefined);
+      expect(result.rows[0]).toMatchObject({ alreadyOwned: true, grade: 'AU' });
+      expectNoWritesExcept(prisma);
     });
   });
 
@@ -398,6 +493,269 @@ describe('CollectionImportService', () => {
       prisma.ownership.createMany.mockResolvedValue({ count: 1 });
       const result = await service.confirm('user-1', [COIN_1950_D, COIN_1950_D]);
       expect(result).toEqual({ requested: 1, created: 1, alreadyOwned: 0 });
+    });
+  });
+
+  describe('confirm: without grades keeps the old path (criterion #10)', () => {
+    it.each([['omitted', undefined], ['an empty array', [] as never[]]])(
+      'with grades %s calls createMany once, no $transaction and no updateMany',
+      async (_label, grades) => {
+        prisma.coin.findMany.mockResolvedValue([{ id: COIN_1950_D }]);
+        prisma.ownership.createMany.mockResolvedValue({ count: 1 });
+
+        const result = await service.confirm('user-1', [COIN_1950_D], grades);
+
+        expect(result).toEqual({ requested: 1, created: 1, alreadyOwned: 0 });
+        expect(prisma.ownership.createMany).toHaveBeenCalledWith({
+          data: [{ userId: 'user-1', coinId: COIN_1950_D }],
+          skipDuplicates: true,
+        });
+        expect(prisma.$transaction).not.toHaveBeenCalled();
+        expect(prisma.ownership.updateMany).not.toHaveBeenCalled();
+        expectNoWritesExcept(prisma, [prisma.ownership.createMany]);
+      },
+    );
+  });
+
+  describe('confirm: with grades (criteria #8, #9, #11)', () => {
+    it('creates the ownership then sets the grade of a new coin in one transaction', async () => {
+      prisma.coin.findMany.mockResolvedValue([{ id: COIN_1950_D }]);
+      prisma.ownership.createMany.mockResolvedValue({ count: 1 });
+      prisma.ownership.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.confirm('user-1', [COIN_1950_D], [{ coinId: COIN_1950_D, grade: 'VF' }]);
+
+      expect(result).toEqual({ requested: 1, created: 1, alreadyOwned: 0 });
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(prisma.ownership.createMany).toHaveBeenCalledTimes(1);
+      expect(prisma.ownership.createMany).toHaveBeenCalledWith({
+        data: [{ userId: 'user-1', coinId: COIN_1950_D }],
+        skipDuplicates: true,
+      });
+      expect(prisma.ownership.updateMany).toHaveBeenCalledTimes(1);
+      expect(prisma.ownership.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1', coinId: { in: [COIN_1950_D] } },
+        data: { grade: 'VF' },
+      });
+      // createMany runs before updateMany
+      expect(prisma.ownership.createMany.mock.invocationCallOrder[0]).toBeLessThan(
+        prisma.ownership.updateMany.mock.invocationCallOrder[0],
+      );
+      expectNoWritesExcept(prisma, [prisma.$transaction, prisma.ownership.createMany, prisma.ownership.updateMany]);
+    });
+
+    it('does not put a grade key into the createMany data', async () => {
+      prisma.coin.findMany.mockResolvedValue([{ id: COIN_1950_D }]);
+      prisma.ownership.createMany.mockResolvedValue({ count: 1 });
+      await service.confirm('user-1', [COIN_1950_D], [{ coinId: COIN_1950_D, grade: 'AU' }]);
+      const arg = prisma.ownership.createMany.mock.calls[0][0] as { data: Array<Record<string, unknown>> };
+      expect(arg.data.every((d) => !('grade' in d))).toBe(true);
+    });
+
+    it('overwrites the grade of an already-owned coin (createMany count 0) and reports it as already owned', async () => {
+      prisma.coin.findMany.mockResolvedValue([{ id: COIN_1950_D }]);
+      prisma.ownership.createMany.mockResolvedValue({ count: 0 });
+      prisma.ownership.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.confirm('user-1', [COIN_1950_D], [{ coinId: COIN_1950_D, grade: 'UNC' }]);
+
+      expect(result).toEqual({ requested: 1, created: 0, alreadyOwned: 1 });
+      expect(prisma.ownership.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1', coinId: { in: [COIN_1950_D] } },
+        data: { grade: 'UNC' },
+      });
+    });
+
+    it('uses the createMany count for the result, not the number of graded coins', async () => {
+      prisma.coin.findMany.mockResolvedValue([{ id: COIN_1909_S_VDB }, { id: COIN_1909_S }, { id: COIN_1950_D }]);
+      prisma.ownership.createMany.mockResolvedValue({ count: 2 });
+      prisma.ownership.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.confirm(
+        'user-1',
+        [COIN_1909_S_VDB, COIN_1909_S, COIN_1950_D],
+        [{ coinId: COIN_1950_D, grade: 'F' }],
+      );
+
+      expect(result).toEqual({ requested: 3, created: 2, alreadyOwned: 1 });
+    });
+
+    it('never writes a grade for coins that were sent without one (blank, unknown or unmapped never wipe)', async () => {
+      prisma.coin.findMany.mockResolvedValue([{ id: COIN_1909_S_VDB }, { id: COIN_1909_S }, { id: COIN_1950_D }]);
+      prisma.ownership.createMany.mockResolvedValue({ count: 0 });
+      prisma.ownership.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.confirm(
+        'user-1',
+        [COIN_1909_S_VDB, COIN_1909_S, COIN_1950_D],
+        [{ coinId: COIN_1909_S, grade: 'XF' }],
+      );
+
+      expect(prisma.ownership.updateMany).toHaveBeenCalledTimes(1);
+      const arg = prisma.ownership.updateMany.mock.calls[0][0] as { where: { coinId: { in: string[] } } };
+      expect(arg.where.coinId.in).toEqual([COIN_1909_S]);
+      expect(arg.where.coinId.in).not.toContain(COIN_1909_S_VDB);
+      expect(arg.where.coinId.in).not.toContain(COIN_1950_D);
+    });
+
+    it('never writes a null grade', async () => {
+      prisma.coin.findMany.mockResolvedValue([{ id: COIN_1909_S }, { id: COIN_1950_D }]);
+      prisma.ownership.createMany.mockResolvedValue({ count: 0 });
+      prisma.ownership.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.confirm('user-1', [COIN_1909_S, COIN_1950_D], [{ coinId: COIN_1909_S, grade: 'G' }]);
+
+      for (const [arg] of prisma.ownership.updateMany.mock.calls as Array<[{ data: { grade: unknown } }]>) {
+        expect(arg.data.grade).not.toBeNull();
+        expect(arg.data.grade).toBe('G');
+      }
+    });
+
+    it('groups ids by grade into one updateMany per grade, in COIN_GRADES order and grades order within a group', async () => {
+      prisma.coin.findMany.mockResolvedValue([
+        { id: COIN_1909_S_VDB },
+        { id: COIN_1909_S },
+        { id: COIN_1950_D },
+      ]);
+      prisma.ownership.createMany.mockResolvedValue({ count: 3 });
+      prisma.ownership.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.confirm(
+        'user-1',
+        [COIN_1909_S_VDB, COIN_1909_S, COIN_1950_D],
+        [
+          { coinId: COIN_1950_D, grade: 'UNC' },
+          { coinId: COIN_1909_S_VDB, grade: 'VG' },
+          { coinId: COIN_1909_S, grade: 'UNC' },
+        ],
+      );
+
+      expect(prisma.ownership.updateMany).toHaveBeenCalledTimes(2);
+      expect(prisma.ownership.updateMany).toHaveBeenNthCalledWith(1, {
+        where: { userId: 'user-1', coinId: { in: [COIN_1909_S_VDB] } },
+        data: { grade: 'VG' },
+      });
+      expect(prisma.ownership.updateMany).toHaveBeenNthCalledWith(2, {
+        where: { userId: 'user-1', coinId: { in: [COIN_1950_D, COIN_1909_S] } },
+        data: { grade: 'UNC' },
+      });
+    });
+
+    it('issues at most one updateMany per distinct grade', async () => {
+      const grades = ['G', 'VG', 'F', 'VF', 'XF', 'AU', 'UNC'] as const;
+      const ids = [
+        COIN_1909_S_VDB,
+        COIN_1909_S,
+        COIN_1950_D,
+        'b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c01',
+        'b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c02',
+        'b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c03',
+        'b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c04',
+      ];
+      prisma.coin.findMany.mockResolvedValue(ids.map((id) => ({ id })));
+      prisma.ownership.createMany.mockResolvedValue({ count: 7 });
+      prisma.ownership.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.confirm(
+        'user-1',
+        ids,
+        ids.map((coinId, i) => ({ coinId, grade: grades[6 - i] })),
+      );
+
+      expect(prisma.ownership.updateMany).toHaveBeenCalledTimes(7);
+      const order = (prisma.ownership.updateMany.mock.calls as Array<[{ data: { grade: string } }]>).map(
+        ([arg]) => arg.data.grade,
+      );
+      expect(order).toEqual(['G', 'VG', 'F', 'VF', 'XF', 'AU', 'UNC']);
+    });
+
+    it('scopes every updateMany to the calling user', async () => {
+      prisma.coin.findMany.mockResolvedValue([{ id: COIN_1950_D }]);
+      prisma.ownership.createMany.mockResolvedValue({ count: 1 });
+      prisma.ownership.updateMany.mockResolvedValue({ count: 1 });
+      await service.confirm('user-77', [COIN_1950_D], [{ coinId: COIN_1950_D, grade: 'XF' }]);
+      expect(prisma.ownership.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ userId: 'user-77' }) }),
+      );
+    });
+
+    it('de-duplicates coinIds but still applies the grade', async () => {
+      prisma.coin.findMany.mockResolvedValue([{ id: COIN_1950_D }]);
+      prisma.ownership.createMany.mockResolvedValue({ count: 1 });
+      prisma.ownership.updateMany.mockResolvedValue({ count: 1 });
+
+      const result = await service.confirm(
+        'user-1',
+        [COIN_1950_D, COIN_1950_D],
+        [{ coinId: COIN_1950_D, grade: 'AU' }],
+      );
+
+      expect(result).toEqual({ requested: 1, created: 1, alreadyOwned: 0 });
+      expect(prisma.ownership.updateMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects a grade whose coinId is not in coinIds with IMPORT_INVALID_GRADES before any DB call', async () => {
+      const promise = service.confirm('user-1', [COIN_1950_D], [{ coinId: COIN_UNLISTED, grade: 'F' }]);
+
+      await expect(promise).rejects.toBeInstanceOf(BadRequestException);
+      await expect(promise).rejects.toMatchObject({ message: 'IMPORT_INVALID_GRADES' });
+      expect(prisma.coin.findMany).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expectNoWritesExcept(prisma);
+    });
+
+    it('rejects two grade entries for the same coin with IMPORT_INVALID_GRADES before any DB call', async () => {
+      const promise = service.confirm(
+        'user-1',
+        [COIN_1950_D],
+        [
+          { coinId: COIN_1950_D, grade: 'F' },
+          { coinId: COIN_1950_D, grade: 'F' },
+        ],
+      );
+
+      await expect(promise).rejects.toBeInstanceOf(BadRequestException);
+      await expect(promise).rejects.toMatchObject({ message: 'IMPORT_INVALID_GRADES' });
+      expect(prisma.coin.findMany).not.toHaveBeenCalled();
+      expectNoWritesExcept(prisma);
+    });
+
+    it('rejects one stray coinId even when other grade entries are valid', async () => {
+      const promise = service.confirm(
+        'user-1',
+        [COIN_1950_D, COIN_1909_S],
+        [
+          { coinId: COIN_1950_D, grade: 'VF' },
+          { coinId: COIN_UNLISTED, grade: 'VF' },
+        ],
+      );
+      await expect(promise).rejects.toMatchObject({ message: 'IMPORT_INVALID_GRADES' });
+      expectNoWritesExcept(prisma);
+    });
+
+    it('still reports IMPORT_UNKNOWN_COIN and writes nothing when a graded coin is not an approved coin', async () => {
+      prisma.coin.findMany.mockResolvedValue([{ id: COIN_1909_S }]);
+
+      const promise = service.confirm(
+        'user-1',
+        [COIN_1909_S, COIN_1950_D],
+        [{ coinId: COIN_1950_D, grade: 'VF' }],
+      );
+
+      await expect(promise).rejects.toMatchObject({ message: 'IMPORT_UNKNOWN_COIN' });
+      expect(prisma.ownership.createMany).not.toHaveBeenCalled();
+      expect(prisma.ownership.updateMany).not.toHaveBeenCalled();
+      expectNoWritesExcept(prisma);
+    });
+
+    it('propagates a failing updateMany so the transaction rolls back', async () => {
+      prisma.coin.findMany.mockResolvedValue([{ id: COIN_1950_D }]);
+      prisma.ownership.createMany.mockResolvedValue({ count: 1 });
+      prisma.ownership.updateMany.mockRejectedValue(new Error('db down'));
+
+      await expect(
+        service.confirm('user-1', [COIN_1950_D], [{ coinId: COIN_1950_D, grade: 'VF' }]),
+      ).rejects.toThrow('db down');
     });
   });
 });

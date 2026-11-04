@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   ImportColumnMapping,
+  ImportConfirmRequest,
   ImportConfirmResponse,
   ImportPreviewResponse,
 } from '@coin-collector/shared';
@@ -20,8 +21,8 @@ export function usePreviewImport() {
 
 export function useConfirmImport() {
   const queryClient = useQueryClient();
-  return useMutation<ImportConfirmResponse, ApiError, string[]>({
-    mutationFn: (coinIds) => confirmImport(coinIds),
+  return useMutation<ImportConfirmResponse, ApiError, ImportConfirmRequest>({
+    mutationFn: ({ coinIds, grades }) => confirmImport(coinIds, grades ?? []),
     onSuccess: () => {
       // Ownership is global, so every collection, set and gap view (the dashboard reads
       // ['user-sets', id, 'gaps']) may have changed.

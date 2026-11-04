@@ -408,11 +408,19 @@ export function getCoinName(coin: CoinNameInput): CoinName {
 }
 
 // CSV collection import (POST /collection/import/preview and /confirm). The preview parses and
-// matches an uploaded CSV in memory and writes nothing; only confirm creates Ownership rows.
+// matches an uploaded CSV in memory and writes nothing; only confirm writes: it creates Ownership
+// rows and sets the grades it was sent (never clearing an existing grade).
 export const IMPORT_MAX_FILE_BYTES = 1_048_576;
 export const IMPORT_MAX_ROWS = 2000;
 
-export type ImportField = 'year' | 'country' | 'denomination' | 'mintMark' | 'variety' | 'combined';
+export type ImportField =
+  | 'year'
+  | 'country'
+  | 'denomination'
+  | 'mintMark'
+  | 'variety'
+  | 'combined'
+  | 'grade';
 export const IMPORT_FIELDS: readonly ImportField[] = [
   'year',
   'country',
@@ -420,6 +428,7 @@ export const IMPORT_FIELDS: readonly ImportField[] = [
   'mintMark',
   'variety',
   'combined',
+  'grade',
 ];
 // Field -> 0-based column index. Unmapped fields are absent.
 export type ImportColumnMapping = Partial<Record<ImportField, number>>;
@@ -455,7 +464,8 @@ export type ImportErrorCode =
   | 'IMPORT_EMPTY'
   | 'IMPORT_NO_DATA_ROWS'
   | 'IMPORT_INVALID_MAPPING'
-  | 'IMPORT_UNKNOWN_COIN';
+  | 'IMPORT_UNKNOWN_COIN'
+  | 'IMPORT_INVALID_GRADES';
 
 export interface ImportCoinSummary {
   id: string;
@@ -477,6 +487,7 @@ export interface ImportPreviewRow {
   candidates: ImportCoinSummary[]; // non-empty only for 'ambiguous'
   alreadyOwned: boolean; // matched && coin.owned
   duplicateOfLine: number | null; // matched rows only: line of the first row with the same coin
+  grade: CoinGrade | null; // normalised Grade cell; null when unmapped, empty or not recognised
 }
 
 export interface ImportPreviewSummary {
@@ -496,10 +507,25 @@ export interface ImportPreviewResponse {
   mapping: ImportColumnMapping; // the mapping actually used
   rows: ImportPreviewRow[];
   summary: ImportPreviewSummary;
+  warnings: ImportPreviewWarning[]; // preview-only; [] when none or when grade is unmapped
+}
+
+export type ImportWarningCode = 'grade_not_recognised';
+
+export interface ImportPreviewWarning {
+  line: number; // the row's line
+  code: ImportWarningCode;
+  value: string; // trimmed original cell text
+}
+
+export interface ImportConfirmGrade {
+  coinId: string;
+  grade: CoinGrade;
 }
 
 export interface ImportConfirmRequest {
   coinIds: string[];
+  grades?: ImportConfirmGrade[]; // omitted or [] = no grades are written
 }
 
 export interface ImportConfirmResponse {

@@ -21,7 +21,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-10-01](2026-10-01-rate-limiting-per-client-ip-behind-render.md) | Rate limits are per client IP, using an explicit proxy hop count | Accepted |
 | [2026-10-02](2026-10-02-in-app-admin-role.md) | Catalog submissions are reviewed in-app by an admin role that is read from the database | Accepted |
 | [2026-10-02](2026-10-02-submission-review-rules.md) | Review decisions are final, rejection reasons are visible only to the submitter, and duplicate warnings are advisory | Accepted |
-| [2026-10-05](2026-10-05-collection-import-preview-then-confirm.md) | Collection import is a stateless preview-then-confirm flow that only adds ownership | Accepted |
+| [2026-10-05](2026-10-05-collection-import-preview-then-confirm.md) | Collection import is a stateless preview-then-confirm flow that only adds ownership | Superseded by [2026-11-04-csv-import-confirm-sets-grades](2026-11-04-csv-import-confirm-sets-grades.md) |
 | [2026-10-09](2026-10-09-album-view-client-side-projection.md) | The set Album view is a client-side projection of the gap data, with the view mode kept in the URL | Superseded by 2026-10-17 |
 | [2026-10-13](2026-10-13-new-set-created-in-one-request.md) | Creating a set is one request; coins are picked afterwards in the set editor | Accepted |
 | [2026-10-13](2026-10-13-set-list-endpoints-return-flat-coin-count.md) | Set list endpoints return a flat coinCount from Prisma _count | Accepted |
@@ -36,10 +36,11 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-10-19](2026-10-19-collection-filtered-and-grouped-on-client.md) | The Collection page filters, counts and groups one unfiltered GET /collection on the client | Accepted |
 | [2026-10-19](2026-10-19-removed-coins-stay-visible-via-page-local-list.md) | An un-owned coin stays on the Collection page as "Removed" through a page-local, display-only list | Accepted |
 | [2026-10-19](2026-10-19-catalog-badges-from-two-batched-queries.md) | GET /catalog adds `owned` and `inSetsCount` for signed-in callers with two batched queries keyed by the page's coin ids | Accepted |
-| [2026-11-02](2026-11-02-one-optional-adjectival-grade-per-ownership-row.md) | A coin's condition is one optional adjectival grade on the ownership row, with an optional per-set minimum grade | Accepted |
+| [2026-11-02](2026-11-02-one-optional-adjectival-grade-per-ownership-row.md) | A coin's condition is one optional adjectival grade on the ownership row, with an optional per-set minimum grade | Superseded by [2026-11-04-csv-import-confirm-sets-grades](2026-11-04-csv-import-confirm-sets-grades.md) |
 | [2026-11-02](2026-11-02-grade-gap-fields-conditional-on-min-grade.md) | In the gap view, grade and minGrade are always present and nullable, while needsUpgrade and upgradeCount appear only when the set has a minGrade | Accepted |
 | [2026-11-03](2026-11-03-grade-saves-use-separate-optimistic-hook.md) | Grade edits go through a separate `useSetGrade` hook that shares the cache helpers of `useSetOwnership` | Accepted |
 | [2026-11-03](2026-11-03-min-grade-save-waits-for-gap-view-refetch.md) | Saving a set's minimum grade is not optimistic: the mutation stays pending until the gap view is refetched | Accepted |
+| [2026-11-04](2026-11-04-csv-import-confirm-sets-grades.md) | CSV import confirm takes an optional grades array and overwrites grades, never clearing one | Accepted |
 
 ## Where else decisions live
 

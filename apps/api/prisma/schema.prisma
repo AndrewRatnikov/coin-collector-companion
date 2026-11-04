@@ -174,7 +174,7 @@ model Ownership {
   userId  String
   coinId  String
   ownedAt DateTime @default(now())
-  // Optional, at most one per row; written only by PATCH /collection/:coinId.
+  // Optional, at most one per row; written by PATCH /collection/:coinId and by CSV import confirm (only for rows with a recognised grade).
   grade   CoinGrade?
 
   user User @relation(fields: [userId], references: [id])

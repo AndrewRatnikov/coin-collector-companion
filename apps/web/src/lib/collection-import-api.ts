@@ -1,5 +1,6 @@
 import type {
   ImportColumnMapping,
+  ImportConfirmGrade,
   ImportConfirmResponse,
   ImportPreviewResponse,
 } from '@coin-collector/shared';
@@ -21,9 +22,13 @@ export async function previewImport(
   });
 }
 
-export async function confirmImport(coinIds: string[]): Promise<ImportConfirmResponse> {
+// Without grades the body stays exactly { coinIds }, as before grades existed.
+export async function confirmImport(
+  coinIds: string[],
+  grades: ImportConfirmGrade[] = [],
+): Promise<ImportConfirmResponse> {
   return apiFetch<ImportConfirmResponse>('/collection/import/confirm', {
     method: 'POST',
-    body: JSON.stringify({ coinIds }),
+    body: JSON.stringify(grades.length === 0 ? { coinIds } : { coinIds, grades }),
   });
 }

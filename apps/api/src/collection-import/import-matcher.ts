@@ -17,6 +17,7 @@ import {
   VARIETY_NONE_PLACEHOLDERS,
 } from './import-aliases';
 import type { ParsedCsvRow } from './csv-parser';
+import { rowGrade } from './import-grades';
 
 // Pure normalisation and matching of parsed CSV rows against a catalog snapshot. No I/O: the
 // caller loads the catalog and the user's owned coin ids and passes them in.
@@ -375,6 +376,7 @@ export function matchRows(input: MatchRowsInput): ImportPreviewRow[] {
   return input.rows.map((row): ImportPreviewRow => {
     const outcome = matchRow(row.values, input.mapping, index);
     const values = [...row.values];
+    const grade = rowGrade(row.values, input.mapping);
 
     if (outcome.status === 'matched') {
       const coin = summarize(outcome.coin, input.ownedCoinIds);
@@ -389,6 +391,7 @@ export function matchRows(input: MatchRowsInput): ImportPreviewRow[] {
         candidates: [],
         alreadyOwned: coin.owned,
         duplicateOfLine: firstLine ?? null,
+        grade,
       };
     }
 
@@ -407,6 +410,7 @@ export function matchRows(input: MatchRowsInput): ImportPreviewRow[] {
       candidates,
       alreadyOwned: false,
       duplicateOfLine: null,
+      grade,
     };
   });
 }

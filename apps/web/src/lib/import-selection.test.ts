@@ -1,8 +1,10 @@
 /**
- * Tests for: import-selection (effectiveCoin, selectedCoinIds, countToImport, countSkipped,
+ * Tests for: import-selection (effectiveCoin, selectedCoinIds, selectedGrades, countToImport, countSkipped,
  *            toImportCoinSummary, formatImportCoinLabel, importErrorKey)
  * Contract source: runs/run_20261005_212015/plan.md § Interface Contract (Web: import-selection.ts)
- * Covers criteria: #3, #21, #25, #26, #9 (error keys) (from runs/run_20261005_212015/prd.md)
+ *                   and runs/run_20261104_064643/plan.md § Interface Contract (Web: lib/import-selection.ts)
+ * Covers criteria: #3, #21, #25, #26, #9 (error keys) (from runs/run_20261005_212015/prd.md);
+ *                  #8, #9, #11 (selectedGrades) (from runs/run_20261104_064643/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -10,7 +12,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { CatalogCoin, ImportCoinSummary, ImportPreviewRow } from '@coin-collector/shared';
+import type { CatalogCoin, CoinGrade, ImportCoinSummary, ImportPreviewRow } from '@coin-collector/shared';
 import { ApiError } from '@/lib/api-client';
 import {
   countSkipped,
@@ -19,6 +21,7 @@ import {
   formatImportCoinLabel,
   importErrorKey,
   selectedCoinIds,
+  selectedGrades,
   toImportCoinSummary,
   type ImportDecisions,
 } from '@/lib/import-selection';
@@ -37,7 +40,12 @@ function summary(id: string, overrides: Partial<ImportCoinSummary> = {}): Import
   };
 }
 
-function matchedRow(line: number, coin: ImportCoinSummary, duplicateOfLine: number | null = null): ImportPreviewRow {
+function matchedRow(
+  line: number,
+  coin: ImportCoinSummary,
+  duplicateOfLine: number | null = null,
+  grade: CoinGrade | null = null,
+): ImportPreviewRow {
   return {
     line,
     values: ['1950', 'USA', 'Cent'],
@@ -47,10 +55,11 @@ function matchedRow(line: number, coin: ImportCoinSummary, duplicateOfLine: numb
     candidates: [],
     alreadyOwned: coin.owned,
     duplicateOfLine,
+    grade,
   };
 }
 
-function ambiguousRow(line: number, candidates: ImportCoinSummary[]): ImportPreviewRow {
+function ambiguousRow(line: number, candidates: ImportCoinSummary[], grade: CoinGrade | null = null): ImportPreviewRow {
   return {
     line,
     values: ['1950', 'USA', 'Cent'],
@@ -60,10 +69,11 @@ function ambiguousRow(line: number, candidates: ImportCoinSummary[]): ImportPrev
     candidates,
     alreadyOwned: false,
     duplicateOfLine: null,
+    grade,
   };
 }
 
-function unmatchedRow(line: number): ImportPreviewRow {
+function unmatchedRow(line: number, grade: CoinGrade | null = null): ImportPreviewRow {
   return {
     line,
     values: ['1960', 'USA', 'Cent'],
@@ -73,10 +83,11 @@ function unmatchedRow(line: number): ImportPreviewRow {
     candidates: [],
     alreadyOwned: false,
     duplicateOfLine: null,
+    grade,
   };
 }
 
-function invalidRow(line: number): ImportPreviewRow {
+function invalidRow(line: number, grade: CoinGrade | null = null): ImportPreviewRow {
   return {
     line,
     values: ['', 'USA', 'Cent'],
@@ -86,6 +97,7 @@ function invalidRow(line: number): ImportPreviewRow {
     candidates: [],
     alreadyOwned: false,
     duplicateOfLine: null,
+    grade,
   };
 }
 
@@ -150,6 +162,90 @@ describe('selectedCoinIds', () => {
 
   it('returns an empty list for no rows', () => {
     expect(selectedCoinIds([], {})).toEqual([]);
+  });
+});
+
+describe('selectedGrades', () => {
+  it('returns { coinId, grade } for each selected coin whose row has a grade, in row order', () => {
+    const rows = [matchedRow(2, A, null, 'VF'), matchedRow(3, B, null, 'UNC'), matchedRow(4, OWNED, null, 'G')];
+    expect(selectedGrades(rows, {})).toEqual([
+      { coinId: 'coin-a', grade: 'VF' },
+      { coinId: 'coin-b', grade: 'UNC' },
+      { coinId: 'coin-owned', grade: 'G' },
+    ]);
+  });
+
+  it('gives a different result for a different grade on the same coin', () => {
+    expect(selectedGrades([matchedRow(2, A, null, 'XF')], {})).toEqual([{ coinId: 'coin-a', grade: 'XF' }]);
+    expect(selectedGrades([matchedRow(2, A, null, 'AU')], {})).toEqual([{ coinId: 'coin-a', grade: 'AU' }]);
+  });
+
+  it('leaves out rows without a grade (blank or unrecognised)', () => {
+    const rows = [matchedRow(2, A, null, 'F'), matchedRow(3, B, null, null)];
+    expect(selectedGrades(rows, {})).toEqual([{ coinId: 'coin-a', grade: 'F' }]);
+  });
+
+  it('returns an empty list when no row has a grade, and for no rows', () => {
+    expect(selectedGrades([matchedRow(2, A), matchedRow(3, B)], {})).toEqual([]);
+    expect(selectedGrades([], {})).toEqual([]);
+  });
+
+  it('first graded row wins when a coin appears in several rows', () => {
+    const rows = [matchedRow(2, A, null, 'VG'), matchedRow(3, A, 2, 'UNC'), matchedRow(4, B, null, 'F')];
+    expect(selectedGrades(rows, {})).toEqual([
+      { coinId: 'coin-a', grade: 'VG' },
+      { coinId: 'coin-b', grade: 'F' },
+    ]);
+  });
+
+  it('skips a leading ungraded row of the same coin and takes the first graded one', () => {
+    const rows = [matchedRow(2, A, null, null), matchedRow(3, A, 2, 'XF'), matchedRow(4, A, 2, 'G')];
+    expect(selectedGrades(rows, {})).toEqual([{ coinId: 'coin-a', grade: 'XF' }]);
+  });
+
+  it('ignores a skipped row, so the next graded row of that coin supplies the grade', () => {
+    const rows = [matchedRow(2, A, null, 'VG'), matchedRow(3, A, 2, 'UNC')];
+    expect(selectedGrades(rows, { 2: { kind: 'skip' } })).toEqual([{ coinId: 'coin-a', grade: 'UNC' }]);
+    expect(selectedGrades(rows, { 2: { kind: 'skip' }, 3: { kind: 'skip' } })).toEqual([]);
+  });
+
+  it('does not send a grade for unmatched, invalid or unresolved ambiguous rows', () => {
+    const rows = [
+      unmatchedRow(2, 'F'),
+      invalidRow(3, 'G'),
+      ambiguousRow(4, [A, B], 'XF'),
+      matchedRow(5, B, null, 'VF'),
+    ];
+    expect(selectedGrades(rows, {})).toEqual([{ coinId: 'coin-b', grade: 'VF' }]);
+  });
+
+  it('gives the row grade to the coin the user picked', () => {
+    const rows = [unmatchedRow(2, 'F'), ambiguousRow(3, [A, B], 'XF'), matchedRow(4, OWNED, null, 'AU')];
+    const decisions: ImportDecisions = { 2: { kind: 'pick', coin: A }, 3: { kind: 'pick', coin: B } };
+    expect(selectedGrades(rows, decisions)).toEqual([
+      { coinId: 'coin-a', grade: 'F' },
+      { coinId: 'coin-b', grade: 'XF' },
+      { coinId: 'coin-owned', grade: 'AU' },
+    ]);
+  });
+
+  it('uses the picked coin instead of the matched one on a graded matched row', () => {
+    const rows = [matchedRow(2, A, null, 'VF')];
+    expect(selectedGrades(rows, { 2: { kind: 'pick', coin: B } })).toEqual([{ coinId: 'coin-b', grade: 'VF' }]);
+  });
+
+  it('only returns coins that selectedCoinIds also returns', () => {
+    const rows = [
+      matchedRow(2, A, null, 'VF'),
+      matchedRow(3, B, null, 'F'),
+      unmatchedRow(4, 'G'),
+      ambiguousRow(5, [A, B], 'AU'),
+    ];
+    const decisions: ImportDecisions = { 3: { kind: 'skip' } };
+    const ids = selectedCoinIds(rows, decisions);
+    for (const g of selectedGrades(rows, decisions)) {
+      expect(ids).toContain(g.coinId);
+    }
   });
 });
 
@@ -284,6 +380,7 @@ describe('importErrorKey', () => {
     ['IMPORT_NO_DATA_ROWS', 'import.error.noDataRows'],
     ['IMPORT_INVALID_MAPPING', 'import.error.invalidMapping'],
     ['IMPORT_UNKNOWN_COIN', 'import.error.unknownCoin'],
+    ['IMPORT_INVALID_GRADES', 'import.error.invalidGrades'],
   ])('maps the ApiError message %s to %s', (code, key) => {
     expect(importErrorKey(new ApiError(400, code))).toBe(key);
   });
@@ -292,6 +389,7 @@ describe('importErrorKey', () => {
     expect(importErrorKey(new ApiError(400, 'something else'))).toBe('common.somethingWentWrong');
     expect(importErrorKey(new ApiError(500, 'Internal server error'))).toBe('common.somethingWentWrong');
     expect(importErrorKey(new Error('IMPORT_EMPTY'))).toBe('common.somethingWentWrong');
+    expect(importErrorKey(new Error('IMPORT_INVALID_GRADES'))).toBe('common.somethingWentWrong');
     expect(importErrorKey(null)).toBe('common.somethingWentWrong');
     expect(importErrorKey('IMPORT_EMPTY')).toBe('common.somethingWentWrong');
     expect(importErrorKey(undefined)).toBe('common.somethingWentWrong');

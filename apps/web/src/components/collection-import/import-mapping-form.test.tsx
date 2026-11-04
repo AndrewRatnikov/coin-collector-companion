@@ -1,7 +1,8 @@
 /**
  * Tests for: ImportMappingForm
  * Contract source: runs/run_20261005_212015/plan.md § Interface Contract (Component: ImportMappingForm)
- * Covers criteria: #13 (from runs/run_20261005_212015/prd.md)
+ *                   and runs/run_20261104_064643/plan.md § Interface Contract (Component: ImportMappingForm)
+ * Covers criteria: #13 (from runs/run_20261005_212015/prd.md); #1, #3 (grade field, from runs/run_20261104_064643/prd.md)
  *
  * CONTRACT_GAP: none.
  */
@@ -20,6 +21,7 @@ const FIELD_TESTIDS = [
   'import-mapping-mint-mark',
   'import-mapping-variety',
   'import-mapping-combined',
+  'import-mapping-grade',
 ];
 
 function selectOf(testId: string): HTMLSelectElement {
@@ -30,11 +32,12 @@ function selectOf(testId: string): HTMLSelectElement {
 
 describe('ImportMappingForm', () => {
   describe('structure', () => {
-    it('renders a form with one select per field, in IMPORT_FIELDS order', () => {
+    it('renders a form with one select per field, in IMPORT_FIELDS order (Grade last)', () => {
       render(<ImportMappingForm headers={HEADERS} mapping={{}} onApply={vi.fn()} />);
       const form = screen.getByTestId('import-mapping-form');
       const selects = within(form).getAllByRole('combobox');
       expect(selects.map((s) => s.getAttribute('data-testid'))).toEqual(FIELD_TESTIDS);
+      expect(selects[selects.length - 1]).toHaveAttribute('data-testid', 'import-mapping-grade');
     });
 
     it('offers "not mapped" (value "") plus one option per header with the column index as value', () => {
@@ -51,6 +54,13 @@ describe('ImportMappingForm', () => {
       render(<ImportMappingForm headers={['A', 'B']} mapping={{}} onApply={vi.fn()} />);
       const options = within(selectOf('import-mapping-year')).getAllByRole('option');
       expect(options.map((o) => o.getAttribute('value'))).toEqual(['', '0', '1']);
+      const gradeOptions = within(selectOf('import-mapping-grade')).getAllByRole('option');
+      expect(gradeOptions.map((o) => o.getAttribute('value'))).toEqual(['', '0', '1']);
+    });
+
+    it('labels the Grade select as optional', () => {
+      render(<ImportMappingForm headers={HEADERS} mapping={{}} onApply={vi.fn()} />);
+      expect(screen.getByText('Grade (optional)')).toBeInTheDocument();
     });
   });
 
@@ -69,6 +79,7 @@ describe('ImportMappingForm', () => {
       expect(selectOf('import-mapping-mint-mark').value).toBe('3');
       expect(selectOf('import-mapping-variety').value).toBe('');
       expect(selectOf('import-mapping-combined').value).toBe('');
+      expect(selectOf('import-mapping-grade').value).toBe('');
     });
 
     it('reflects a different mapping prop with different selections', () => {
@@ -83,6 +94,28 @@ describe('ImportMappingForm', () => {
       expect(selectOf('import-mapping-country').value).toBe('0');
       expect(selectOf('import-mapping-variety').value).toBe('2');
       expect(selectOf('import-mapping-year').value).toBe('');
+    });
+
+    it('preselects the suggested Grade column from the mapping prop', () => {
+      const { unmount } = render(
+        <ImportMappingForm
+          headers={HEADERS}
+          mapping={{ year: 0, country: 1, denomination: 2, grade: 4 }}
+          onApply={vi.fn()}
+        />,
+      );
+      expect(selectOf('import-mapping-grade').value).toBe('4');
+      expect(selectOf('import-mapping-variety').value).toBe('');
+      unmount();
+
+      render(
+        <ImportMappingForm
+          headers={HEADERS}
+          mapping={{ year: 0, country: 1, denomination: 2, grade: 3 }}
+          onApply={vi.fn()}
+        />,
+      );
+      expect(selectOf('import-mapping-grade').value).toBe('3');
     });
   });
 
@@ -153,6 +186,31 @@ describe('ImportMappingForm', () => {
       );
       expect(screen.getByTestId('import-mapping-apply')).toBeDisabled();
     });
+
+    it('keeps Apply enabled with Grade not mapped, and enabled with Grade mapped (Grade is optional)', () => {
+      const { unmount } = render(
+        <ImportMappingForm headers={HEADERS} mapping={{ year: 0, country: 1, denomination: 2 }} onApply={vi.fn()} />,
+      );
+      expect(selectOf('import-mapping-grade').value).toBe('');
+      expect(screen.getByTestId('import-mapping-apply')).toBeEnabled();
+      unmount();
+
+      render(
+        <ImportMappingForm
+          headers={HEADERS}
+          mapping={{ year: 0, country: 1, denomination: 2, grade: 4 }}
+          onApply={vi.fn()}
+        />,
+      );
+      expect(screen.getByTestId('import-mapping-apply')).toBeEnabled();
+      expect(screen.queryByTestId('import-mapping-required-hint')).not.toBeInTheDocument();
+    });
+
+    it('does not make a Grade-only mapping complete', () => {
+      render(<ImportMappingForm headers={HEADERS} mapping={{ grade: 4 }} onApply={vi.fn()} />);
+      expect(screen.getByTestId('import-mapping-apply')).toBeDisabled();
+      expect(screen.getByTestId('import-mapping-required-hint')).toBeInTheDocument();
+    });
   });
 
   describe('onApply', () => {
@@ -173,6 +231,7 @@ describe('ImportMappingForm', () => {
       expect(onApply).toHaveBeenCalledWith({ year: 0, country: 1, denomination: 2, mintMark: 3 });
       expect(onApply.mock.calls[0][0]).not.toHaveProperty('variety');
       expect(onApply.mock.calls[0][0]).not.toHaveProperty('combined');
+      expect(onApply.mock.calls[0][0]).not.toHaveProperty('grade');
     });
 
     it('sends the edited draft, not the original mapping', async () => {
@@ -204,6 +263,39 @@ describe('ImportMappingForm', () => {
       await user.click(screen.getByTestId('import-mapping-apply'));
 
       expect(onApply).toHaveBeenCalledWith({ year: 0, country: 1, denomination: 2 });
+    });
+
+    it('includes the Grade column the user picks', async () => {
+      const user = userEvent.setup();
+      const onApply = vi.fn();
+      render(
+        <ImportMappingForm headers={HEADERS} mapping={{ year: 0, country: 1, denomination: 2 }} onApply={onApply} />,
+      );
+
+      await user.selectOptions(selectOf('import-mapping-grade'), '4');
+      await user.click(screen.getByTestId('import-mapping-apply'));
+
+      expect(onApply).toHaveBeenCalledWith({ year: 0, country: 1, denomination: 2, grade: 4 });
+    });
+
+    it('sends the suggested Grade column as a number, and omits it after being set to "not mapped"', async () => {
+      const user = userEvent.setup();
+      const onApply = vi.fn();
+      render(
+        <ImportMappingForm
+          headers={HEADERS}
+          mapping={{ year: 0, country: 1, denomination: 2, grade: 3 }}
+          onApply={onApply}
+        />,
+      );
+
+      await user.click(screen.getByTestId('import-mapping-apply'));
+      expect(onApply).toHaveBeenLastCalledWith({ year: 0, country: 1, denomination: 2, grade: 3 });
+
+      await user.selectOptions(selectOf('import-mapping-grade'), '');
+      await user.click(screen.getByTestId('import-mapping-apply'));
+      expect(onApply).toHaveBeenLastCalledWith({ year: 0, country: 1, denomination: 2 });
+      expect(onApply.mock.calls[1][0]).not.toHaveProperty('grade');
     });
 
     it('does not call onApply when Apply is disabled', async () => {

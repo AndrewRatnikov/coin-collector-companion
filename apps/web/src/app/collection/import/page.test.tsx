@@ -2,7 +2,10 @@
  * Tests for: CollectionImportPage (/collection/import), including ImportPreviewTable through the page
  * Contract source: runs/run_20261005_212015/plan.md § Interface Contract
  *                   (Page: /collection/import, Component: ImportPreviewTable, Component: ImportMappingForm)
- * Covers criteria: #1, #3, #9 (web side), #13, #21, #24, #25, #26 (from runs/run_20261005_212015/prd.md)
+ *                   and runs/run_20261104_064643/plan.md § Interface Contract
+ *                   (Page: app/collection/import/page.tsx, ImportWarnings, ImportPreviewTable, ImportMappingForm)
+ * Covers criteria: #1, #3, #9 (web side), #13, #21, #24, #25, #26 (from runs/run_20261005_212015/prd.md);
+ *                  #3, #6, #7, #8, #9, #10, #11 (grades, from runs/run_20261104_064643/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -84,6 +87,7 @@ function row(overrides: Partial<ImportPreviewRow> & Pick<ImportPreviewRow, 'line
     candidates: [],
     alreadyOwned: false,
     duplicateOfLine: null,
+    grade: null,
     ...overrides,
   };
 }
@@ -135,6 +139,7 @@ function previewResponse(
       invalid: 6,
       toImport: 99,
     },
+    warnings: [],
     ...overrides,
   };
 }
@@ -142,6 +147,14 @@ function previewResponse(
 const MIXED_ROWS = [ROW_MATCHED, ROW_OWNED, ROW_DUPLICATE, ROW_AMBIGUOUS, ROW_UNMATCHED, ROW_INVALID];
 // Same rows without the duplicate of coin-a, so skipping row 2 really removes coin-a from the import.
 const ROWS_WITHOUT_DUPLICATE = [ROW_MATCHED, ROW_OWNED, ROW_AMBIGUOUS, ROW_UNMATCHED, ROW_INVALID];
+
+// Grade fixtures: the Grade column is the 5th header (index 4) and is mapped.
+const GRADE_HEADERS = ['Year', 'Country', 'Denomination', 'Mint', 'Grade'];
+const GRADE_MAPPING = { year: 0, country: 1, denomination: 2, grade: 4 };
+
+function gradeResponse(rows: ImportPreviewRow[], overrides: Partial<ImportPreviewResponse> = {}) {
+  return previewResponse(rows, { headers: GRADE_HEADERS, mapping: GRADE_MAPPING, ...overrides });
+}
 
 function csvFile(name = 'c.csv') {
   return new File(['Year,Country,Denomination,Mint\n1950,USA,Cent,D\n'], name, { type: 'text/csv' });
@@ -194,6 +207,12 @@ async function uploadAndPreview(user: User, file: File = csvFile()) {
 
 async function reachPreview(user: User, rows: ImportPreviewRow[] = MIXED_ROWS) {
   previewImportMock.mockResolvedValue(previewResponse(rows));
+  await uploadAndPreview(user);
+  await screen.findByTestId('import-summary');
+}
+
+async function reachPreviewWith(user: User, response: ImportPreviewResponse) {
+  previewImportMock.mockResolvedValue(response);
   await uploadAndPreview(user);
   await screen.findByTestId('import-summary');
 }
@@ -688,6 +707,7 @@ describe('CollectionImportPage', () => {
       expect((screen.getByTestId('import-mapping-country') as HTMLSelectElement).value).toBe('1');
       expect((screen.getByTestId('import-mapping-denomination') as HTMLSelectElement).value).toBe('2');
       expect((screen.getByTestId('import-mapping-mint-mark') as HTMLSelectElement).value).toBe('');
+      expect((screen.getByTestId('import-mapping-grade') as HTMLSelectElement).value).toBe('');
       const options = within(screen.getByTestId('import-mapping-year')).getAllByRole('option');
       expect(options.map((o) => o.textContent)).toEqual(['Not mapped', 'Year', 'Country', 'Denomination', 'Mint']);
     });
@@ -756,6 +776,264 @@ describe('CollectionImportPage', () => {
 
       expect(screen.getByTestId('import-mapping-apply')).toBeDisabled();
       expect(screen.getByTestId('import-mapping-required-hint')).toBeInTheDocument();
+    });
+  });
+
+  describe('grades: mapping form', () => {
+    it('preselects the Grade column the server suggested', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(user, gradeResponse([ROW_MATCHED]));
+
+      const select = screen.getByTestId('import-mapping-grade') as HTMLSelectElement;
+      expect(select.value).toBe('4');
+      const options = within(select).getAllByRole('option');
+      expect(options.map((o) => o.textContent)).toEqual(['Not mapped', 'Year', 'Country', 'Denomination', 'Mint', 'Grade']);
+      expect(screen.getByTestId('import-mapping-apply')).toBeEnabled();
+    });
+
+    it('applying a mapping with the Grade column re-previews with grade in the mapping', async () => {
+      const { user } = renderPage();
+      previewImportMock.mockResolvedValueOnce(
+        previewResponse([ROW_MATCHED], { headers: GRADE_HEADERS, mapping: { year: 0, country: 1, denomination: 2 } }),
+      );
+      await uploadAndPreview(user);
+      await screen.findByTestId('import-summary');
+
+      previewImportMock.mockResolvedValueOnce(gradeResponse([ROW_MATCHED]));
+      await user.selectOptions(screen.getByTestId('import-mapping-grade'), '4');
+      await user.click(screen.getByTestId('import-mapping-apply'));
+
+      await waitFor(() => {
+        expect(previewImportMock).toHaveBeenCalledTimes(2);
+      });
+      expect(previewImportMock.mock.calls[1][1]).toEqual({ year: 0, country: 1, denomination: 2, grade: 4 });
+    });
+  });
+
+  describe('grades: preview chips, flags and warnings', () => {
+    it('shows a grade chip on rows with a grade and none on rows without', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(
+        user,
+        gradeResponse([{ ...ROW_MATCHED, grade: 'VF' }, { ...ROW_OWNED, grade: null }, { ...ROW_UNMATCHED, grade: 'G' }]),
+      );
+
+      expect(within(rowEl(2)).getByTestId('import-row-grade')).toHaveTextContent(/^VF$/);
+      expect(within(rowEl(3)).queryByTestId('import-row-grade')).not.toBeInTheDocument();
+      expect(within(rowEl(6)).getByTestId('import-row-grade')).toHaveTextContent(/^G$/);
+      expect(within(rowEl(2)).getByTestId('import-row-grade')).toHaveAttribute('data-grade', 'VF');
+    });
+
+    it('shows the warnings list and a flag on the warned rows', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(
+        user,
+        gradeResponse([ROW_MATCHED, ROW_OWNED, ROW_UNMATCHED], {
+          warnings: [
+            { line: 3, code: 'grade_not_recognised', value: 'AG' },
+            { line: 6, code: 'grade_not_recognised', value: 'MS-65' },
+          ],
+        }),
+      );
+
+      const section = screen.getByTestId('import-warnings');
+      expect(section).toHaveTextContent('Grades not recognised (2)');
+      expect(within(screen.getByTestId('import-warning-3')).getByTestId('import-warning-value').textContent).toBe('AG');
+      expect(within(screen.getByTestId('import-warning-6')).getByTestId('import-warning-line')).toHaveTextContent(
+        'Line 6',
+      );
+      expect(within(rowEl(3)).getByTestId('import-row-grade-warning')).toBeInTheDocument();
+      expect(within(rowEl(6)).getByTestId('import-row-grade-warning')).toBeInTheDocument();
+      expect(within(rowEl(2)).queryByTestId('import-row-grade-warning')).not.toBeInTheDocument();
+      // a warning never changes the match status
+      expect(rowEl(3)).toHaveAttribute('data-status', 'matched');
+      expect(rowEl(6)).toHaveAttribute('data-status', 'unmatched');
+    });
+
+    it('does not render the warnings list when there are no warnings', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(user, gradeResponse([{ ...ROW_MATCHED, grade: 'F' }]));
+
+      expect(screen.queryByTestId('import-warnings')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('import-row-grade-warning')).not.toBeInTheDocument();
+    });
+
+    it('does not change the existing UI when Grade is not mapped', async () => {
+      const { user } = renderPage();
+      await reachPreview(user);
+
+      expect(screen.queryByTestId('import-warnings')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('import-row-grade')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('import-summary-grades')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('grades: summary count', () => {
+    it('shows the number of grades that confirm will send when Grade is mapped', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(
+        user,
+        gradeResponse([
+          { ...ROW_MATCHED, grade: 'VF' },
+          { ...ROW_OWNED, grade: 'G' },
+          { ...ROW_UNMATCHED, grade: 'F' },
+          { ...ROW_INVALID, grade: null },
+        ]),
+      );
+
+      // unmatched row 6 has no coin, so its grade is not sent
+      expect(textOf('import-summary-grades')).toBe('2');
+    });
+
+    it('counts the first graded row per coin only', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(
+        user,
+        gradeResponse([
+          { ...ROW_MATCHED, grade: 'VF' },
+          { ...ROW_DUPLICATE, grade: 'UNC' },
+        ]),
+      );
+      expect(textOf('import-summary-grades')).toBe('1');
+    });
+
+    it('updates live when rows are skipped or resolved', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(
+        user,
+        gradeResponse([{ ...ROW_MATCHED, grade: 'VF' }, { ...ROW_AMBIGUOUS, grade: 'XF' }, { ...ROW_UNMATCHED }]),
+      );
+      expect(textOf('import-summary-grades')).toBe('1');
+
+      await user.selectOptions(within(rowEl(5)).getByTestId('import-row-candidates'), 'cand-1');
+      expect(textOf('import-summary-grades')).toBe('2');
+
+      await user.click(within(rowEl(2)).getByTestId('import-row-skip'));
+      expect(textOf('import-summary-grades')).toBe('1');
+    });
+  });
+
+  describe('grades: confirm', () => {
+    it('sends the grades of the selected coins next to the coin ids', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(
+        user,
+        gradeResponse([{ ...ROW_MATCHED, grade: 'VF' }, { ...ROW_OWNED, grade: 'AU' }, { ...ROW_UNMATCHED, grade: 'G' }]),
+      );
+      confirmImportMock.mockResolvedValue({ requested: 2, created: 1, alreadyOwned: 1 });
+
+      await user.click(screen.getByTestId('import-confirm'));
+
+      await waitFor(() => {
+        expect(confirmImportMock).toHaveBeenCalledTimes(1);
+      });
+      expect(confirmImportMock.mock.calls[0][0]).toEqual(['coin-a', 'coin-owned']);
+      expect(confirmImportMock.mock.calls[0][1]).toEqual([
+        { coinId: 'coin-a', grade: 'VF' },
+        { coinId: 'coin-owned', grade: 'AU' },
+      ]);
+    });
+
+    it('sends the first graded row of a duplicated coin', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(
+        user,
+        gradeResponse([
+          { ...ROW_MATCHED, grade: null },
+          { ...ROW_DUPLICATE, grade: 'XF' },
+        ]),
+      );
+      confirmImportMock.mockResolvedValue({ requested: 1, created: 1, alreadyOwned: 0 });
+
+      await user.click(screen.getByTestId('import-confirm'));
+
+      await waitFor(() => {
+        expect(confirmImportMock).toHaveBeenCalledTimes(1);
+      });
+      expect(confirmImportMock.mock.calls[0][1]).toEqual([{ coinId: 'coin-a', grade: 'XF' }]);
+    });
+
+    it('does not send the grade of a skipped row, and gives a picked coin the row grade', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(
+        user,
+        gradeResponse([{ ...ROW_MATCHED, grade: 'VF' }, { ...ROW_OWNED, grade: 'AU' }, { ...ROW_AMBIGUOUS, grade: 'F' }]),
+      );
+      confirmImportMock.mockResolvedValue({ requested: 2, created: 1, alreadyOwned: 1 });
+
+      await user.click(within(rowEl(2)).getByTestId('import-row-skip'));
+      await user.selectOptions(within(rowEl(5)).getByTestId('import-row-candidates'), 'cand-2');
+      await user.click(screen.getByTestId('import-confirm'));
+
+      await waitFor(() => {
+        expect(confirmImportMock).toHaveBeenCalledTimes(1);
+      });
+      expect(confirmImportMock.mock.calls[0][0]).toEqual(['coin-owned', 'cand-2']);
+      expect(confirmImportMock.mock.calls[0][1]).toEqual([
+        { coinId: 'coin-owned', grade: 'AU' },
+        { coinId: 'cand-2', grade: 'F' },
+      ]);
+    });
+
+    it('sends no grades when no row has a recognised grade (unmapped, blank or unknown values)', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(
+        user,
+        gradeResponse([ROW_MATCHED, ROW_OWNED], {
+          warnings: [{ line: 3, code: 'grade_not_recognised', value: 'shiny' }],
+        }),
+      );
+      confirmImportMock.mockResolvedValue({ requested: 2, created: 1, alreadyOwned: 1 });
+
+      await user.click(screen.getByTestId('import-confirm'));
+
+      await waitFor(() => {
+        expect(confirmImportMock).toHaveBeenCalledTimes(1);
+      });
+      expect(confirmImportMock.mock.calls[0][0]).toEqual(['coin-a', 'coin-owned']);
+      expect(confirmImportMock.mock.calls[0][1] ?? []).toEqual([]);
+    });
+
+    it('is enabled when the only selected coins are owned but have a grade to set', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(user, gradeResponse([{ ...ROW_OWNED, grade: 'VG' }]));
+
+      expect(textOf('import-summary-to-import')).toBe('0');
+      expect(textOf('import-summary-grades')).toBe('1');
+      expect(screen.getByTestId('import-confirm')).toBeEnabled();
+    });
+
+    it('stays disabled when the only selected coins are owned and have no grade', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(user, gradeResponse([{ ...ROW_OWNED, grade: null }]));
+
+      expect(textOf('import-summary-grades')).toBe('0');
+      expect(screen.getByTestId('import-confirm')).toBeDisabled();
+    });
+
+    it('becomes disabled again when the grade-only row is skipped', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(user, gradeResponse([{ ...ROW_OWNED, grade: 'VG' }]));
+      expect(screen.getByTestId('import-confirm')).toBeEnabled();
+
+      await user.click(within(rowEl(3)).getByTestId('import-row-skip'));
+
+      expect(textOf('import-summary-grades')).toBe('0');
+      expect(screen.getByTestId('import-confirm')).toBeDisabled();
+    });
+
+    it('shows the translated IMPORT_INVALID_GRADES error and stays on the preview', async () => {
+      const { user } = renderPage();
+      await reachPreviewWith(user, gradeResponse([{ ...ROW_MATCHED, grade: 'VF' }]));
+      confirmImportMock.mockRejectedValue(new ApiError(400, 'IMPORT_INVALID_GRADES'));
+
+      await user.click(screen.getByTestId('import-confirm'));
+
+      expect(await screen.findByTestId('import-confirm-error')).toHaveTextContent(
+        'The grades sent with the import are not valid. Preview the file again.',
+      );
+      expect(screen.getByTestId('import-summary')).toBeInTheDocument();
+      expect(screen.queryByTestId('import-result')).not.toBeInTheDocument();
     });
   });
 });
