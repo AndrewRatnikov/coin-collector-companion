@@ -1,8 +1,9 @@
 /**
  * Tests for: collection-import-api (previewImport, confirmImport) and the apiFetch FormData change
  * Contract source: runs/run_20261005_212015/plan.md § Interface Contract (Web: collection-import-api.ts)
- *                   and § Web item 1 (api-client.ts: no JSON Content-Type for FormData bodies)
- * Covers criteria: #1, #3, #6, #9 (from runs/run_20261005_212015/prd.md)
+ *                   and § Web item 1 (api-client.ts: no JSON Content-Type for FormData bodies);
+ *                   runs/run_20261104_064643/plan.md § Interface Contract (Web: lib/collection-import-api.ts)
+ * Covers criteria: #1, #3, #6, #9 (from runs/run_20261005_212015/prd.md); #8, #10, #11 (from runs/run_20261104_064643/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -30,6 +31,7 @@ const PREVIEW_RESPONSE: ImportPreviewResponse = {
     invalid: 0,
     toImport: 0,
   },
+  warnings: [],
 };
 
 const CONFIRM_RESPONSE: ImportConfirmResponse = { requested: 2, created: 1, alreadyOwned: 1 };
@@ -97,6 +99,24 @@ describe('collection-import-api', () => {
       const raw = (init.body as FormData).get('mapping');
       expect(typeof raw).toBe('string');
       expect(JSON.parse(raw as string)).toEqual({ year: 2, country: 0, denomination: 1, mintMark: 3 });
+    });
+
+    it('sends the grade column in the mapping JSON', async () => {
+      const fetchMock = stubFetchResolving(200, PREVIEW_RESPONSE);
+      await previewImport(csvFile(), { year: 2, country: 0, denomination: 1, grade: 4 });
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      const raw = (init.body as FormData).get('mapping');
+      expect(JSON.parse(raw as string)).toEqual({ year: 2, country: 0, denomination: 1, grade: 4 });
+    });
+
+    it('returns rows with their grade and the warnings list from the server', async () => {
+      const withGrades: ImportPreviewResponse = {
+        ...PREVIEW_RESPONSE,
+        warnings: [{ line: 4, code: 'grade_not_recognised', value: 'AG' }],
+      };
+      stubFetchResolving(200, withGrades);
+      const result = await previewImport(csvFile());
+      expect(result.warnings).toEqual([{ line: 4, code: 'grade_not_recognised', value: 'AG' }]);
     });
 
     it('does not set a Content-Type header (the browser must add the multipart boundary)', async () => {
@@ -170,6 +190,49 @@ describe('collection-import-api', () => {
       expect(JSON.parse(init.body as string)).toEqual({ coinIds: ['only-one'] });
     });
 
+    it('sends a body without a grades key when grades is omitted or empty', async () => {
+      const fetchMock = stubFetchResolving(200, CONFIRM_RESPONSE);
+      await confirmImport(['coin-1']);
+      await confirmImport(['coin-1'], []);
+      const [, first] = fetchMock.mock.calls[0] as [string, RequestInit];
+      const [, second] = fetchMock.mock.calls[1] as [string, RequestInit];
+      expect(first.body).toBe(JSON.stringify({ coinIds: ['coin-1'] }));
+      expect(second.body).toBe(JSON.stringify({ coinIds: ['coin-1'] }));
+      expect(JSON.parse(second.body as string)).not.toHaveProperty('grades');
+    });
+
+    it('sends { coinIds, grades } when grades are given', async () => {
+      const fetchMock = stubFetchResolving(200, CONFIRM_RESPONSE);
+
+      await confirmImport(['coin-1', 'coin-2'], [{ coinId: 'coin-2', grade: 'VF' }]);
+
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(url.endsWith('/collection/import/confirm')).toBe(true);
+      expect(init.method).toBe('POST');
+      expect(JSON.parse(init.body as string)).toEqual({
+        coinIds: ['coin-1', 'coin-2'],
+        grades: [{ coinId: 'coin-2', grade: 'VF' }],
+      });
+    });
+
+    it('sends exactly the grades it is given (different grades, different payloads)', async () => {
+      const fetchMock = stubFetchResolving(200, CONFIRM_RESPONSE);
+
+      await confirmImport(
+        ['coin-1', 'coin-2'],
+        [
+          { coinId: 'coin-1', grade: 'G' },
+          { coinId: 'coin-2', grade: 'UNC' },
+        ],
+      );
+
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+      expect(JSON.parse(init.body as string).grades).toEqual([
+        { coinId: 'coin-1', grade: 'G' },
+        { coinId: 'coin-2', grade: 'UNC' },
+      ]);
+    });
+
     it('sets Content-Type: application/json (unchanged apiFetch behaviour for JSON bodies)', async () => {
       const fetchMock = stubFetchResolving(200, CONFIRM_RESPONSE);
       await confirmImport(['coin-1']);
@@ -182,6 +245,13 @@ describe('collection-import-api', () => {
       const error = await confirmImport(['coin-1']).catch((e: unknown) => e);
       expect(error).toBeInstanceOf(ApiError);
       expect((error as ApiError).message).toBe('IMPORT_UNKNOWN_COIN');
+    });
+
+    it('rejects with an ApiError for IMPORT_INVALID_GRADES', async () => {
+      stubFetchResolving(400, { message: 'IMPORT_INVALID_GRADES' });
+      const error = await confirmImport(['coin-1'], [{ coinId: 'coin-9', grade: 'F' }]).catch((e: unknown) => e);
+      expect(error).toBeInstanceOf(ApiError);
+      expect((error as ApiError).message).toBe('IMPORT_INVALID_GRADES');
     });
   });
 });

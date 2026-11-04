@@ -1,8 +1,8 @@
 /**
  * Tests for: column-mapping (HEADER_SYNONYMS, suggestMapping, parseMappingField)
  * Contract source: runs/run_20261005_212015/plan.md § Interface Contract (Module: column-mapping.ts)
- *                   and § Column mapping (binding)
- * Covers criteria: #13 (from runs/run_20261005_212015/prd.md)
+ *                   and § Column mapping (binding); runs/run_20261104_064643/plan.md § Approach 3
+ * Covers criteria: #13 (from runs/run_20261005_212015/prd.md); #1, #2 (from runs/run_20261104_064643/prd.md)
  *
  * CONTRACT_GAP: none.
  */
@@ -35,6 +35,11 @@ describe('HEADER_SYNONYMS', () => {
     expect(HEADER_SYNONYMS.combined).toEqual(
       expect.arrayContaining(['coin', 'description', 'title', 'name', 'item']),
     );
+    expect(HEADER_SYNONYMS.grade).toEqual(expect.arrayContaining(['grade', 'condition', 'estado', 'conservacion']));
+  });
+
+  it('includes grade as an import field', () => {
+    expect(IMPORT_FIELDS).toContain('grade');
   });
 });
 
@@ -86,9 +91,10 @@ describe('suggestMapping', () => {
     expect(suggestMapping(['Coin', 'Issuer', 'Nominal'])).toEqual({ combined: 0, country: 1, denomination: 2 });
   });
 
-  it('ignores unknown headers, which keep their column index free', () => {
+  it('ignores unknown headers, which keep their column index free, and maps the Grade header', () => {
     expect(suggestMapping(['Price', 'Year', 'Grade', 'Country', 'Notes', 'Denomination'])).toEqual({
       year: 1,
+      grade: 2,
       country: 3,
       denomination: 5,
     });
@@ -112,6 +118,40 @@ describe('suggestMapping', () => {
     expect(isImportMappingComplete(suggestMapping(['Year', 'Country', 'Denomination']))).toBe(true);
     expect(isImportMappingComplete(suggestMapping(['Coin', 'Country', 'Denomination']))).toBe(true);
     expect(isImportMappingComplete(suggestMapping(['Year', 'Country']))).toBe(false);
+  });
+
+  describe('grade column', () => {
+    it.each([['Grade'], ['Condition'], ['Estado'], ['Conservación'], ['Conservacion']])(
+      'maps the header %s to grade',
+      (header) => {
+        expect(suggestMapping(['Year', header])).toEqual({ year: 0, grade: 1 });
+      },
+    );
+
+    it('is accent- and case-insensitive and ignores surrounding whitespace', () => {
+      expect(suggestMapping(['CONSERVACIÓN'])).toEqual({ grade: 0 });
+      expect(suggestMapping([' Estado '])).toEqual({ grade: 0 });
+      expect(suggestMapping(['conservación'])).toEqual({ grade: 0 });
+      expect(suggestMapping(['CONDITION'])).toEqual({ grade: 0 });
+    });
+
+    it('maps only the first grade-like header', () => {
+      expect(suggestMapping(['Condition', 'Grade', 'Year'])).toEqual({ grade: 0, year: 2 });
+    });
+
+    it('does not map unrelated headers to grade', () => {
+      expect(suggestMapping(['Notes', 'Price', 'Gradient'])).toEqual({});
+    });
+
+    it('never makes the mapping complete on its own (grade is optional)', () => {
+      expect(isImportMappingComplete(suggestMapping(['Year', 'Country', 'Grade']))).toBe(false);
+      expect(isImportMappingComplete(suggestMapping(['Year', 'Country', 'Denomination', 'Grade']))).toBe(true);
+      expect(isImportMappingComplete(suggestMapping(['Year', 'Country', 'Denomination']))).toBe(true);
+    });
+
+    it('accent stripping does not break the existing headers', () => {
+      expect(suggestMapping(['Year', 'Country'])).toEqual({ year: 0, country: 1 });
+    });
   });
 });
 
@@ -147,6 +187,25 @@ describe('parseMappingField', () => {
       country: 1,
       denomination: 2,
     });
+  });
+
+  it('accepts the grade field and omits it when null', () => {
+    expect(parseMappingField('{"year":0,"country":1,"denomination":2,"grade":3}', 4)).toEqual({
+      year: 0,
+      country: 1,
+      denomination: 2,
+      grade: 3,
+    });
+    const unmapped = parseMappingField('{"year":0,"country":1,"denomination":2,"grade":null}', 4);
+    expect(unmapped).toEqual({ year: 0, country: 1, denomination: 2 });
+    expect(unmapped).not.toHaveProperty('grade');
+  });
+
+  it('applies the column-uniqueness and bounds rules to grade', () => {
+    expect(codeOf(() => parseMappingField('{"year":0,"grade":0}', 3))).toBe('IMPORT_INVALID_MAPPING');
+    expect(codeOf(() => parseMappingField('{"grade":3}', 3))).toBe('IMPORT_INVALID_MAPPING');
+    expect(codeOf(() => parseMappingField('{"grade":"1"}', 3))).toBe('IMPORT_INVALID_MAPPING');
+    expect(parseMappingField('{"grade":2}', 3)).toEqual({ grade: 2 });
   });
 
   it('accepts an empty object', () => {

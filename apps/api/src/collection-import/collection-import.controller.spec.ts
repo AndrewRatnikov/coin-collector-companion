@@ -1,13 +1,14 @@
 /**
  * Tests for: CollectionImportController
  * Contract source: runs/run_20261005_212015/plan.md § Interface Contract (Controller: collection-import.controller.ts)
- * Covers criteria: #1, #10 (from runs/run_20261005_212015/prd.md)
+ *                   and runs/run_20261104_064643/plan.md § Interface Contract (API: CollectionImportController)
+ * Covers criteria: #1, #10 (from runs/run_20261005_212015/prd.md); #8, #11 (from runs/run_20261104_064643/prd.md)
  *
  * CONTRACT_GAP: none.
  *
  * CollectionImportService is mocked entirely. This file proves delegation (user.userId, file, mapping,
- * dto.coinIds), that neither route is @Public() (so the global JwtAuthGuard applies), the route paths and
- * 200 status codes, the throttle metadata (checked the way src/rate-limits.spec.ts does) and that the
+ * dto.coinIds, dto.grades ?? []), that neither route is @Public() (so the global JwtAuthGuard applies), the route
+ * paths and 200 status codes, the throttle metadata (checked the way src/rate-limits.spec.ts does) and that the
  * preview route has an upload interceptor attached. No real network or DB.
  */
 
@@ -90,7 +91,7 @@ describe('CollectionImportController', () => {
 
   describe('preview', () => {
     it('delegates the caller userId, the uploaded file and the mapping string, returning the result unchanged', async () => {
-      const serviceResult = { headers: ['Year'], delimiter: ',', mapping: {}, rows: [], summary: {} };
+      const serviceResult = { headers: ['Year'], delimiter: ',', mapping: {}, rows: [], summary: {}, warnings: [] };
       mockService.preview.mockResolvedValue(serviceResult);
       const body = Object.assign(new PreviewImportDto(), { mapping: '{"year":0}' });
 
@@ -114,25 +115,54 @@ describe('CollectionImportController', () => {
   });
 
   describe('confirm', () => {
-    it('delegates the caller userId and dto.coinIds, returning the result unchanged', async () => {
+    const UUID_A = '3fa85f64-5717-4562-b3fc-2c963f66afa6';
+    const UUID_B = '7c9e6679-7425-40de-944b-e07fc1f90ae7';
+
+    it('delegates the caller userId and dto.coinIds with an empty grades list when grades is absent', async () => {
       const serviceResult = { requested: 2, created: 1, alreadyOwned: 1 };
       mockService.confirm.mockResolvedValue(serviceResult);
       const dto = Object.assign(new ConfirmImportDto(), {
-        coinIds: ['3fa85f64-5717-4562-b3fc-2c963f66afa6', '7c9e6679-7425-40de-944b-e07fc1f90ae7'],
+        coinIds: [UUID_A, UUID_B],
       });
 
       const result = await controller.confirm(user, dto);
 
       expect(mockService.confirm).toHaveBeenCalledTimes(1);
-      expect(mockService.confirm).toHaveBeenCalledWith('user-1', dto.coinIds);
+      expect(mockService.confirm).toHaveBeenCalledWith('user-1', dto.coinIds, []);
       expect(result).toBe(serviceResult);
+    });
+
+    it('passes dto.grades through to the service', async () => {
+      mockService.confirm.mockResolvedValue({ requested: 2, created: 2, alreadyOwned: 0 });
+      const grades = [
+        { coinId: UUID_A, grade: 'VF' as const },
+        { coinId: UUID_B, grade: 'UNC' as const },
+      ];
+      const dto = Object.assign(new ConfirmImportDto(), { coinIds: [UUID_A, UUID_B], grades });
+
+      await controller.confirm(user, dto);
+
+      expect(mockService.confirm).toHaveBeenCalledWith('user-1', [UUID_A, UUID_B], grades);
+    });
+
+    it('passes an explicit empty grades array as an empty array', async () => {
+      mockService.confirm.mockResolvedValue({ requested: 1, created: 1, alreadyOwned: 0 });
+      const dto = Object.assign(new ConfirmImportDto(), { coinIds: [UUID_A], grades: [] });
+      await controller.confirm(user, dto);
+      expect(mockService.confirm).toHaveBeenCalledWith('user-1', [UUID_A], []);
     });
 
     it('uses the userId of the authenticated user, not a value from the body', async () => {
       mockService.confirm.mockResolvedValue({ requested: 1, created: 1, alreadyOwned: 0 });
-      const dto = Object.assign(new ConfirmImportDto(), { coinIds: ['3fa85f64-5717-4562-b3fc-2c963f66afa6'] });
+      const dto = Object.assign(new ConfirmImportDto(), { coinIds: [UUID_A] });
       await controller.confirm({ userId: 'user-77', email: 'c@example.com' }, dto);
-      expect(mockService.confirm).toHaveBeenCalledWith('user-77', dto.coinIds);
+      expect(mockService.confirm).toHaveBeenCalledWith('user-77', dto.coinIds, []);
+    });
+
+    it('propagates service errors such as IMPORT_INVALID_GRADES', async () => {
+      mockService.confirm.mockRejectedValue(new Error('IMPORT_INVALID_GRADES'));
+      const dto = Object.assign(new ConfirmImportDto(), { coinIds: [UUID_A] });
+      await expect(controller.confirm(user, dto)).rejects.toThrow('IMPORT_INVALID_GRADES');
     });
   });
 });
