@@ -25,6 +25,7 @@ const FIELD_SLUGS: Record<ImportField, string> = {
   mintMark: 'mint-mark',
   variety: 'variety',
   combined: 'combined',
+  grade: 'grade',
 };
 
 const FIELD_LABELS: Record<ImportField, MessageKey> = {
@@ -34,6 +35,7 @@ const FIELD_LABELS: Record<ImportField, MessageKey> = {
   mintMark: 'import.field.mintMark',
   variety: 'import.field.variety',
   combined: 'import.field.combined',
+  grade: 'import.field.grade',
 };
 
 // The draft starts from `mapping`; the page remounts this form (via `key`) for every new
