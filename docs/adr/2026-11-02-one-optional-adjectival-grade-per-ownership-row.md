@@ -1,6 +1,6 @@
 # A coin's condition is one optional adjectival grade on the ownership row, with an optional per-set minimum grade
 
-- **Status:** Accepted
+- **Status:** Superseded by [2026-11-04-csv-import-confirm-sets-grades](2026-11-04-csv-import-confirm-sets-grades.md)
 - **Date:** 2026-11-02
 - **Source:** orchestrator run `run_20261102_194108` (coin grades, phase 1 of 4: data, shared types, API, docs; the scale and the one-column shape were fixed in the task brief)
 - **Code:** `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/20261102200000_add_coin_grades/migration.sql`, `packages/shared/src/index.ts`, `apps/api/src/collection/collection.service.ts`, `apps/api/src/sets/sets.service.ts`
