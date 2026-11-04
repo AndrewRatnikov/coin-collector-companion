@@ -1,6 +1,7 @@
 import type {
   CatalogCoin,
   ImportCoinSummary,
+  ImportConfirmGrade,
   ImportErrorCode,
   ImportPreviewRow,
 } from '@coin-collector/shared';
@@ -43,6 +44,24 @@ export function selectedCoinIds(rows: ImportPreviewRow[], decisions: ImportDecis
   return uniqueEffectiveCoins(rows, decisions).map((coin) => coin.id);
 }
 
+// The grades confirm sends: per effective coin, the grade of its first graded row (file order).
+// Skipped rows and rows without a recognised grade contribute nothing.
+export function selectedGrades(
+  rows: ImportPreviewRow[],
+  decisions: ImportDecisions,
+): ImportConfirmGrade[] {
+  const seen = new Set<string>();
+  const grades: ImportConfirmGrade[] = [];
+  for (const row of rows) {
+    const coin = effectiveCoin(row, decisions[row.line]);
+    if (coin !== null && row.grade !== null && !seen.has(coin.id)) {
+      seen.add(coin.id);
+      grades.push({ coinId: coin.id, grade: row.grade });
+    }
+  }
+  return grades;
+}
+
 export function countToImport(rows: ImportPreviewRow[], decisions: ImportDecisions): number {
   return uniqueEffectiveCoins(rows, decisions).filter((coin) => !coin.owned).length;
 }
@@ -81,6 +100,7 @@ const ERROR_KEYS: Record<ImportErrorCode, MessageKey> = {
   IMPORT_NO_DATA_ROWS: 'import.error.noDataRows',
   IMPORT_INVALID_MAPPING: 'import.error.invalidMapping',
   IMPORT_UNKNOWN_COIN: 'import.error.unknownCoin',
+  IMPORT_INVALID_GRADES: 'import.error.invalidGrades',
 };
 
 function isImportErrorCode(message: string): message is ImportErrorCode {
