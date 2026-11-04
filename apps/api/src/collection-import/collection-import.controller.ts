@@ -60,12 +60,14 @@ export class CollectionImportController {
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('confirm')
   @HttpCode(200)
-  @ApiOperation({ summary: 'Mark the confirmed coins as owned (idempotent)' })
+  @ApiOperation({
+    summary: 'Mark the confirmed coins as owned and set the grades sent with them (idempotent)',
+  })
   @ApiOkResponse({ description: 'How many ownership rows were created' })
   confirm(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: ConfirmImportDto,
   ): Promise<ImportConfirmResponse> {
-    return this.collectionImportService.confirm(user.userId, dto.coinIds);
+    return this.collectionImportService.confirm(user.userId, dto.coinIds, dto.grades ?? []);
   }
 }
