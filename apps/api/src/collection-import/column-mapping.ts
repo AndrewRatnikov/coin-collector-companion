@@ -10,11 +10,15 @@ export const HEADER_SYNONYMS: Record<ImportField, readonly string[]> = {
   mintMark: ['mint mark', 'mintmark', 'mint', 'mm'],
   variety: ['variety', 'variant', 'var'],
   combined: ['coin', 'description', 'title', 'name', 'item'],
+  grade: ['grade', 'condition', 'estado', 'conservacion'],
 };
 
+// Case- and accent-insensitive: "Conservación" and "CONSERVACION" both become "conservacion".
 function normalizeHeader(header: string): string {
   return header
     .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[_\-.]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
