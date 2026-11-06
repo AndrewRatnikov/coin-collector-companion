@@ -15,7 +15,7 @@ import { describe, expect, it } from 'vitest';
 const lockPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../pnpm-lock.yaml');
 
 const FLOORS: Record<string, string> = {
-  next: '16.3.8',
+  next: '16.4.1',
   postcss: '8.5.23',
   sharp: '0.35.5',
   handlebars: '4.7.10',
