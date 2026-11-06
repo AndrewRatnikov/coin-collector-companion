@@ -13,7 +13,7 @@ This run cleared Next.js advisories and in-range transitive ones. Fixing them ne
 
 A dependency-free vitest test in the web package reads `pnpm-lock.yaml` and fails if any copy of a floored package is below its floor. It runs in the normal web unit-test step, so Verify and CI cover it offline.
 
-- The `FLOORS` table is `next 16.3.8`, `postcss 8.5.23`, `sharp 0.35.5`, `handlebars 4.7.10`, `source-map-js 1.2.2`.
+- The `FLOORS` table is `next 16.4.1`, `postcss 8.5.23`, `sharp 0.35.5`, `handlebars 4.7.10`, `source-map-js 1.2.2`.
 - The test parses the entry keys of the `packages:` section with a small inline parser (scoped and quoted keys, peer suffixes stripped) and compares versions numerically with an inline function. It checks every version of each name. A package absent from the lockfile passes.
 - The failure message names the package, the version found and the floor.
 - A sanity test requires more than 100 parsed entries and `next` to be present, so a lockfile format change fails loudly instead of passing vacuously.
