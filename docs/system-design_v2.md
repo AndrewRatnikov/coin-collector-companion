@@ -91,6 +91,8 @@ Auth has no separate box: `users` is an app-owned table in the same Postgres dat
 
 The import script is a standalone offline tool, not a component of the running API service — it's run manually ahead of deploy/seed, writes directly into Postgres via Prisma, and the API never calls out to it or to any external catalog source at request time.
 
+**Runtime:** every Node process (the API on Render, CI, local dev and the import script) runs Node.js 26, pinned to the major version so patch releases arrive automatically: `render.yaml` `NODE_VERSION`, the CI `node-version`, root `package.json` `engines.node` (`>=26 <27`) and `.nvmrc` change together (see [ADR 2026-11-06](adr/2026-11-06-node-major-pinned-to-26-on-every-platform.md)). The web app's Node version on Vercel is set in the Vercel project settings.
+
 ### 2.3 Data flow
 
 **Anonymous browse:** web calls `GET /catalog` or `GET /sets/canonical` with no `Authorization` header. API serves entirely from Postgres, paginated (`page`/`limit`) — there's no cache-miss path, because there's no runtime external source to miss against; a filter that returns nothing genuinely has no matching data yet, not data waiting to be fetched. Catalog population happens ahead of time via the offline import script (§4.3). No write endpoints are reachable without a token.

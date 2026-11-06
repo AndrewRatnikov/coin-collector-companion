@@ -41,6 +41,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-03](2026-11-03-grade-saves-use-separate-optimistic-hook.md) | Grade edits go through a separate `useSetGrade` hook that shares the cache helpers of `useSetOwnership` | Accepted |
 | [2026-11-03](2026-11-03-min-grade-save-waits-for-gap-view-refetch.md) | Saving a set's minimum grade is not optimistic: the mutation stays pending until the gap view is refetched | Accepted |
 | [2026-11-04](2026-11-04-csv-import-confirm-sets-grades.md) | CSV import confirm takes an optional grades array and overwrites grades, never clearing one | Accepted |
+| [2026-11-06](2026-11-06-node-major-pinned-to-26-on-every-platform.md) | Node is pinned to major 26 on every platform: Render, CI, `engines` and `.nvmrc` | Accepted |
 
 ## Where else decisions live
 
