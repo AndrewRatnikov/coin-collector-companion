@@ -55,7 +55,7 @@ coin-collector-companion/
 
 ## Getting started
 
-Prerequisites: Node.js 22+ (`nvm use 22`), pnpm 11, and a PostgreSQL database.
+Prerequisites: Node.js 26 (`nvm use` reads `.nvmrc`), pnpm 11, and a PostgreSQL database.
 
 ```bash
 pnpm install
