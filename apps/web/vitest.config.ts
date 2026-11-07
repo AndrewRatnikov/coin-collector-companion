@@ -10,10 +10,8 @@ export default defineConfig({
     globals: true,
     // Node 25+ exposes its own Web Storage global, which is undefined without
     // --localstorage-file and hides jsdom's localStorage/sessionStorage.
-    poolOptions: {
-      forks: { execArgv: ['--no-experimental-webstorage'] },
-      threads: { execArgv: ['--no-experimental-webstorage'] },
-    },
+    // Vitest 4+ applies execArgv to every pool's workers (poolOptions was removed).
+    execArgv: ['--no-experimental-webstorage'],
     env: {
       NEXT_PUBLIC_API_URL: 'http://localhost:4000/api',
     },

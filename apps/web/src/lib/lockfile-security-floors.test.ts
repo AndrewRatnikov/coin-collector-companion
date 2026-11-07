@@ -1,8 +1,8 @@
 // @vitest-environment node
 /**
- * Tests for: pnpm-lock.yaml security floors (next, postcss, sharp, handlebars, source-map-js, body-parser, multer, qs, deepmerge-ts)
- * Contract source: runs/run_20261107_151225/plan.md § Interface Contract → Test file: lockfile security floors
- * Covers criteria: #4, #7 (from prd.md)
+ * Tests for: pnpm-lock.yaml security floors (next, postcss, sharp, handlebars, source-map-js, body-parser, multer, qs, deepmerge-ts, vitest, @vitest/mocker, tinypool)
+ * Contract source: runs/run_20261107_163405/plan.md § Interface Contract → Test file: lockfile security floors
+ * Covers criteria: #1, #7 (from prd.md)
  *
  * CONTRACT_GAPs: none
  */
@@ -24,6 +24,9 @@ const FLOORS: Record<string, string> = {
   multer: '2.5.0',
   qs: '6.16.1',
   'deepmerge-ts': '8.0.0',
+  vitest: '4.1.11',
+  '@vitest/mocker': '4.1.12',
+  tinypool: '2.1.2',
 };
 
 function compareVersions(a: string, b: string): -1 | 0 | 1 {
