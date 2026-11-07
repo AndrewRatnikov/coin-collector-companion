@@ -19,5 +19,4 @@ minimumReleaseAge: 10080
 # Security overrides only; reasons and removal conditions in
 # docs/adr/2026-11-07-pnpm-overrides-for-multer-and-deepmerge-ts.md
 overrides:
-  'multer@<2.5.0': ^2.5.0
   'deepmerge-ts@<8.0.0': ^8.0.2
