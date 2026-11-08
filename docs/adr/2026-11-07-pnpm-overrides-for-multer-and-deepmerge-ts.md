@@ -1,6 +1,6 @@
 # Two pnpm overrides lift multer to 2.5.0 and deepmerge-ts to 8.x, because their parents pin the vulnerable versions exactly
 
-- **Status:** Accepted. Amended 2026-11-07: the multer override was removed in Phase 6 (see Update below); the deepmerge-ts override stays.
+- **Status:** Accepted. Amended 2026-11-07: the multer override was removed in Phase 6. Amended 2026-11-08: the deepmerge-ts override was removed in Phase 7, so no override remains (see the Updates below).
 - **Date:** 2026-11-07
 - **Source:** orchestrator run `run_20261107_151225` (dependency upgrade, Phase 3 of 7)
 - **Code:** `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `apps/web/src/lib/lockfile-security-floors.test.ts`
@@ -66,3 +66,11 @@ Phase 6 moves the api to NestJS 12. `@nestjs/platform-express` 12.3.0 and every 
 The `'deepmerge-ts@<8.0.0': ^8.0.2` override stays: Prisma is still 6.19.3, and `@prisma/config` 6.19.3 still pins deepmerge-ts 7.1.5. Its removal condition (Prisma 7) belongs to Phase 7.
 
 Phase 6 also clears the js-yaml finding noted under Consequences: `@nestjs/swagger` 12.0.5 depends on js-yaml 5.5.0, so `pnpm audit --prod` reports no findings.
+
+## Update: the deepmerge-ts override is removed (2026-11-08, Phase 7 of 7, Prisma 7)
+
+- **Source:** orchestrator run `run_20261108_081744` (dependency upgrade, Phase 7 of 7)
+
+Phase 7 moves `apps/api` and `scripts/import-catalog` to Prisma 7.10.1 ([2026-11-08-prisma-7-with-the-pg-driver-adapter.md](2026-11-08-prisma-7-with-the-pg-driver-adapter.md)). `@prisma/config` 7.10.1 depends on `deepmerge-ts` `8.0.2` itself, and both packages declare `prisma` `^7.10.1`, so no Prisma version they allow pins deepmerge-ts 7. That is the removal condition above, so the `'deepmerge-ts@<8.0.0': ^8.0.2` entry is deleted, together with the comment and the now empty `overrides:` key in `pnpm-workspace.yaml`. The lockfile loses its `overrides:` section; deepmerge-ts stays at 8.0.2, the only copy in the tree, and the `deepmerge-ts 8.0.0` floor in `lockfile-security-floors.test.ts` still guards it.
+
+The repo now has no pnpm overrides. A new one needs its own reason and removal condition, recorded the same way.
