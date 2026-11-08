@@ -12,6 +12,12 @@ paths:
 ## Auth
 - **Optional-auth routes** (first used by `GET /catalog?submittedByMe=true`): a route-level guard extending `AuthGuard('jwt')` that overrides only `handleRequest` to return `user ?? undefined` instead of throwing. Apply it with `@UseGuards(OptionalGuard)` alongside the route's `@Public()`, and never touch the global `APP_GUARD`. Pair it with `@OptionalCurrentUser()`, typed `AuthenticatedUser | undefined`; don't widen `@CurrentUser()`. Reuse this shape for any future optional-auth route.
 
+## Prisma 7
+- **Import the client from the generated folder, never from `@prisma/client`:** `PrismaClient`, `Prisma` (and `Prisma.PrismaClientKnownRequestError`), models and enums come from `src/generated/prisma/client` (relative path, e.g. `../generated/prisma/client`). `@prisma/client` itself now only holds the runtime the generated code loads; `require('@prisma/client')` throws `Cannot find module '.prisma/client/default'`. Services and specs must import the error class from the same module, or `instanceof` checks stop matching.
+- **The generator is pinned to CommonJS** (`moduleFormat = "cjs"`, `importFileExtension = ""` in `schema.prisma`). Don't drop either: the api is CommonJS, and `.js` import extensions in the generated files break Jest's resolver.
+- **Prisma 7 loads no `.env`.** The CLI gets `DATABASE_URL` from `prisma.config.ts` (which reads `apps/api/.env` if it exists), the app from Nest's `ConfigModule`, and each script (`scripts/*.ts`, `scripts/import-catalog`) loads `apps/api/.env` itself before building `PrismaClient` with a `PrismaPg` adapter. A new script must do the same.
+- **`prisma.config.ts` sits outside `src`,** so `tsconfig.build.json` excludes it (like `prisma/` and `scripts/`); `nest build` fails with TS6059 otherwise. If a compiled `prisma.config.js` ever appears next to it, delete it: the CLI loads `.js` first and fails with "Failed to parse syntax of config file".
+
 ## Jest
 - **Jest `rootDir` is `src`**, and `"roots"` also includes `<rootDir>/../scripts`. A `*.spec.ts` in any other top-level folder under `apps/api/` is silently never run: a false-pass risk. Add that folder to `roots` when you put specs there.
 - **Fresh-worktree test failures:** see `.claude/rules/test-commands.md` (Prisma client + shared build).

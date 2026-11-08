@@ -12,7 +12,7 @@
 | Area | Decision |
 |---|---|
 | Auth | Hand-rolled JWT (bcrypt + Passport), restored from v1 — Neon Auth passed over for being still in Beta |
-| ORM | Prisma (driver adapter for Neon serverless) |
+| ORM | Prisma 7 with the `@prisma/adapter-pg` driver adapter (node-postgres); client generated into `apps/api/src/generated/prisma` |
 | API style | REST |
 | Catalog data source | Open data for v1 — Wikipedia mintage lists / US Mint publications, Wikimedia Commons images. Numista demoted to an optional, permission-gated future enrichment layer (§4.3), not a v1 dependency |
 | Catalog sync | Offline, manually-run, resumable/idempotent import script only — no runtime external calls, no scheduled job, no request-time cache-fill (§4.3) |
@@ -34,8 +34,11 @@ coin-collector-companion/
 │   │   └── src/lib/api-client.ts   # typed fetch wrapper using packages/shared DTOs
 │   └── api/                 # NestJS — REST API
 │       ├── prisma/
-│       │   └── schema.prisma
+│       │   ├── schema.prisma
+│       │   └── migrations/
+│       ├── prisma.config.ts # Prisma CLI config: schema and migrations paths, DATABASE_URL
 │       └── src/
+│           ├── generated/prisma/  # Prisma Client output of `prisma generate` (git-ignored)
 │           ├── auth/        # bcrypt + Passport JWT strategy, restored from v1 (§4.2)
 │           ├── catalog/     # coin catalog — served from Postgres only, no runtime external calls
 │           ├── sets/        # canonical + user sets, gap view
@@ -105,7 +108,7 @@ The import script is a standalone offline tool, not a component of the running A
 
 ### 2.4 Storage choice
 
-Single Neon Postgres project. No secondary datastore — at this scale (personal use and small-scale testing), a cache layer like Redis is unnecessary complexity, and there's no runtime external catalog source to cache against in the first place (see §4.3 below). Prisma as the ORM, using `@prisma/adapter-neon` for the serverless driver so connections behave correctly against Neon's pooling on Render.
+Single Neon Postgres project. No secondary datastore — at this scale (personal use and small-scale testing), a cache layer like Redis is unnecessary complexity, and there's no runtime external catalog source to cache against in the first place (see §4.3 below). Prisma 7 as the ORM, connecting through the `@prisma/adapter-pg` driver adapter (node-postgres over TCP) with the same `DATABASE_URL`, Neon's pooled connection string on Render. The CLI (`migrate deploy`, `migrate diff`) takes the URL from `apps/api/prisma.config.ts`. See [docs/adr/2026-11-08-prisma-7-with-the-pg-driver-adapter.md](adr/2026-11-08-prisma-7-with-the-pg-driver-adapter.md).
 
 ## 3. API Contracts (REST)
 
