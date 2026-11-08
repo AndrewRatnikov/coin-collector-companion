@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { UserSet } from '@prisma/client';
+import type { UserSet } from '../generated/prisma/client';
 import { getCoinName, meetsMinGrade } from '@coin-collector/shared';
 import type {
   CanonicalSetDetail,

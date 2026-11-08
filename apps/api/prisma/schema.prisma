@@ -4,12 +4,15 @@
 // UserSet/UserSetCoin at all).
 
 generator client {
-  provider = "prisma-client-js"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "cjs"
+  importFileExtension = ""
 }
 
+// The connection URL lives in prisma.config.ts (CLI) and in the PrismaPg adapter (runtime).
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // In-app admin role. Read from the database on every admin request by RolesGuard (never

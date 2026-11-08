@@ -3,6 +3,7 @@
  * Tests for: NestJS 12 in apps/api (Phase 6 of 7)
  * Contract source: runs/run_20261107_181139/plan.md § Interface Contract → Test file: NestJS version pins
  * Covers criteria: #1, #2, #4, #5 (from prd.md)
+ * Updated for Phase 7 of 7 (run_20261108_081744): Prisma is now 7, and no pnpm override is left.
  *
  * CONTRACT_GAPs: none
  */
@@ -57,18 +58,6 @@ function apiImporterEntry(lock: string, name: string): { specifier: string; vers
   };
 }
 
-function overridesSection(text: string): string[] {
-  const lines = text.split(/\r?\n/);
-  const start = lines.findIndex((l) => l === 'overrides:');
-  expect(start).toBeGreaterThanOrEqual(0);
-  const out: string[] = [];
-  for (const line of lines.slice(start + 1)) {
-    if (line.length > 0 && !/^\s/.test(line)) break;
-    if (line.trim() !== '') out.push(line);
-  }
-  return out;
-}
-
 function packageKeys(lock: string): string[] {
   const lines = lock.split(/\r?\n/);
   const start = lines.findIndex((l) => l === 'packages:');
@@ -118,11 +107,11 @@ describe('NestJS 12 in apps/api', () => {
     expect(apiPackage().type).toBeUndefined();
   });
 
-  it('stays on Jest 30 and Prisma 6', () => {
+  it('stays on Jest 30, with Prisma on 7 since Phase 7', () => {
     const pkg = apiPackage();
     expect(pkg.devDependencies.jest).toMatch(/^\^30\./);
-    expect(pkg.devDependencies.prisma).toMatch(/^\^6\./);
-    expect(pkg.dependencies['@prisma/client']).toMatch(/^\^6\./);
+    expect(pkg.devDependencies.prisma).toMatch(/^\^7\./);
+    expect(pkg.dependencies['@prisma/client']).toMatch(/^\^7\./);
   });
 
   it.each([
@@ -135,14 +124,12 @@ describe('NestJS 12 in apps/api', () => {
     expect(apiPackage().scripts[script]).toBe(expected);
   });
 
-  it('pnpm-workspace.yaml overrides only deepmerge-ts (multer override removed)', () => {
-    expect(overridesSection(read('pnpm-workspace.yaml'))).toEqual([
-      "  'deepmerge-ts@<8.0.0': ^8.0.2",
-    ]);
+  it('pnpm-workspace.yaml has no overrides left (deepmerge-ts removed in Phase 7)', () => {
+    expect(read('pnpm-workspace.yaml').split(/\r?\n/)).not.toContain('overrides:');
   });
 
-  it('pnpm-lock.yaml overrides only deepmerge-ts', () => {
-    expect(overridesSection(read('pnpm-lock.yaml'))).toEqual(['  deepmerge-ts@<8.0.0: ^8.0.2']);
+  it('pnpm-lock.yaml has no overrides section', () => {
+    expect(read('pnpm-lock.yaml').split(/\r?\n/)).not.toContain('overrides:');
   });
 
   it('keeps minimumReleaseAge at 10080', () => {

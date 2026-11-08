@@ -1,10 +1,10 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-// Declaring the same @prisma/client/prisma/typescript version ranges as apps/api
-// (package.json) makes pnpm dedupe this package's @prisma/client to the identical
-// store entry apps/api's own `prisma generate` already populates — so this resolves
-// to a real generated client without apps/api having to re-export or re-generate it.
-import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+// The Prisma 7 client that apps/api generates from its schema.prisma (run
+// `pnpm --filter api exec prisma generate` first). This package declares the same Prisma
+// versions as apps/api, so the generated code and the adapter agree.
+import { PrismaClient } from '../../apps/api/src/generated/prisma/client';
 import { sanitizeIdentityField } from '@coin-collector/shared';
 import { toImageFields } from './lib/image';
 import { toSpecFields } from './lib/specs';
@@ -64,7 +64,13 @@ async function main() {
     throw new Error(`No fixture files found in ${FIXTURES_DIR}`);
   }
 
-  const prisma = new PrismaClient();
+  // Prisma 7 neither loads .env nor connects without a driver adapter: read apps/api/.env
+  // when it exists (environment variables take precedence), then connect through PrismaPg.
+  const envFile = join(__dirname, '..', '..', 'apps', 'api', '.env');
+  if (existsSync(envFile)) process.loadEnvFile(envFile);
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  });
   try {
     // Sequential, not Promise.all: fails loudly and stops on the first bad file rather
     // than partially importing several at once (system-design_v2.md §4.3/§4.5) — safe

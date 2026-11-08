@@ -1,10 +1,8 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
-// Declaring the same @prisma/client version apps/api already generates lets this
-// script use the real generated client directly (see plan.md § Approach step 2) --
-// unlike scripts/import-catalog, this file lives inside apps/api, so no cross-package
-// import workaround is needed here.
-import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+// The Prisma 7 client generated from apps/api/prisma/schema.prisma (prisma generate).
+import { PrismaClient } from '../src/generated/prisma/client';
 
 const TEMPLATES_DIR = join(__dirname, '..', '..', '..', 'seed', 'templates');
 
@@ -148,7 +146,13 @@ export async function main(): Promise<void> {
     throw new Error(`No template files found in ${TEMPLATES_DIR}`);
   }
 
-  const prisma = new PrismaClient();
+  // Prisma 7 neither loads .env nor connects without a driver adapter: read apps/api/.env
+  // when it exists (environment variables take precedence), then connect through PrismaPg.
+  const envFile = join(__dirname, '..', '.env');
+  if (existsSync(envFile)) process.loadEnvFile(envFile);
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  });
   try {
     // Sequential, not Promise.all: fails loudly and stops on the first bad file
     // rather than partially seeding several at once (system-design_v2.md §4.4/§4.5)

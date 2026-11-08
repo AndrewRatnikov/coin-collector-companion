@@ -12,14 +12,15 @@ pnpm run import                       # imports every *.json file under fixtures
 pnpm run import fixtures/foo.json     # or import specific file(s) only
 ```
 
-Needs `DATABASE_URL` pointed at the target Postgres instance — Prisma Client auto-loads
-`apps/api/.env` (the same one `apps/api` itself uses), since that's where `schema.prisma` lives.
+Needs `DATABASE_URL` pointed at the target Postgres instance. The script loads
+`apps/api/.env` (the same one `apps/api` itself uses) when it exists; a `DATABASE_URL` already
+set in the environment wins. Prisma 7 no longer loads `.env` files on its own.
 
-This package declares the same `@prisma/client`/`prisma`/`typescript` version ranges as
-`apps/api`'s own `package.json` on purpose: it makes pnpm dedupe this package's `@prisma/client`
-to the exact same generated-client store entry `apps/api`'s `prisma generate` already populates,
-instead of installing a second, separately-generated (or ungenerated) copy. Run
-`pnpm --filter api exec prisma generate` first if the client hasn't been generated yet.
+The script imports the Prisma 7 client that `apps/api` generates into
+`apps/api/src/generated/prisma` (git-ignored), and connects through the `@prisma/adapter-pg`
+driver adapter. Run `pnpm --filter api exec prisma generate` first if the client hasn't been
+generated yet. This package declares the same `@prisma/client`, `@prisma/adapter-pg` and `prisma`
+versions as `apps/api`, so the generated code, its runtime and the adapter always match.
 
 ## What it does
 

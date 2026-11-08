@@ -53,7 +53,7 @@
     },
     {
       "name": "schema.prisma matches migrations",
-      "run": "cd apps/api && pnpm exec prisma migrate diff --from-url \"$DATABASE_URL\" --to-schema-datamodel prisma/schema.prisma --exit-code",
+      "run": "cd apps/api && pnpm exec prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --exit-code",
       "needs": "database",
       "hint": "schema.prisma has changes that no migration creates. Add a migration (prisma migrate dev --create-only) for them."
     },

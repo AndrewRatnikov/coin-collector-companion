@@ -42,7 +42,8 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-03](2026-11-03-min-grade-save-waits-for-gap-view-refetch.md) | Saving a set's minimum grade is not optimistic: the mutation stays pending until the gap view is refetched | Accepted |
 | [2026-11-04](2026-11-04-csv-import-confirm-sets-grades.md) | CSV import confirm takes an optional grades array and overwrites grades, never clearing one | Accepted |
 | [2026-11-06](2026-11-06-node-major-pinned-to-26-on-every-platform.md) | Node is pinned to major 26 on every platform: Render, CI, `engines` and `.nvmrc` | Accepted |
-| [2026-11-07](2026-11-07-pnpm-overrides-for-multer-and-deepmerge-ts.md) | Two pnpm overrides lift multer to 2.5.0 and deepmerge-ts to 8.x, because their parents pin the vulnerable versions exactly | Accepted; multer override removed 2026-11-07 (Phase 6) |
+| [2026-11-07](2026-11-07-pnpm-overrides-for-multer-and-deepmerge-ts.md) | Two pnpm overrides lift multer to 2.5.0 and deepmerge-ts to 8.x, because their parents pin the vulnerable versions exactly | Accepted; both overrides removed: multer 2026-11-07 (Phase 6), deepmerge-ts 2026-11-08 (Phase 7) |
+| [2026-11-08](2026-11-08-prisma-7-with-the-pg-driver-adapter.md) | Prisma 7 runs through the `@prisma/adapter-pg` driver adapter, with a CommonJS client generated into `apps/api/src/generated/prisma` and `prisma.config.ts` for the CLI | Accepted |
 
 ## Where else decisions live
 
