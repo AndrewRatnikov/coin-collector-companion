@@ -1,4 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../src/generated/prisma/client';
 
 // A structural subset of PrismaClient -- lets tests pass a plain mock object with
 // only these four properties instead of a full PrismaClient (and no `as any` cast).
@@ -42,7 +45,13 @@ export async function deleteUserCascade(
 
 async function main(): Promise<void> {
   const emails = parseEmailArgs(process.argv.slice(2));
-  const prisma = new PrismaClient();
+  // Prisma 7 neither loads .env nor connects without a driver adapter: read apps/api/.env
+  // when it exists (environment variables take precedence), then connect through PrismaPg.
+  const envFile = join(__dirname, '..', '.env');
+  if (existsSync(envFile)) process.loadEnvFile(envFile);
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  });
 
   try {
     const countAll = async () => ({

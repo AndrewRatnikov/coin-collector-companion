@@ -1,4 +1,7 @@
-import { PrismaClient, Role } from '@prisma/client';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient, Role } from '../src/generated/prisma/client';
 
 // Grants or revokes the in-app admin role. Run manually by the owner; there is no UI or API
 // for this on purpose:
@@ -52,7 +55,13 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const prisma = new PrismaClient();
+  // Prisma 7 neither loads .env nor connects without a driver adapter: read apps/api/.env
+  // when it exists (environment variables take precedence), then connect through PrismaPg.
+  const envFile = join(__dirname, '..', '.env');
+  if (existsSync(envFile)) process.loadEnvFile(envFile);
+  const prisma = new PrismaClient({
+    adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  });
   try {
     const result = await setUserRole(prisma, args.email, args.role);
     if (!result.found) {
