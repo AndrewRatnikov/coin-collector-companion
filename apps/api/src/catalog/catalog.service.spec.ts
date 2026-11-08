@@ -50,7 +50,7 @@
 
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import { CATALOG_COIN_SELECT, CatalogService, SUBMITTED_COIN_SELECT } from './catalog.service';
 import { FindCatalogQueryDto } from './dto/find-catalog-query.dto';
 import { CreateCoinDto } from './dto/create-coin.dto';
