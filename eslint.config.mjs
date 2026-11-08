@@ -14,6 +14,7 @@ export default tseslint.config(
       '**/node_modules/**',
       '**/*.tsbuildinfo',
       '**/next-env.d.ts',
+      'apps/api/src/generated/**',
     ],
   },
   eslint.configs.recommended,

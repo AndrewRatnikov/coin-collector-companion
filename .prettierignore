@@ -4,6 +4,7 @@ build
 .next
 .turbo
 coverage
+apps/api/src/generated
 pnpm-lock.yaml
 
 # Hand-authored prose docs — not code, not this tool's concern
