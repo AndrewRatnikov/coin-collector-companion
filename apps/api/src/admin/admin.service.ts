@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../generated/prisma/client';
 import type { AdminCoin, AdminCoinDuplicate, AdminCoinListItem, PaginatedResponse } from '@coin-collector/shared';
 import { CATALOG_COIN_SELECT } from '../catalog/catalog.service';
 import { PrismaService } from '../prisma/prisma.service';

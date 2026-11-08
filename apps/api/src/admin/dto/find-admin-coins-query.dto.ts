@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsIn, IsInt, IsOptional, Min } from 'class-validator';
-import type { CoinStatus } from '@prisma/client';
+import type { CoinStatus } from '../../generated/prisma/client';
 
 const COIN_STATUSES: CoinStatus[] = ['approved', 'pending', 'rejected'];
 
