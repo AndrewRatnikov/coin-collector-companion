@@ -15,3 +15,4 @@ paths:
 ## Jest
 - **Jest `rootDir` is `src`**, and `"roots"` also includes `<rootDir>/../scripts`. A `*.spec.ts` in any other top-level folder under `apps/api/` is silently never run: a false-pass risk. Add that folder to `roots` when you put specs there.
 - **Fresh-worktree test failures:** see `.claude/rules/test-commands.md` (Prisma client + shared build).
+- **Run api tests through the package scripts** (`pnpm --filter api test` / `test:e2e`). Since NestJS 12 the `@nestjs/*` packages are ESM-only, and Jest's CommonJS runtime can load them only with Node's `--experimental-vm-modules` flag, which the scripts pass (`node --experimental-vm-modules ./node_modules/jest/bin/jest.js`). A bare `jest` or `pnpm exec jest` fails most suites with "Must use import to load ES Module": an environment error, not a broken test. IDE runners need `NODE_OPTIONS=--experimental-vm-modules`.

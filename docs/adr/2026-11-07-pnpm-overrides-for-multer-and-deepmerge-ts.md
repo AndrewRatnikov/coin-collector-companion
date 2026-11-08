@@ -1,6 +1,6 @@
 # Two pnpm overrides lift multer to 2.5.0 and deepmerge-ts to 8.x, because their parents pin the vulnerable versions exactly
 
-- **Status:** Accepted
+- **Status:** Accepted. Amended 2026-11-07: the multer override was removed in Phase 6 (see Update below); the deepmerge-ts override stays.
 - **Date:** 2026-11-07
 - **Source:** orchestrator run `run_20261107_151225` (dependency upgrade, Phase 3 of 7)
 - **Code:** `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `apps/web/src/lib/lockfile-security-floors.test.ts`
@@ -56,3 +56,13 @@ The resulting lockfile has body-parser 2.4.0, multer 2.5.0, qs 6.17.1 and deepme
 - pnpm 11 gotcha: after adding or editing `overrides`, `pnpm install` reports "Already up to date" and ignores the change until `node_modules/.pnpm-workspace-state-v1.json` is deleted.
 - Each later Nest or Prisma upgrade should check its removal condition above and delete the entry when it holds; the floors keep the fix in place either way.
 - Phase 3 also held back versions that were younger than 7 days on 2026-11-07: `@nestjs/swagger` stays at 11.4.7 (11.4.8 published 2026-11-04), `tailwindcss` and `@tailwindcss/postcss` stay at 4.3.3 (4.3.4 on 2026-11-02, 4.3.5 on 2026-11-06), `@tanstack/react-query` goes to 5.105.0 (5.106.0-5.107.1 published 2026-11-04 to 2026-11-06), `supertest` goes to 7.3.1 (7.3.2 published 2026-11-07), and `next` stays at 16.4.3 (16.4.4 on 2026-11-02, 16.4.5 on 2026-11-03). `pnpm audit --prod` still reports one moderate finding, js-yaml 5.3.0 (GHSA-r3ph-w7gj-g6xm), pinned exactly by `@nestjs/swagger` 11.4.7. Its fix comes with swagger 11.4.8, eligible from 2026-11-11, and js-yaml is outside the packages this phase may override, so no override is added for it.
+
+## Update: the multer override is removed (2026-11-07, Phase 6 of 7, NestJS 12)
+
+- **Source:** orchestrator run `run_20261107_181139` (dependency upgrade, Phase 6 of 7)
+
+Phase 6 moves the api to NestJS 12. `@nestjs/platform-express` 12.3.0 and every later 12.x release depend on `multer` `2.5.0` themselves (12.0.0 to 12.2.0 still pinned 2.2.0 to 2.4.0). The lockfile resolves `@nestjs/platform-express` 12.3.2, and `apps/api/package.json` now declares `^12.3.2`, so no version it allows pins a vulnerable multer. That is the removal condition above, so the `'multer@<2.5.0': ^2.5.0` entry is deleted from `pnpm-workspace.yaml`. The lockfile only loses that line of its `overrides:` section; multer stays at 2.5.0, and the `multer 2.5.0` floor in `lockfile-security-floors.test.ts` still guards it.
+
+The `'deepmerge-ts@<8.0.0': ^8.0.2` override stays: Prisma is still 6.19.3, and `@prisma/config` 6.19.3 still pins deepmerge-ts 7.1.5. Its removal condition (Prisma 7) belongs to Phase 7.
+
+Phase 6 also clears the js-yaml finding noted under Consequences: `@nestjs/swagger` 12.0.5 depends on js-yaml 5.5.0, so `pnpm audit --prod` reports no findings.
