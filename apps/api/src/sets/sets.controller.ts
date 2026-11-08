@@ -69,6 +69,18 @@ export class SetsController {
     return this.setsService.findCanonicalById(id);
   }
 
+  @Get('canonical/:id/gaps')
+  @ApiOperation({
+    summary: "The caller's own progress on a canonical checklist: owned/not-owned per coin and completion %",
+  })
+  @ApiOkResponse({ description: 'Gap view for the checklist (minGrade is always null; no upgrade fields)' })
+  getCanonicalGaps(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<GapViewResponse> {
+    return this.setsService.getCanonicalGaps(user.userId, id);
+  }
+
   @Public()
   @Get('public')
   @ApiOperation({ summary: 'List every public (user) set across all users, paginated' })

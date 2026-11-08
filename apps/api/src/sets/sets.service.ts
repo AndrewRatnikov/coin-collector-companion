@@ -9,6 +9,8 @@ import { getCoinName, meetsMinGrade } from '@coin-collector/shared';
 import type {
   CanonicalSetDetail,
   CanonicalSetSummary,
+  CatalogCoin,
+  CoinGrade,
   GapSlot,
   GapViewResponse,
   PaginatedResponse,
@@ -21,6 +23,7 @@ import type {
   UserSetSummary,
 } from '@coin-collector/shared';
 import { PrismaService } from '../prisma/prisma.service';
+import { CATALOG_COIN_SELECT } from '../catalog/catalog.service';
 import { CreateSetDto } from './dto/create-set.dto';
 import { UpdateSetDto } from './dto/update-set.dto';
 import { PatchSetCoinsDto } from './dto/patch-set-coins.dto';
@@ -35,6 +38,53 @@ function compareSuggestions(a: SuggestedCanonicalSet, b: SuggestedCanonicalSet):
   if (byName !== 0) return byName;
   if (a.id === b.id) return 0;
   return a.id < b.id ? -1 : 1;
+}
+
+/** One gap-view slot before counting: its own id/position, the coin exactly as it is returned,
+ *  and the caller's Ownership row for that coin (null when the caller doesn't own it). */
+export interface GapSlotSource {
+  id: string;
+  position: number;
+  coin: CatalogCoin;
+  ownership: { grade: CoinGrade | null } | null;
+}
+
+/** Shared slot/count/percent rules for every gap view (GET /sets/:id/gaps and
+ *  GET /sets/canonical/:id/gaps). Sources must already be sorted by position. */
+export function buildGapView(
+  setId: string,
+  minGrade: CoinGrade | null,
+  sources: GapSlotSource[],
+): GapViewResponse {
+  const totalCount = sources.length;
+  // needsUpgrade/upgradeCount are present only when the set has a minGrade (shared GapSlot docs).
+  const slots: GapSlot[] = sources.map((src) => {
+    const owned = src.ownership !== null;
+    const grade = src.ownership?.grade ?? null;
+    return {
+      id: src.id,
+      position: src.position,
+      coin: src.coin,
+      owned,
+      grade,
+      ...(minGrade !== null ? { needsUpgrade: owned && !meetsMinGrade(grade, minGrade) } : {}),
+    };
+  });
+  // Grades never affect the counts or completion.
+  const ownedCount = slots.filter((s) => s.owned).length;
+  const completionPercent = totalCount === 0 ? 0 : Math.round((ownedCount / totalCount) * 100);
+
+  return {
+    setId,
+    ownedCount,
+    totalCount,
+    completionPercent,
+    minGrade,
+    ...(minGrade !== null
+      ? { upgradeCount: slots.filter((s) => s.needsUpgrade === true).length }
+      : {}),
+    slots,
+  };
 }
 
 @Injectable()
@@ -296,37 +346,53 @@ export class SetsService {
       throw new NotFoundException('Set not found');
     }
 
-    const totalCount = set.coins.length;
-    const minGrade = set.minGrade;
-    // needsUpgrade/upgradeCount are present only when the set has a minGrade (shared GapSlot docs).
-    const slots: GapSlot[] = set.coins.map((usc) => {
-      const ownership = usc.coin.ownerships[0];
-      const owned = ownership !== undefined;
-      const grade = ownership?.grade ?? null;
-      return {
+    return buildGapView(
+      setId,
+      set.minGrade,
+      set.coins.map((usc) => ({
         id: usc.id,
         position: usc.position,
         coin: usc.coin,
-        owned,
-        grade,
-        ...(minGrade !== null ? { needsUpgrade: owned && !meetsMinGrade(grade, minGrade) } : {}),
-      };
-    });
-    // Grades never affect the counts or completion.
-    const ownedCount = slots.filter((s) => s.owned).length;
-    const completionPercent = totalCount === 0 ? 0 : Math.round((ownedCount / totalCount) * 100);
+        ownership: usc.coin.ownerships[0] ?? null,
+      })),
+    );
+  }
 
-    return {
-      setId,
-      ownedCount,
-      totalCount,
-      completionPercent,
-      minGrade,
-      ...(minGrade !== null
-        ? { upgradeCount: slots.filter((s) => s.needsUpgrade === true).length }
-        : {}),
-      slots,
-    };
+  async getCanonicalGaps(callerId: string, checklistId: string): Promise<GapViewResponse> {
+    const set = await this.prisma.canonicalSet.findUnique({
+      where: { id: checklistId },
+      select: {
+        id: true,
+        coins: {
+          orderBy: { position: 'asc' },
+          select: {
+            id: true,
+            position: true,
+            coin: {
+              select: {
+                ...CATALOG_COIN_SELECT,
+                ownerships: { where: { userId: callerId }, select: { grade: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!set) {
+      throw new NotFoundException('Canonical set not found');
+    }
+
+    // Checklists have no minGrade, so the view carries no upgrade fields.
+    return buildGapView(
+      checklistId,
+      null,
+      set.coins.map(({ id, position, coin: { ownerships, ...coin } }) => ({
+        id,
+        position,
+        coin,
+        ownership: ownerships[0] ?? null,
+      })),
+    );
   }
 
   private async getOwnedSetOrThrow(userId: string, id: string): Promise<UserSet> {
