@@ -2,14 +2,19 @@
  * Tests for: PublicSetDetailPage coin row variety + link to the coin page
  * Contract source: runs/run_20261006_215558/plan.md § Interface Contract → Page: PublicSetDetailPage (modify)
  *                   runs/run_20261017_142658/plan.md § Approach §3 (variety is now carried by the title and eyebrow)
+ *                   runs/run_20261109_220451/plan.md § Interface Contract → Page: PublicSetDetailPage
  * Covers criteria: #1, #2, #3, #4 (status outside link), #5 (from run_20261006_215558's prd.md),
- *                  #6 (from run_20261017_142658's prd.md)
+ *                  #6 (from run_20261017_142658's prd.md), #9 (from run_20261109_220451's prd.md)
  *
  * Mock setup mirrors sets/public/[id]/page.test.tsx.
  *
  * run_20261017_142658: the raw-variety line (public-set-detail-coin-variety) is removed. The variety now shows
  * as the getCoinName title, with the coin's type name as the eyebrow, inside the same link to the coin page.
- * The coin fixtures carry the name and isKeyDate fields that getCoinName reads. The status test is unchanged.
+ * The coin fixtures carry the name and isKeyDate fields that getCoinName reads.
+ *
+ * run_20261109_220451: the status span (public-set-detail-coin-status) is replaced by the read-only mark
+ * (public-set-detail-coin-mark); the test for "outside the link" now checks the mark. Gap fixtures carry
+ * `grade` and `minGrade`.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -105,10 +110,11 @@ const GAPS = {
   ownedCount: 1,
   totalCount: 3,
   completionPercent: 33,
+  minGrade: null,
   slots: [
-    { id: 'usc-1', position: 0, coin: COIN_1, owned: true },
-    { id: 'usc-2', position: 1, coin: COIN_2, owned: false },
-    { id: 'usc-3', position: 2, coin: COIN_3, owned: false },
+    { id: 'usc-1', position: 0, coin: COIN_1, owned: true, grade: null },
+    { id: 'usc-2', position: 1, coin: COIN_2, owned: false, grade: null },
+    { id: 'usc-3', position: 2, coin: COIN_3, owned: false, grade: null },
   ],
 };
 
@@ -171,16 +177,19 @@ describe('PublicSetDetailPage: coin variety and link to coin page', () => {
     expect(within(items[2]).getByTestId('public-set-detail-coin-link').getAttribute('href')).toBe('/catalog/coin-3');
   });
 
-  it('criterion 4: the owned/missing status is rendered but not inside the link when logged in with gaps', async () => {
+  it('criterion 4: the owned/missing mark is rendered but not inside the link when logged in with gaps', async () => {
     getStoredTokenMock.mockReturnValue('tok-abc');
     useSetGapsMock.mockReturnValue(gapsResult({ data: GAPS as never, isSuccess: true }));
     const items = await getItems();
 
-    const status0 = within(items[0]).getByTestId('public-set-detail-coin-status');
-    const status1 = within(items[1]).getByTestId('public-set-detail-coin-status');
-    expect(status0).toHaveTextContent('owned');
-    expect(status1).toHaveTextContent('missing');
-    expect(within(items[0]).getByTestId('public-set-detail-coin-link').contains(status0)).toBe(false);
-    expect(within(items[1]).getByTestId('public-set-detail-coin-link').contains(status1)).toBe(false);
+    const mark0 = await within(items[0]).findByTestId('public-set-detail-coin-mark');
+    const mark1 = within(items[1]).getByTestId('public-set-detail-coin-mark');
+    expect(mark0).toHaveTextContent('Owned');
+    expect(mark0).toHaveAttribute('data-owned', 'true');
+    expect(mark1).toHaveTextContent('Missing');
+    expect(mark1).toHaveAttribute('data-owned', 'false');
+    expect(within(items[0]).getByTestId('public-set-detail-coin-link').contains(mark0)).toBe(false);
+    expect(within(items[1]).getByTestId('public-set-detail-coin-link').contains(mark1)).toBe(false);
+    expect(screen.queryByTestId('public-set-detail-coin-status')).not.toBeInTheDocument();
   });
 });

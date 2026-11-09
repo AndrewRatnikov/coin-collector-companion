@@ -2,6 +2,7 @@
  * Tests for: CanonicalSetDetailPage coin row variety + link to the coin page
  * Contract source: runs/run_20261006_215558/plan.md § Interface Contract → Page: CanonicalSetDetailPage (modify)
  *                   runs/run_20261017_142658/plan.md § Approach §3 (variety is now carried by the title and eyebrow)
+ *                   runs/run_20261109_220451/plan.md § Interface Contract → Test notes (useCanonicalSetGaps mock)
  * Covers criteria: #1, #2, #3, #5 (from run_20261006_215558's prd.md), #6 (from run_20261017_142658's prd.md)
  *
  * Mock setup mirrors sets/canonical/[id]/page.test.tsx (Suspense around the page).
@@ -9,6 +10,9 @@
  * run_20261017_142658: the raw-variety line (canonical-set-coin-variety) is removed. The variety now shows
  * as the getCoinName title, with the coin's type name as the eyebrow, inside the same link to the coin page.
  * The coin fixtures carry the name and isKeyDate fields that getCoinName reads.
+ *
+ * run_20261109_220451: only the useCanonicalSetGaps mock is added (the page now calls it and there is
+ * no QueryClientProvider here). No assertion changes.
  */
 
 import { Suspense } from 'react';
@@ -16,10 +20,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import CanonicalSetDetailPage from '@/app/sets/canonical/[id]/page';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
+import { useCanonicalSetGaps } from '@/lib/hooks/use-user-sets';
 import { getStoredToken } from '@/lib/auth-token';
 
 vi.mock('@/lib/hooks/use-canonical-sets', () => ({
   useCanonicalSet: vi.fn(),
+}));
+
+vi.mock('@/lib/hooks/use-user-sets', () => ({
+  useCanonicalSetGaps: vi.fn(),
 }));
 
 vi.mock('@/lib/auth-token', () => ({
@@ -27,6 +36,7 @@ vi.mock('@/lib/auth-token', () => ({
 }));
 
 const useCanonicalSetMock = vi.mocked(useCanonicalSet);
+const useCanonicalSetGapsMock = vi.mocked(useCanonicalSetGaps);
 const getStoredTokenMock = vi.mocked(getStoredToken);
 
 function queryResult(overrides: Partial<ReturnType<typeof useCanonicalSet>> = {}) {
@@ -102,6 +112,13 @@ const DETAIL = {
 describe('CanonicalSetDetailPage: coin variety and link to coin page', () => {
   beforeEach(() => {
     useCanonicalSetMock.mockReset();
+    useCanonicalSetGapsMock.mockReset();
+    useCanonicalSetGapsMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      isSuccess: false,
+    } as ReturnType<typeof useCanonicalSetGaps>);
     getStoredTokenMock.mockReset();
     getStoredTokenMock.mockReturnValue(null);
     useCanonicalSetMock.mockReturnValue(queryResult({ data: DETAIL as never }));

@@ -3,13 +3,16 @@
  * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Module: user-sets-api.ts (MODIFY)
  *                   runs/run_20261018_105617/plan.md § Interface Contract → Module: user-sets-api.ts (MODIFY)
  *                   runs/run_20261103_192441/plan.md § Interface Contract → Module: user-sets-api (MODIFY)
+ *                   runs/run_20261109_220451/plan.md § Interface Contract → Function: getCanonicalSetGaps
  * Covers criteria: #1 (from prd.md); #2, #3 (from run_20261018_105617's prd.md);
- *                  #2 (run_20261103_192441: updateSetMinGrade payloads, untranslated codes)
+ *                  #2 (run_20261103_192441: updateSetMinGrade payloads, untranslated codes);
+ *                  #2 (run_20261109_220451: getCanonicalSetGaps)
  *
  * This file supersedes the prior run's version of the same file, adding
  * patchSetCoins coverage alongside the existing getUserSets/createSet/renameSet/
  * deleteSet/getSetGaps tests (all unchanged from before), and getSetsSummary.
  * run_20261103_192441 adds updateSetMinGrade.
+ * run_20261109_220451 adds getCanonicalSetGaps.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -17,6 +20,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createSet,
   deleteSet,
+  getCanonicalSetGaps,
   getSetGaps,
   getSetsSummary,
   getUserSets,
@@ -231,6 +235,40 @@ describe('user-sets-api', () => {
     it('propagates a rejection when the request fails', async () => {
       stubFetchResolving(500, { message: 'Internal error' });
       await expect(getSetGaps('u1')).rejects.toThrow();
+    });
+  });
+
+  describe('run_20261109_220451 criterion 2: getCanonicalSetGaps calls GET /sets/canonical/:id/gaps', () => {
+    it('requests /sets/canonical/:id/gaps with a plain GET and returns the GapViewResponse body', async () => {
+      const gaps = {
+        setId: 'c1',
+        ownedCount: 2,
+        totalCount: 4,
+        completionPercent: 50,
+        minGrade: null,
+        slots: [],
+      };
+      const fetchMock = stubFetchResolving(200, gaps);
+      const result = await getCanonicalSetGaps('c1');
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit | undefined];
+      expect(url.endsWith('/sets/canonical/c1/gaps')).toBe(true);
+      expect(init?.method ?? 'GET').toBe('GET');
+      expect(init?.body).toBeUndefined();
+      expect(result).toEqual(gaps);
+    });
+
+    it('targets the id it is given and not the owned-set gaps route', async () => {
+      const fetchMock = stubFetchResolving(200, { setId: 'c9', ownedCount: 0, totalCount: 0, completionPercent: 0, slots: [] });
+      await getCanonicalSetGaps('c9');
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url.endsWith('/sets/canonical/c9/gaps')).toBe(true);
+      expect(url.endsWith('/sets/c9/gaps')).toBe(false);
+      expect(url.endsWith('/sets/canonical/c1/gaps')).toBe(false);
+    });
+
+    it('propagates a rejection when the request fails', async () => {
+      stubFetchResolving(404, { message: 'Not found' });
+      await expect(getCanonicalSetGaps('c1')).rejects.toThrow();
     });
   });
 

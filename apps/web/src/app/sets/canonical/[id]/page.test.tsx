@@ -3,6 +3,7 @@
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CanonicalSetDetailPage
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
  *                   runs/run_20261017_142658/plan.md § Approach §3 and §4 (name block via getCoinName; Skeleton testid)
+ *                   runs/run_20261109_220451/plan.md § Interface Contract → Test notes (useCanonicalSetGaps mock)
  * Covers criteria: #9 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md),
  *                  #6, #13 (from run_20261017_142658's prd.md)
  *
@@ -20,6 +21,9 @@
  * the removed `.animate-pulse` class, and the coin list test expects the getCoinName title and subtitle
  * instead of the formatCoinLabel string. The coin fixtures now carry the full set of naming fields
  * (name, variety, isKeyDate) because getCoinName reads them.
+ *
+ * run_20261109_220451: the page now calls useCanonicalSetGaps, and these tests render without a
+ * QueryClientProvider, so the hook is mocked (idle result). No assertion changes.
  */
 
 import { Suspense } from 'react';
@@ -27,10 +31,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import CanonicalSetDetailPage from '@/app/sets/canonical/[id]/page';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
+import { useCanonicalSetGaps } from '@/lib/hooks/use-user-sets';
 import { getStoredToken } from '@/lib/auth-token';
 
 vi.mock('@/lib/hooks/use-canonical-sets', () => ({
   useCanonicalSet: vi.fn(),
+}));
+
+vi.mock('@/lib/hooks/use-user-sets', () => ({
+  useCanonicalSetGaps: vi.fn(),
 }));
 
 vi.mock('@/lib/auth-token', () => ({
@@ -38,6 +47,7 @@ vi.mock('@/lib/auth-token', () => ({
 }));
 
 const useCanonicalSetMock = vi.mocked(useCanonicalSet);
+const useCanonicalSetGapsMock = vi.mocked(useCanonicalSetGaps);
 const getStoredTokenMock = vi.mocked(getStoredToken);
 
 function queryResult(overrides: Partial<ReturnType<typeof useCanonicalSet>> = {}) {
@@ -98,6 +108,13 @@ const DETAIL = {
 describe('CanonicalSetDetailPage', () => {
   beforeEach(() => {
     useCanonicalSetMock.mockReset();
+    useCanonicalSetGapsMock.mockReset();
+    useCanonicalSetGapsMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      isSuccess: false,
+    } as ReturnType<typeof useCanonicalSetGaps>);
     getStoredTokenMock.mockReset();
     getStoredTokenMock.mockReturnValue(null);
   });

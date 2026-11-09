@@ -4,14 +4,16 @@
  * Extended by: runs/run_20261017_210503/plan.md § Interface Contract → Hooks in use-user-sets.ts
  *              runs/run_20261018_105617/plan.md § Interface Contract → Module: use-user-sets.ts (MODIFY)
  *              runs/run_20261103_192441/plan.md § Interface Contract → Hook: useUpdateSetMinGrade
+ *              runs/run_20261109_220451/plan.md § Interface Contract → Hook: useCanonicalSetGaps
  * Covers criteria: #1, #2 (run_20260721_171115); #12 (run_20261017_210503); #3, #10 (run_20261018_105617);
- *                  #3, #9 (run_20261103_192441)
+ *                  #3, #9 (run_20261103_192441); #2 (run_20261109_220451)
  *
  * All earlier tests are kept unchanged. Added: optimistic remove in usePatchSetCoins, the extra
  * ['user-sets'] invalidation, useAddCoinsToSet, and useSetsSummary.
  * Fixture-only change (run_20261102_194108): slots gain `grade: null`, gap views and the SET literal
  * gain `minGrade: null`.
  * run_20261103_192441 adds useUpdateSetMinGrade (non-optimistic, pending until the gap view refetched).
+ * run_20261109_220451 adds useCanonicalSetGaps (and getCanonicalSetGaps to the api mock factory).
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -21,6 +23,7 @@ import type { CatalogCoin, GapViewResponse } from '@coin-collector/shared';
 import { ApiError } from '@/lib/api-client';
 import {
   useAddCoinsToSet,
+  useCanonicalSetGaps,
   useCreateSet,
   useDeleteSet,
   usePatchSetCoins,
@@ -33,6 +36,7 @@ import {
 import {
   createSet,
   deleteSet,
+  getCanonicalSetGaps,
   getSetGaps,
   getSetsSummary,
   getUserSets,
@@ -49,6 +53,7 @@ vi.mock('@/lib/user-sets-api', () => ({
   updateSetMinGrade: vi.fn(),
   deleteSet: vi.fn(),
   getSetGaps: vi.fn(),
+  getCanonicalSetGaps: vi.fn(),
   patchSetCoins: vi.fn(),
 }));
 
@@ -59,6 +64,7 @@ const renameSetMock = vi.mocked(renameSet);
 const updateSetMinGradeMock = vi.mocked(updateSetMinGrade);
 const deleteSetMock = vi.mocked(deleteSet);
 const getSetGapsMock = vi.mocked(getSetGaps);
+const getCanonicalSetGapsMock = vi.mocked(getCanonicalSetGaps);
 const patchSetCoinsMock = vi.mocked(patchSetCoins);
 
 function makeWrapper() {
@@ -146,6 +152,7 @@ describe('use-user-sets hooks', () => {
     updateSetMinGradeMock.mockReset();
     deleteSetMock.mockReset();
     getSetGapsMock.mockReset();
+    getCanonicalSetGapsMock.mockReset();
     patchSetCoinsMock.mockReset();
   });
 
@@ -259,6 +266,113 @@ describe('use-user-sets hooks', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(getSetGapsMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('run_20261109_220451 criterion 2: useCanonicalSetGaps wraps getCanonicalSetGaps', () => {
+    it('calls getCanonicalSetGaps with the id and exposes the resolved GapViewResponse', async () => {
+      const gaps = makeGaps('c1', ['coin-1']);
+      getCanonicalSetGapsMock.mockResolvedValue(gaps);
+      const { wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useCanonicalSetGaps('c1'), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.data).toEqual(gaps);
+      });
+      expect(getCanonicalSetGapsMock).toHaveBeenCalledTimes(1);
+      expect(getCanonicalSetGapsMock).toHaveBeenCalledWith('c1');
+      expect(getSetGapsMock).not.toHaveBeenCalled();
+    });
+
+    it('uses the id it is given', async () => {
+      getCanonicalSetGapsMock.mockResolvedValue(makeGaps('c7', []));
+      const { wrapper } = makeWrapper();
+
+      renderHook(() => useCanonicalSetGaps('c7'), { wrapper });
+
+      await waitFor(() => expect(getCanonicalSetGapsMock).toHaveBeenCalledWith('c7'));
+      expect(getCanonicalSetGapsMock).not.toHaveBeenCalledWith('c1');
+    });
+
+    it('makes no request when enabled is false', async () => {
+      const { wrapper } = makeWrapper();
+      const { result } = renderHook(() => useCanonicalSetGaps('c1', { enabled: false }), { wrapper });
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(getCanonicalSetGapsMock).not.toHaveBeenCalled();
+      expect(result.current.fetchStatus).toBe('idle');
+    });
+
+    it('starts requesting once enabled flips from false to true', async () => {
+      getCanonicalSetGapsMock.mockResolvedValue(makeGaps('c1', ['coin-1', 'coin-2']));
+      const { wrapper } = makeWrapper();
+      const { result, rerender } = renderHook(({ enabled }) => useCanonicalSetGaps('c1', { enabled }), {
+        wrapper,
+        initialProps: { enabled: false },
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(getCanonicalSetGapsMock).not.toHaveBeenCalled();
+
+      rerender({ enabled: true });
+
+      await waitFor(() => expect(result.current.data?.ownedCount).toBe(2));
+      expect(getCanonicalSetGapsMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('makes no request for an empty id, even when enabled', async () => {
+      const { wrapper } = makeWrapper();
+      renderHook(() => useCanonicalSetGaps('', { enabled: true }), { wrapper });
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(getCanonicalSetGapsMock).not.toHaveBeenCalled();
+    });
+
+    it('is enabled by default when no options are passed', async () => {
+      getCanonicalSetGapsMock.mockResolvedValue(makeGaps('c1', []));
+      const { wrapper } = makeWrapper();
+
+      renderHook(() => useCanonicalSetGaps('c1'), { wrapper });
+
+      await waitFor(() => expect(getCanonicalSetGapsMock).toHaveBeenCalledTimes(1));
+    });
+
+    it('stores the result under ["user-sets", "canonical", id, "gaps"]', async () => {
+      const gaps = makeGaps('c1', ['coin-1']);
+      getCanonicalSetGapsMock.mockResolvedValue(gaps);
+      const { queryClient, wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useCanonicalSetGaps('c1'), { wrapper });
+
+      await waitFor(() => expect(result.current.data).toEqual(gaps));
+      expect(queryClient.getQueryData(['user-sets', 'canonical', 'c1', 'gaps'])).toEqual(gaps);
+      expect(queryClient.getQueryData(['user-sets', 'c1', 'gaps'])).toBeUndefined();
+    });
+
+    it('refetches when the ["user-sets"] prefix is invalidated (how an ownership change refreshes the progress)', async () => {
+      getCanonicalSetGapsMock.mockResolvedValueOnce(makeGaps('c1', ['coin-1']));
+      getCanonicalSetGapsMock.mockResolvedValueOnce(makeGaps('c1', ['coin-1', 'coin-2']));
+      const { queryClient, wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useCanonicalSetGaps('c1'), { wrapper });
+      await waitFor(() => expect(result.current.data?.ownedCount).toBe(1));
+
+      await act(async () => {
+        await queryClient.invalidateQueries({ queryKey: ['user-sets'] });
+      });
+
+      await waitFor(() => expect(result.current.data?.ownedCount).toBe(2));
+      expect(getCanonicalSetGapsMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('exposes an error when getCanonicalSetGaps rejects', async () => {
+      getCanonicalSetGapsMock.mockRejectedValue(new ApiError(500, 'Internal server error'));
+      const { wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useCanonicalSetGaps('c1'), { wrapper });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
     });
   });
 
