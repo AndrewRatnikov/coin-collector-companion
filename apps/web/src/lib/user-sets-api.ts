@@ -48,6 +48,10 @@ export async function getSetGaps(id: string): Promise<GapViewResponse> {
   return apiFetch<GapViewResponse>(`/sets/${id}/gaps`);
 }
 
+export async function getCanonicalSetGaps(id: string): Promise<GapViewResponse> {
+  return apiFetch<GapViewResponse>(`/sets/canonical/${id}/gaps`);
+}
+
 export async function patchSetCoins(id: string, body: PatchSetCoinsRequest): Promise<UserSetCoinSummary[]> {
   return apiFetch<UserSetCoinSummary[]>(`/sets/${id}/coins`, {
     method: 'PATCH',

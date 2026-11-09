@@ -12,6 +12,7 @@ import { removeCoinsFromGaps } from '@/lib/set-page';
 import {
   createSet,
   deleteSet,
+  getCanonicalSetGaps,
   getSetGaps,
   getSetsSummary,
   getUserSets,
@@ -44,6 +45,17 @@ export function useSetGaps(id: string) {
     queryKey: ['user-sets', id, 'gaps'],
     queryFn: () => getSetGaps(id),
     enabled: Boolean(id),
+  });
+}
+
+// The caller's own progress on a curated checklist. Under ['user-sets'] so every ownership
+// mutation's invalidation refreshes it; the 4-part key keeps it out of the optimistic gap
+// patching (isGapsKey matches 3-part keys only). `enabled: false` for signed-out visitors.
+export function useCanonicalSetGaps(id: string, { enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery<GapViewResponse>({
+    queryKey: ['user-sets', 'canonical', id, 'gaps'],
+    queryFn: () => getCanonicalSetGaps(id),
+    enabled: enabled && Boolean(id),
   });
 }
 

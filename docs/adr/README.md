@@ -45,6 +45,8 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-07](2026-11-07-pnpm-overrides-for-multer-and-deepmerge-ts.md) | Two pnpm overrides lift multer to 2.5.0 and deepmerge-ts to 8.x, because their parents pin the vulnerable versions exactly | Accepted; both overrides removed: multer 2026-11-07 (Phase 6), deepmerge-ts 2026-11-08 (Phase 7) |
 | [2026-11-08](2026-11-08-prisma-7-with-the-pg-driver-adapter.md) | Prisma 7 runs through the `@prisma/adapter-pg` driver adapter, with a CommonJS client generated into `apps/api/src/generated/prisma` and `prisma.config.ts` for the CLI | Accepted |
 | [2026-11-08](2026-11-08-canonical-checklist-gaps-separate-endpoint.md) | Curated checklists get their own auth-only `GET /sets/canonical/:id/gaps` that reuses `GapViewResponse`, with `minGrade` always null | Accepted |
+| [2026-11-09](2026-11-09-public-set-progress-reuses-owner-gaps-endpoint.md) | The public set page takes the viewer's progress from `GET /sets/:id/gaps` and ignores the owner's grade fields | Accepted |
+| [2026-11-09](2026-11-09-canonical-gaps-query-under-user-sets-key.md) | The curated checklist gaps query is keyed `['user-sets', 'canonical', id, 'gaps']` | Accepted |
 
 ## Where else decisions live
 

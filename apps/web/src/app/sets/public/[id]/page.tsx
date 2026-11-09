@@ -6,7 +6,11 @@ import { getCoinName } from '@coin-collector/shared';
 import { getStoredToken } from '@/lib/auth-token';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import { useSetGaps } from '@/lib/hooks/use-user-sets';
+import { SetProgress, SetProgressSkeleton } from '@/components/sets/set-progress';
+import { GradeChip } from '@/components/ui/grade-chip';
+import { OwnershipMark } from '@/components/ui/ownership-mark';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatOwnedOfTotal } from '@/lib/album-layout';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
@@ -37,11 +41,15 @@ export default function PublicSetDetailPage({ params }: { params: Promise<{ id: 
     return <main data-testid="public-set-detail-page" />;
   }
 
-  const ownedById = new Map<string, boolean>(
-    gapsQuery.isSuccess && gapsQuery.data ? gapsQuery.data.slots.map((slot) => [slot.coin.id, slot.owned]) : [],
-  );
-
-  const showOverlap = isLoggedIn && gapsQuery.isSuccess && Boolean(gapsQuery.data);
+  // The viewer's own ownership from GET /sets/:id/gaps. That response also carries the set
+  // owner's minGrade, upgradeCount and needsUpgrade: never read them here.
+  const gaps = isLoggedIn && gapsQuery.isSuccess && gapsQuery.data ? gapsQuery.data : null;
+  const slotByCoinId = new Map(gaps ? gaps.slots.map((slot) => [slot.coin.id, slot]) : []);
+  const showProgressArea = isLoggedIn && set !== undefined && set.coins.length > 0;
+  const cloneLabel =
+    gaps && gaps.ownedCount > 0
+      ? formatOwnedOfTotal(t('setProgress.cloneCtaWithOwned'), gaps.ownedCount, gaps.totalCount)
+      : t('publicSetDetail.cloneCta');
 
   return (
     <main
@@ -69,9 +77,24 @@ export default function PublicSetDetailPage({ params }: { params: Promise<{ id: 
 
       {set && (
         <>
-          <h1 data-testid="public-set-detail-name" className="text-[32px] font-normal [font-family:var(--font-heading)]">
-            {resolveLocalizedText(set.name, locale)}
-          </h1>
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,300px)] items-end gap-x-6 gap-y-3 max-[899px]:grid-cols-1">
+            <h1 data-testid="public-set-detail-name" className="text-[32px] font-normal [font-family:var(--font-heading)]">
+              {resolveLocalizedText(set.name, locale)}
+            </h1>
+            {showProgressArea && gapsQuery.isLoading && (
+              <SetProgressSkeleton testId="public-set-detail-progress-loading" />
+            )}
+            {showProgressArea && gaps && gaps.totalCount > 0 && (
+              <SetProgress
+                testIdPrefix="public-set-detail"
+                className="self-end"
+                ownedTemplate={t('setProgress.youOwnOfTotal')}
+                owned={gaps.ownedCount}
+                total={gaps.totalCount}
+                percent={gaps.completionPercent}
+              />
+            )}
+          </div>
 
           <div className="flex flex-wrap items-center gap-4">
             {isLoggedIn && (
@@ -80,25 +103,17 @@ export default function PublicSetDetailPage({ params }: { params: Promise<{ id: 
                 data-testid="public-set-clone-cta"
                 className="w-fit rounded-[2px] bg-[var(--color-accent)] px-[26px] py-[13px] text-[12px] font-medium uppercase tracking-[0.1em] text-[var(--color-bg)] hover:bg-[color-mix(in_srgb,var(--color-accent)_86%,#000)]"
               >
-                {t('publicSetDetail.cloneCta')}
+                {cloneLabel}
               </Link>
             )}
           </div>
-
-          {showOverlap && (
-            <p
-              data-testid="public-set-detail-overlap"
-              className="[font-family:var(--font-mono)] text-[13px] tabular-nums text-[var(--color-neutral-600)]"
-            >
-              {t('publicSetDetail.overlap')} {gapsQuery.data!.ownedCount} {t('common.ofSeparator')} {gapsQuery.data!.slots.length}
-            </p>
-          )}
 
           <ul data-testid="public-set-detail-coin-list" className="flex flex-col border-t border-[var(--color-divider)]">
             {[...set.coins]
               .sort((a, b) => a.position - b.position)
               .map((item) => {
                 const name = getCoinName(item.coin);
+                const slot = slotByCoinId.get(item.coin.id);
                 return (
                   <li
                     key={item.id}
@@ -120,12 +135,12 @@ export default function PublicSetDetailPage({ params }: { params: Promise<{ id: 
                         {name.subtitle}
                       </span>
                     </Link>
-                    {gapsQuery.isSuccess && ownedById.has(item.coin.id) && (
-                      <span
-                        data-testid="public-set-detail-coin-status"
-                        className="text-xs uppercase tracking-[0.08em] text-[var(--color-neutral-600)]"
-                      >
-                        {ownedById.get(item.coin.id) ? t('common.owned') : t('common.missing')}
+                    {slot && (
+                      <span className="ml-auto flex items-center gap-2">
+                        {slot.owned && slot.grade != null && (
+                          <GradeChip grade={slot.grade} testId="public-set-detail-coin-grade" />
+                        )}
+                        <OwnershipMark owned={slot.owned} testId="public-set-detail-coin-mark" />
                       </span>
                     )}
                   </li>

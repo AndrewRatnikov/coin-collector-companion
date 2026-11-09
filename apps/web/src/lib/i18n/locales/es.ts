@@ -411,7 +411,10 @@ const esShape: Record<MessageKey, string> = {
   // public set detail
   'publicSetDetail.errorLoading': 'Algo salió mal al cargar esta colección. Inténtalo de nuevo.',
   'publicSetDetail.cloneCta': 'Clonar a mis colecciones',
-  'publicSetDetail.overlap': 'Ya posees',
+
+  // set progress (checklists and public sets)
+  'setProgress.youOwnOfTotal': 'Tienes {owned} de {total}',
+  'setProgress.cloneCtaWithOwned': 'Empezar esta colección · {owned} de {total} ya conseguidas',
 
   // my submissions
   'mySubmissions.title': 'Mis envíos',
