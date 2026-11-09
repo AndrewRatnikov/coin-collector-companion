@@ -26,6 +26,7 @@ import { UndoToastProvider, useUndoToast } from '@/components/ui/undo-toast';
 import { AddCoinsSheet } from '@/components/sets/add-coins-sheet';
 import { SelectionActionBar } from '@/components/sets/selection-action-bar';
 import { SetActionsMenu } from '@/components/sets/set-actions-menu';
+import { SetProgress } from '@/components/sets/set-progress';
 import { SetAlbum } from '@/components/sets/set-album';
 import { SetCoinList } from '@/components/sets/set-coin-list';
 import { SEGMENT_BUTTON_CLASSNAME, SEGMENT_GROUP_CLASSNAME, SetViewSwitch } from '@/components/sets/set-view-switch';
@@ -59,32 +60,6 @@ function fill(template: string, values: Record<string, string | number>): string
     text = text.split(`{${key}}`).join(String(value));
   }
   return text;
-}
-
-/** "{owned} of {total} owned" with both numbers in mono; the text content stays the plain sentence. */
-function OwnedOfTotal({ template, owned, total }: { template: string; owned: number; total: number }) {
-  const parts = template.split(/(\{owned\}|\{total\})/);
-  return (
-    <>
-      {parts.map((part, index) => {
-        if (part === '{owned}') {
-          return (
-            <span key={index} className="font-mono text-[22px] font-medium tabular-nums text-text">
-              {owned}
-            </span>
-          );
-        }
-        if (part === '{total}') {
-          return (
-            <span key={index} className="font-mono tabular-nums">
-              {total}
-            </span>
-          );
-        }
-        return <Fragment key={index}>{part}</Fragment>;
-      })}
-    </>
-  );
 }
 
 /** "{n} to upgrade" with the number in mono; the text content stays the plain sentence. */
@@ -663,40 +638,25 @@ function SetEditor({ id }: { id: string }) {
           </p>
         </div>
 
-        <div data-testid="set-editor-progress" className="[grid-area:progress] flex min-w-0 flex-col gap-2 self-end">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-            <span data-testid="set-editor-owned-count" className="text-sm text-neutral-800">
-              <OwnedOfTotal template={t('setEditor.ownedOfTotal')} owned={gaps.ownedCount} total={gaps.totalCount} />
-            </span>
-            <span className="flex items-baseline gap-3">
-              {showUpgrades && (
-                <span
-                  data-testid="set-editor-upgrade-count"
-                  className="inline-flex items-baseline gap-1 text-sm text-accent-800"
-                >
-                  <UpgradeIcon className="self-center" />
-                  <UpgradeCountText template={t('setPage.upgradeCount')} n={upgradeCount} />
-                </span>
-              )}
-              <span data-testid="set-editor-completion" className="font-mono text-sm tabular-nums text-accent-700">
-                {gaps.completionPercent}%
+        <SetProgress
+          testIdPrefix="set-editor"
+          className="[grid-area:progress] self-end"
+          ownedTemplate={t('setEditor.ownedOfTotal')}
+          owned={gaps.ownedCount}
+          total={gaps.totalCount}
+          percent={gaps.completionPercent}
+          upgradeSlot={
+            showUpgrades ? (
+              <span
+                data-testid="set-editor-upgrade-count"
+                className="inline-flex items-baseline gap-1 text-sm text-accent-800"
+              >
+                <UpgradeIcon className="self-center" />
+                <UpgradeCountText template={t('setPage.upgradeCount')} n={upgradeCount} />
               </span>
-            </span>
-          </div>
-          <div
-            role="progressbar"
-            aria-label={t('setEditor.completionLabel')}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={gaps.completionPercent}
-            className="h-2 overflow-hidden rounded-[var(--radius-md)] bg-neutral-300"
-          >
-            <div
-              className="h-full rounded-[var(--radius-md)] bg-accent motion-safe:transition-[width] motion-safe:duration-300"
-              style={{ width: `${gaps.completionPercent}%` }}
-            />
-          </div>
-        </div>
+            ) : undefined
+          }
+        />
 
         <div className="[grid-area:segs] flex min-w-0 flex-wrap items-center gap-3">
           <div role="group" aria-label={t('setEditor.showLabel')} className={SEGMENT_GROUP_CLASSNAME}>
