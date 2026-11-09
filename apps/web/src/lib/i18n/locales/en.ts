@@ -416,7 +416,10 @@ const enShape = {
   // public set detail
   'publicSetDetail.errorLoading': 'Something went wrong loading this set. Please try again.',
   'publicSetDetail.cloneCta': 'Clone into my sets',
-  'publicSetDetail.overlap': 'You already own',
+
+  // set progress (checklists and public sets)
+  'setProgress.youOwnOfTotal': 'You own {owned} of {total}',
+  'setProgress.cloneCtaWithOwned': 'Start this set · {owned} of {total} already owned',
 
   // my submissions
   'mySubmissions.title': 'My Submissions',
