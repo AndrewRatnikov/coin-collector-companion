@@ -33,7 +33,7 @@
  * documented in plan.md's Risks section; it does not change what is asserted here).
  *
  * For getGaps (run_20260720_142942), userSet.findUnique's fixture stands in for the real
- * Prisma nested include (`coins.coin.ownerships` filtered to `where: { userId: callerId }`
+ * Prisma nested select (`coins.coin.ownerships` filtered to `where: { userId: callerId }`
  * at the DB layer) — the mock's `coins[].coin.ownerships` array is pre-shaped as if that
  * filter already ran, since a mocked Prisma client cannot itself apply a WHERE clause.
  * Every getGaps fixture carries `minGrade` (null when the set has no goal), as the real row does.
@@ -46,6 +46,7 @@ import { BadRequestException, ForbiddenException, NotFoundException } from '@nes
 import { Test, TestingModule } from '@nestjs/testing';
 import { SetsService } from './sets.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { CATALOG_COIN_SELECT } from '../catalog/catalog.service';
 import { FindPublicSetsQueryDto } from './dto/find-public-sets-query.dto';
 
 function makePublicQuery(overrides: Partial<FindPublicSetsQueryDto> = {}): FindPublicSetsQueryDto {
@@ -1262,13 +1263,50 @@ describe('SetsService', () => {
 
       expect(mockPrismaService.userSet.findUnique).toHaveBeenCalledWith({
         where: { id: uuidC },
-        include: {
+        select: {
+          id: true,
+          minGrade: true,
           coins: {
             orderBy: { position: 'asc' },
-            include: { coin: { include: { ownerships: { where: { userId: 'user-1' } } } } },
+            select: {
+              id: true,
+              position: true,
+              coin: {
+                select: {
+                  ...CATALOG_COIN_SELECT,
+                  ownerships: { where: { userId: 'user-1' }, select: { grade: true } },
+                },
+              },
+            },
           },
         },
       });
+    });
+
+    it('never returns submittedByUserId or the ownerships array on a slot coin', async () => {
+      // Honors the query's select the way Prisma does, so a query that fetches the full row
+      // leaks submittedByUserId into the result here just as it would against the real DB.
+      const row: Record<string, unknown> = {
+        id: 'coin-a',
+        name: 'Coin A',
+        submittedByUserId: 'submitter-1',
+        ownerships: [{ grade: 'VF' }],
+      };
+      mockPrismaService.userSet.findUnique.mockImplementation(
+        async (args: { select?: { coins: { select: { coin: { select: Record<string, unknown> } } } } }) => {
+          const coinSelect = args.select?.coins.select.coin.select;
+          const coin = coinSelect
+            ? Object.fromEntries(Object.entries(row).filter(([key]) => key in coinSelect))
+            : row;
+          return { id: uuidC, minGrade: null, coins: [{ id: 'usc-1', position: 1, coin }] };
+        },
+      );
+
+      const result = await service.getGaps('user-1', uuidC);
+
+      expect(result.slots[0].owned).toBe(true);
+      expect(result.slots[0].coin).not.toHaveProperty('submittedByUserId');
+      expect(result.slots[0].coin).not.toHaveProperty('ownerships');
     });
 
     it('is a single query — no per-slot/N+1 lookups against userSetCoin or ownership', async () => {
@@ -1287,7 +1325,7 @@ describe('SetsService', () => {
 
       // Exactly one round trip for the whole set, regardless of how many slots it has —
       // a per-slot implementation would call one of these once per coin (3 times here)
-      // instead of the nested `include` doing it in the single findUnique call above.
+      // instead of the nested `select` doing it in the single findUnique call above.
       expect(mockPrismaService.userSet.findUnique).toHaveBeenCalledTimes(1);
       expect(mockPrismaService.userSetCoin.findMany).not.toHaveBeenCalled();
       expect(mockPrismaService.ownership.findMany).not.toHaveBeenCalled();
@@ -1315,11 +1353,11 @@ describe('SetsService', () => {
         {
           id: 'usc-1',
           position: 1,
-          coin: { id: 'coin-a', ownerships: [{ userId: 'user-1', coinId: 'coin-a' }] },
+          coin: { id: 'coin-a' },
           owned: true,
           grade: null,
         },
-        { id: 'usc-2', position: 2, coin: { id: 'coin-b', ownerships: [] }, owned: false, grade: null },
+        { id: 'usc-2', position: 2, coin: { id: 'coin-b' }, owned: false, grade: null },
       ]);
     });
 
@@ -1513,10 +1551,21 @@ describe('SetsService', () => {
 
       expect(mockPrismaService.userSet.findUnique).toHaveBeenCalledWith({
         where: { id: uuidC },
-        include: {
+        select: {
+          id: true,
+          minGrade: true,
           coins: {
             orderBy: { position: 'asc' },
-            include: { coin: { include: { ownerships: { where: { userId: 'user-9' } } } } },
+            select: {
+              id: true,
+              position: true,
+              coin: {
+                select: {
+                  ...CATALOG_COIN_SELECT,
+                  ownerships: { where: { userId: 'user-9' }, select: { grade: true } },
+                },
+              },
+            },
           },
         },
       });

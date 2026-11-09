@@ -335,10 +335,21 @@ export class SetsService {
   async getGaps(callerId: string, setId: string): Promise<GapViewResponse> {
     const set = await this.prisma.userSet.findUnique({
       where: { id: setId },
-      include: {
+      select: {
+        id: true,
+        minGrade: true,
         coins: {
           orderBy: { position: 'asc' },
-          include: { coin: { include: { ownerships: { where: { userId: callerId } } } } },
+          select: {
+            id: true,
+            position: true,
+            coin: {
+              select: {
+                ...CATALOG_COIN_SELECT,
+                ownerships: { where: { userId: callerId }, select: { grade: true } },
+              },
+            },
+          },
         },
       },
     });
@@ -349,11 +360,11 @@ export class SetsService {
     return buildGapView(
       setId,
       set.minGrade,
-      set.coins.map((usc) => ({
-        id: usc.id,
-        position: usc.position,
-        coin: usc.coin,
-        ownership: usc.coin.ownerships[0] ?? null,
+      set.coins.map(({ id, position, coin: { ownerships, ...coin } }) => ({
+        id,
+        position,
+        coin,
+        ownership: ownerships[0] ?? null,
       })),
     );
   }
