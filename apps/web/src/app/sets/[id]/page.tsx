@@ -1,7 +1,6 @@
 'use client';
 
-import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
-import Link from 'next/link';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCoinName } from '@coin-collector/shared';
 import type { CoinGrade, GapSlot } from '@coin-collector/shared';
@@ -18,82 +17,26 @@ import {
 } from '@/lib/hooks/use-user-sets';
 import { useBulkSetOwnership, useSetOwnership } from '@/lib/hooks/use-collection';
 import { downloadMissingCsv } from '@/lib/missing-list';
-import { Badge } from '@/components/ui/badge';
 import type { CoinCardStatus } from '@/components/ui/coin-card';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Skeleton } from '@/components/ui/skeleton';
 import { UndoToastProvider, useUndoToast } from '@/components/ui/undo-toast';
 import { AddCoinsSheet } from '@/components/sets/add-coins-sheet';
 import { SelectionActionBar } from '@/components/sets/selection-action-bar';
 import { SetActionsMenu } from '@/components/sets/set-actions-menu';
-import { SetProgress } from '@/components/sets/set-progress';
-import { SetAlbum } from '@/components/sets/set-album';
-import { SetCoinList } from '@/components/sets/set-coin-list';
-import { SEGMENT_BUTTON_CLASSNAME, SEGMENT_GROUP_CLASSNAME, SetViewSwitch } from '@/components/sets/set-view-switch';
-import { SetYearGroup } from '@/components/sets/set-year-group';
-import { UpgradeIcon } from '@/components/ui/upgrade-badge';
+import { SetPageDeleteDialog } from '@/components/set-page/set-page-delete-dialog';
+import { SetPageCompleteEmpty, SetPageEmpty, SetPageUpgradeEmpty } from '@/components/set-page/set-page-empty-states';
+import { SetPageHeader } from '@/components/set-page/set-page-header';
+import { SetPageError, SetPageLoading } from '@/components/set-page/set-page-load-states';
+import { PAGE_WRAPPER_CLASSNAME, type SetFilter } from '@/components/set-page/set-page-shared';
+import { SetPageLiveRegion, SetPageSelectHint } from '@/components/set-page/set-page-status';
+import { SetPageToolbar } from '@/components/set-page/set-page-toolbar';
+import { SetPageYearGroups } from '@/components/set-page/set-page-year-groups';
+import { fill } from '@/lib/fill-template';
 import { gradeShortLabel } from '@/lib/grades';
-import { formatOwnedOfTotal } from '@/lib/album-layout';
 import { markSetDeleted } from '@/lib/set-deleted-notice';
-import { buildYearGroups, getSetKind, getSetSharedParts, type SetKind } from '@/lib/set-page';
+import { buildYearGroups } from '@/lib/set-page';
 import { buildSetViewSearch, parseSetView, type SetView } from '@/lib/set-view';
 import { useTranslation } from '@/lib/i18n/i18n-context';
-import type { MessageKey } from '@/lib/i18n/locales/en';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
-
-const PAGE_WRAPPER_CLASSNAME =
-  'mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-6 px-[clamp(20px,5vw,48px)] py-10 max-[899px]:py-6';
-
-const KIND_LABEL: Record<SetKind, MessageKey> = {
-  curated: 'setPage.kindCurated',
-  copied: 'setPage.kindCopied',
-  own: 'setPage.kindOwn',
-};
-
-const FOCUS_RING = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-700';
-
-type SetFilter = 'all' | 'missing' | 'upgrade';
-
-function fill(template: string, values: Record<string, string | number>): string {
-  let text = template;
-  for (const [key, value] of Object.entries(values)) {
-    text = text.split(`{${key}}`).join(String(value));
-  }
-  return text;
-}
-
-/** "{n} to upgrade" with the number in mono; the text content stays the plain sentence. */
-function UpgradeCountText({ template, n }: { template: string; n: number }) {
-  const parts = template.split('{n}');
-  return (
-    <>
-      {parts.map((part, index) => (
-        <Fragment key={index}>
-          {index > 0 && <span className="font-mono tabular-nums">{n}</span>}
-          {part}
-        </Fragment>
-      ))}
-    </>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function AlertIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true" className="flex-none text-danger">
-      <circle cx="10" cy="10" r="8" stroke="currentColor" strokeWidth="1.6" />
-      <path d="M10 6v5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <circle cx="10" cy="14" r="1" fill="currentColor" />
-    </svg>
-  );
-}
 
 function SetEditor({ id }: { id: string }) {
   const router = useRouter();
@@ -375,52 +318,11 @@ function SetEditor({ id }: { id: string }) {
   }
 
   if (setLoading || gapsLoading) {
-    return (
-      <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME}>
-        <div data-testid="set-editor-loading" aria-busy="true" className="flex flex-col gap-6">
-          <span className="sr-only">{t('setPage.loadingLabel')}</span>
-          <div className="flex flex-col gap-3">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-11 w-3/5" />
-            <Skeleton className="h-4 w-2/5" />
-          </div>
-          <Skeleton className="h-11 w-full" />
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(172px,100%),1fr))] gap-3.5 max-[899px]:grid-cols-2 max-[899px]:gap-2.5">
-            {Array.from({ length: 5 }, (_, index) => (
-              <Skeleton key={index} className="aspect-[3/4] w-full rounded-lg" />
-            ))}
-          </div>
-        </div>
-      </main>
-    );
+    return <SetPageLoading />;
   }
 
   if (setIsError || gapsIsError) {
-    return (
-      <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME}>
-        <div
-          data-testid="set-editor-error"
-          role="alert"
-          className="flex items-start gap-3 rounded-[var(--radius-lg)] border border-danger-line bg-danger-bg p-4 text-sm text-text"
-        >
-          <AlertIcon />
-          <div className="flex min-w-0 flex-1 flex-col gap-1">
-            <p className="font-semibold">{t('setPage.errorTitle')}</p>
-            <p className="text-neutral-800">{t('setPage.errorBody')}</p>
-            <div className="mt-2">
-              <button
-                type="button"
-                data-testid="set-editor-error-retry"
-                onClick={retryLoad}
-                className={`min-h-11 cursor-pointer rounded-[var(--radius-md)] border border-neutral-400 bg-white px-4 text-sm font-medium text-text hover:border-accent ${FOCUS_RING}`}
-              >
-                {t('setPage.tryAgain')}
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
+    return <SetPageError onRetry={retryLoad} />;
   }
 
   if (!set || !gaps) {
@@ -473,250 +375,66 @@ function SetEditor({ id }: { id: string }) {
     .filter((s) => s.id !== id)
     .map((s) => ({ id: s.id, name: resolveLocalizedText(s.name, locale) }));
 
-  const shared = getSetSharedParts(gaps.slots);
-  const subtitleParts: ReactNode[] = [t(KIND_LABEL[getSetKind(set)])];
-  if (shared.country !== null) subtitleParts.push(shared.country);
-  if (shared.denomination !== null) subtitleParts.push(shared.denomination);
-  if (shared.years !== null) {
-    subtitleParts.push(
-      <span data-testid="set-editor-subtitle-years" className="font-mono tabular-nums">
-        {shared.years}
-      </span>,
-    );
-  }
-
   let body: ReactNode;
   if (gaps.slots.length === 0) {
-    body = (
-      <div className="flex flex-col gap-1 rounded-[var(--radius-lg)] bg-surface px-5 py-8 text-center">
-        <p data-testid="set-editor-empty" className="text-base font-semibold text-text">
-          {t('setPage.empty')}
-        </p>
-        {isOwner && (
-          <p data-testid="set-editor-empty-owner-hint" className="text-sm text-neutral-700">
-            {t('setPage.emptyOwnerHint')}
-          </p>
-        )}
-      </div>
-    );
+    body = <SetPageEmpty isOwner={isOwner} />;
   } else if (groups.length === 0 && activeFilter === 'upgrade') {
-    body = (
-      <div
-        data-testid="set-editor-upgrade-empty"
-        className="flex flex-col items-center gap-3 rounded-[var(--radius-lg)] bg-surface px-5 py-10 text-center"
-      >
-        <p className="text-base font-semibold text-text">{t('setPage.upgradeEmptyTitle')}</p>
-        <button
-          type="button"
-          data-testid="set-editor-upgrade-show-all"
-          onClick={() => setFilter('all')}
-          className={`min-h-11 cursor-pointer rounded-[var(--radius-md)] px-2 text-sm font-medium text-accent-700 underline hover:text-accent-800 ${FOCUS_RING}`}
-        >
-          {t('setPage.showAllCoins')}
-        </button>
-      </div>
-    );
+    body = <SetPageUpgradeEmpty onShowAll={() => setFilter('all')} />;
   } else if (groups.length === 0) {
-    body = (
-      <div
-        data-testid="set-editor-complete-empty"
-        className="flex flex-col items-center gap-3 rounded-[var(--radius-lg)] bg-surface px-5 py-10 text-center"
-      >
-        <Badge variant="complete" />
-        <p className="text-base font-semibold text-text">{t('setPage.completeTitle')}</p>
-        <button
-          type="button"
-          data-testid="set-editor-show-all-coins"
-          onClick={() => setFilter('all')}
-          className={`min-h-11 cursor-pointer rounded-[var(--radius-md)] px-2 text-sm font-medium text-accent-700 underline hover:text-accent-800 ${FOCUS_RING}`}
-        >
-          {t('setPage.showAllCoins')}
-        </button>
-      </div>
-    );
+    body = <SetPageCompleteEmpty onShowAll={() => setFilter('all')} />;
   } else {
     body = (
-      <div data-testid="set-editor-groups" className="flex flex-col gap-10 max-[899px]:gap-8">
-        {groups.map((group) => (
-          <SetYearGroup
-            key={group.year}
-            year={group.year}
-            ownedCount={group.ownedCount}
-            totalCount={group.totalCount}
-            markAllCount={group.markableCoinIds.length}
-            onMarkAll={
-              isOwner && !selecting && activeFilter !== 'upgrade'
-                ? () => handleMarkYear(group.year, group.markableCoinIds)
-                : undefined
-            }
-          >
-            {isAlbum ? (
-              <SetAlbum
-                slots={group.slots}
-                visitor={!isOwner}
-                selectMode={selecting}
-                selectedCoinIds={selected}
-                statusFor={statusFor}
-                onToggle={handleToggle}
-                onSelect={toggleSelected}
-              />
-            ) : (
-              <SetCoinList
-                slots={group.slots}
-                visitor={!isOwner}
-                statusFor={statusFor}
-                onToggle={handleToggle}
-                otherSets={otherSets}
-                onRemove={handleRemove}
-                onAddToSet={handleAddToSet}
-              />
-            )}
-          </SetYearGroup>
-        ))}
-      </div>
+      <SetPageYearGroups
+        groups={groups}
+        isOwner={isOwner}
+        isAlbum={isAlbum}
+        selecting={selecting}
+        activeFilter={activeFilter}
+        selected={selected}
+        statusFor={statusFor}
+        onToggle={handleToggle}
+        onSelect={toggleSelected}
+        otherSets={otherSets}
+        onRemove={handleRemove}
+        onAddToSet={handleAddToSet}
+        onMarkYear={handleMarkYear}
+      />
     );
   }
 
   return (
     <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME}>
-      {/* One DOM for both layouts: grid areas move the actions next to the crumb under 900px. */}
-      <header
-        className={[
-          'grid items-end gap-x-6 gap-y-3 border-b border-divider pb-[18px]',
-          'grid-cols-[minmax(0,1fr)_minmax(0,300px)]',
-          "[grid-template-areas:'crumb_crumb'_'title_progress'_'segs_actions']",
-          'max-[899px]:grid-cols-[minmax(0,1fr)_auto] max-[899px]:items-center',
-          "max-[899px]:[grid-template-areas:'crumb_actions'_'title_title'_'progress_progress'_'segs_segs']",
-        ].join(' ')}
+      <SetPageHeader
+        isOwner={isOwner}
+        set={set}
+        gaps={gaps}
+        renaming={renaming}
+        nameInputRef={nameInputRef}
+        nameValue={nameValue}
+        savedName={savedName}
+        onNameChange={setNameValue}
+        onCommitRename={commitRename}
+        onCancelRename={cancelRename}
+        showUpgrades={showUpgrades}
+        upgradeCount={upgradeCount}
       >
-        <p className="[grid-area:crumb] text-[13px] text-neutral-700">
-          <Link
-            href={isOwner ? '/dashboard' : '/sets/public'}
-            data-testid="set-editor-breadcrumb"
-            className="inline-flex min-h-9 items-center hover:text-accent-700 hover:underline"
-          >
-            {isOwner ? t('setPage.breadcrumbMySets') : t('setPage.breadcrumbPublicSets')}
-          </Link>
-        </p>
-
-        <div className="[grid-area:title] flex min-w-0 flex-col gap-1.5 self-end">
-          <h1
-            data-testid="set-editor-name"
-            className="m-0 font-[family-name:var(--font-heading)] text-[40px] font-semibold leading-[1.1] [overflow-wrap:anywhere] max-[719px]:text-[30px]"
-          >
-            {renaming ? (
-              <input
-                ref={nameInputRef}
-                data-testid="set-editor-name-input"
-                type="text"
-                aria-label={t('setEditor.renameSet')}
-                value={nameValue}
-                onChange={(e) => setNameValue(e.target.value)}
-                onBlur={commitRename}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    commitRename();
-                  } else if (e.key === 'Escape') {
-                    e.preventDefault();
-                    cancelRename();
-                  }
-                }}
-                className="w-full border-b border-accent-700 bg-transparent [font:inherit] focus:outline-none"
-              />
-            ) : (
-              resolveLocalizedText(savedName, locale)
-            )}
-          </h1>
-          <p data-testid="set-editor-subtitle" className="text-sm text-neutral-700">
-            {subtitleParts.map((part, index) => (
-              <Fragment key={index}>
-                {index > 0 && ' · '}
-                {part}
-              </Fragment>
-            ))}
-          </p>
-        </div>
-
-        <SetProgress
-          testIdPrefix="set-editor"
-          className="[grid-area:progress] self-end"
-          ownedTemplate={t('setEditor.ownedOfTotal')}
-          owned={gaps.ownedCount}
-          total={gaps.totalCount}
-          percent={gaps.completionPercent}
-          upgradeSlot={
-            showUpgrades ? (
-              <span
-                data-testid="set-editor-upgrade-count"
-                className="inline-flex items-baseline gap-1 text-sm text-accent-800"
-              >
-                <UpgradeIcon className="self-center" />
-                <UpgradeCountText template={t('setPage.upgradeCount')} n={upgradeCount} />
-              </span>
-            ) : undefined
-          }
-        />
-
-        <div className="[grid-area:segs] flex min-w-0 flex-wrap items-center gap-3">
-          <div role="group" aria-label={t('setEditor.showLabel')} className={SEGMENT_GROUP_CLASSNAME}>
-            <button
-              type="button"
-              data-testid="set-editor-show-all-toggle"
-              aria-pressed={activeFilter === 'all'}
-              onClick={() => setFilter('all')}
-              className={SEGMENT_BUTTON_CLASSNAME}
-            >
-              {t('setPage.showAll')} <span className="font-mono tabular-nums">{gaps.totalCount}</span>
-            </button>
-            <button
-              type="button"
-              data-testid="set-editor-show-missing-toggle"
-              aria-pressed={activeFilter === 'missing'}
-              onClick={() => setFilter('missing')}
-              className={SEGMENT_BUTTON_CLASSNAME}
-            >
-              {t('setPage.showMissing')} <span className="font-mono tabular-nums">{missingCount}</span>
-            </button>
-            {showUpgrades && (
-              <button
-                type="button"
-                data-testid="set-editor-show-upgrade-toggle"
-                aria-pressed={activeFilter === 'upgrade'}
-                onClick={() => setFilter('upgrade')}
-                className={SEGMENT_BUTTON_CLASSNAME}
-              >
-                {t('setPage.showNeedsUpgrade')} <span className="font-mono tabular-nums">{upgradeCount}</span>
-              </button>
-            )}
-          </div>
-          <SetViewSwitch view={view} onChange={handleViewChange} />
-        </div>
-
-        {isOwner && (
-          <div className="[grid-area:actions] flex flex-wrap items-center justify-end gap-2 justify-self-end">
-            {isAlbum && (
-              <button
-                type="button"
-                data-testid="set-editor-select-toggle"
-                aria-pressed={selectMode}
-                onClick={() => (selectMode ? leaveSelectMode() : enterSelectMode())}
-                className={`min-h-11 cursor-pointer rounded-[var(--radius-md)] border border-neutral-400 bg-white px-4 text-sm font-medium text-text hover:border-accent aria-pressed:border-accent-700 aria-pressed:bg-accent-100 aria-pressed:text-accent-800 max-[899px]:hidden ${FOCUS_RING}`}
-              >
-                {selectMode ? t('setPage.doneSelecting') : t('setPage.select')}
-              </button>
-            )}
-            <button
-              type="button"
-              data-testid="set-editor-toggle-add-coins"
-              aria-haspopup="dialog"
-              aria-expanded={pickerOpen}
-              onClick={() => setPickerOpen(true)}
-              className={`inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-[var(--radius-md)] bg-accent-700 px-4 text-sm font-medium text-white hover:bg-accent-800 max-[899px]:px-0 ${FOCUS_RING}`}
-            >
-              <PlusIcon />
-              <span className="max-[899px]:sr-only">{t('setEditor.addCoins')}</span>
-            </button>
+        <SetPageToolbar
+          activeFilter={activeFilter}
+          onFilterChange={setFilter}
+          totalCount={gaps.totalCount}
+          missingCount={missingCount}
+          showUpgrades={showUpgrades}
+          upgradeCount={upgradeCount}
+          view={view}
+          onViewChange={handleViewChange}
+          isOwner={isOwner}
+          isAlbum={isAlbum}
+          selectMode={selectMode}
+          onEnterSelectMode={enterSelectMode}
+          onLeaveSelectMode={leaveSelectMode}
+          pickerOpen={pickerOpen}
+          onOpenPicker={() => setPickerOpen(true)}
+          actionsMenu={
             <SetActionsMenu
               onRename={startRename}
               onDelete={() => setDeleteConfirmOpen(true)}
@@ -730,9 +448,9 @@ function SetEditor({ id }: { id: string }) {
               minGradePending={minGradeMutation.isPending}
               onMinGradeChange={handleMinGradeChange}
             />
-          </div>
-        )}
-      </header>
+          }
+        />
+      </SetPageHeader>
 
       {isOwner && minGradeFailed && (
         <p role="alert" data-testid="set-editor-min-grade-error" className="text-[13px] font-medium text-danger">
@@ -740,11 +458,7 @@ function SetEditor({ id }: { id: string }) {
         </p>
       )}
 
-      {selecting && (
-        <p data-testid="set-editor-select-hint" className="text-sm text-neutral-700">
-          {t('setPage.selectHint')}
-        </p>
-      )}
+      {selecting && <SetPageSelectHint />}
 
       {body}
 
@@ -757,9 +471,7 @@ function SetEditor({ id }: { id: string }) {
         />
       )}
 
-      <p data-testid="set-editor-live" role="status" aria-live="polite" className="sr-only">
-        {liveMessage}
-      </p>
+      <SetPageLiveRegion message={liveMessage} />
 
       {isOwner && pickerOpen && (
         <AddCoinsSheet
@@ -770,28 +482,13 @@ function SetEditor({ id }: { id: string }) {
         />
       )}
 
-      <ConfirmDialog
+      <SetPageDeleteDialog
         open={deleteConfirmOpen}
-        title={t('setEditor.deleteConfirmTitle').split('{name}').join(set.name)}
-        description={
-          <>
-            {formatOwnedOfTotal(t('setEditor.deleteConfirmMessage'), 0, gaps.totalCount)}
-            {gaps.ownedCount > 0 && (
-              <p
-                data-testid="set-editor-delete-confirm-safe"
-                className="mt-3 rounded-[var(--radius-md)] bg-accent-100 px-3.5 py-3 text-accent-800"
-              >
-                {formatOwnedOfTotal(t('setEditor.deleteConfirmSafe'), gaps.ownedCount, gaps.totalCount)}
-              </p>
-            )}
-          </>
-        }
-        variant="danger"
-        confirmLabel={t('setEditor.deleteButton')}
-        cancelLabel={t('common.cancel')}
+        setName={set.name}
+        ownedCount={gaps.ownedCount}
+        totalCount={gaps.totalCount}
         onConfirm={handleDelete}
         onCancel={() => setDeleteConfirmOpen(false)}
-        testIdPrefix="set-editor-delete-confirm"
       />
     </main>
   );

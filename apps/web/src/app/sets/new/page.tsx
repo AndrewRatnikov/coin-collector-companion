@@ -16,6 +16,7 @@ import {
   summarizeSourceCoins,
   type SourceCoinItem,
 } from '@/lib/new-set-preview';
+import { fill } from '@/lib/fill-template';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
@@ -42,10 +43,6 @@ const CHIP_CLASS = 'rounded-[var(--radius-md)] bg-surface px-2 py-0.5 font-mono 
 const SUBHEADING_CLASS = 'text-xs font-semibold uppercase tracking-[0.06em] text-neutral-800';
 const PRIMARY_BUTTON_CLASS =
   'rounded-[var(--radius-md)] bg-accent-700 px-5 text-sm font-semibold text-white hover:bg-accent-800 disabled:cursor-not-allowed disabled:opacity-70';
-
-function fillCount(template: string, count: number): string {
-  return template.split('{count}').join(String(count));
-}
 
 interface EntryParams {
   cloneFrom: 'canonical' | 'user' | null;
@@ -208,7 +205,7 @@ function NewSetForm() {
     ? t('setNew.submitting')
     : option === 'blank' || typeof coinCount !== 'number'
       ? t('setNew.submit')
-      : fillCount(t('setNew.submitWithCount'), coinCount);
+      : fill(t('setNew.submitWithCount'), { count: coinCount });
 
   const searchTerm = search.trim().toLowerCase();
   const filteredPublicSets = searchTerm
@@ -395,7 +392,7 @@ function NewSetForm() {
                           )}
                           {typeof set.coinCount === 'number' && (
                             <span className={CHIP_CLASS}>
-                              {fillCount(t('setNew.coinsChip'), set.coinCount)}
+                              {fill(t('setNew.coinsChip'), { count: set.coinCount })}
                             </span>
                           )}
                         </button>
@@ -438,7 +435,7 @@ function NewSetForm() {
                           </span>
                           {typeof set.coinCount === 'number' && (
                             <span className={CHIP_CLASS}>
-                              {fillCount(t('setNew.coinsChip'), set.coinCount)}
+                              {fill(t('setNew.coinsChip'), { count: set.coinCount })}
                             </span>
                           )}
                         </button>
@@ -511,7 +508,7 @@ function NewSetForm() {
               {option !== 'blank' && coinSummary && (
                 <div data-testid="set-new-source-chips" className="flex flex-wrap gap-2 pt-1">
                   <span className={CHIP_CLASS}>
-                    {fillCount(t('setNew.coinsChip'), coinSummary.count)}
+                    {fill(t('setNew.coinsChip'), { count: coinSummary.count })}
                   </span>
                   {yearRange !== '' && <span className={CHIP_CLASS}>{yearRange}</span>}
                   {coinSummary.countries.length === 1 && (
@@ -521,7 +518,7 @@ function NewSetForm() {
                   )}
                   {coinSummary.countries.length > 1 && (
                     <span className="rounded-[var(--radius-md)] bg-surface px-2 py-0.5 text-xs">
-                      {fillCount(t('setNew.countriesChip'), coinSummary.countries.length)}
+                      {fill(t('setNew.countriesChip'), { count: coinSummary.countries.length })}
                     </span>
                   )}
                 </div>
@@ -588,7 +585,7 @@ function NewSetForm() {
                       ))}
                       {preview.rest > 0 && (
                         <p data-testid="set-new-preview-more" className="text-sm text-neutral-700">
-                          {fillCount(t('setNew.previewMore'), preview.rest)}
+                          {fill(t('setNew.previewMore'), { count: preview.rest })}
                         </p>
                       )}
                     </div>
