@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "web", "dev"]
+    },
+    {
+      "name": "render",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-c",
+        "if [ -z \"${CCC_RENDER_DEV_STACK:-}\" ]; then echo 'the render configuration is started by render review through .claude/render/setup.mjs' >&2; exit 1; fi; exec bash \"$CCC_RENDER_DEV_STACK\""
+      ]
+    }
+  ]
+}

@@ -87,5 +87,36 @@
       "seed/**",
       "scripts/import-catalog/**"
     ]
+  },
+  "render": {
+    "setup": ".claude/render/setup.mjs",
+    "server": "render",
+    "portArgs": [],
+    "install": "pnpm install --frozen-lockfile",
+    "installTimeoutSec": 900,
+    "readyTimeoutSec": 480,
+    "now": "2026-11-10T12:00:00Z",
+    "timezone": "UTC",
+    "viewports": {
+      "desktop": [
+        1280,
+        800
+      ],
+      "mobile": [
+        390,
+        844
+      ]
+    },
+    "hideSelectors": [
+      "nextjs-portal"
+    ],
+    "fixtures": {
+      "owner-set": "signed in as the owner; /sets/render-set is their own set 'Wheat Cents 1941-1945': 15 USA cents in 5 years (none/D/S), 8 owned, 1945 fully missing, no min grade",
+      "owner-set-min-grade": "signed in as the owner; /sets/render-set is their set 'Wheat Cents 1946-1950': 15 cents, min grade VF, 6 owned of which 3 (F, VG, ungraded) need an upgrade",
+      "owner-set-empty": "signed in as the owner; /sets/render-set is their set 'Empty set' with no coins",
+      "visitor-set": "signed in as another user; /sets/render-set is the owner's public 'Wheat Cents 1941-1945' (15 coins), the visitor owns 3 of them",
+      "set-load-error": "signed in as the owner; /sets/render-set is 'Wheat Cents 1941-1945' but GET /sets/render-set/gaps answers 500, so the page shows its load error",
+      "new-set-sources": "signed in as the owner (3 sets of their own); 2 curated checklists 'Lincoln Wheat Cents 1941-1945' and '1946-1950' (15 coins each) and 3 public user sets exist"
+    }
   }
 }
