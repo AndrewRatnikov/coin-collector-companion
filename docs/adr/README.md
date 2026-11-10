@@ -49,6 +49,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-09](2026-11-09-canonical-gaps-query-under-user-sets-key.md) | The curated checklist gaps query is keyed `['user-sets', 'canonical', id, 'gaps']` | Accepted |
 | [2026-11-10](2026-11-10-i18n-dictionaries-split-by-area.md) | The en and es dictionaries are split into ten per-area files per locale, with each es area typed against its en area | Accepted |
 | [2026-11-10](2026-11-10-set-page-sections-are-prop-only-components.md) | Page splits move JSX into prop-only section components while the route file keeps all state, effects, data hooks and handlers | Accepted |
+| [2026-11-10](2026-11-10-add-coins-focus-trap-effect-wrapped-in-a-hook.md) | The Add coins sheet's Escape and Tab keydown effect lives in a hook the sheet calls, as a narrow exception to prop-only components | Accepted |
 
 ## Where else decisions live
 
