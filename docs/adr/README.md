@@ -47,6 +47,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-08](2026-11-08-canonical-checklist-gaps-separate-endpoint.md) | Curated checklists get their own auth-only `GET /sets/canonical/:id/gaps` that reuses `GapViewResponse`, with `minGrade` always null | Accepted |
 | [2026-11-09](2026-11-09-public-set-progress-reuses-owner-gaps-endpoint.md) | The public set page takes the viewer's progress from `GET /sets/:id/gaps` and ignores the owner's grade fields | Accepted |
 | [2026-11-09](2026-11-09-canonical-gaps-query-under-user-sets-key.md) | The curated checklist gaps query is keyed `['user-sets', 'canonical', id, 'gaps']` | Accepted |
+| [2026-11-10](2026-11-10-i18n-dictionaries-split-by-area.md) | The en and es dictionaries are split into ten per-area files per locale, with each es area typed against its en area | Accepted |
 
 ## Where else decisions live
 

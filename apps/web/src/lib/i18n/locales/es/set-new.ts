@@ -1,0 +1,55 @@
+import type enSetNew from '../en/set-new';
+
+// Spanish dictionary, set-new area. Typed against `en/set-new.ts`, so a missing
+// or extra key fails `tsc --noEmit` in this file. Merged by `./index.ts`.
+const setNew: Record<keyof typeof enSetNew, string> = {
+  // new set
+  'setNew.title': 'Nueva colección',
+  'setNew.breadcrumbMySets': 'Mis colecciones',
+  'setNew.stepsLabel': 'Pasos',
+  'setNew.stepStart': 'Punto de partida',
+  'setNew.stepCreate': 'Nombre y creación',
+  'setNew.startHeading': '¿Cómo quieres empezar?',
+  'setNew.optionCanonicalTitle': 'Lista curada',
+  'setNew.optionCanonicalDescription':
+    'Una lista completa de una serie, mantenida por Coin Collector Companion. La forma más fácil de empezar.',
+  'setNew.optionPublicTitle': 'Copiar la colección de un coleccionista',
+  'setNew.optionPublicDescription': 'Empieza desde una colección que otro coleccionista ha compartido.',
+  'setNew.optionBlankTitle': 'Empezar vacía',
+  'setNew.optionBlankDescription': 'Elige tú mismo cada moneda del catálogo.',
+  'setNew.recommended': 'Recomendada',
+  'setNew.chooseChecklist': 'Elige una lista curada',
+  'setNew.chooseCollectorSet': 'Elige la colección de un coleccionista',
+  'setNew.searchPublicLabel': 'Buscar colecciones públicas',
+  'setNew.searchPublicPlaceholder': 'Buscar colecciones públicas por nombre',
+  'setNew.coinsChip': '{count} monedas',
+  'setNew.countriesChip': '{count} países',
+  'setNew.blankExplanation': 'Crearás una colección vacía y luego añadirás monedas del catálogo una por una.',
+  'setNew.continue': 'Continuar',
+  'setNew.eyebrowCanonical': 'Lista curada',
+  'setNew.eyebrowPublic': 'Copiando la colección de un coleccionista',
+  'setNew.eyebrowBlank': 'Partiendo de',
+  'setNew.change': 'Cambiar',
+  'setNew.blankSourceName': 'Una colección vacía',
+  'setNew.publicSourceDescription': 'Obtienes tu propia copia. Los cambios que hagas no afectarán a la original.',
+  'setNew.blankSourceDescription': 'Después de crearla, usa «Añadir monedas» para elegir monedas del catálogo.',
+  'setNew.previewHeading': 'Monedas que vas a seguir',
+  'setNew.previewNote': 'Puedes añadir o quitar monedas después de crear la colección.',
+  'setNew.previewMore': '+ {count} más',
+  'setNew.nameHeading': 'Ponle nombre a tu colección',
+  'setNew.nameLabel': 'Nombre de la colección',
+  'setNew.publicHelper': 'Las colecciones son públicas: otros coleccionistas pueden verlas y copiarlas.',
+  'setNew.submitWithCount': 'Crear colección con {count} monedas',
+  'setNew.submit': 'Crear colección',
+  'setNew.submitting': 'Creando…',
+  'setNew.cancel': 'Cancelar',
+  'setNew.nextHeading': 'Qué pasa después',
+  'setNew.nextOpens': 'Tu nueva colección se abre en la vista de álbum.',
+  'setNew.nextOpensBlank': 'Tu colección vacía se abre, lista para «Añadir monedas».',
+  'setNew.nextTick': 'Marca las monedas que ya tienes. Los huecos muestran lo que te falta buscar.',
+  'setNew.nextEdit': 'Añade o quita monedas cuando quieras.',
+  'setNew.notFound': 'No se encontró esa colección. Elige otro punto de partida.',
+  'setNew.defaultError': 'Algo salió mal al crear la colección.',
+};
+
+export default setNew;
