@@ -23,7 +23,9 @@ import {
   type AddCoinsSession,
 } from '@/lib/add-coins';
 import { useTranslation } from '@/lib/i18n/i18n-context';
+import { fill } from '@/lib/fill-template';
 import { Badge } from '@/components/ui/badge';
+import { CheckIcon, CloseIcon, PlusIcon, SearchIcon } from '@/components/ui/icons';
 import { PlaceholderCoin } from '@/components/ui/placeholder-coin';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AddCoinsFilterChip, CHIP_CLASSNAME, handleMenuArrowKeys } from '@/components/sets/add-coins-filter-chip';
@@ -44,57 +46,9 @@ const BTN_PRIMARY = `inline-flex min-h-11 cursor-pointer items-center justify-ce
 const BTN_SECONDARY = `inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-md)] border border-neutral-400 bg-white px-[18px] text-sm font-medium text-text hover:border-accent ${FOCUS_RING}`;
 const MENU_ITEM = `flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-[var(--radius-sm,4px)] px-2.5 text-left text-sm text-text hover:bg-surface aria-checked:font-medium ${FOCUS_RING}`;
 
-function fill(template: string, values: Record<string, string | number>): string {
-  let text = template;
-  for (const [key, value] of Object.entries(values)) {
-    text = text.split(`{${key}}`).join(String(value));
-  }
-  return text;
-}
-
 /** Visible in a browser; jsdom has no checkVisibility, so everything counts there. */
 function isVisible(el: HTMLElement): boolean {
   return typeof el.checkVisibility === 'function' ? el.checkVisibility() : true;
-}
-
-function CloseIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-      <path d="M5 5l10 10M15 5 5 15" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 18 18"
-      fill="none"
-      aria-hidden="true"
-      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-700"
-    >
-      <circle cx="8" cy="8" r="5.25" stroke="currentColor" strokeWidth="1.6" />
-      <path d="m12 12 3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function CheckIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path d="m3.5 8.5 3 3 6-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 interface MenuOption {
@@ -516,7 +470,7 @@ export function AddCoinsSheet({ setId, setName, slots, onClose }: AddCoinsSheetP
 
         <div className="flex flex-1 flex-col gap-3.5 overflow-y-auto px-6 pb-6 pt-4 max-[899px]:px-4 max-[899px]:pb-24">
           <div className="relative">
-            <SearchIcon />
+            <SearchIcon className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-700" />
             <input
               ref={searchRef}
               type="search"
