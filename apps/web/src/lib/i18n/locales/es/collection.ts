@@ -7,6 +7,8 @@ const collection: Record<keyof typeof enCollection, string> = {
   'collection.title': 'Colección',
   'collection.errorLoading': 'Algo salió mal al cargar tu colección. Inténtalo de nuevo.',
   'collection.importLink': 'Importar desde CSV',
+  'collection.exportButton': 'Exportar CSV',
+  'collection.exportError': 'No se pudo crear el archivo de exportación. Inténtalo de nuevo.',
   'collection.subtitle': 'Todas las monedas que tienes, en todas tus colecciones · {n} monedas',
   'collection.subtitleOne': 'Todas las monedas que tienes, en todas tus colecciones · {n} moneda',
   'collection.layoutLabel': 'Vista',

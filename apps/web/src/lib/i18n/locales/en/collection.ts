@@ -5,6 +5,8 @@ const collection = {
   'collection.title': 'Collection',
   'collection.errorLoading': 'Something went wrong loading your collection. Please try again.',
   'collection.importLink': 'Import from CSV',
+  'collection.exportButton': 'Export CSV',
+  'collection.exportError': 'Could not create the export file. Please try again.',
   'collection.subtitle': 'Every coin you own, across all your sets · {n} coins',
   'collection.subtitleOne': 'Every coin you own, across all your sets · {n} coin',
   'collection.layoutLabel': 'Layout',
