@@ -533,3 +533,84 @@ export interface ImportConfirmResponse {
   created: number; // new Ownership rows
   alreadyOwned: number; // requested - created
 }
+
+// CSV export (missing list, collection export)
+
+export const CSV_BOM = '﻿';
+
+const CSV_FORMULA_PREFIX = /^[=+\-@]/;
+const CSV_NEEDS_QUOTING = /[",\r\n]/;
+
+/** Formula-injection prefix first (`'` before a leading = + - @), then RFC 4180 quoting (", comma, CR, LF). */
+export function csvCell(value: string): string {
+  let cell = String(value);
+  if (CSV_FORMULA_PREFIX.test(cell)) {
+    cell = `'${cell}`;
+  }
+  if (CSV_NEEDS_QUOTING.test(cell)) {
+    cell = `"${cell.replace(/"/g, '""')}"`;
+  }
+  return cell;
+}
+
+/** Each cell through csvCell, joined with ','. */
+export function csvRow(cells: readonly string[]): string {
+  return cells.map(csvCell).join(',');
+}
+
+/** CSV_BOM + lines joined with CRLF. Lines are used verbatim (headers are not escaped). No trailing CRLF. */
+export function csvDocument(lines: readonly string[]): string {
+  return CSV_BOM + lines.join('\r\n');
+}
+
+/** 'YYYY-MM-DD' in local time. */
+export function formatLocalDate(date: Date): string {
+  const year = String(date.getFullYear()).padStart(4, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+// No "Name" column: the import maps name/coin/title/description/item to its combined field.
+export const COLLECTION_CSV_HEADER =
+  'Country,Denomination,Year,Mint mark,Variety,Grade,Series,Key date,Mintage,Owned since';
+
+export interface CollectionCsvItem {
+  coin: Pick<CatalogCoin, 'country' | 'denomination' | 'year' | 'mintMark' | 'variety' | 'name' | 'isKeyDate' | 'mintage'>;
+  grade: CoinGrade | null;
+  ownedAt: Date | string; // GET /collection sends an ISO string over JSON; OwnershipItem types it as Date
+}
+
+function compareCodeUnits(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+function compareCollectionCsvItems(a: CollectionCsvItem, b: CollectionCsvItem): number {
+  return (
+    compareCodeUnits(a.coin.country, b.coin.country) ||
+    compareDenominations(a.coin.denomination, b.coin.denomination) ||
+    compareCodeUnits(a.coin.denomination, b.coin.denomination) ||
+    a.coin.year - b.coin.year ||
+    compareCodeUnits(a.coin.mintMark, b.coin.mintMark) ||
+    compareCodeUnits(a.coin.variety, b.coin.variety)
+  );
+}
+
+/** The whole collection as CSV that the CSV import reads back with no manual mapping. Pure; never mutates `items`. */
+export function buildCollectionCsv(items: readonly CollectionCsvItem[]): string {
+  const rows = [...items].sort(compareCollectionCsvItems).map(({ coin, grade, ownedAt }) =>
+    csvRow([
+      coin.country,
+      coin.denomination,
+      String(coin.year),
+      coin.mintMark,
+      coin.variety,
+      grade ?? '',
+      coin.name,
+      coin.isKeyDate ? 'yes' : 'no',
+      coin.mintage === null ? '' : String(coin.mintage),
+      formatLocalDate(new Date(ownedAt)),
+    ]),
+  );
+  return csvDocument([COLLECTION_CSV_HEADER, ...rows]);
+}
