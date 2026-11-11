@@ -4,63 +4,22 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getCoinName, getDenominationNumeral, type CreateSetRequestBody } from '@coin-collector/shared';
+import type { CreateSetRequestBody } from '@coin-collector/shared';
 import { RequireAuth } from '@/components/auth/require-auth';
-import { ListSkeleton } from '@/components/ui/list-skeleton';
+import { HEADING_FONT, type SourceDetail } from '@/components/set-new/set-new-shared';
+import { SetNewStep1 } from '@/components/set-new/set-new-step-1';
+import { SetNewStep2 } from '@/components/set-new/set-new-step-2';
+import { SetNewStepper } from '@/components/set-new/set-new-stepper';
 import { useCanonicalSet, useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
 import { usePublicSet, usePublicSets } from '@/lib/hooks/use-public-sets';
 import { useCreateSet } from '@/lib/hooks/use-user-sets';
-import {
-  buildCoinPreview,
-  formatYearRange,
-  summarizeSourceCoins,
-  type SourceCoinItem,
-} from '@/lib/new-set-preview';
+import { buildCoinPreview, formatYearRange, summarizeSourceCoins } from '@/lib/new-set-preview';
+import { readEntry, type EntryParams, type Step, type StartOption } from '@/lib/new-set-entry';
 import { fill } from '@/lib/fill-template';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
-type Step = 1 | 2;
-type StartOption = 'canonical' | 'public' | 'blank';
-
-const OPTIONS: StartOption[] = ['canonical', 'public', 'blank'];
-
-const OPTION_TEXT_KEYS = {
-  canonical: {
-    title: 'setNew.optionCanonicalTitle',
-    description: 'setNew.optionCanonicalDescription',
-  },
-  public: { title: 'setNew.optionPublicTitle', description: 'setNew.optionPublicDescription' },
-  blank: { title: 'setNew.optionBlankTitle', description: 'setNew.optionBlankDescription' },
-} as const;
-
 const PUBLIC_LIST_FILTERS = { page: 1, limit: 100 };
-
-const HEADING_FONT = 'font-[family-name:var(--font-heading)]';
-const INPUT_CLASS =
-  'rounded-[var(--radius-md)] border border-neutral-400 bg-white px-3 text-sm focus:border-accent focus:outline-none focus:ring-[3px] focus:ring-accent-200';
-const CHIP_CLASS = 'rounded-[var(--radius-md)] bg-surface px-2 py-0.5 font-mono text-xs';
-const SUBHEADING_CLASS = 'text-xs font-semibold uppercase tracking-[0.06em] text-neutral-800';
-const PRIMARY_BUTTON_CLASS =
-  'rounded-[var(--radius-md)] bg-accent-700 px-5 text-sm font-semibold text-white hover:bg-accent-800 disabled:cursor-not-allowed disabled:opacity-70';
-
-interface EntryParams {
-  cloneFrom: 'canonical' | 'user' | null;
-  cloneFromId: string;
-}
-
-function readEntry(searchParams: { get(name: string): string | null }): EntryParams {
-  const raw = searchParams.get('cloneFrom');
-  const cloneFrom = raw === 'canonical' || raw === 'user' ? raw : null;
-  return { cloneFrom, cloneFromId: cloneFrom ? (searchParams.get('cloneFromId') ?? '') : '' };
-}
-
-/** The step-2 source detail, normalised over the canonical and public shapes. */
-interface SourceDetail {
-  name: string;
-  description: string | null;
-  coins: SourceCoinItem[];
-}
 
 function NewSetForm() {
   const router = useRouter();
@@ -214,29 +173,6 @@ function NewSetForm() {
       )
     : publicSets;
 
-  function renderSourcesState(isLoading: boolean, isError: boolean) {
-    if (isLoading) {
-      return (
-        <div data-testid="set-new-sources-loading">
-          <ListSkeleton />
-        </div>
-      );
-    }
-    if (isError) {
-      return (
-        <p data-testid="set-new-sources-error" className="text-sm text-danger">
-          {t('common.somethingWentWrong')}
-        </p>
-      );
-    }
-    return null;
-  }
-
-  const sourceCardClass =
-    'flex h-full w-full flex-col items-start gap-2 rounded-[var(--radius-lg)] border border-neutral-300 bg-white p-[18px] text-left transition hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-accent-200';
-  const sourceGridClass =
-    'grid gap-3.5 [grid-template-columns:repeat(auto-fill,minmax(min(340px,100%),1fr))]';
-
   const coinSummary = detail ? summarizeSourceCoins(detail.coins) : null;
   const yearRange = coinSummary ? formatYearRange(coinSummary.minYear, coinSummary.maxYear) : '';
   const preview = detail ? buildCoinPreview(detail.coins) : null;
@@ -266,398 +202,45 @@ function NewSetForm() {
         </h1>
       </div>
 
-      <ol
-        data-testid="set-new-stepper"
-        aria-label={t('setNew.stepsLabel')}
-        className="flex items-center gap-3"
-      >
-        <li>
-          <button
-            type="button"
-            data-testid="set-new-stepper-1"
-            aria-current={step === 1 ? 'step' : undefined}
-            onClick={() => setStep(1)}
-            className="flex items-center gap-2 text-sm font-medium text-neutral-800 hover:text-accent-700"
-          >
-            <span
-              aria-hidden="true"
-              className={`flex h-7 w-7 items-center justify-center rounded-full text-sm ${
-                step === 1 ? 'bg-accent-700 font-mono text-white' : 'bg-accent text-white'
-              }`}
-            >
-              {step === 1 ? '1' : '✓'}
-            </span>
-            {t('setNew.stepStart')}
-          </button>
-        </li>
-        <li aria-hidden="true" className="h-px w-10 bg-neutral-400" />
-        <li
-          data-testid="set-new-stepper-2"
-          aria-current={step === 2 ? 'step' : undefined}
-          className="flex items-center gap-2 text-sm font-medium text-neutral-800"
-        >
-          <span
-            aria-hidden="true"
-            className={`flex h-7 w-7 items-center justify-center rounded-full font-mono text-sm ${
-              step === 2
-                ? 'bg-accent-700 text-white'
-                : 'border-[1.5px] border-neutral-500 text-neutral-700'
-            }`}
-          >
-            2
-          </span>
-          {t('setNew.stepCreate')}
-        </li>
-      </ol>
+      <SetNewStepper step={step} onStepOneClick={() => setStep(1)} />
 
       {step === 1 ? (
-        <section data-testid="set-new-step-1" className="flex flex-col gap-5">
-          {notFound && (
-            <p
-              data-testid="set-new-not-found"
-              className="rounded-[var(--radius-md)] border border-neutral-300 bg-surface px-4 py-3 text-sm text-neutral-800"
-            >
-              {t('setNew.notFound')}
-            </p>
-          )}
-
-          <h2 className={`${HEADING_FONT} text-[26px] font-semibold`}>
-            {t('setNew.startHeading')}
-          </h2>
-
-          <div
-            role="radiogroup"
-            aria-label={t('setNew.stepStart')}
-            className="grid gap-3.5 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]"
-          >
-            {OPTIONS.map((id) => {
-              const selected = option === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  data-testid={`set-new-option-${id}`}
-                  onClick={() => selectOption(id)}
-                  className={`flex flex-col items-start gap-1.5 rounded-[var(--radius-lg)] text-left transition hover:border-accent hover:shadow-md focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-accent-200 ${
-                    selected
-                      ? 'border-2 border-accent bg-accent-100 p-[18px]'
-                      : 'border border-neutral-300 bg-white p-[19px]'
-                  }`}
-                >
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-base font-semibold">{t(OPTION_TEXT_KEYS[id].title)}</span>
-                    {id === 'canonical' && (
-                      <span
-                        data-testid="set-new-recommended"
-                        className="rounded-full bg-accent-800 px-2 py-0.5 text-[11px] font-semibold text-accent-100"
-                      >
-                        {t('setNew.recommended')}
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-sm text-neutral-800">
-                    {t(OPTION_TEXT_KEYS[id].description)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {option === 'canonical' && (
-            <div className="flex flex-col gap-3">
-              <h3 className={SUBHEADING_CLASS}>{t('setNew.chooseChecklist')}</h3>
-              {renderSourcesState(canonicalSetsQuery.isLoading, canonicalSetsQuery.isError) ?? (
-                <ul data-testid="set-new-canonical-list" className={sourceGridClass}>
-                  {canonicalSets.map((set) => {
-                    const resolvedName = resolveLocalizedText(set.name, locale);
-                    return (
-                      <li key={set.id}>
-                        <button
-                          type="button"
-                          data-testid="set-new-canonical-card"
-                          onClick={() => pickSource(set.id, resolvedName)}
-                          className={sourceCardClass}
-                        >
-                          <span
-                            className={`${HEADING_FONT} text-[22px] font-semibold leading-tight`}
-                          >
-                            {resolvedName}
-                          </span>
-                          {set.description !== null && (
-                            <span className="line-clamp-2 text-[13px] text-neutral-800">
-                              {set.description}
-                            </span>
-                          )}
-                          {typeof set.coinCount === 'number' && (
-                            <span className={CHIP_CLASS}>
-                              {fill(t('setNew.coinsChip'), { count: set.coinCount })}
-                            </span>
-                          )}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          )}
-
-          {option === 'public' && (
-            <div className="flex flex-col gap-3">
-              <h3 className={SUBHEADING_CLASS}>{t('setNew.chooseCollectorSet')}</h3>
-              <input
-                type="search"
-                data-testid="set-new-public-search"
-                aria-label={t('setNew.searchPublicLabel')}
-                placeholder={t('setNew.searchPublicPlaceholder')}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className={`h-[42px] w-full max-w-[480px] ${INPUT_CLASS}`}
-              />
-              {renderSourcesState(publicSetsQuery.isLoading, publicSetsQuery.isError) ?? (
-                <ul data-testid="set-new-public-list" className={sourceGridClass}>
-                  {filteredPublicSets.map((set) => {
-                    const resolvedName = resolveLocalizedText(set.name, locale);
-                    return (
-                      <li key={set.id}>
-                        <button
-                          type="button"
-                          data-testid="set-new-public-card"
-                          onClick={() => pickSource(set.id, resolvedName)}
-                          className={sourceCardClass}
-                        >
-                          <span
-                            className={`${HEADING_FONT} text-[22px] font-semibold leading-tight`}
-                          >
-                            {resolvedName}
-                          </span>
-                          {typeof set.coinCount === 'number' && (
-                            <span className={CHIP_CLASS}>
-                              {fill(t('setNew.coinsChip'), { count: set.coinCount })}
-                            </span>
-                          )}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-          )}
-
-          {option === 'blank' && (
-            <div
-              data-testid="set-new-blank-panel"
-              className="flex flex-col items-start gap-4 rounded-[var(--radius-lg)] bg-surface p-5"
-            >
-              <p className="text-sm text-neutral-800">{t('setNew.blankExplanation')}</p>
-              <button
-                type="button"
-                data-testid="set-new-continue"
-                onClick={() => pickSource(null, '')}
-                className={`min-h-11 ${PRIMARY_BUTTON_CLASS}`}
-              >
-                {t('setNew.continue')}
-              </button>
-            </div>
-          )}
-        </section>
+        <SetNewStep1
+          notFound={notFound}
+          option={option}
+          onSelectOption={selectOption}
+          canonicalSetsLoading={canonicalSetsQuery.isLoading}
+          canonicalSetsError={canonicalSetsQuery.isError}
+          canonicalSets={canonicalSets}
+          publicSetsLoading={publicSetsQuery.isLoading}
+          publicSetsError={publicSetsQuery.isError}
+          filteredPublicSets={filteredPublicSets}
+          search={search}
+          onSearchChange={setSearch}
+          onPickSource={pickSource}
+        />
       ) : (
-        <div
-          data-testid="set-new-step-2"
-          className="flex flex-col gap-8 min-[720px]:flex-row min-[720px]:flex-wrap min-[720px]:items-start"
-        >
-          <section className="flex min-w-0 flex-col gap-5 min-[720px]:[flex:999_1_560px]">
-            <div
-              data-testid="set-new-source-card"
-              className="flex flex-col gap-2 rounded-[var(--radius-lg)] border border-neutral-300 bg-white p-[22px]"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <span
-                  data-testid="set-new-source-eyebrow"
-                  className="text-xs font-semibold uppercase tracking-[0.06em] text-neutral-700"
-                >
-                  {option === 'canonical'
-                    ? t('setNew.eyebrowCanonical')
-                    : option === 'public'
-                      ? t('setNew.eyebrowPublic')
-                      : t('setNew.eyebrowBlank')}
-                </span>
-                <button
-                  type="button"
-                  data-testid="set-new-change"
-                  onClick={() => setStep(1)}
-                  className="text-sm text-accent-700 underline hover:text-accent-800"
-                >
-                  {t('setNew.change')}
-                </button>
-              </div>
-              <h2
-                data-testid="set-new-source-name"
-                className={`${HEADING_FONT} text-[28px] font-semibold leading-tight`}
-              >
-                {option === 'blank' ? t('setNew.blankSourceName') : sourceName}
-              </h2>
-              {sourceDescription !== null && (
-                <p data-testid="set-new-source-description" className="text-sm text-neutral-800">
-                  {sourceDescription}
-                </p>
-              )}
-              {option !== 'blank' && coinSummary && (
-                <div data-testid="set-new-source-chips" className="flex flex-wrap gap-2 pt-1">
-                  <span className={CHIP_CLASS}>
-                    {fill(t('setNew.coinsChip'), { count: coinSummary.count })}
-                  </span>
-                  {yearRange !== '' && <span className={CHIP_CLASS}>{yearRange}</span>}
-                  {coinSummary.countries.length === 1 && (
-                    <span className="rounded-[var(--radius-md)] bg-surface px-2 py-0.5 text-xs">
-                      {coinSummary.countries[0]}
-                    </span>
-                  )}
-                  {coinSummary.countries.length > 1 && (
-                    <span className="rounded-[var(--radius-md)] bg-surface px-2 py-0.5 text-xs">
-                      {fill(t('setNew.countriesChip'), { count: coinSummary.countries.length })}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {option !== 'blank' && (
-              <div data-testid="set-new-preview" className="flex flex-col gap-3">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <h3 className={SUBHEADING_CLASS}>{t('setNew.previewHeading')}</h3>
-                  <p className="text-[13px] text-neutral-700">{t('setNew.previewNote')}</p>
-                </div>
-                {detailLoading && !detail ? (
-                  <div data-testid="set-new-preview-loading">
-                    <ListSkeleton />
-                  </div>
-                ) : (
-                  preview && (
-                    <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] border border-neutral-300 bg-neutral-100 p-4">
-                      {preview.groups.map((group) => (
-                        <div key={group.year} className="flex flex-col gap-2">
-                          <div
-                            data-testid="set-new-preview-year"
-                            className={`${HEADING_FONT} text-lg font-semibold`}
-                          >
-                            {group.year}
-                          </div>
-                          <ul className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr))]">
-                            {group.coins.map((coin) => {
-                              const coinName = getCoinName(coin);
-                              return (
-                                <li
-                                  key={coin.id}
-                                  data-testid="set-new-preview-item"
-                                  className="flex min-w-0 items-center gap-3"
-                                >
-                                  <span
-                                    aria-hidden="true"
-                                    className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-neutral-400 bg-neutral-300 font-mono text-xs text-neutral-800"
-                                  >
-                                    {coin.imageUrl ? (
-                                      <img
-                                        src={coin.imageUrl}
-                                        alt=""
-                                        className="h-full w-full object-cover"
-                                      />
-                                    ) : (
-                                      getDenominationNumeral(coin.denomination)
-                                    )}
-                                  </span>
-                                  <span className="flex min-w-0 flex-col">
-                                    <span data-testid="set-new-preview-title" className="truncate text-sm font-medium">
-                                      {coinName.title}
-                                    </span>
-                                    <span data-testid="set-new-preview-subtitle" className="text-xs text-neutral-700">
-                                      {coinName.subtitle}
-                                    </span>
-                                  </span>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      ))}
-                      {preview.rest > 0 && (
-                        <p data-testid="set-new-preview-more" className="text-sm text-neutral-700">
-                          {fill(t('setNew.previewMore'), { count: preview.rest })}
-                        </p>
-                      )}
-                    </div>
-                  )
-                )}
-              </div>
-            )}
-          </section>
-
-          <aside
-            data-testid="set-new-aside"
-            className="order-first flex flex-col gap-4 rounded-[var(--radius-lg)] border border-neutral-300 bg-white p-[22px] min-[720px]:order-none min-[720px]:max-w-[400px] min-[720px]:[flex:1_1_320px]"
-          >
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-              <h2 className={`${HEADING_FONT} text-2xl font-semibold`}>
-                {t('setNew.nameHeading')}
-              </h2>
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="set-new-name" className="text-sm font-medium">
-                  {t('setNew.nameLabel')}
-                </label>
-                <input
-                  id="set-new-name"
-                  data-testid="set-new-name-input"
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => {
-                    setNameTouched(true);
-                    setName(e.target.value);
-                  }}
-                  className={`h-11 w-full ${INPUT_CLASS}`}
-                />
-              </div>
-              <p className="text-[13px] text-neutral-700">{t('setNew.publicHelper')}</p>
-
-              {error && (
-                <p data-testid="set-new-error" role="alert" className="text-sm text-danger">
-                  {error}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                data-testid="set-new-submit"
-                disabled={createSet.isPending}
-                className={`min-h-12 w-full ${PRIMARY_BUTTON_CLASS}`}
-              >
-                {submitLabel}
-              </button>
-              <Link
-                data-testid="set-new-cancel"
-                href={cancelHref}
-                className="self-center text-sm text-accent-700 underline hover:text-accent-800"
-              >
-                {t('setNew.cancel')}
-              </Link>
-            </form>
-
-            <div className="flex flex-col gap-2 border-t border-divider pt-4">
-              <h3 className={SUBHEADING_CLASS}>{t('setNew.nextHeading')}</h3>
-              <ol
-                data-testid="set-new-next-steps"
-                className="list-decimal space-y-1 pl-5 text-[13px] text-neutral-800"
-              >
-                <li>{option === 'blank' ? t('setNew.nextOpensBlank') : t('setNew.nextOpens')}</li>
-                <li>{t('setNew.nextTick')}</li>
-                <li>{t('setNew.nextEdit')}</li>
-              </ol>
-            </div>
-          </aside>
-        </div>
+        <SetNewStep2
+          option={option}
+          onChangeSource={() => setStep(1)}
+          sourceName={sourceName}
+          sourceDescription={sourceDescription}
+          coinSummary={coinSummary}
+          yearRange={yearRange}
+          detail={detail}
+          detailLoading={detailLoading}
+          preview={preview}
+          onSubmit={handleSubmit}
+          name={name}
+          onNameChange={(value) => {
+            setNameTouched(true);
+            setName(value);
+          }}
+          error={error}
+          isPending={createSet.isPending}
+          submitLabel={submitLabel}
+          cancelHref={cancelHref}
+        />
       )}
     </main>
   );
