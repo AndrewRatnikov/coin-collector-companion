@@ -18,6 +18,8 @@
  *
  * run_20261110_062926: the dictionaries are split into per-area files. Two tests are
  * added at the end (key-count sum, prefix placement); the existing assertions are untouched.
+ *
+ * run_20261112_212821: 'notFound' is added to the common area's allowed prefixes (the only change).
  */
 
 import { describe, expect, it } from 'vitest';
@@ -45,7 +47,7 @@ import esSetNew from '@/lib/i18n/locales/es/set-new';
 import esSets from '@/lib/i18n/locales/es/sets';
 
 const AREA_PREFIXES: Record<string, readonly string[]> = {
-  common: ['nav', 'footer', 'languageSwitcher', 'home', 'common', 'ui'],
+  common: ['nav', 'footer', 'languageSwitcher', 'home', 'common', 'ui', 'notFound'],
   account: ['login', 'signup', 'forgotPassword', 'resetPassword', 'settings'],
   catalog: ['catalog', 'coinDetail', 'submitCoinForm', 'submissionConfirmation', 'mySubmissions', 'admin'],
   sets: ['setPage', 'setEditor', 'setAlbum', 'setProgress', 'missingList'],
