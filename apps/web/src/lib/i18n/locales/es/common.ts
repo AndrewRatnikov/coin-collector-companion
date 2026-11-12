@@ -105,6 +105,19 @@ const common: Record<keyof typeof enCommon, string> = {
   'ui.setCard.complete': 'Completa',
   'ui.toast.undo': 'Deshacer',
   'ui.toast.dismiss': 'Cerrar',
+  // not found (components/ui/not-found-content): unknown URLs and missing coins, sets, checklists
+  'notFound.pageTitle': 'Página no encontrada',
+  'notFound.pageBody':
+    'No encontramos la página que buscabas. Puede que el enlace sea incorrecto o que la página se haya movido.',
+  'notFound.coinTitle': 'Esta moneda no está en el catálogo',
+  'notFound.coinBody': 'Puede que se haya eliminado o que el enlace sea incorrecto.',
+  'notFound.setTitle': 'Esta colección no existe o se ha eliminado',
+  'notFound.setBody': 'Revisa el enlace o busca otra colección que completar.',
+  'notFound.checklistTitle': 'Esta lista de control no existe',
+  'notFound.checklistBody': 'Revisa el enlace o elige otra lista de control.',
+  'notFound.catalogLink': 'Explorar el catálogo',
+  'notFound.checklistsLink': 'Listas de control',
+  'notFound.mySetsLink': 'Mis colecciones',
 };
 
 export default common;
