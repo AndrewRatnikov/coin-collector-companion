@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getCoinName } from '@coin-collector/shared';
 import type { CoinGrade, GapSlot } from '@coin-collector/shared';
 import { RequireAuth } from '@/components/auth/require-auth';
+import { NotFoundContent } from '@/components/ui/not-found-content';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import {
   useAddCoinsToSet,
@@ -33,6 +34,7 @@ import { SetPageYearGroups } from '@/components/set-page/set-page-year-groups';
 import { fill } from '@/lib/fill-template';
 import { gradeShortLabel } from '@/lib/grades';
 import { markSetDeleted } from '@/lib/set-deleted-notice';
+import { isNotFoundError } from '@/lib/not-found-error';
 import { buildYearGroups } from '@/lib/set-page';
 import { buildSetViewSearch, parseSetView, type SetView } from '@/lib/set-view';
 import { useTranslation } from '@/lib/i18n/i18n-context';
@@ -315,6 +317,16 @@ function SetEditor({ id }: { id: string }) {
   function retryLoad() {
     void setQuery.refetch();
     void gapsQuery.refetch();
+  }
+
+  // The set itself doesn't exist (404, or 400 for a malformed id): checked before the gaps
+  // query's loading/error state, which must not hide it.
+  if (setIsError && isNotFoundError(setQuery.error)) {
+    return (
+      <main data-testid="set-editor-page" className={PAGE_WRAPPER_CLASSNAME}>
+        <NotFoundContent variant="set" />
+      </main>
+    );
   }
 
   if (setLoading || gapsLoading) {
