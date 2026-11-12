@@ -59,13 +59,14 @@ function queryResult(overrides: Record<string, unknown> = {}) {
 
 function renderPage(coinId = 'coin-1') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
+  const result = render(
     <QueryClientProvider client={queryClient}>
       <Suspense fallback={<div />}>
         <CoinDetailPage params={Promise.resolve({ coinId })} />
       </Suspense>
     </QueryClientProvider>,
   );
+  return { ...result, queryClient };
 }
 
 const COIN: CatalogCoin = {
@@ -186,12 +187,13 @@ describe('CoinDetailPage: not-found state', () => {
     >);
     getSetGapsMock.mockRejectedValue(new ApiError(404, 'Not Found'));
     useCoinMock.mockReturnValue(queryResult({ data: COIN }));
-    renderPage();
+    const { queryClient } = renderPage();
 
     expect(await screen.findByTestId('coin-detail-label')).toBeInTheDocument();
     await waitFor(() => {
-      expect(getSetGapsMock).toHaveBeenCalled();
+      expect(queryClient.getQueryState(['user-sets', 'set-a', 'gaps'])?.status).toBe('error');
     });
+    expect(screen.getByTestId('coin-detail-label')).toBeInTheDocument();
     expect(screen.queryByTestId('not-found')).not.toBeInTheDocument();
     expect(screen.queryByTestId('coin-detail-error')).not.toBeInTheDocument();
   });
