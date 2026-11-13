@@ -116,7 +116,8 @@
       "owner-set-empty": "signed in as the owner; /sets/render-set is their set 'Empty set' with no coins",
       "visitor-set": "signed in as another user; /sets/render-set is the owner's public 'Wheat Cents 1941-1945' (15 coins), the visitor owns 3 of them",
       "set-load-error": "signed in as the owner; /sets/render-set is 'Wheat Cents 1941-1945' but GET /sets/render-set/gaps answers 500, so the page shows its load error",
-      "new-set-sources": "signed in as the owner (3 sets of their own); 2 curated checklists 'Lincoln Wheat Cents 1941-1945' and '1946-1950' (15 coins each) and 3 public user sets exist"
+      "new-set-sources": "signed in as the owner (3 sets of their own); 2 curated checklists 'Lincoln Wheat Cents 1941-1945' and '1946-1950' (15 coins each) and 3 public user sets exist",
+      "signed-out": "nobody is signed in (no access token, no refresh cookie); the seeded coins, the 2 curated checklists and the owner's sets exist. Use real ids or made-up ones in the route: there is no /sets/render-set alias here"
     }
   }
 }

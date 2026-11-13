@@ -42,6 +42,7 @@
  *   visitor-set          visitor, alias -> OWNER_SET (someone else's public set)
  *   set-load-error       owner, alias -> OWNER_SET, GET /sets/render-set/gaps answered with 500
  *   new-set-sources      owner; the canonical sets above and every user set exist
+ *   signed-out           nobody signed in (no token, no cookies); same data, no alias
  *
  * Adding a fixture: add rows to buildSql() if it needs new data (fixed UUIDs, ON CONFLICT DO
  * NOTHING), add an entry to FIXTURES, and describe it in verify.json's render.fixtures.
@@ -79,6 +80,7 @@ const FIXTURES = {
   'visitor-set': { user: 'visitor', setId: OWNER_SET },
   'set-load-error': { user: 'owner', setId: OWNER_SET, failGaps: true },
   'new-set-sources': { user: 'owner', setId: OWNER_SET },
+  'signed-out': { user: null },
 }
 
 // ── module state (one module instance per side) ─────────────────────────────────────────
@@ -316,6 +318,12 @@ export async function seed({ page, fixture }) {
   const fx = FIXTURES[fixture]
   if (!fx) throw new Error(`setup hook: unknown fixture "${fixture}"`)
   await ensureData()
+  if (!fx.user) {
+    // Signed out: no access token and no refresh cookie, so the app can't silently sign in.
+    await page.context().clearCookies()
+    await page.evaluate((key) => window.localStorage.removeItem(key), TOKEN_KEY)
+    return
+  }
   const token = await tokenFor(fx.user)
   await page.evaluate(([key, value]) => window.localStorage.setItem(key, value), [TOKEN_KEY, token])
   await installAlias(page, fx)
