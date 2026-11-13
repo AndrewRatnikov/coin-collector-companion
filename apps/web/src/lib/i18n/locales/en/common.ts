@@ -103,6 +103,19 @@ const common = {
   'ui.setCard.complete': 'Complete',
   'ui.toast.undo': 'Undo',
   'ui.toast.dismiss': 'Dismiss',
+  // not found (components/ui/not-found-content): unknown URLs and missing coins, sets, checklists
+  'notFound.pageTitle': 'Page not found',
+  'notFound.pageBody':
+    "We couldn't find the page you were looking for. The link may be wrong or the page may have moved.",
+  'notFound.coinTitle': "This coin isn't in the catalog",
+  'notFound.coinBody': 'It may have been removed, or the link may be wrong.',
+  'notFound.setTitle': "This set doesn't exist or was deleted",
+  'notFound.setBody': 'Check the link, or find another set to collect.',
+  'notFound.checklistTitle': "This checklist doesn't exist",
+  'notFound.checklistBody': 'Check the link, or pick another checklist.',
+  'notFound.catalogLink': 'Browse the catalog',
+  'notFound.checklistsLink': 'Checklists',
+  'notFound.mySetsLink': 'My sets',
 } satisfies Record<string, string>;
 
 export default common;
