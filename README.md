@@ -98,7 +98,7 @@ pnpm --filter api test:e2e    # e2e tests against the database in DATABASE_URL
 pnpm --filter web test
 ```
 
-CI (`.github/workflows/ci.yml`) runs lint, typecheck, migrations and the API unit and e2e tests on pushes and pull requests to `main`.
+CI (`.github/workflows/ci.yml`) runs lint, typecheck, the API and web builds, migrations, the API and web unit tests and the API e2e tests on pushes and pull requests to `main`.
 
 ## Deployment
 
