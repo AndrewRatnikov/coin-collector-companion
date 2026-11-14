@@ -57,11 +57,22 @@ jobs:
           pnpm --filter api typecheck
           pnpm --filter web typecheck
 
+      - name: Build API
+        run: pnpm --filter api build
+
+      - name: Build web
+        run: pnpm --filter web build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000/api
+
       - name: Apply migrations
         run: pnpm --filter api exec prisma migrate deploy
 
       - name: Unit tests
         run: pnpm --filter api test
+
+      - name: Web unit tests
+        run: pnpm --filter web test
 
       - name: E2E tests
         run: pnpm --filter api test:e2e
