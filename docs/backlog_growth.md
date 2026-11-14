@@ -33,7 +33,7 @@ Order of work: make production safe (Step 0), fix what a first visitor sees (Ste
 - [ ] 0.1 Create a Neon branch for development and point local `apps/api/.env` at it. Production's `DATABASE_URL` lives only in Render. Update CLAUDE.md "Database safety" and the README warning to match.
 - [ ] 0.2 **Pending manual pass:** run `prisma migrate status` against production and apply `20260923200000_add_password_reset_token`, `20260926120000_add_coin_specs` and `20261102200000_add_coin_grades` if any is missing. Re-run the catalog import afterwards (specs, Ukrainian fixtures).
 - [ ] 0.3 Run `prisma migrate deploy` as part of the Render deploy (pre-deploy command or the start of `buildCommand` in `render.yaml`), so code can't ship ahead of its migration. Remove the "migrations are not run by the Render build" notes from README and CLAUDE.md once verified.
-- [ ] 0.4 `.github/workflows/ci.yml`: add `pnpm --filter web test`, `pnpm --filter api build` and `pnpm --filter web build`, so CI matches `.claude/verify.json`.
+- [x] 0.4 `.github/workflows/ci.yml`: add `pnpm --filter web test`, `pnpm --filter api build` and `pnpm --filter web build`, so CI matches `.claude/verify.json`.
 - [ ] 0.5 Error tracking (Sentry or similar free tier) in `apps/api` and `apps/web`. No personal data in events beyond the user id.
 - [ ] 0.6 Privacy-friendly analytics on the web app (page views plus four events: sign-up, set created, coin marked owned, set cloned). Write an ADR for the provider choice.
 - [ ] 0.7 Security headers on the API (`helmet` in `apps/api/src/configure-app.ts`) and a unit test that they are set.
