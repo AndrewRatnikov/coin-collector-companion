@@ -54,7 +54,7 @@ pnpm --filter api run seed:canonical             # upsert canonical sets from se
 cd scripts/import-catalog && pnpm run import     # upsert catalog coins from fixtures/*.json
 ```
 
-Builds exclude test files, so always run `typecheck` too. The CI job (`.github/workflows/ci.yml`) and the orchestrator's `.claude/verify.json` both run lint, typecheck, unit tests and e2e.
+Builds exclude test files, so always run `typecheck` too. The CI job (`.github/workflows/ci.yml`) and the orchestrator's `.claude/verify.json` run the same checks: lint, typecheck, the API and web builds, the API and web unit tests, migrations and e2e. verify.json also checks that `schema.prisma` matches the migrations.
 
 ## Database safety
 
