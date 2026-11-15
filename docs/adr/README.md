@@ -52,6 +52,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-10](2026-11-10-add-coins-focus-trap-effect-wrapped-in-a-hook.md) | The Add coins sheet's Escape and Tab keydown effect lives in a hook the sheet calls, as a narrow exception to prop-only components | Accepted |
 | [2026-11-11](2026-11-11-collection-export-built-in-the-browser-round-trip-safe.md) | Collection export built in the browser, round-trip safe with the import | Accepted |
 | [2026-11-15](2026-11-15-api-security-headers-helmet-defaults-no-csp-relaxation.md) | The API sends helmet's default security headers unchanged, with no CSP relaxation, including on Swagger UI | Accepted |
+| [2026-11-15](2026-11-15-render-build-applies-migrations.md) | Every Render deploy applies pending migrations with `prisma migrate deploy` inside `buildCommand` | Accepted |
 
 ## Where else decisions live
 
