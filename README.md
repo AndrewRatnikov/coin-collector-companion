@@ -76,7 +76,7 @@ PORT=4000 pnpm --filter api start:dev          # health: http://localhost:4000/a
 
 Swagger UI is at `http://localhost:4000/api/docs`.
 
-> **Careful:** don't point your local `.env` at the production database for development work, and never pass it to Prisma as `--shadow-database-url`, which wipes it.
+> **Careful:** local development uses a separate Neon branch (`dev`), not the production database. Keep the production connection string out of your local `.env`; when a command really has to run against production, pass it inline (`DATABASE_URL='...' pnpm ...`). Never pass the production URL to Prisma as `--shadow-database-url`, which wipes it.
 
 ### Web (`apps/web`)
 

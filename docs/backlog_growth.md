@@ -30,8 +30,9 @@ Order of work: make production safe (Step 0), fix what a first visitor sees (Ste
 
 ## Step 0: Production safety and visibility
 
-- [ ] 0.1 Create a Neon branch for development and point local `apps/api/.env` at it. Production's `DATABASE_URL` lives only in Render. Update CLAUDE.md "Database safety" and the README warning to match.
-- [ ] 0.2 **Pending manual pass:** run `prisma migrate status` against production and apply `20260923200000_add_password_reset_token`, `20260926120000_add_coin_specs` and `20261102200000_add_coin_grades` if any is missing. Re-run the catalog import afterwards (specs, Ukrainian fixtures).
+- [x] 0.1 Create a Neon branch for development and point local `apps/api/.env` at it. Production's `DATABASE_URL` lives only in Render. Update CLAUDE.md "Database safety" and the README warning to match.
+- [x] 0.2 Run `prisma migrate status` against production and apply `20260923200000_add_password_reset_token`, `20260926120000_add_coin_specs` and `20261102200000_add_coin_grades` if any is missing. Done 2026-11-14: 11 migrations found, "Database schema is up to date", nothing to apply.
+  - [x] 0.2.1 Confirmed 2026-11-14 on the live site (coin pages show diameter, weight and mintage). Was: confirm the catalog import was re-run after `add_coin_specs` (specs on coin pages, Ukrainian coins present); if not, run `seed:canonical` and the import against production.
 - [ ] 0.3 Run `prisma migrate deploy` as part of the Render deploy (pre-deploy command or the start of `buildCommand` in `render.yaml`), so code can't ship ahead of its migration. Remove the "migrations are not run by the Render build" notes from README and CLAUDE.md once verified.
 - [x] 0.4 `.github/workflows/ci.yml`: add `pnpm --filter web test`, `pnpm --filter api build` and `pnpm --filter web build`, so CI matches `.claude/verify.json`.
 - [ ] 0.5 Error tracking (Sentry or similar free tier) in `apps/api` and `apps/web`. No personal data in events beyond the user id.

@@ -14,8 +14,8 @@ Before making scope decisions, read [docs/prd_v2.md](docs/prd_v2.md) (what and w
 - **Runtime:** Node 26, pinned to the major version (`engines.node` `>=26 <27`; `render.yaml`, CI and `.nvmrc` say `26`). Change all four together ([ADR](docs/adr/2026-11-06-node-major-pinned-to-26-on-every-platform.md)).
 - **Built:** auth (register/login, refresh tokens, change password, forgot/reset password), catalog browse/detail, user coin submissions with review status and "My submissions", custom/canonical/public sets with clone, collection, gap view, dashboard, glossary, feedback, EN/ES UI, coin grades (API; web: grade picker on the coin page, grade chips on set and collection pages, set minimum grade with Upgrade states, count and filter), CSV import reads an optional Grade column (EN/ES values; unknown values warned in the preview).
 - **Password reset email:** needs a verified sending domain, and there isn't one yet. Without it, Resend only delivers to the Resend account owner's own address. Backlog items 3.12–4.3 in `docs/backlog_password-management.md` stay open until then.
-- **Migrations:** `20260923200000_add_password_reset_token`, `20260926120000_add_coin_specs` and `20261102200000_add_coin_grades` were written without DB access. Check `prisma migrate status` against Neon before deploying (see Database safety below). After `add_coin_specs` is applied, re-run the catalog import to fill specs and load the Ukrainian fixtures.
-- [ ] **Pending manual pass:** apply with `prisma migrate deploy` against Neon before deploying (`20261102200000_add_coin_grades`; the API reads `Ownership.grade`, so un-migrated prod 500s `GET /collection` and the gap view).
+- **Migrations:** all 11 are applied (`prisma migrate status` reported "Database schema is up to date" on 2026-11-14, including `add_password_reset_token`, `add_coin_specs` and `add_coin_grades`). New migrations still need `prisma migrate deploy` against production before the code that needs them ships (see Database safety below).
+- **Catalog import:** re-run after `add_coin_specs`; the live site shows coin specs (confirmed 2026-11-14).
 - **Paperwork gap:** `docs/backlog_glossary.md` is unticked, but `/glossary` and its test exist. Validate it, then tick it off.
 
 ## Architecture
@@ -60,7 +60,9 @@ Builds exclude test files, so always run `typecheck` too. The CI job (`.github/w
 
 These rules are here because each of them has broken production before.
 
-- `apps/api/.env`'s `DATABASE_URL` is the **shared Neon database that production (Render) uses.** Treat every command against it as a prod operation.
+- Local `apps/api/.env`'s `DATABASE_URL` points at the Neon **`dev` branch**, a copy of production made on 2026-11-14. Production's URL lives only in Render. Keep it that way: never save the production URL into `.env`.
+- For a deliberate production command (`prisma migrate status` / `migrate deploy`, `seed:canonical`, the catalog import), pass the production URL inline for that one command (`DATABASE_URL='...' pnpm ...`); it takes precedence over `.env`. Treat every such command as a prod operation.
+- If the `dev` branch gets broken, delete it in the Neon console and create a new one from production.
 - **Never pass that URL as Prisma's `--shadow-database-url`.** Doing so once wiped the database, and it had to be restored with Neon point-in-time restore.
 - **Render's build does not run migrations.** Apply new migrations with `prisma migrate deploy` before the code that needs them ships. Unapplied migrations have 500'd `GET /catalog` and login in the past, and typecheck/build/unit tests don't catch this.
 - **For a non-interactive migration** (no TTY), generate the SQL with `prisma migrate diff --from-config-datasource --to-schema prisma/schema.prisma --script` (Prisma 7 removed `--from-url`; the URL comes from `prisma.config.ts`, i.e. `DATABASE_URL`), put it in a new `prisma/migrations/<timestamp>_<name>/migration.sql`, then run `migrate deploy`.
