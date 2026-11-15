@@ -1,6 +1,7 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 
 export interface TrustProxyHopsResult {
   hops: number;
@@ -32,7 +33,10 @@ export function parseTrustProxyHops(raw: string | undefined): TrustProxyHopsResu
   return { hops: 0, invalid: true };
 }
 
-/** Shared app setup used by main.ts and the e2e tests. */
+/**
+ * Shared app setup used by main.ts and the e2e tests: trust proxy, security headers (helmet),
+ * cookie parsing, credentialed CORS, the api/v1 prefix and the validation pipe.
+ */
 export function configureApp(app: NestExpressApplication): void {
   const raw = process.env.TRUST_PROXY_HOPS;
   const { hops, invalid } = parseTrustProxyHops(raw);
@@ -40,6 +44,11 @@ export function configureApp(app: NestExpressApplication): void {
     logger.warn(`Invalid TRUST_PROXY_HOPS value "${raw}"; expected a non-negative integer. Falling back to 0.`);
   }
   app.set('trust proxy', hops);
+
+  // Security headers with helmet's defaults on purpose (see the security-headers ADR in docs/adr/):
+  // Swagger UI at /api/docs (mounted by main.ts after this call) works under the default CSP, and
+  // CORP/COOP same-origin don't affect the web app's CORS-mode fetch calls.
+  app.use(helmet());
 
   app.use(cookieParser());
 
