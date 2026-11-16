@@ -15,16 +15,20 @@ The engineering is ahead of the product. The core loop works and is well tested,
 
 ## Decision
 
-Order of work: make production safe (Step 0), fix what a first visitor sees (Step 1), widen the catalog (Step 2), make public pages findable (Step 3), then add the features that bring people back and bring new people in (Steps 4-5). Steps 6-7 change PRD non-goals and are parked until the PRD is updated.
+Order of work: make production safe (Step 0), fix what a first visitor sees (Step 1), widen the catalog (Step 2), make public pages findable (Step 3), then add the features that bring people back and bring new people in (Steps 4-5) and the ones that keep the gap view accurate and easy to fill (Steps 6-7). Steps 8-10 are parked until the PRD is updated.
 
 **Open question to settle before Step 2:** the PRD's goal is a portfolio piece and personal tool. If that is still the goal, Steps 0-1 plus a written case study finish the project. Steps 2 onward only make sense if the goal becomes real users. Record the answer in `docs/prd_v2.md` (Goals) before starting Step 2.
 
 **PRD conflicts, flagged so they aren't built by accident** (CLAUDE.md "Scope discipline"):
 
 - Step 1.5 (keep the API warm) reverses "cold starts are an accepted trade-off" for Render only; Neon autosuspend stays accepted. Needs a line in the PRD and CLAUDE.md status.
-- Step 6 (quantities, notes, purchase price) reverses three PRD non-goals.
-- Step 7.1 (Numista export preset) reads a user's own export file and calls no Numista service, but "any Numista dependency" is on the scope firewall, so it needs an explicit PRD decision.
-- Step 7.2 (own-coin photos) and 7.3 (theme tags) are on the scope firewall by name.
+- Step 6 (sets that stay current) adds a stored filter to a set. PRD Requirement 9 only covers building a set from a filter once, so it needs a PRD line.
+- Step 7 (import presets) reads a user's own export file and calls no outside service, but "any Numista dependency" is on the scope firewall, so the Numista preset needs an explicit PRD decision. The other presets don't.
+- Step 8 (type-set slots) changes the data model rule "a set is a list of coins".
+- Step 9 (quantities, notes, purchase price) reverses three PRD non-goals.
+- Step 10.1 (theme tags) is on the scope firewall by name.
+
+**Competitor check (2026-11-16):** Steps 4 onward were revised against [docs/competitor-analysis.md](competitor-analysis.md). The test for every feature is the main idea: does it feed coins into the gap view, make the gap view truer to the collector's own goal, or put the gap list in their hands when they need it? Features that fail the test were dropped or demoted (see "Explicitly NOT this scope").
 
 ---
 
@@ -92,48 +96,91 @@ Web and API stay separate services. Server components fetch from the API over HT
 
 ## Step 4: Shareable progress
 
+The registries show that collectors want to show a set and its progress; this is the version for uncertified coins.
+
 - [ ] 4.1 "Share progress" action on `/sets/[id]`: copies the public set URL. The public page already shows the owner's progress (ADR 2026-11-09).
 - [ ] 4.2 Generated preview image for public set pages (set name, percent complete, coins to go) via `opengraph-image`.
 - [ ] 4.3 "Start this checklist" action for logged-out visitors on a shared set: sign-up, then clone, in one flow.
-- [ ] 4.4 Analytics events for share and for sign-ups that arrive from a shared set.
+- [ ] 4.4 Public sets list can be sorted by number of clones, so good checklists surface.
+- [ ] 4.5 Analytics events for share and for sign-ups that arrive from a shared set.
 
 **Checkpoint:** a collector can post their progress, and a visitor who clicks through can start the same checklist in one flow.
 
 ## Step 5: Want list for shows and shops
 
-- [ ] 5.1 Web app manifest and icons so the app installs to a phone home screen.
-- [ ] 5.2 Offline read access to the missing-coins page (`/sets/[id]/missing`) for sets the user has opened: cache the last response and show its date.
-- [ ] 5.3 One combined want list across all of the user's sets, deduplicated by coin, with the existing print and CSV export.
-- [ ] 5.4 Mark a coin owned while offline; sync on reconnect (queue on top of the optimistic ownership hook). Cut this first if the step runs long.
-- [ ] 5.5 Manual pass on a phone in airplane mode.
+Raised in priority after the competitor check: a year-and-mint-mark want list is what users of the big catalogues ask for and build by hand today. If Steps 3 and 5 compete for time, do 5.1-5.4 first.
 
-**Checkpoint:** a collector at a dealer's table can open their want list with no signal.
+- [ ] 5.1 Missing-coins page (`/sets/[id]/missing`) groups by denomination and year with mint marks on one line (for example "1914: D, S"), so it reads like a show list. Print and CSV follow the same order.
+- [ ] 5.2 When the set has a minimum grade, the want list gets a second section, "Upgrade wanted", listing owned coins below it with their current grade. Check first what the page shows today for those coins.
+- [ ] 5.3 One combined want list across all of the user's sets, deduplicated by coin, with the same grouping, print and CSV export.
+- [ ] 5.4 Web app manifest and icons so the app installs to a phone home screen, and offline read access to the want lists the user has opened (cache the last response and show its date).
+- [ ] 5.5 Mark a coin owned while offline; sync on reconnect (queue on top of the optimistic ownership hook). Cut this first if the step runs long.
+- [ ] 5.6 Manual pass on a phone in airplane mode.
 
-## Step 6: Quantities, notes and cost (parked: needs a PRD change)
+**Checkpoint:** a collector at a dealer's table can open a compact list of what they need and what they want to upgrade, with no signal.
 
-- [ ] 6.1 PRD update: remove "no duplicate tracking" and "no per-coin notes" from Non-Goals and define the rules (gap logic stays "owned at least one").
-- [ ] 6.2 Migration: `Ownership.quantity` (default 1), `note`, `pricePaid`, `acquiredAt`. All optional except quantity.
-- [ ] 6.3 API and shared types; `PATCH /collection/:coinId` accepts the new fields.
-- [ ] 6.4 Web: fields on the coin page ownership panel; a "spares" filter on the Collection page.
-- [ ] 6.5 CSV import and export carry the new columns and stay round-trip safe (ADR 2026-11-11).
-- [ ] 6.6 Collection total cost on the dashboard.
+## Step 6: Sets that stay current (needs a PRD line)
+
+A set built from a catalogue filter is a snapshot. When the catalogue grows (new year issues, a newly imported series, an approved submission), the set silently falls behind and the gap view under-reports.
+
+- [ ] 6.1 PRD and system design update: a set may remember the filter it was built from. The set's coin list stays explicit; nothing is added without the owner's action.
+- [ ] 6.2 Migration and API: optional stored filter on `UserSet` (country, denomination, name, year range), saved when a set is created from a filter. Clones do not inherit it.
+- [ ] 6.3 `GET /sets/:id` reports how many approved catalogue coins match the stored filter but are not in the set.
+- [ ] 6.4 Set page: a notice "N new coins match this set" with review and add, or dismiss. Dismissed coins are not offered again.
+- [ ] 6.5 Same notice for sets cloned from a curated checklist when the checklist's template version gains coins.
+- [ ] 6.6 Tests: unit, e2e for the count, component test for the notice. EN and ES strings.
+
+**Checkpoint:** when the catalogue gains coins that belong in a collector's set, the set page tells them, and the gap view stays true.
+
+## Step 7: Import from other tools (Numista preset needs a PRD decision)
+
+Collectors already keep years of data elsewhere. Import is how they try the gap view without retyping.
+
+- [ ] 7.1 Collect one real export file from each source as a test fixture: a generic spreadsheet, OpenNumismat, Colnect, uCoin, Numista. Record each file's licence and origin next to the fixture.
+- [ ] 7.2 Source presets in the importer: picking a source pre-fills the column mapping (`import-aliases.ts`, `column-mapping.ts`). The preview-then-confirm flow is unchanged (ADR 2026-10-05).
+- [ ] 7.3 Unmatched rows can be exported as CSV, so the user knows what the catalogue is missing, and each one links to "submit this coin".
+- [ ] 7.4 After confirm, suggest curated checklists that the imported coins already partly fill ("you own 38 of 142 Lincoln Wheat cents").
+- [ ] 7.5 Tests per preset against its fixture.
+
+**Checkpoint:** a collector with an existing list elsewhere gets it in, sees which checklists they have already started, and knows exactly which coins didn't match.
+
+## Step 8: Type-set slots (parked: needs a PRD change)
+
+Type collecting (one example of each design, any year) is a mainstream goal that an explicit coin list can't express.
+
+- [ ] 8.1 PRD and system design update: a set slot may be satisfied by any one of several coins. Define how completion, the want list and minimum grade behave for such a slot.
+- [ ] 8.2 Data model, API and gap query.
+- [ ] 8.3 Set editor: group selected coins into one slot; album and list views show the slot once.
+- [ ] 8.4 One curated type set as the reference case.
+
+**Checkpoint:** a collector can track "one of each" and the gap view counts a slot as filled by any qualifying coin.
+
+## Step 9: Quantities, notes and cost (parked, lowest priority: needs a PRD change)
+
+Demoted after the competitor check. This is inventory-manager territory, well served by other tools, and it does not change what is missing. Build only if users ask.
+
+- [ ] 9.1 PRD update: remove "no duplicate tracking" and "no per-coin notes" from Non-Goals and define the rules (gap logic stays "owned at least one").
+- [ ] 9.2 Migration: `Ownership.quantity` (default 1), `note`, `pricePaid`, `acquiredAt`. All optional except quantity.
+- [ ] 9.3 API and shared types; `PATCH /collection/:coinId` accepts the new fields.
+- [ ] 9.4 Web: fields on the coin page ownership panel; a "spares" filter on the Collection page.
+- [ ] 9.5 CSV import and export carry the new columns and stay round-trip safe (ADR 2026-11-11).
 
 **Checkpoint:** a collector can record what they paid and which coins they have spare.
 
-## Step 7: Later candidates (parked: each needs a PRD change)
+## Step 10: Later candidates (parked)
 
-- [ ] 7.1 Numista export preset in the CSV importer (column aliases in `import-aliases.ts` and a fixture from a real export).
-- [ ] 7.2 Own-coin photos (storage, moderation, premium candidate).
-- [ ] 7.3 Theme tags on public sets for discovery.
-- [ ] 7.4 "Find this coin" marketplace links in the gap view. The dealers in [docs/affiliate-programs-research.md](affiliate-programs-research.md) are mostly bullion sellers and a poor fit; revisit once there is traffic to measure.
+- [ ] 10.1 Theme tags on public sets for discovery (needs a PRD change).
+- [ ] 10.2 "Find this coin" marketplace links in the gap view. The dealers in [docs/affiliate-programs-research.md](affiliate-programs-research.md) are mostly bullion sellers and a poor fit; revisit once there is traffic to measure.
 
 ---
 
 ## Explicitly NOT this scope (resist)
 
-- **Marketplace, trading between users, following, comments, profiles.** PRD non-goals stand. "Spares" in Step 6 is a personal filter, not trade matching.
-- **Value or price tracking.** No pricing data source passes the licensing rules today. Step 6 records what the user paid, nothing more.
-- **Image recognition.**
+- **Marketplace, swap matching, following, comments, profiles.** PRD non-goals stand, and these are other products' core with networks this project doesn't have. "Spares" in Step 9 is a personal filter, not trade matching.
+- **Photo identification of coins.** A crowded category of phone apps.
+- **Rankings and leaderboards.** The grading-service registries own this.
+- **Own-coin photos.** Removed from the backlog after the competitor check: storage and moderation cost for an inventory feature.
+- **Value or price tracking.** No pricing data source passes the licensing rules today. Step 9 records what the user paid, nothing more.
 - **A paid tier or billing.** The PRD trigger (a specific free-tier limit being hit) still applies. Nothing in this backlog costs money; Step 1.5 stays on the free plans.
 - **Moving API logic into Next.js** to make Step 3 easier.
 - **Rewriting client pages that need a login** (dashboard, collection, set editor) as server components. Step 3 covers public pages only.
