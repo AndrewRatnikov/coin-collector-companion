@@ -395,8 +395,8 @@ describe('groupWantList', () => {
   it('ignores owned slots', () => {
     const rows = groupWantList(
       [
-        slot('a', 1, true, { year: 1911, mintMark: 'D' }),
-        slot('b', 2, false, { year: 1911, mintMark: 'S' }),
+        slot('a', 1, true, { year: 1911, mintMark: 'D', variety: '' }),
+        slot('b', 2, false, { year: 1911, mintMark: 'S', variety: '' }),
       ] as never,
       new Set(),
     );
@@ -406,9 +406,9 @@ describe('groupWantList', () => {
 
   it('sorts by position, groups years in order of first appearance and does not mutate the input', () => {
     const slots = [
-      slot('late', 9, false, { year: 1913, mintMark: 'S' }),
-      slot('first', 1, false, { year: 1911, mintMark: 'D' }),
-      slot('mid', 5, false, { year: 1911, mintMark: 'S' }),
+      slot('late', 9, false, { year: 1913, mintMark: 'S', variety: '' }),
+      slot('first', 1, false, { year: 1911, mintMark: 'D', variety: '' }),
+      slot('mid', 5, false, { year: 1911, mintMark: 'S', variety: '' }),
     ];
     const before = [...slots];
 
@@ -422,8 +422,8 @@ describe('groupWantList', () => {
 
   it('takes the key-date flag from keyDateIds by coin id, not from coin.isKeyDate', () => {
     const slots = [
-      slot('k', 1, false, { year: 1914, mintMark: 'D', isKeyDate: false }),
-      slot('n', 2, false, { year: 1914, mintMark: 'S', isKeyDate: true }),
+      slot('k', 1, false, { year: 1914, mintMark: 'D', variety: '', isKeyDate: false }),
+      slot('n', 2, false, { year: 1914, mintMark: 'S', variety: '', isKeyDate: true }),
     ] as never;
 
     const flagged = groupWantList(slots, new Set(['coin-k']));
