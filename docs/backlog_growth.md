@@ -59,7 +59,7 @@ Order of work: make production safe (Step 0), fix what a first visitor sees (Ste
   - [ ] 1.5.3 `GET /health` stays a pure liveness check with no database query (true today in `health.controller.ts`), and a unit test fails if `PrismaService` is injected into `HealthController`. A ping that touches Neon would keep its compute awake and use up the 100 CU-hours (about 400 hours at 0.25 CU) around mid-month.
   - [ ] 1.5.4 Do not warm Neon. Free-plan auto-suspend (5 minutes) can't be turned off, and a resume takes a few hundred milliseconds, which 1.3 already covers.
   - [ ] 1.5.5 After a week, check Render's free-hours usage and Neon's CU-hours in their dashboards and record the numbers in `docs/history.md`.
-- [ ] 1.6 Manual browser pass at phone and desktop width, logged out, with a cold API. Pending manual pass (see the checklist in `docs/design/2026-11-16_landing.md`).
+- [x] 1.6 Manual browser pass at phone and desktop width, logged out, with a cold API. Pending manual pass (see the checklist in `docs/design/2026-11-16_landing.md`).
 
 **Checkpoint:** a logged-out visitor understands the product and sees a working gap view within a few seconds.
 
