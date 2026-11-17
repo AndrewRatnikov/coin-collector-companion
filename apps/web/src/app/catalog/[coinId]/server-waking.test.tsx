@@ -134,7 +134,7 @@ describe('CoinDetailPage: server waking notice', () => {
       isPending: false,
       failedCoinIds: new Set<string>(),
     } as unknown as ReturnType<typeof useSetGrade>);
-    useUserSetsMock.mockReturnValue({ data: [], isLoading: false, isError: false } as ReturnType<typeof useUserSets>);
+    useUserSetsMock.mockReturnValue({ data: [], isLoading: false, isError: false } as unknown as ReturnType<typeof useUserSets>);
     useAddCoinsToSetMock.mockReturnValue({
       mutateAsync: vi.fn(),
       isPending: false,
