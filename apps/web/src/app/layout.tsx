@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 import { Cormorant_Garamond, IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
+import { cookies } from 'next/headers';
 import { QueryProvider } from '@/components/providers/query-provider';
 import { SiteFooter } from '@/components/layout/site-footer';
 import { SiteNav } from '@/components/layout/site-nav';
 import { I18nProvider } from '@/lib/i18n/i18n-context';
+import { LOCALE_COOKIE_NAME, parseLocale } from '@/lib/i18n/locale-cookie';
+import enLanding from '@/lib/i18n/locales/en/landing';
 import './globals.css';
 
 // Heading font (Cormorant Garamond, weight 600 ceiling) — Classical design system.
@@ -29,17 +32,23 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: 'Coin Collector Companion',
-  description: 'Track your coin collection against canonical set checklists.',
+  // Metadata is static, so it stays English.
+  description: enLanding['landing.metaDescription'],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // The visitor's locale from the ccc-locale cookie, so <html lang> and the first render match it.
+  // Reading cookies makes every route dynamically rendered (see the 2026-11-16 locale-cookie ADR).
+  const cookieStore = await cookies();
+  const locale = parseLocale(cookieStore.get(LOCALE_COOKIE_NAME)?.value);
+
   return (
     <html
-      lang="en"
+      lang={locale}
       className={[
         cormorantGaramond.variable,
         ibmPlexSans.variable,
@@ -48,7 +57,7 @@ export default function RootLayout({
       ].join(' ')}
     >
       <body className="min-h-full flex flex-col">
-        <I18nProvider>
+        <I18nProvider initialLocale={locale}>
           <QueryProvider>
             <SiteNav />
             {children}

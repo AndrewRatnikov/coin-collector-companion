@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import en from './locales/en';
 import es from './locales/es';
 import type { MessageKey } from './locales/en';
+import { isLocale, readLocaleCookie, writeLocaleCookie } from './locale-cookie';
 import { LOCALE_STORAGE_KEY, type Locale } from './types';
 
 const dictionaries: Record<Locale, Record<MessageKey, string>> = { en, es };
@@ -31,22 +32,34 @@ export function useTranslation(): I18nContextValue {
   return useContext(I18nContext);
 }
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  // Initial render is always 'en' on both server and client so hydration never
-  // mismatches; a stored preference (if any) is applied a moment after mount.
-  const [locale, setLocaleState] = useState<Locale>('en');
+export function I18nProvider({
+  children,
+  initialLocale = 'en',
+}: {
+  children: ReactNode;
+  initialLocale?: Locale;
+}) {
+  // The first render uses `initialLocale`, which the root layout reads from the
+  // `ccc-locale` cookie on the server, so server and client render the same
+  // language and hydration never mismatches.
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
+  // Migration for visitors who chose a language before the cookie existed:
+  // `localStorage` stays the source of the choice, so a valid stored locale is
+  // applied and copied into the cookie when the cookie is missing or differs.
+  // A cookie with no stored value changes nothing.
   useEffect(() => {
     const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-    if (stored === 'en' || stored === 'es') {
-      setLocaleState(stored);
+    if (!isLocale(stored)) return;
+    setLocaleState(stored);
+    if (readLocaleCookie() !== stored) {
+      writeLocaleCookie(stored);
     }
   }, []);
 
-  // Keeps the root <html lang> attribute (set server-side to "en" in layout.tsx,
-  // since the initial client render must also be "en" to avoid a hydration
-  // mismatch) truthful for screen readers/SEO once a stored non-English
-  // preference is applied or the user switches languages.
+  // Keeps the root <html lang> attribute (set server-side from the cookie in
+  // layout.tsx) truthful for screen readers/SEO once a stored preference is
+  // applied or the user switches languages.
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
@@ -54,6 +67,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   function setLocale(next: Locale) {
     setLocaleState(next);
     window.localStorage.setItem(LOCALE_STORAGE_KEY, next);
+    writeLocaleCookie(next);
   }
 
   const value: I18nContextValue = {
