@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
@@ -19,6 +20,7 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 // 2/5 work; see CLAUDE.md's Project status pivot note.
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 100 }]),
     PrismaModule,
@@ -32,6 +34,8 @@ import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
   ],
   controllers: [HealthController],
   providers: [
+    // Reports unhandled (non-HttpException) errors to Sentry; must come before other filters.
+    { provide: APP_FILTER, useClass: SentryGlobalFilter },
     // SD D2 guard order: ThrottlerGuard -> JwtAuthGuard -> ValidationPipe
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },

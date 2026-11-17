@@ -19,3 +19,5 @@ services:
         sync: false
       - key: TRUST_PROXY_HOPS
         value: '1'
+      - key: SENTRY_DSN
+        sync: false
