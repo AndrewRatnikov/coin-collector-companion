@@ -1,7 +1,10 @@
 /**
  * Tests for: apps/web/src/app/globals.css print rules
  * Contract source: runs/run_20261001_205959/plan.md § Interface Contract → Stylesheet: print rules
- * Covers criteria: #12 (from prd.md)
+ *                   runs/run_20261117_063301/plan.md § Interface Contract → Print rule
+ * Covers criteria: #12 (from prd.md), and #15 of run_20261117_063301
+ *
+ * run_20261117_063301: the existing assertions are unchanged; a print-region block is added at the end.
  *
  * CONTRACT_GAPs: none
  */
@@ -85,5 +88,57 @@ describe('globals.css @media print', () => {
   it('keeps the existing design tokens untouched', () => {
     expect(globalsCss).toMatch(/--color-bg:\s*#f3f2f2/);
     expect(globalsCss).toMatch(/--color-accent:\s*#b68235/);
+  });
+});
+
+describe('globals.css @media print: data-print-region (landing want list)', () => {
+  const SCOPE = 'body:has([data-print-region])';
+  const rules = parseRules(extractPrintBlock(globalsCss) ?? '');
+
+  it('hides everything on the page while a print region exists, using visibility', () => {
+    const hiding = rules.filter(
+      (r) => /visibility:\s*hidden/.test(r.declarations) && r.selectors.some((s) => s.startsWith(SCOPE)),
+    );
+
+    expect(hiding.length).toBeGreaterThan(0);
+    expect(hiding.flatMap((r) => r.selectors)).toContain(`${SCOPE} *`);
+  });
+
+  it('shows the print region and its descendants again', () => {
+    const showing = rules.filter((r) => /visibility:\s*visible/.test(r.declarations));
+    const selectors = showing.flatMap((r) => r.selectors);
+
+    expect(selectors).toContain(`${SCOPE} [data-print-region]`);
+    expect(selectors).toContain(`${SCOPE} [data-print-region] *`);
+  });
+
+  it('pulls the print region to the top of the page with absolute positioning', () => {
+    const positioned = rules.filter(
+      (r) => /position:\s*absolute/.test(r.declarations) && r.selectors.includes(`${SCOPE} [data-print-region]`),
+    );
+
+    expect(positioned.length).toBeGreaterThan(0);
+  });
+
+  it('scopes every data-print-region selector by body:has([data-print-region])', () => {
+    const selectors = rules.flatMap((r) => r.selectors).filter((s) => s.includes('[data-print-region]'));
+
+    expect(selectors.length).toBeGreaterThanOrEqual(3);
+    for (const selector of selectors) {
+      expect(selector.startsWith(SCOPE), selector).toBe(true);
+    }
+  });
+
+  it('adds no display: none on structural elements for the print region', () => {
+    const hiddenSelectors = rules
+      .filter((r) => /display:\s*none/.test(r.declarations))
+      .flatMap((r) => r.selectors);
+
+    for (const selector of hiddenSelectors) {
+      expect(selector).not.toContain('data-print-region');
+    }
+    for (const kept of ['main', 'table', 'h1', 'p', 'body', 'html']) {
+      expect(hiddenSelectors).not.toContain(kept);
+    }
   });
 });
