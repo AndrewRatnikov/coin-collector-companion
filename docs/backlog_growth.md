@@ -49,17 +49,17 @@ Order of work: make production safe (Step 0), fix what a first visitor sees (Ste
 
 ## Step 1: First impression
 
-- [ ] 1.1 Landing page shows the gap view itself: a read-only demo of one curated set with sample ownership, above the three existing links. No account needed. EN and ES strings together.
-- [ ] 1.2 Landing page copy states the one-line pitch ("see what you're still missing") and has a clear sign-up action next to the demo.
-- [ ] 1.3 Loading state for a cold API: after about 3 seconds without a response, show "waking the server" text instead of an empty page, on the public pages.
-- [ ] 1.4 `<html lang>` is correct on first paint: store the locale in a cookie as well as `localStorage` and read it in `layout.tsx`.
+- [x] 1.1 Landing page shows the gap view itself: a read-only demo of one curated set with sample ownership, above the three existing links. No account needed. EN and ES strings together. Done 2026-11-17: the signed-out `/` shows a static, network-free Lincoln Wheat Cents sample (24 coins, 16 owned; 1909-1912 at phone width) as a gap demo built from `CoinCard`, with a printable want list and CSV download next to it, then the three ways in with live counts, and what's covered (`components/landing/`, `lib/landing/`); the demo ships read-only (variant A), and `interactive` on `LandingHero` switches it to tappable `StatusToggle`s (variant B). EN and ES in `locales/*/landing.ts`. Brief: `docs/design/2026-11-16_landing.md`.
+- [x] 1.2 Landing page copy states the one-line pitch ("see what you're still missing") and has a clear sign-up action next to the demo. Done 2026-11-17: the hero's `h1` is "See what you're still missing.", with "Create a free account" (`/signup`) and "Browse checklists" next to the demo; meta description and a static Open Graph/Twitter card (`app/opengraph-image.png`, `app/twitter-image.png`) carry the same pitch.
+- [x] 1.3 Loading state for a cold API: after about 3 seconds without a response, show "waking the server" text instead of an empty page, on the public pages. Done 2026-11-17: `useSlowLoading` (3 s) plus `ServerWakingNotice` (`common.serverWaking`) under the loading skeleton of `/catalog`, `/catalog/[coinId]`, `/sets/canonical`, `/sets/canonical/[id]`, `/sets/public`, `/sets/public/[id]`, and under the ways-in counts on `/`; driven by each page's main query only.
+- [x] 1.4 `<html lang>` is correct on first paint: store the locale in a cookie as well as `localStorage` and read it in `layout.tsx`. Done 2026-11-17: `setLocale` also writes a `ccc-locale` cookie (one year, `SameSite=Lax`, `lib/i18n/locale-cookie.ts`), an existing `localStorage` choice is copied into it on the next visit, and the async root layout reads it with `cookies()` and passes it to `<html lang>` and `I18nProvider initialLocale`. Every route is now dynamically rendered; see the ADR in docs/adr/.
 - [ ] 1.5 Keep the API warm on the free plan; leave the database to sleep. **Needs the PRD line noted above.** Checked 2026-11-13 against Render and Neon docs; re-check the limits before building.
   - [ ] 1.5.1 A free external scheduler (cron-job.org, an uptime monitor, or a GitHub Actions `schedule` workflow at `*/10`) requests `GET /api/v1/health` every 10 minutes. Render's free web service sleeps after 15 minutes without inbound traffic.
   - [ ] 1.5.2 Confirm the Render workspace has only this one free web service: 24/7 uses 720-744 of the 750 free instance hours per month, and running out suspends every free service until the next month.
   - [ ] 1.5.3 `GET /health` stays a pure liveness check with no database query (true today in `health.controller.ts`), and a unit test fails if `PrismaService` is injected into `HealthController`. A ping that touches Neon would keep its compute awake and use up the 100 CU-hours (about 400 hours at 0.25 CU) around mid-month.
   - [ ] 1.5.4 Do not warm Neon. Free-plan auto-suspend (5 minutes) can't be turned off, and a resume takes a few hundred milliseconds, which 1.3 already covers.
   - [ ] 1.5.5 After a week, check Render's free-hours usage and Neon's CU-hours in their dashboards and record the numbers in `docs/history.md`.
-- [ ] 1.6 Manual browser pass at phone and desktop width, logged out, with a cold API.
+- [ ] 1.6 Manual browser pass at phone and desktop width, logged out, with a cold API. Pending manual pass (see the checklist in `docs/design/2026-11-16_landing.md`).
 
 **Checkpoint:** a logged-out visitor understands the product and sees a working gap view within a few seconds.
 

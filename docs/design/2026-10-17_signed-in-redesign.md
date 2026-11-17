@@ -21,6 +21,7 @@ Implementation brief for the signed-in experience: navigation, My sets, the set 
    - **subtitle:** country · denomination · year with the mint mark in collector notation (`1909-S`). Leave out any part the title already contains (title = denomination → "Ukraine · 1992"; title = "1909-S VDB" → "United States · 1 Cent").
    - **eyebrow:** the series (the variety prefix) or `''`.
    - The year is never in the title, except for date-style key names.
+   - **Amendment (2026-11-16, landing brief `docs/design/2026-11-16_landing.md`):** in a single-series set whose header already carries series, country and denomination (the signed-out landing demo), a card titles itself by collector notation, date and mint (e.g. "1909", "1909 VDB", "1909-S VDB"), through `CoinCard`'s `titleOverride` prop, in mono 13/500. `getCoinName` itself is unchanged.
    - Unit-test it against the examples on the Foundations board: Donetsk Oblast, 1909-S VDB, a plain Lincoln Wheat Cent, and 25 Kopiyok 1992.
    - Then replace `formatCoinLabel` and `getAlbumCardText` at every call site. Today that's `collection/page.tsx`, `catalog/[coinId]/page.tsx`, `catalog/mine/page.tsx`, `sets/canonical/[id]`, `sets/public/[id]`, `sets/[id]` and `admin/submission-review-item.tsx`. Keep `formatCoinLabel` only where a single flat string is truly needed (CSV export, aria labels).
 4. **Components** in `apps/web/src/components/ui/`, one file each, each with a test. Classes are in `classical.css`; the spec is the Component spec board.
