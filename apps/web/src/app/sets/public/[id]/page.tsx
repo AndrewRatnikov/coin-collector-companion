@@ -6,6 +6,8 @@ import { getCoinName } from '@coin-collector/shared';
 import { getStoredToken } from '@/lib/auth-token';
 import { isNotFoundError } from '@/lib/not-found-error';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
+import { useSlowLoading } from '@/lib/hooks/use-slow-loading';
+import { ServerWakingNotice } from '@/components/ui/server-waking-notice';
 import { useSetGaps } from '@/lib/hooks/use-user-sets';
 import { SetProgress, SetProgressSkeleton } from '@/components/sets/set-progress';
 import { GradeChip } from '@/components/ui/grade-chip';
@@ -31,6 +33,7 @@ export default function PublicSetDetailPage({ params }: { params: Promise<{ id: 
   }, [params]);
 
   const { data: set, isLoading, isError, error } = usePublicSet(id ?? '');
+  const slow = useSlowLoading(isLoading);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -68,6 +71,7 @@ export default function PublicSetDetailPage({ params }: { params: Promise<{ id: 
       {isLoading && (
         <div data-testid="public-set-detail-loading">
           <Skeleton className="h-6 w-48" />
+          <ServerWakingNotice show={slow} className="mt-3" />
         </div>
       )}
 

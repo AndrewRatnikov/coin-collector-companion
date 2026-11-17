@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
+import { useSlowLoading } from '@/lib/hooks/use-slow-loading';
+import { ServerWakingNotice } from '@/components/ui/server-waking-notice';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { SetsTabs } from '@/components/layout/sets-tabs';
 import { useTranslation } from '@/lib/i18n/i18n-context';
@@ -10,6 +12,7 @@ import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 export default function CanonicalSetsPage() {
   const { t, locale } = useTranslation();
   const { data, isLoading, isError } = useCanonicalSets();
+  const slow = useSlowLoading(isLoading);
 
   return (
     <main
@@ -27,6 +30,7 @@ export default function CanonicalSetsPage() {
       {isLoading && (
         <div data-testid="canonical-sets-loading">
           <ListSkeleton />
+          <ServerWakingNotice show={slow} className="mt-3" />
         </div>
       )}
 

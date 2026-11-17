@@ -6,6 +6,8 @@ import { getCoinName } from '@coin-collector/shared';
 import { getStoredToken } from '@/lib/auth-token';
 import { isNotFoundError } from '@/lib/not-found-error';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
+import { useSlowLoading } from '@/lib/hooks/use-slow-loading';
+import { ServerWakingNotice } from '@/components/ui/server-waking-notice';
 import { useCanonicalSetGaps } from '@/lib/hooks/use-user-sets';
 import { SetProgress, SetProgressSkeleton } from '@/components/sets/set-progress';
 import { GradeChip } from '@/components/ui/grade-chip';
@@ -31,6 +33,7 @@ export default function CanonicalSetDetailPage({ params }: { params: Promise<{ i
   }, [params]);
 
   const { data: set, isLoading, isError, error } = useCanonicalSet(id ?? '');
+  const slow = useSlowLoading(isLoading);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -67,6 +70,7 @@ export default function CanonicalSetDetailPage({ params }: { params: Promise<{ i
       {isLoading && (
         <div data-testid="canonical-set-detail-loading">
           <Skeleton className="h-6 w-48" />
+          <ServerWakingNotice show={slow} className="mt-3" />
         </div>
       )}
 
