@@ -30,9 +30,10 @@ const EXPECTED_IDS = [
   ]),
 ];
 
+// Slot order (a filter over the slots keeps it): 1909-S comes before 1909-S VDB.
 const EXPECTED_MISSING = [
-  'sample-1909-S-VDB',
   'sample-1909-S',
+  'sample-1909-S-VDB',
   'sample-1910-S',
   'sample-1912-S',
   'sample-1914-D',
@@ -136,8 +137,8 @@ describe('LINCOLN_SAMPLE_MOBILE_SLOTS', () => {
   it('owns 8 of 12 and misses four', () => {
     expect(LINCOLN_SAMPLE_MOBILE_SLOTS.filter((s) => s.owned)).toHaveLength(8);
     expect(LINCOLN_SAMPLE_MOBILE_SLOTS.filter((s) => !s.owned).map((s) => s.id)).toEqual([
-      'sample-1909-S-VDB',
       'sample-1909-S',
+      'sample-1909-S-VDB',
       'sample-1910-S',
       'sample-1912-S',
     ]);
