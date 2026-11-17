@@ -18,6 +18,12 @@ import {
 } from '@/lib/landing/lincoln-sample';
 import { buildMissingCsv, missingCsvFilename } from '@/lib/missing-list';
 
+const BOM = String.fromCharCode(0xfeff);
+
+function stripBom(text: string): string {
+  return text.startsWith(BOM) ? text.slice(1) : text;
+}
+
 function renderList(slots = LINCOLN_SAMPLE_SLOTS, keyDateIds: ReadonlySet<string> = LINCOLN_SAMPLE_KEY_DATE_IDS) {
   return render(<WantList slots={slots} keyDateIds={keyDateIds} />);
 }
@@ -180,7 +186,7 @@ describe('WantList: Download CSV', () => {
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     const text = await readText(createObjectURL.mock.calls[0][0] as Blob);
     expect(text).toBe(buildMissingCsv({ slots: LINCOLN_SAMPLE_SLOTS }, LINCOLN_SAMPLE_CSV_NAME));
-    const body = text.replace(/^﻿/, '');
+    const body = stripBom(text);
     expect(body.split('\r\n')).toHaveLength(9);
     expect(body).toContain('Lincoln Wheat Cent,United States,1 Cent,1909,S,VDB,yes,');
     expect(clicked).toHaveLength(1);
@@ -194,7 +200,7 @@ describe('WantList: Download CSV', () => {
     fireEvent.click(screen.getByTestId('want-list-csv'));
 
     const text = await readText(createObjectURL.mock.calls[0][0] as Blob);
-    expect(text.replace(/^﻿/, '').split('\r\n')).toHaveLength(5);
+    expect(stripBom(text).split('\r\n')).toHaveLength(5);
     expect(text).toBe(buildMissingCsv({ slots: LINCOLN_SAMPLE_MOBILE_SLOTS }, LINCOLN_SAMPLE_CSV_NAME));
   });
 });
