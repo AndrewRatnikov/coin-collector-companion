@@ -22,10 +22,13 @@ import {
   type CollectionLayout,
   type CollectionViewFilters,
 } from '@/lib/collection-view';
+import { getCollection } from '@/lib/collection-api';
+import { downloadCollectionCsv } from '@/lib/collection-export';
 import { useCollection, useSetOwnership } from '@/lib/hooks/use-collection';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 
 const FOCUS_RING = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-700';
+const HEADER_ACTION_CLASSNAME = `inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] border border-neutral-400 bg-white px-4 text-sm font-medium text-text hover:border-accent ${FOCUS_RING}`;
 const LOADING_CARDS = 6;
 
 function fill(template: string, values: Record<string, string | number>): string {
@@ -67,6 +70,15 @@ function UploadIcon() {
   );
 }
 
+function DownloadIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M8 2.5v8M4.75 7.5 8 10.75l3.25-3.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M2.75 10.5v2.25h10.5V10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function CollectionList() {
   const { t } = useTranslation();
   const toast = useUndoToast();
@@ -89,6 +101,27 @@ function CollectionList() {
   const [filters, setFilters] = useState<CollectionViewFilters>(EMPTY_COLLECTION_FILTERS);
   const [openOverrides, setOpenOverrides] = useState<Record<string, boolean>>({});
   const [layout, setLayout] = useState<CollectionLayout>('cards');
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState(false);
+
+  // Always the whole, unfiltered collection: filters never change what is exported.
+  const exportDisabled = isLoading || exporting || (data !== undefined && data.length === 0);
+
+  async function handleExport() {
+    let items: readonly OwnershipItem[] | undefined = data;
+    try {
+      if (!items) {
+        setExporting(true);
+        items = await getCollection();
+      }
+      downloadCollectionCsv(items);
+      setExportError(false);
+    } catch {
+      setExportError(true);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   function markPending(coinId: string, pending: boolean) {
     if (pending) pendingRef.current.add(coinId);
@@ -213,46 +246,64 @@ function CollectionList() {
           )}
         </div>
 
-        {displayItems.length > 0 && (
-          <div className="flex flex-wrap items-center gap-3">
-            <div
-              role="group"
-              data-testid="collection-layout-switch"
-              aria-label={t('collection.layoutLabel')}
-              className={SEGMENT_GROUP_CLASSNAME}
-            >
-              <button
-                type="button"
-                data-testid="collection-layout-cards"
-                aria-pressed={layout === 'cards'}
-                onClick={() => setLayout('cards')}
-                className={`${SEGMENT_BUTTON_CLASSNAME} inline-flex cursor-pointer items-center gap-1.5 max-[899px]:px-3`}
+        <div className="flex flex-wrap items-center gap-3">
+          {displayItems.length > 0 && (
+            <>
+              <div
+                role="group"
+                data-testid="collection-layout-switch"
+                aria-label={t('collection.layoutLabel')}
+                className={SEGMENT_GROUP_CLASSNAME}
               >
-                <CardsIcon />
-                <span className="max-[899px]:sr-only">{t('collection.layoutCards')}</span>
-              </button>
-              <button
-                type="button"
-                data-testid="collection-layout-rows"
-                aria-pressed={layout === 'rows'}
-                onClick={() => setLayout('rows')}
-                className={`${SEGMENT_BUTTON_CLASSNAME} inline-flex cursor-pointer items-center gap-1.5 max-[899px]:px-3`}
+                <button
+                  type="button"
+                  data-testid="collection-layout-cards"
+                  aria-pressed={layout === 'cards'}
+                  onClick={() => setLayout('cards')}
+                  className={`${SEGMENT_BUTTON_CLASSNAME} inline-flex cursor-pointer items-center gap-1.5 max-[899px]:px-3`}
+                >
+                  <CardsIcon />
+                  <span className="max-[899px]:sr-only">{t('collection.layoutCards')}</span>
+                </button>
+                <button
+                  type="button"
+                  data-testid="collection-layout-rows"
+                  aria-pressed={layout === 'rows'}
+                  onClick={() => setLayout('rows')}
+                  className={`${SEGMENT_BUTTON_CLASSNAME} inline-flex cursor-pointer items-center gap-1.5 max-[899px]:px-3`}
+                >
+                  <RowsIcon />
+                  <span className="max-[899px]:sr-only">{t('collection.layoutRows')}</span>
+                </button>
+              </div>
+              <Link
+                data-testid="collection-import-button"
+                href="/collection/import"
+                className={HEADER_ACTION_CLASSNAME}
               >
-                <RowsIcon />
-                <span className="max-[899px]:sr-only">{t('collection.layoutRows')}</span>
-              </button>
-            </div>
-            <Link
-              data-testid="collection-import-button"
-              href="/collection/import"
-              className={`inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-md)] border border-neutral-400 bg-white px-4 text-sm font-medium text-text hover:border-accent ${FOCUS_RING}`}
-            >
-              <UploadIcon />
-              {t('collection.importLink')}
-            </Link>
-          </div>
-        )}
+                <UploadIcon />
+                {t('collection.importLink')}
+              </Link>
+            </>
+          )}
+          <button
+            type="button"
+            data-testid="collection-export-button"
+            onClick={handleExport}
+            disabled={exportDisabled}
+            className={`${HEADER_ACTION_CLASSNAME} cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-neutral-400`}
+          >
+            <DownloadIcon />
+            {t('collection.exportButton')}
+          </button>
+        </div>
       </div>
+
+      {exportError && (
+        <p data-testid="collection-export-error" role="alert" className="text-sm text-danger">
+          {t('collection.exportError')}
+        </p>
+      )}
 
       {isLoading && (
         <div

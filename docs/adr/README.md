@@ -14,7 +14,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 
 | Date | Decision | Status |
 |---|---|---|
-| [2026-07-26](2026-07-26-dependency-free-i18n.md) | The web app uses a dependency-free i18n layer with compile-time key parity | Accepted |
+| [2026-07-26](2026-07-26-dependency-free-i18n.md) | The web app uses a dependency-free i18n layer with compile-time key parity | Accepted; the locale-choice clause (first render always `en`) is superseded by [2026-11-16-locale-cookie-read-in-root-layout](2026-11-16-locale-cookie-read-in-root-layout.md) |
 | [2026-10-01](2026-10-01-account-deletion-is-a-hard-delete.md) | Account deletion is an immediate hard delete in one transaction; submitted coins stay, anonymised | Accepted |
 | [2026-10-01](2026-10-01-jwt-validation-checks-the-user-exists.md) | Every authenticated request checks that the user still exists | Accepted |
 | [2026-10-01](2026-10-01-missing-list-built-in-the-browser.md) | The missing-coins CSV and print view are built in the browser from the gap data | Accepted |
@@ -47,6 +47,13 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-08](2026-11-08-canonical-checklist-gaps-separate-endpoint.md) | Curated checklists get their own auth-only `GET /sets/canonical/:id/gaps` that reuses `GapViewResponse`, with `minGrade` always null | Accepted |
 | [2026-11-09](2026-11-09-public-set-progress-reuses-owner-gaps-endpoint.md) | The public set page takes the viewer's progress from `GET /sets/:id/gaps` and ignores the owner's grade fields | Accepted |
 | [2026-11-09](2026-11-09-canonical-gaps-query-under-user-sets-key.md) | The curated checklist gaps query is keyed `['user-sets', 'canonical', id, 'gaps']` | Accepted |
+| [2026-11-10](2026-11-10-i18n-dictionaries-split-by-area.md) | The en and es dictionaries are split into ten per-area files per locale, with each es area typed against its en area | Accepted |
+| [2026-11-10](2026-11-10-set-page-sections-are-prop-only-components.md) | Page splits move JSX into prop-only section components while the route file keeps all state, effects, data hooks and handlers | Accepted |
+| [2026-11-10](2026-11-10-add-coins-focus-trap-effect-wrapped-in-a-hook.md) | The Add coins sheet's Escape and Tab keydown effect lives in a hook the sheet calls, as a narrow exception to prop-only components | Accepted |
+| [2026-11-11](2026-11-11-collection-export-built-in-the-browser-round-trip-safe.md) | Collection export built in the browser, round-trip safe with the import | Accepted |
+| [2026-11-15](2026-11-15-api-security-headers-helmet-defaults-no-csp-relaxation.md) | The API sends helmet's default security headers unchanged, with no CSP relaxation, including on Swagger UI | Accepted |
+| [2026-11-15](2026-11-15-render-build-applies-migrations.md) | Every Render deploy applies pending migrations with `prisma migrate deploy` inside `buildCommand` | Accepted |
+| [2026-11-16](2026-11-16-locale-cookie-read-in-root-layout.md) | The root layout reads the visitor's locale from a `ccc-locale` cookie, so `<html lang>` and the first render match it, and every route renders dynamically | Accepted |
 
 ## Where else decisions live
 

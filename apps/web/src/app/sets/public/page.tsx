@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ListSkeleton } from '@/components/ui/list-skeleton';
 import { SetsTabs } from '@/components/layout/sets-tabs';
 import { usePublicSets } from '@/lib/hooks/use-public-sets';
+import { useSlowLoading } from '@/lib/hooks/use-slow-loading';
+import { ServerWakingNotice } from '@/components/ui/server-waking-notice';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
@@ -14,6 +16,7 @@ export default function PublicSetsPage() {
   const { t, locale } = useTranslation();
   const [page, setPage] = useState(1);
   const { data, isLoading, isError } = usePublicSets({ page, limit: DEFAULT_LIMIT });
+  const slow = useSlowLoading(isLoading);
 
   function goToPage(nextPage: number) {
     setPage(nextPage);
@@ -38,6 +41,7 @@ export default function PublicSetsPage() {
       {isLoading && (
         <div data-testid="public-sets-loading">
           <ListSkeleton />
+          <ServerWakingNotice show={slow} className="mt-3" />
         </div>
       )}
 

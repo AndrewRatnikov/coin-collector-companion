@@ -1,7 +1,10 @@
 /**
  * Tests for: @/lib/missing-list
  * Contract source: runs/run_20261001_205959/plan.md § Interface Contract → Module: missing-list
- * Covers criteria: #1, #2, #3, #4, #5, #6, #9 (from prd.md)
+ *                   runs/run_20261117_063301/plan.md § Interface Contract → Function: groupWantList
+ * Covers criteria: #1, #2, #3, #4, #5, #6, #9 (from prd.md), and #14 of run_20261117_063301
+ *
+ * run_20261117_063301: the existing tests are unchanged; the groupWantList block is added at the end.
  *
  * CONTRACT_GAPs: none
  */
@@ -14,9 +17,15 @@ import {
   downloadMissingCsv,
   formatLocalDate,
   getMissingSlots,
+  groupWantList,
   missingCsvFilename,
   slugifySetName,
 } from '@/lib/missing-list';
+import {
+  LINCOLN_SAMPLE_KEY_DATE_IDS,
+  LINCOLN_SAMPLE_MOBILE_SLOTS,
+  LINCOLN_SAMPLE_SLOTS,
+} from '@/lib/landing/lincoln-sample';
 
 const BOM = '﻿';
 
@@ -319,5 +328,111 @@ describe('downloadMissingCsv', () => {
     downloadMissingCsv(gapsOf([slot('a', 0, false)]), 'Set', new Date(2026, 9, 1));
 
     expect(document.querySelectorAll('a').length).toBe(before);
+  });
+});
+
+describe('groupWantList', () => {
+  it('groups the full sample into 6 year rows over 8 missing coins with key dates starred', () => {
+    const rows = groupWantList(LINCOLN_SAMPLE_SLOTS, LINCOLN_SAMPLE_KEY_DATE_IDS);
+
+    expect(rows).toEqual([
+      {
+        year: 1909,
+        mints: [
+          { label: 'S', isKeyDate: true },
+          { label: 'S VDB', isKeyDate: true },
+        ],
+      },
+      { year: 1910, mints: [{ label: 'S', isKeyDate: false }] },
+      { year: 1912, mints: [{ label: 'S', isKeyDate: false }] },
+      {
+        year: 1914,
+        mints: [
+          { label: 'D', isKeyDate: true },
+          { label: 'S', isKeyDate: false },
+        ],
+      },
+      { year: 1915, mints: [{ label: 'S', isKeyDate: false }] },
+      { year: 1916, mints: [{ label: 'S', isKeyDate: false }] },
+    ]);
+    expect(rows.reduce((total, row) => total + row.mints.length, 0)).toBe(8);
+  });
+
+  it('groups the 1909-1912 mobile slice into 3 rows over 4 coins', () => {
+    const rows = groupWantList(LINCOLN_SAMPLE_MOBILE_SLOTS, LINCOLN_SAMPLE_KEY_DATE_IDS);
+
+    expect(rows.map((row) => row.year)).toEqual([1909, 1910, 1912]);
+    expect(rows.reduce((total, row) => total + row.mints.length, 0)).toBe(4);
+  });
+
+  it('returns no rows when nothing is missing or there are no slots', () => {
+    expect(groupWantList(LINCOLN_SAMPLE_SLOTS.map((s) => ({ ...s, owned: true })), LINCOLN_SAMPLE_KEY_DATE_IDS)).toEqual([]);
+    expect(groupWantList([], new Set())).toEqual([]);
+  });
+
+  it('uses an empty label for a plain coin and the variety alone when there is no mint mark', () => {
+    const rows = groupWantList(
+      [
+        slot('plain', 1, false, { year: 1911, mintMark: '', variety: '', isKeyDate: false }),
+        slot('vdb', 2, false, { year: 1911, mintMark: '', variety: 'VDB', isKeyDate: false }),
+        slot('d', 3, false, { year: 1911, mintMark: 'D', variety: '', isKeyDate: false }),
+      ] as never,
+      new Set(),
+    );
+
+    expect(rows).toEqual([
+      {
+        year: 1911,
+        mints: [
+          { label: '', isKeyDate: false },
+          { label: 'VDB', isKeyDate: false },
+          { label: 'D', isKeyDate: false },
+        ],
+      },
+    ]);
+  });
+
+  it('ignores owned slots', () => {
+    const rows = groupWantList(
+      [
+        slot('a', 1, true, { year: 1911, mintMark: 'D', variety: '' }),
+        slot('b', 2, false, { year: 1911, mintMark: 'S', variety: '' }),
+      ] as never,
+      new Set(),
+    );
+
+    expect(rows).toEqual([{ year: 1911, mints: [{ label: 'S', isKeyDate: false }] }]);
+  });
+
+  it('sorts by position, groups years in order of first appearance and does not mutate the input', () => {
+    const slots = [
+      slot('late', 9, false, { year: 1913, mintMark: 'S', variety: '' }),
+      slot('first', 1, false, { year: 1911, mintMark: 'D', variety: '' }),
+      slot('mid', 5, false, { year: 1911, mintMark: 'S', variety: '' }),
+    ];
+    const before = [...slots];
+
+    const rows = groupWantList(slots as never, new Set());
+
+    expect(rows.map((row) => row.year)).toEqual([1911, 1913]);
+    expect(rows[0].mints.map((m) => m.label)).toEqual(['D', 'S']);
+    expect(slots).toEqual(before);
+    expect(slots.map((s) => s.id)).toEqual(['late', 'first', 'mid']);
+  });
+
+  it('takes the key-date flag from keyDateIds by coin id, not from coin.isKeyDate', () => {
+    const slots = [
+      slot('k', 1, false, { year: 1914, mintMark: 'D', variety: '', isKeyDate: false }),
+      slot('n', 2, false, { year: 1914, mintMark: 'S', variety: '', isKeyDate: true }),
+    ] as never;
+
+    const flagged = groupWantList(slots, new Set(['coin-k']));
+    const none = groupWantList(slots, new Set());
+
+    expect(flagged[0].mints).toEqual([
+      { label: 'D', isKeyDate: true },
+      { label: 'S', isKeyDate: false },
+    ]);
+    expect(none[0].mints.every((m) => !m.isKeyDate)).toBe(true);
   });
 });

@@ -6,6 +6,7 @@ import type {
   OwnershipItem,
   SetOwnershipResponse,
 } from '@coin-collector/shared';
+import { CATALOG_COIN_SELECT } from '../catalog/catalog.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { FindCollectionQueryDto } from './dto/find-collection-query.dto';
 
@@ -85,7 +86,13 @@ export class CollectionService {
           ...(query.year !== undefined ? { year: query.year } : {}),
         },
       },
-      include: { coin: true },
+      select: {
+        userId: true,
+        coinId: true,
+        ownedAt: true,
+        grade: true,
+        coin: { select: CATALOG_COIN_SELECT },
+      },
       orderBy: { ownedAt: 'desc' },
     });
   }

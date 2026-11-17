@@ -10,10 +10,18 @@ export interface BadgeProps {
   variant: BadgeVariant;
   count?: number;
   children?: ReactNode;
+  /** 'small' is the 18px pill used inside compact coin cards. Default 'default' (22px). */
+  size?: BadgeSize;
 }
 
-const BASE_CLASSES =
-  'inline-flex items-center gap-1 h-[22px] px-2 rounded-full text-xs font-medium whitespace-nowrap leading-none';
+export type BadgeSize = 'default' | 'small';
+
+const BASE_CLASSES = 'inline-flex items-center gap-1 rounded-full font-medium whitespace-nowrap leading-none';
+
+const SIZE_CLASSES: Record<BadgeSize, string> = {
+  default: 'h-[22px] px-2 text-xs',
+  small: 'h-[18px] px-1.5 text-[10px]',
+};
 
 const VARIANT_CLASSES: Record<BadgeVariant, string> = {
   owned: 'bg-accent-100 text-accent-800 border border-accent-400',
@@ -40,7 +48,7 @@ function labelKey(variant: BadgeVariant, count: number | undefined): MessageKey 
 }
 
 /** Small status pill: owned, in N sets, N missing, key date or complete. */
-export function Badge({ variant, count, children }: BadgeProps) {
+export function Badge({ variant, count, children, size = 'default' }: BadgeProps) {
   const { t } = useTranslation();
   const n = variant === 'missing' ? (count ?? 1) : count;
   const label = t(labelKey(variant, count))
@@ -48,7 +56,12 @@ export function Badge({ variant, count, children }: BadgeProps) {
     .join(String(n ?? ''));
 
   return (
-    <span data-testid="badge" data-variant={variant} className={`${BASE_CLASSES} ${VARIANT_CLASSES[variant]}`}>
+    <span
+      data-testid="badge"
+      data-variant={variant}
+      data-size={size}
+      className={`${BASE_CLASSES} ${SIZE_CLASSES[size]} ${VARIANT_CLASSES[variant]}`}
+    >
       {children ?? label}
     </span>
   );

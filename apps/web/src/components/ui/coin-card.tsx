@@ -6,7 +6,7 @@ import { useTranslation } from '@/lib/i18n/i18n-context';
 import { Badge } from '@/components/ui/badge';
 import { GradeChip } from '@/components/ui/grade-chip';
 import { PlaceholderCoin } from '@/components/ui/placeholder-coin';
-import { StatusToggle, useDelayedPending } from '@/components/ui/status-toggle';
+import { StatusToggle, TickIcon, useDelayedPending } from '@/components/ui/status-toggle';
 import { UpgradeBadge } from '@/components/ui/upgrade-badge';
 
 export type CoinCardStatus = 'idle' | 'pending' | 'failed';
@@ -29,9 +29,39 @@ export interface CoinCardProps {
   grade?: CoinGrade | null;
   /** API's needsUpgrade for this slot; shows the Upgrade state when owned and not a visitor. Default false. */
   needsUpgrade?: boolean;
+  /** 'compact' is the small demo card: no eyebrow or subtitle, no lift, small key-date badge in the body. */
+  density?: CoinCardDensity;
+  /** Replaces getCoinName(coin).title in coin-card-title (e.g. collector notation "1909-S VDB"). */
+  titleOverride?: string;
+  /** coin-card-status text when owned (idle). Default t('ui.coin.statusOwned'). */
+  ownedStatusLabel?: string;
+  /** false: the title is plain text, with no link to the coin page. Default true. */
+  linkToCoin?: boolean;
+  /** true: an aria-hidden check disc replaces the StatusToggle, so the card has no control. Default false. */
+  readOnly?: boolean;
 }
 
+export type CoinCardDensity = 'default' | 'compact';
+
 function noop() {}
+
+/** The non-interactive check disc of a read-only card: solid tick when owned, dashed when missing. */
+function ReadOnlyCheck({ owned, compact }: { owned: boolean; compact: boolean }) {
+  const face = owned
+    ? 'bg-accent border-2 border-white text-white shadow-sm'
+    : 'bg-white/90 border-[1.5px] border-dashed border-neutral-500 text-neutral-500';
+  return (
+    <span
+      data-testid="coin-card-check"
+      aria-hidden="true"
+      className={`absolute right-1 top-1 z-[3] inline-flex items-center justify-center ${compact ? 'size-9' : 'size-11'}`}
+    >
+      <span className={`flex items-center justify-center rounded-full ${compact ? 'size-6' : 'size-8'} ${face}`}>
+        <TickIcon className={compact ? 'size-3' : 'size-4'} />
+      </span>
+    </span>
+  );
+}
 
 /**
  * One coin in a grid: the coin well, the getCoinName block as a stretched link to the coin page,
@@ -52,9 +82,16 @@ export function CoinCard({
   missingStatusLabel,
   grade = null,
   needsUpgrade = false,
+  density = 'default',
+  titleOverride,
+  ownedStatusLabel,
+  linkToCoin = true,
+  readOnly = false,
 }: CoinCardProps) {
   const { t } = useTranslation();
   const name = getCoinName(coin);
+  const titleText = titleOverride ?? name.title;
+  const compact = density === 'compact';
   const showSaving = useDelayedPending(status === 'pending');
 
   const ownedLook = owned && !visitor;
@@ -65,7 +102,7 @@ export function CoinCard({
   const rootClasses = [
     'group relative flex flex-col rounded-lg border overflow-hidden',
     'motion-safe:transition motion-safe:duration-150',
-    'motion-safe:hover:-translate-y-0.5 motion-safe:focus-within:-translate-y-0.5',
+    compact ? '' : 'motion-safe:hover:-translate-y-0.5 motion-safe:focus-within:-translate-y-0.5',
     'hover:shadow-md focus-within:shadow-md hover:border-accent focus-within:border-accent',
     ownedLook ? 'bg-accent-100 shadow-sm' : 'bg-neutral-100',
     failed
@@ -83,9 +120,13 @@ export function CoinCard({
   const title = (
     <span
       data-testid="coin-card-title"
-      className="text-[15px] font-semibold leading-[1.3] text-text group-hover:text-accent-700"
+      className={
+        compact
+          ? 'font-mono text-[13px] font-medium leading-[1.3] text-text'
+          : 'text-[15px] font-semibold leading-[1.3] text-text group-hover:text-accent-700'
+      }
     >
-      {name.title}
+      {titleText}
     </span>
   );
 
@@ -112,7 +153,7 @@ export function CoinCard({
     } else if (owned) {
       statusLine = (
         <span data-testid="coin-card-status" className="font-medium text-accent-700">
-          {t('ui.coin.statusOwned')}
+          {ownedStatusLabel ?? t('ui.coin.statusOwned')}
         </span>
       );
     } else {
@@ -133,13 +174,14 @@ export function CoinCard({
       data-selected={selected ? 'true' : 'false'}
       data-key-date={coin.isKeyDate ? 'true' : 'false'}
       data-upgrade={upgrade ? 'true' : 'false'}
+      data-density={density}
       className={rootClasses}
     >
       <div
         data-testid="coin-card-well"
         className={`@container relative aspect-[4/3] flex items-center justify-center ${ownedLook ? 'bg-accent-200' : 'bg-neutral-200'}`}
       >
-        {coin.isKeyDate && (
+        {coin.isKeyDate && !compact && (
           <span className="absolute left-2 top-2.5">
             <Badge variant="key-date" />
           </span>
@@ -150,16 +192,17 @@ export function CoinCard({
           material={coin.material}
           imageUrl={coin.imageUrl}
           missing={!owned && !visitor}
+          className={compact ? 'size-[52cqw]! text-[52cqw]!' : ''}
         />
       </div>
 
-      <div className="flex min-w-0 flex-col gap-px px-3 pt-2.5 pb-3">
-        {name.eyebrow !== '' && !hideEyebrow && (
+      <div className={`flex min-w-0 flex-col gap-px ${compact ? 'px-2 pt-[7px] pb-2' : 'px-3 pt-2.5 pb-3'}`}>
+        {name.eyebrow !== '' && !hideEyebrow && !compact && (
           <span data-testid="coin-card-eyebrow" className="truncate text-[11px] font-medium text-neutral-700">
             {name.eyebrow}
           </span>
         )}
-        {selectMode ? (
+        {selectMode || !linkToCoin ? (
           title
         ) : (
           <Link
@@ -170,12 +213,16 @@ export function CoinCard({
             {title}
           </Link>
         )}
-        <span data-testid="coin-card-subtitle" className="text-xs text-neutral-700">
-          {name.subtitle}
-        </span>
+        {!compact && (
+          <span data-testid="coin-card-subtitle" className="text-xs text-neutral-700">
+            {name.subtitle}
+          </span>
+        )}
 
         {statusLine && (
-          <div className="mt-1.5 flex min-h-5 items-center justify-between gap-1.5 text-xs">
+          <div
+            className={`mt-1.5 flex min-h-5 items-center justify-between gap-1.5 ${compact ? 'text-[11px]' : 'text-xs'}`}
+          >
             {owned && !visitor && grade !== null ? (
               <span className="flex min-w-0 items-center gap-1.5">
                 {statusLine}
@@ -196,13 +243,20 @@ export function CoinCard({
             )}
           </div>
         )}
+        {compact && coin.isKeyDate && (
+          <span className="mt-1 flex">
+            <Badge variant="key-date" size="small" />
+          </span>
+        )}
       </div>
 
-      {!visitor && !selectMode && (
+      {!visitor && !selectMode && readOnly && <ReadOnlyCheck owned={owned} compact={compact} />}
+
+      {!visitor && !selectMode && !readOnly && (
         <StatusToggle
           variant="check"
           owned={owned}
-          coinTitle={name.title}
+          coinTitle={titleText}
           state={status}
           onToggle={onToggle}
           ariaLabel={toggleLabel}

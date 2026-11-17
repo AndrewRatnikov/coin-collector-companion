@@ -15,8 +15,12 @@ import {
 import { useAddCoinsToSet, useUserSets } from '@/lib/hooks/use-user-sets';
 import { getSetGaps } from '@/lib/user-sets-api';
 import { getStoredToken } from '@/lib/auth-token';
+import { useSlowLoading } from '@/lib/hooks/use-slow-loading';
+import { ServerWakingNotice } from '@/components/ui/server-waking-notice';
+import { isNotFoundError } from '@/lib/not-found-error';
 import { catalogCountryHref, getCoinSetRows, getCoinSpecRows, type CoinSpecKey } from '@/lib/coin-page';
 import { Skeleton } from '@/components/ui/skeleton';
+import { NotFoundContent } from '@/components/ui/not-found-content';
 import { Badge } from '@/components/ui/badge';
 import { PlaceholderCoin } from '@/components/ui/placeholder-coin';
 import type { StatusToggleState } from '@/components/ui/status-toggle';
@@ -80,7 +84,8 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
     };
   }, [params]);
 
-  const { data: coin, isLoading, isError } = useCoin(coinId ?? '');
+  const { data: coin, isLoading, isError, error } = useCoin(coinId ?? '');
+  const slow = useSlowLoading(isLoading);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -248,10 +253,13 @@ export default function CoinDetailPage({ params }: { params: Promise<{ coinId: s
             <Skeleton className="h-12 w-3/4" />
             <Skeleton className="h-5 w-56" />
           </div>
+          <ServerWakingNotice show={slow} className="min-[900px]:col-span-2" />
         </div>
       )}
 
-      {isError && (
+      {isError && isNotFoundError(error) && <NotFoundContent variant="coin" />}
+
+      {isError && !isNotFoundError(error) && (
         <p data-testid="coin-detail-error" className="text-sm text-[color:var(--color-accent-800)]">
           {t('coinDetail.errorLoading')}
         </p>

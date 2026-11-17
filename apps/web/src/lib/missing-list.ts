@@ -1,26 +1,49 @@
-import type { GapSlot, GapViewResponse } from '@coin-collector/shared';
+import { csvDocument, csvRow, formatLocalDate, type GapSlot, type GapViewResponse } from '@coin-collector/shared';
+
+export { formatLocalDate } from '@coin-collector/shared';
 
 export const MISSING_CSV_HEADER = 'Name,Country,Denomination,Year,Mint mark,Variety,Key date,Mintage';
-
-const BOM = '﻿';
-const FORMULA_PREFIX = /^[=+\-@]/;
-const NEEDS_QUOTING = /[",\r\n]/;
 
 /** Unowned slots, ascending by position. Never mutates the input. */
 export function getMissingSlots(gaps: Pick<GapViewResponse, 'slots'>): GapSlot[] {
   return [...gaps.slots].filter((slot) => !slot.owned).sort((a, b) => a.position - b.position);
 }
 
-/** Formula-injection prefix first, then RFC 4180 quoting. */
-function csvCell(value: string): string {
-  let cell = String(value);
-  if (FORMULA_PREFIX.test(cell)) {
-    cell = `'${cell}`;
+export interface WantListMint {
+  label: string;
+  isKeyDate: boolean;
+}
+
+export interface WantListYear {
+  year: number;
+  mints: WantListMint[];
+}
+
+/**
+ * Unowned slots grouped by year (years in order of first appearance after sorting by position).
+ * A mint's label is "mintMark variety" ('' for a plain coin); key dates come from `keyDateIds`.
+ * Never mutates the input.
+ */
+export function groupWantList(
+  slots: readonly Pick<GapSlot, 'coin' | 'owned' | 'position'>[],
+  keyDateIds: ReadonlySet<string>,
+): WantListYear[] {
+  const rows: WantListYear[] = [];
+  const byYear = new Map<number, WantListYear>();
+  const missing = slots.filter((slot) => !slot.owned).sort((a, b) => a.position - b.position);
+  for (const { coin } of missing) {
+    let row = byYear.get(coin.year);
+    if (!row) {
+      row = { year: coin.year, mints: [] };
+      byYear.set(coin.year, row);
+      rows.push(row);
+    }
+    row.mints.push({
+      label: [coin.mintMark, coin.variety].filter(Boolean).join(' '),
+      isKeyDate: keyDateIds.has(coin.id),
+    });
   }
-  if (NEEDS_QUOTING.test(cell)) {
-    cell = `"${cell.replace(/"/g, '""')}"`;
-  }
-  return cell;
+  return rows;
 }
 
 export function buildMissingCsv(
@@ -30,7 +53,7 @@ export function buildMissingCsv(
   setName: string,
 ): string {
   const rows = getMissingSlots(gaps).map(({ coin }) =>
-    [
+    csvRow([
       coin.name,
       coin.country,
       coin.denomination,
@@ -39,11 +62,9 @@ export function buildMissingCsv(
       coin.variety,
       coin.isKeyDate ? 'yes' : 'no',
       coin.mintage === null ? '' : String(coin.mintage),
-    ]
-      .map(csvCell)
-      .join(','),
+    ]),
   );
-  return BOM + [MISSING_CSV_HEADER, ...rows].join('\r\n');
+  return csvDocument([MISSING_CSV_HEADER, ...rows]);
 }
 
 export function slugifySetName(name: string): string {
@@ -57,14 +78,6 @@ export function slugifySetName(name: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
   return slug === '' ? 'set' : slug;
-}
-
-/** 'YYYY-MM-DD' in local time. */
-export function formatLocalDate(date: Date): string {
-  const year = String(date.getFullYear()).padStart(4, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
 
 export function missingCsvFilename(setName: string, date: Date): string {

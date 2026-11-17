@@ -4,12 +4,16 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getCoinName } from '@coin-collector/shared';
 import { getStoredToken } from '@/lib/auth-token';
+import { isNotFoundError } from '@/lib/not-found-error';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
+import { useSlowLoading } from '@/lib/hooks/use-slow-loading';
+import { ServerWakingNotice } from '@/components/ui/server-waking-notice';
 import { useCanonicalSetGaps } from '@/lib/hooks/use-user-sets';
 import { SetProgress, SetProgressSkeleton } from '@/components/sets/set-progress';
 import { GradeChip } from '@/components/ui/grade-chip';
 import { OwnershipMark } from '@/components/ui/ownership-mark';
 import { Skeleton } from '@/components/ui/skeleton';
+import { NotFoundContent } from '@/components/ui/not-found-content';
 import { formatOwnedOfTotal } from '@/lib/album-layout';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
@@ -28,7 +32,8 @@ export default function CanonicalSetDetailPage({ params }: { params: Promise<{ i
     };
   }, [params]);
 
-  const { data: set, isLoading, isError } = useCanonicalSet(id ?? '');
+  const { data: set, isLoading, isError, error } = useCanonicalSet(id ?? '');
+  const slow = useSlowLoading(isLoading);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -65,10 +70,13 @@ export default function CanonicalSetDetailPage({ params }: { params: Promise<{ i
       {isLoading && (
         <div data-testid="canonical-set-detail-loading">
           <Skeleton className="h-6 w-48" />
+          <ServerWakingNotice show={slow} className="mt-3" />
         </div>
       )}
 
-      {isError && (
+      {isError && isNotFoundError(error) && <NotFoundContent variant="checklist" />}
+
+      {isError && !isNotFoundError(error) && (
         <p data-testid="canonical-set-detail-error" className="text-sm text-[color:var(--color-accent-800)]">
           {t('canonicalSetDetail.errorLoading')}
         </p>

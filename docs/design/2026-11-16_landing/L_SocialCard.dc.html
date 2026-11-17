@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Social preview card</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/9289bb8d20793fdaa54f2a398d1afa04">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>body{margin:0}.sc .ccard:hover{transform:none;box-shadow:none}.sc .ccard.missing:hover{border-color:var(--n300)}.sc .ccard.owned:hover{border-color:var(--a400)}</style>
+</helmet>
+<div class="cc sc" style="width: 1200px; height: 630px; box-sizing: border-box; padding: 64px 72px; display: grid; grid-template-columns: minmax(0, 1fr) 460px; gap: 56px; align-items: center; background: #f3f2f2; border-bottom: 8px solid #b68235">
+<div style="display: flex; flex-direction: column; gap: 28px">
+<span class="brand" style="font-size: 30px"><span class="brand-mark" aria-hidden="true" style="width: 36px; height: 36px"></span>Coin Collector Companion</span>
+<h1 class="h1" style="font-size: 76px; line-height: 1.02">{{headline}}</h1>
+<p style="font-size: 24px; color: #444141">{{sub}}</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 18px; padding: 28px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 18px; color: #444141"><b class="mono" style="font-size: 30px; font-weight: 500; color: #201f1d">16</b> {{of}} <span class="mono">24</span> {{owned}}</span><span class="mono" style="font-size: 22px; color: #7d5411">67%</span></div>
+<div class="progress" style="height: 10px"><span style="width: 67%"></span></div>
+</div>
+<div class="gh" style="min-height: 28px"><span class="gh-y" style="font-size: 18px">1914</span><span class="gh-rule" aria-hidden="true"></span></div>
+<ul class="cgrid" style="grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px">
+<li class="ccard owned"><div class="ccard-well"><span class="coin copper" aria-hidden="true"><span class="n">1</span><span class="u">Cent</span></span><span class="check on" aria-hidden="true"><i><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></i></span></div><div class="ccard-body"><span class="mono" style="font-size: 16px; font-weight: 500">1914</span></div></li>
+<li class="ccard missing"><div class="ccard-well"><span class="coin copper" aria-hidden="true"><span class="n">1</span><span class="u">Cent</span></span><span class="check" aria-hidden="true"><i><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></i></span></div><div class="ccard-body"><span class="mono" style="font-size: 16px; font-weight: 500">1914-D</span><span class="badge b-key" style="align-self: flex-start; margin-top: 4px">★ Key date</span></div></li>
+<li class="ccard missing"><div class="ccard-well"><span class="coin copper" aria-hidden="true"><span class="n">1</span><span class="u">Cent</span></span><span class="check" aria-hidden="true"><i><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></i></span></div><div class="ccard-body"><span class="mono" style="font-size: 16px; font-weight: 500">1914-S</span></div></li>
+</ul>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"lang":{"editor":"enum","options":["en","es"],"default":"en"},"$preview":{"width":1200,"height":630}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var es = this.props.lang === 'es';
+    return es
+      ? { headline: 'Mira lo que aún te falta.', sub: 'Listas gratuitas para coleccionistas de monedas.', of: 'de', owned: 'conseguidas' }
+      : { headline: 'See what you’re still missing.', sub: 'Free checklists for coin collectors.', of: 'of', owned: 'owned' };
+  }
+}
+</script>
+</body>
+</html>

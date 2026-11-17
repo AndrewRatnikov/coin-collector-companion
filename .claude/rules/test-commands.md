@@ -16,4 +16,4 @@ pnpm --filter api exec prisma generate && pnpm --filter api test
 pnpm --filter @coin-collector/shared build && pnpm --filter web test
 ```
 
-Live-DB work (running a seed or migration for real, psql spot checks against the Neon dev DB that Render also uses) is a manual step. Automated runs have no DB credentials. Leave those backlog items unchecked with a "pending manual pass" note instead of marking them done on the strength of mocked-Prisma unit tests.
+Live-DB work (running a seed or migration for real, psql spot checks against production; local `.env` points at the separate Neon `dev` branch) is a manual step. Automated runs have no DB credentials. Leave those backlog items unchecked with a "pending manual pass" note instead of marking them done on the strength of mocked-Prisma unit tests.

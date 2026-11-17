@@ -1,0 +1,4 @@
+export const FOCUS_RING = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-700';
+export const BTN_PRIMARY = `inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-md)] bg-accent-700 px-[18px] text-sm font-medium text-white hover:bg-accent-800 ${FOCUS_RING}`;
+export const BTN_SECONDARY = `inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-md)] border border-neutral-400 bg-white px-[18px] text-sm font-medium text-text hover:border-accent ${FOCUS_RING}`;
+export const MENU_ITEM = `flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-[var(--radius-sm,4px)] px-2.5 text-left text-sm text-text hover:bg-surface aria-checked:font-medium ${FOCUS_RING}`;

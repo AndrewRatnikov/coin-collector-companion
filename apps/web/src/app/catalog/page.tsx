@@ -20,6 +20,8 @@ import {
   type CatalogViewState,
 } from '@/lib/catalog-view';
 import { getStoredToken } from '@/lib/auth-token';
+import { useSlowLoading } from '@/lib/hooks/use-slow-loading';
+import { ServerWakingNotice } from '@/components/ui/server-waking-notice';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -83,6 +85,7 @@ function CatalogPageContent() {
 
   const filters = useMemo(() => catalogViewStateToFilters(view, isLoggedIn), [view, isLoggedIn]);
   const { data, isLoading, isError } = useCatalog(filters);
+  const slow = useSlowLoading(isLoading && !data);
   const { data: facets } = useCatalogFacets(view.country || undefined);
 
   function update(next: CatalogViewState) {
@@ -267,6 +270,7 @@ function CatalogPageContent() {
                 isLoading={isLoading && !data}
                 showOwnership={isLoggedIn}
               />
+              <ServerWakingNotice show={slow} />
               {data && data.items.length > 0 && (
                 <CatalogPagination page={view.page} totalPages={totalPages} onPageChange={handlePageChange} />
               )}

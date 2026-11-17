@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Landing page mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/9289bb8d20793fdaa54f2a398d1afa04">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+.lpm .ccard:hover,.lpm .ccard:focus-within{transform:none;box-shadow:none}
+.lpm .ccard.owned:hover{border-color:var(--a400)}
+.lpm .ccard.missing:hover{border-color:var(--n300)}
+.lpm .check{cursor:default}
+.lpm-want td{padding:6px 0;border-bottom:1px dashed var(--n300)}
+.lpm-want tr:last-child td{border-bottom:0}
+</style>
+</helmet>
+<div class="m cc" lang="{{lang}}">
+<header class="m-top">
+<span class="brand-mark" aria-hidden="true"></span>
+<span class="t serif" style="font-size: 19px">Coin Collector Companion</span>
+<a href="#" class="btn btn-secondary btn-sm" style="margin-right: 6px; min-height: 44px">{{tx.login}}</a>
+</header>
+<main class="m-body" style="gap: 22px; padding-bottom: 32px">
+
+<section style="display: flex; flex-direction: column; gap: 14px">
+<p class="eyebrow" style="font-size: 11px">{{tx.eyebrow}}</p>
+<h1 class="h1" style="font-size: 38px; line-height: 1.06">{{tx.headline}}</h1>
+<p style="font-size: 16px; color: #444141">{{tx.body}}</p>
+<a href="#" class="btn btn-primary" style="min-height: 48px; font-size: 15px">{{tx.cta}}</a>
+<a href="#" class="btn btn-secondary" style="min-height: 48px">{{tx.cta2}}</a>
+<p style="font-size: 13px; color: #605d5d; text-align: center">{{tx.honest}}</p>
+</section>
+
+<section aria-labelledby="dm-h" style="display: flex; flex-direction: column; gap: 14px; padding: 16px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px; margin: 0 -4px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #444141; padding-bottom: 10px; border-bottom: 1px dashed #bab6b6"><span class="badge b-inset">{{tx.sample}}</span>{{tx.sampleLabel}}</span>
+<div style="display: flex; flex-direction: column; gap: 2px">
+<h2 id="dm-h" class="h2" style="font-size: 28px">Lincoln Wheat Cents</h2>
+<p class="muted" style="font-size: 12px">{{tx.sub}}</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 14px; color: #444141"><b class="mono" style="font-size: 20px; font-weight: 500; color: #201f1d">8</b> {{tx.of}} <span class="mono">12</span> {{tx.ownedWord}}</span><span class="mono" style="color: #7d5411">67%</span></div>
+<div class="progress" role="progressbar" aria-label="{{tx.progress}}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="67"><span style="width: 67%"></span></div>
+</div>
+<div class="seg" role="group" aria-label="{{tx.show}}" style="align-self: flex-start"><button type="button" aria-pressed="{{fAll}}" onClick="{{showAll}}">{{tx.all}} <span class="mono">12</span></button><button type="button" aria-pressed="{{fMissing}}" onClick="{{showMissing}}">{{tx.missing}} <span class="mono">4</span></button></div>
+<div class="lpm" style="display: flex; flex-direction: column; gap: 14px">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+<section aria-label="{{g.year}}" style="display: flex; flex-direction: column; gap: 8px">
+<div class="gh" style="min-height: 28px"><h3 class="gh-y" style="font-size: 17px">{{g.year}}</h3><span class="gh-c" style="font-size: 12px">{{g.summary}}</span><span class="gh-rule" aria-hidden="true"></span></div>
+<ul class="cgrid">
+<sc-for list="{{g.coins}}" as="c" hint-placeholder-count="2">
+<li class="{{c.cls}}">
+<div class="ccard-well"><span class="coin copper" aria-hidden="true"><span class="n">1</span><span class="u">Cent</span></span><span class="{{c.checkCls}}" aria-hidden="true"><i><svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg></i></span></div>
+<div class="ccard-body" style="padding: 8px 10px 10px; gap: 3px"><span class="mono" style="font-size: 14px; font-weight: 500">{{c.label}}</span><span class="{{c.stCls}}" style="font-size: 12px">{{c.st}}</span><sc-if value="{{c.key}}" hint-placeholder-val="{{ false }}"><span class="badge b-key" style="align-self: flex-start; height: 20px; font-size: 11px">★ {{tx.key}}</span></sc-if></div>
+</li>
+</sc-for>
+</ul>
+</section>
+</sc-for>
+</div>
+<a href="#" class="link" style="font-size: 14px; min-height: 44px; display: flex; align-items: center">{{tx.seeFull}}</a>
+</section>
+
+<section aria-labelledby="wm-h" style="display: flex; flex-direction: column; gap: 8px; padding: 16px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px">
+<div style="display: flex; align-items: baseline; justify-content: space-between"><h2 id="wm-h" class="serif" style="font-size: 22px">{{tx.want}}</h2><span class="mono" style="font-size: 12px; color: #605d5d">{{tx.wantCount}}</span></div>
+<table class="lpm-want" style="border-collapse: collapse; width: 100%; font-size: 14px"><tbody>
+<tr><td class="mono" style="width: 56px; font-weight: 500">1909</td><td class="mono">S ★ · S VDB ★</td></tr>
+<tr><td class="mono" style="font-weight: 500">1910</td><td class="mono">S</td></tr>
+<tr><td class="mono" style="font-weight: 500">1912</td><td class="mono">S</td></tr>
+</tbody></table>
+<p style="font-size: 12px; color: #605d5d">{{tx.wantNote}}</p>
+</section>
+
+<section aria-label="{{tx.how}}" style="display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 class="serif" style="font-size: 23px">{{tx.p1t}}</h2><p style="color: #444141">{{tx.p1b}}</p></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 class="serif" style="font-size: 23px">{{tx.p2t}}</h2><p style="color: #444141">{{tx.p2b}}</p></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><h2 class="serif" style="font-size: 23px">{{tx.p3t}}</h2><p style="color: #444141">{{tx.p3b}}</p></div>
+</section>
+
+<section aria-label="{{tx.ways}}" style="display: flex; flex-direction: column; gap: 10px">
+<a href="#" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 56px; padding: 0 14px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px"><span style="font-weight: 600">{{tx.w1}}</span><span class="mono" style="font-size: 12px; color: #605d5d">360 ›</span></a>
+<a href="#" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 56px; padding: 0 14px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px"><span style="font-weight: 600">{{tx.w2}}</span><span class="mono" style="font-size: 12px; color: #605d5d">5 ›</span></a>
+<a href="#" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 56px; padding: 0 14px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px"><span style="font-weight: 600">{{tx.w3}}</span><span style="font-size: 12px; color: #605d5d">{{tx.w3c}} ›</span></a>
+</section>
+
+<section aria-label="{{tx.cov}}" style="display: flex; flex-direction: column; gap: 8px; padding: 16px; background: #eae9e9; border-radius: 7px">
+<h2 class="serif" style="font-size: 23px">{{tx.cov}}</h2>
+<p style="font-size: 14px; color: #444141">{{tx.cov1}} <span class="mono">1909–1958</span> · {{tx.cov2}} <span class="mono">1992–</span></p>
+<a href="#" class="link" style="font-size: 14px; align-self: flex-start; min-height: 44px; display: flex; align-items: center">{{tx.submit}}</a>
+</section>
+
+<footer style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; color: #605d5d; padding-top: 12px; border-top: 1px solid rgba(32,31,29,0.16)">
+<span>{{tx.attr}}</span>
+<span style="display: flex; gap: 16px"><a href="#" style="text-decoration: underline">{{tx.help}}</a><a href="#" style="text-decoration: underline">{{tx.feedback}}</a></span>
+</footer>
+</main>
+<nav class="m-tabs" aria-label="{{tx.nav}}" style="grid-template-columns: repeat(3, 1fr)">
+<a href="#"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M3 5h5.5A2.5 2.5 0 0 1 11 7.5V18a2 2 0 0 0-2-2H3zM19 5h-5.5A2.5 2.5 0 0 0 11 7.5V18a2 2 0 0 1 2-2h6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path></svg>{{tx.tCatalog}}</a>
+<a href="#"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M10.5 6.5H18M10.5 12.5H18M4 17.5h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{tx.tChecklists}}</a>
+<a href="#"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M5 4.5h9.5A2.5 2.5 0 0 1 17 7v11H7.5A2.5 2.5 0 0 1 5 15.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"></path><path d="M8.5 8.5h5M8.5 11.5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg>{{tx.tGlossary}}</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"lang":{"editor":"enum","options":["en","es"],"default":"en"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { filter: 'all' }; }
+  renderVals() {
+    var self = this;
+    var es = this.props.lang === 'es';
+    var tx = es ? {
+      login: 'Entrar', eyebrow: 'Para coleccionistas de monedas', headline: 'Mira lo que aún te falta.',
+      body: 'Arma una lista a tu manera, marca las monedas que tienes y los huecos aparecen solos. Gratis y sin certificación.',
+      cta: 'Crear una cuenta gratis', cta2: 'Ver listas', honest: 'Gratis. Hecho por un coleccionista, para coleccionistas.',
+      sample: 'Ejemplo', sampleLabel: 'Tus colecciones se verán así.', sub: 'Lista curada · Estados Unidos · 1909–1912',
+      of: 'de', ownedWord: 'conseguidas', progress: 'Progreso de la colección de ejemplo', show: 'Mostrar', all: 'Todas', missing: 'Faltantes',
+      key: 'Fecha clave', owned: 'La tengo', missingSt: 'Falta', seeFull: 'Ver la lista completa',
+      want: 'Lista de faltantes', wantCount: '4 monedas', wantNote: 'Imprímela o descárgala en CSV desde tus colecciones.',
+      how: 'Cómo funciona', p1t: 'Tu lista, tus reglas', p1b: 'Filtro del catálogo, elección a mano o lista curada.', p2t: 'La marcas una vez, cuenta en todas', p2b: 'Cada colección que la incluye se actualiza.', p3t: 'Lleva tu lista a la feria', p3b: 'Imprime la lista de faltantes o descárgala en CSV.',
+      ways: 'Empieza a explorar', w1: 'Explorar el catálogo', w2: 'Listas curadas', w3: 'Colecciones de otros', w3c: 'Aún ninguna',
+      cov: 'Qué incluye', cov1: 'Centavos Lincoln Wheat', cov2: 'monedas de Ucrania', submit: '¿Falta una moneda? Envíala.',
+      attr: 'Datos del catálogo derivados de Wikipedia, usados bajo CC BY-SA 4.0.', help: 'Ayuda', feedback: 'Enviar comentarios',
+      nav: 'Principal', tCatalog: 'Catálogo', tChecklists: 'Listas', tGlossary: 'Glosario'
+    } : {
+      login: 'Log in', eyebrow: 'For coin collectors', headline: 'See what you’re still missing.',
+      body: 'Build a checklist on your own terms, mark the coins you own, and the gaps show themselves. Free, no grading service needed.',
+      cta: 'Create a free account', cta2: 'Browse checklists', honest: 'Free. Built by a collector, for collectors.',
+      sample: 'Sample', sampleLabel: 'Your own sets look like this.', sub: 'Curated checklist · United States · 1909–1912',
+      of: 'of', ownedWord: 'owned', progress: 'Sample set completion', show: 'Show', all: 'All', missing: 'Missing',
+      key: 'Key date', owned: 'Owned', missingSt: 'Missing', seeFull: 'See the full checklist',
+      want: 'Want list', wantCount: '4 coins', wantNote: 'Print it or download it as CSV from your own sets.',
+      how: 'How it works', p1t: 'Your checklist, your rules', p1b: 'Catalog filter, hand-picked, or a curated checklist.', p2t: 'Owned once, counted everywhere', p2b: 'Every set that contains the coin updates.', p3t: 'Take your want list to the show', p3b: 'Print the missing list or download it as CSV.',
+      ways: 'Start browsing', w1: 'Browse the catalog', w2: 'Curated checklists', w3: 'Collectors’ sets', w3c: 'None yet',
+      cov: 'What’s covered', cov1: 'Lincoln Wheat cents', cov2: 'Ukrainian coins', submit: 'Missing a coin? Submit it.',
+      attr: 'Catalog data derived from Wikipedia, used under CC BY-SA 4.0.', help: 'Help', feedback: 'Send feedback',
+      nav: 'Main', tCatalog: 'Catalog', tChecklists: 'Checklists', tGlossary: 'Glossary'
+    };
+    var rows = [['1909', ['1909', '1909 VDB', '1909-S', '1909-S VDB']], ['1910', ['1910', '1910-S']], ['1911', ['1911', '1911-D', '1911-S']], ['1912', ['1912', '1912-D', '1912-S']]];
+    var miss = { '1909-S': 1, '1909-S VDB': 1, '1910-S': 1, '1912-S': 1 };
+    var key = { '1909-S': 1, '1909-S VDB': 1 };
+    var f = this.state.filter;
+    var groups = rows.map(function (r) {
+      var list = f === 'missing' ? r[1].filter(function (l) { return miss[l]; }) : r[1];
+      var ownedN = r[1].filter(function (l) { return !miss[l]; }).length;
+      return { year: r[0], summary: ownedN + (es ? ' de ' : ' of ') + r[1].length, coins: list.map(function (l) {
+        var o = !miss[l];
+        return { label: l, key: !!key[l], cls: 'ccard ' + (o ? 'owned' : 'missing'), checkCls: 'check' + (o ? ' on' : ''), stCls: o ? 'st-owned' : 'st-missing', st: o ? tx.owned : tx.missingSt };
+      }) };
+    }).filter(function (g) { return g.coins.length; });
+    return {
+      lang: es ? 'es' : 'en', tx: tx, groups: groups,
+      fAll: f === 'all', fMissing: f === 'missing',
+      showAll: function () { self.setState({ filter: 'all' }); }, showMissing: function () { self.setState({ filter: 'missing' }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

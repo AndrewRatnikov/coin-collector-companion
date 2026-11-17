@@ -3,8 +3,9 @@
  * Contract source: runs/run_20260720_142942/plan.md § Interface Contract (Service: CollectionService)
  * Extended by: runs/run_20261017_210503/plan.md § Interface Contract (API: PATCH /collection)
  *              runs/run_20261102_194108/plan.md § Interface Contract (API: PATCH /collection/:coinId)
+ *              runs/run_20261111_062918/plan.md § Interface Contract (Service: CollectionService.findAll)
  * Covers criteria: #3, #4, #5, #6, #8 (run_20260720_142942); #10 (run_20261017_210503);
- *                  #5, #6, #7, #9 (run_20261102_194108)
+ *                  #5, #6, #7, #9 (run_20261102_194108); #1, #2 (run_20261111_062918)
  *
  * CONTRACT_GAP: none.
  *
@@ -19,6 +20,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from '../generated/prisma/client';
+import { CATALOG_COIN_SELECT } from '../catalog/catalog.service';
 import { CollectionService } from './collection.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { FindCollectionQueryDto } from './dto/find-collection-query.dto';
@@ -397,7 +399,48 @@ describe('CollectionService', () => {
       const call = mockPrismaService.ownership.findMany.mock.calls[0][0];
       expect(call.where.userId).toBe(userId);
       expect(call.where.coin).toEqual({});
-      expect(call.include).toEqual({ coin: true });
+      expect(call.include).toBeUndefined();
+      expect(call.select.coin).toEqual({ select: CATALOG_COIN_SELECT });
+      expect(call.select.userId).toBe(true);
+      expect(call.select.coinId).toBe(true);
+      expect(call.select.ownedAt).toBe(true);
+      expect(call.select.grade).toBe(true);
+    });
+
+    it('never returns submittedByUserId on an item coin (criterion #2 from run_20261111_062918)', async () => {
+      // Honors the query's select the way Prisma does: without a coin select the full row,
+      // submittedByUserId included, comes back, so the old `include: { coin: true }` fails here.
+      const coinRow: Record<string, unknown> = {
+        id: coinId,
+        country: 'USA',
+        year: 1943,
+        name: 'Lincoln Cent',
+        submittedByUserId: 'submitter-1',
+      };
+      const ownershipRow: Record<string, unknown> = {
+        userId,
+        coinId,
+        ownedAt: new Date('2026-01-01T00:00:00.000Z'),
+        grade: 'VF',
+      };
+      mockPrismaService.ownership.findMany.mockImplementation(
+        async (args: { select?: { coin?: { select?: Record<string, unknown> } } }) => {
+          const coinSelect = args.select?.coin?.select;
+          const coin = coinSelect
+            ? Object.fromEntries(Object.entries(coinRow).filter(([key]) => key in coinSelect))
+            : coinRow;
+          return [{ ...ownershipRow, coin }];
+        },
+      );
+
+      const result = await service.findAll(userId, makeQuery());
+
+      expect(result).toHaveLength(1);
+      for (const item of result) {
+        expect(item.coin).not.toHaveProperty('submittedByUserId');
+      }
+      expect(result[0].coin.country).toBe('USA');
+      expect(result[0].grade).toBe('VF');
     });
 
     it('returns whatever prisma resolves, grade included (criterion #9 from run_20261102_194108)', async () => {

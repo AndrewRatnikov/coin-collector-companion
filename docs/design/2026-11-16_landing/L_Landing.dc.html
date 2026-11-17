@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Landing page</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/9289bb8d20793fdaa54f2a398d1afa04">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+.lp-wrap{max-width:1320px;margin:0 auto;padding:0 40px}
+.lp-mini .ccard-well .coin{width:52cqw;height:52cqw;font-size:52cqw}
+.lp-mini .ccard-body{padding:7px 8px 8px;gap:3px}
+.lp-mini .ccard:hover,.lp-mini .ccard:focus-within{transform:none;box-shadow:none}
+.lp-mini .ccard.owned:hover{border-color:var(--a400)}
+.lp-mini .ccard.missing:hover{border-color:var(--n300)}
+.lp-mini .ccard.tap{cursor:pointer}
+.lp-mini .ccard.tap:hover{border-color:var(--accent)!important}
+.lp-mini .check{top:2px;right:2px;width:36px;height:36px;cursor:default}
+.lp-mini button.check{cursor:pointer}
+.lp-mini .check i{width:24px;height:24px}
+.lp-want td{padding:7px 0;border-bottom:1px dashed var(--n300);vertical-align:top}
+.lp-want tr:last-child td{border-bottom:0}
+.lp-way{position:relative;display:flex;flex-direction:column;gap:6px;padding:20px;background:#fff;border:1px solid var(--n300);border-radius:var(--r-lg);transition:border-color .15s,box-shadow .15s}
+.lp-way:hover{border-color:var(--accent);box-shadow:var(--sh-md)}
+.lp-way:hover .lp-way-t{color:var(--a700);text-decoration:underline}
+</style>
+</helmet>
+<div class="cc" lang="{{lang}}">
+
+<header class="nav">
+<div class="nav-in" style="max-width: 1320px">
+<a href="#" class="brand"><span class="brand-mark" aria-hidden="true"></span>Coin Collector Companion</a>
+<nav class="nav-links" aria-label="{{tx.navLabel}}"><a href="#">{{tx.navCatalog}}</a><a href="#">{{tx.navChecklists}}</a></nav>
+<div class="nav-end">
+<div class="lang" role="group" aria-label="{{tx.language}}"><button type="button" aria-pressed="{{isEn}}">EN</button><button type="button" aria-pressed="{{isEs}}">ES</button></div>
+<a href="#" class="btn btn-ghost">{{tx.navLogin}}</a>
+<a href="#" class="btn btn-primary">{{tx.navSignup}}</a>
+</div>
+</div>
+</header>
+
+<main>
+<section class="lp-wrap" style="padding-top: 40px; padding-bottom: 56px; display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 48px; align-items: start">
+
+<div style="display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; flex-direction: column; gap: 18px">
+<p class="eyebrow">{{tx.heroEyebrow}}</p>
+<h1 class="h1" style="font-size: 56px; line-height: 1.04">{{headline}}</h1>
+<p style="font-size: 18px; line-height: 1.55; color: #444141">{{tx.heroBody}}</p>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px">
+<a href="#" class="btn btn-primary" style="min-height: 48px; font-size: 15px">{{tx.ctaPrimary}}</a>
+<a href="#" class="btn btn-secondary" style="min-height: 48px; font-size: 15px">{{tx.ctaSecondary}}</a>
+</div>
+<p style="font-size: 13px; color: #605d5d">{{tx.honest}}</p>
+</div>
+
+<section aria-labelledby="want-h" style="display: flex; flex-direction: column; gap: 12px; padding: 20px 22px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px">
+<h2 id="want-h" class="serif" style="font-size: 24px">{{tx.wantTitle}}</h2>
+<span class="mono" style="font-size: 13px; color: #605d5d">{{wantCount}}</span>
+</div>
+<p style="font-size: 12px; color: #605d5d">Lincoln Wheat Cents · <span class="mono">1909–1916</span></p>
+<table class="lp-want" style="border-collapse: collapse; width: 100%; font-size: 14px">
+<tbody>
+<sc-for list="{{want}}" as="w" hint-placeholder-count="7">
+<tr><td class="mono" style="width: 64px; font-weight: 500">{{w.year}}</td><td class="mono">{{w.mints}}</td></tr>
+</sc-for>
+</tbody>
+</table>
+<sc-if value="{{wantEmpty}}" hint-placeholder-val="{{ false }}"><p style="font-size: 14px; color: #444141">{{tx.wantEmpty}}</p></sc-if>
+<p style="font-size: 12px; color: #605d5d">{{tx.wantKey}}</p>
+<div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-top: 4px; border-top: 1px solid rgba(32,31,29,0.12)">
+<button type="button" class="btn btn-secondary btn-sm" aria-describedby="want-note"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.5 6V2.5h7V6M4.5 11.5h-2v-5h11v5h-2M4.5 9.5h7v4h-7z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"></path></svg>{{tx.print}}</button>
+<button type="button" class="btn btn-secondary btn-sm" aria-describedby="want-note"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.5v8M4.5 7L8 10.5 11.5 7M3 13.5h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{tx.csv}}</button>
+<span id="want-note" style="font-size: 12px; color: #605d5d; flex: 1 1 140px">{{tx.wantNote}}</span>
+</div>
+</section>
+</div>
+
+<section aria-labelledby="demo-h" style="display: flex; flex-direction: column; gap: 18px; padding: 24px 26px 28px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px; min-width: 0">
+<div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 12px; border-bottom: 1px dashed #bab6b6">
+<span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: #444141"><span class="badge b-inset">{{tx.sampleBadge}}</span>{{tx.sampleLabel}}</span>
+<sc-if value="{{isB}}" hint-placeholder-val="{{ false }}"><span style="font-size: 12px; color: #605d5d">{{tx.tryHint}}</span></sc-if>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px 32px">
+<div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+<h2 id="demo-h" class="h2" style="font-size: 32px">Lincoln Wheat Cents</h2>
+<p class="muted" style="font-size: 13px">{{tx.demoSub}}</p>
+</div>
+<div style="flex: 0 1 260px; display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px">
+<span style="font-size: 14px; color: #444141"><b class="mono" style="font-size: 22px; font-weight: 500; color: #201f1d">{{ownedCount}}</b> {{tx.ofOwnedPre}} <span class="mono">24</span> {{tx.ofOwnedPost}}</span>
+<span class="mono" style="font-size: 16px; color: #7d5411">{{pct}}%</span>
+</div>
+<div class="progress" role="progressbar" aria-label="{{tx.progressLabel}}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{pct}}"><span style="{{bar}}"></span></div>
+</div>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+<div class="seg" role="group" aria-label="{{tx.showLabel}}">
+<button type="button" aria-pressed="{{fAll}}" onClick="{{showAll}}">{{tx.all}} <span class="mono">24</span></button>
+<button type="button" aria-pressed="{{fMissing}}" onClick="{{showMissing}}">{{tx.missing}} <span class="mono">{{missingCount}}</span></button>
+</div>
+<span role="status" aria-live="polite" style="font-size: 13px; color: #605d5d">{{filterNote}}</span>
+</div>
+
+<div class="lp-mini" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 28px">
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="8">
+<section aria-label="{{g.year}}" style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
+<div class="gh" style="min-height: 28px; gap: 10px"><h3 class="gh-y" style="font-size: 17px">{{g.year}}</h3><span class="gh-c" style="font-size: 12px">{{g.summary}}</span><span class="gh-rule" aria-hidden="true"></span></div>
+<ul class="cgrid" style="grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{g.coins}}" as="c" hint-placeholder-count="3">
+<li class="{{c.cls}}">
+<div class="ccard-well"><span class="coin copper" aria-hidden="true"><span class="n">1</span><span class="u">Cent</span></span>
+<sc-if value="{{isB}}" hint-placeholder-val="{{ false }}"><button type="button" class="{{c.checkCls}}" aria-pressed="{{c.owned}}" aria-label="{{c.toggleLabel}}" onClick="{{c.toggle}}"><i><svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></i></button></sc-if>
+<sc-if value="{{isA}}" hint-placeholder-val="{{ true }}"><span class="{{c.checkCls}}" aria-hidden="true"><i><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></i></span></sc-if>
+</div>
+<div class="ccard-body">
+<span class="mono" style="font-size: 13px; font-weight: 500; line-height: 1.25; color: #201f1d">{{c.label}}</span>
+<span class="{{c.stCls}}" style="font-size: 11px">{{c.st}}</span>
+<sc-if value="{{c.key}}" hint-placeholder-val="{{ false }}"><span class="badge b-key" style="height: 18px; padding: 0 6px; font-size: 10px; align-self: flex-start">★ {{tx.keyDate}}</span></sc-if>
+</div>
+</li>
+</sc-for>
+</ul>
+</section>
+</sc-for>
+</div>
+
+<sc-if value="{{showSaveNote}}" hint-placeholder-val="{{ false }}">
+<p role="status" style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 12px 14px; background: #fff3e4; border: 1px solid #e1ad66; border-radius: 4px; font-size: 14px; color: #5a3b0a">{{tx.saveNote}} <a href="#" class="link">{{tx.ctaPrimary}}</a></p>
+</sc-if>
+<div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 13px; color: #605d5d">
+<span>{{tx.demoFoot}}</span>
+<a href="#" class="link">{{tx.seeFull}}</a>
+</div>
+</section>
+</section>
+
+<section aria-labelledby="pts-h" style="background: #eae9e9; border-top: 1px solid rgba(32,31,29,0.16); border-bottom: 1px solid rgba(32,31,29,0.16)">
+<div class="lp-wrap" style="padding-top: 56px; padding-bottom: 56px; display: flex; flex-direction: column; gap: 28px">
+<h2 id="pts-h" class="sr">{{tx.ptsHeading}}</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px">
+
+<article style="display: flex; flex-direction: column; gap: 14px">
+<div aria-hidden="true" style="display: flex; flex-direction: column; gap: 6px; padding: 16px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px; min-height: 132px">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px"><span class="chip" style="height: 30px; cursor: default">{{tx.p1a}}</span></span>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px"><span class="chip" style="height: 30px; cursor: default">{{tx.p1b}}</span></span>
+<span style="display: flex; align-items: center; gap: 8px; font-size: 13px"><span class="chip" aria-pressed="true" style="height: 30px; cursor: default; background: #201f1d; color: #ffffff; border-color: #201f1d">{{tx.p1c}}</span></span>
+</div>
+<h3 class="serif" style="font-size: 26px; line-height: 1.15">{{tx.p1Title}}</h3>
+<p style="font-size: 15px; color: #444141">{{tx.p1Body}}</p>
+</article>
+
+<article style="display: flex; flex-direction: column; gap: 14px">
+<div aria-hidden="true" style="display: flex; align-items: center; gap: 16px; padding: 16px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px; min-height: 132px">
+<span class="coin copper" style="width: 72px; height: 72px; font-size: 72px"><span class="n">1</span><span class="u">Cent</span></span>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<span class="mono" style="font-size: 14px; font-weight: 500">1914</span>
+<span style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: #444141"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Lincoln Wheat Cents</span><span class="badge b-owned">✓ {{tx.owned}}</span></span>
+<span style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; color: #444141"><span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{tx.p2Set}}</span><span class="badge b-owned">✓ {{tx.owned}}</span></span>
+</div>
+</div>
+<h3 class="serif" style="font-size: 26px; line-height: 1.15">{{tx.p2Title}}</h3>
+<p style="font-size: 15px; color: #444141">{{tx.p2Body}}</p>
+</article>
+
+<article style="display: flex; flex-direction: column; gap: 14px">
+<div aria-hidden="true" style="display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px; min-height: 132px; font-size: 13px">
+<span class="eyebrow" style="font-size: 11px">{{tx.wantTitle}}</span>
+<span class="mono">1909&#160;&#160;S · S VDB ★</span>
+<span class="mono">1914&#160;&#160;D ★ · S</span>
+<span class="mono" style="color: #605d5d">…</span>
+<span style="display: flex; gap: 8px; margin-top: 4px"><span class="badge b-inset">{{tx.print}}</span><span class="badge b-inset">CSV</span></span>
+</div>
+<h3 class="serif" style="font-size: 26px; line-height: 1.15">{{tx.p3Title}}</h3>
+<p style="font-size: 15px; color: #444141">{{tx.p3Body}}</p>
+</article>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="ways-h" class="lp-wrap" style="padding-top: 56px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px">
+<h2 id="ways-h" class="h2" style="font-size: 32px">{{tx.waysHeading}}</h2>
+<sc-if value="{{showWake}}" hint-placeholder-val="{{ false }}"><p role="status" style="font-size: 13px; color: #605d5d">{{tx.waking}}</p></sc-if>
+<sc-if value="{{isErr}}" hint-placeholder-val="{{ false }}"><p role="status" style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #605d5d">{{tx.countsError}} <button type="button" class="btn btn-secondary btn-sm">{{tx.retry}}</button></p></sc-if>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+<sc-for list="{{ways}}" as="w" hint-placeholder-count="3">
+<a href="#" class="lp-way">
+<span class="lp-way-t" style="font-size: 17px; font-weight: 600">{{w.title}}</span>
+<span style="font-size: 14px; color: #444141">{{w.body}}</span>
+<sc-if value="{{w.showCount}}" hint-placeholder-val="{{ true }}"><span class="mono" style="font-size: 13px; color: #605d5d">{{w.count}}</span></sc-if>
+<sc-if value="{{w.loading}}" hint-placeholder-val="{{ false }}"><span class="sk" style="height: 14px; width: 84px" aria-label="{{tx.loadingCount}}"></span></sc-if>
+</a>
+</sc-for>
+</div>
+</section>
+
+<section aria-labelledby="cov-h" class="lp-wrap" style="padding-top: 56px; display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 48px; align-items: start">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<h2 id="cov-h" class="h2" style="font-size: 32px">{{tx.covHeading}}</h2>
+<p style="font-size: 15px; color: #444141">{{tx.covIntro}}</p>
+<a href="#" class="link" style="font-size: 14px; align-self: flex-start">{{tx.covSubmit}}</a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+<div style="display: flex; gap: 16px; padding: 20px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px">
+<span class="coin copper" aria-hidden="true" style="width: 56px; height: 56px; font-size: 56px"><span class="n">1</span></span>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<h3 style="font-size: 17px; font-weight: 600">{{tx.cov1Title}} <span class="mono" style="font-weight: 500">1909–1958</span></h3>
+<p style="font-size: 14px; color: #444141">{{tx.cov1Body}}</p>
+<p class="mono" style="font-size: 12px; color: #605d5d">{{tx.cov1Meta}}</p>
+</div>
+</div>
+<div style="display: flex; gap: 16px; padding: 20px; background: #ffffff; border: 1px solid #d7d3d3; border-radius: 7px">
+<span class="coin gold" aria-hidden="true" style="width: 56px; height: 56px; font-size: 56px"><span class="n">10</span></span>
+<div style="display: flex; flex-direction: column; gap: 6px; min-width: 0">
+<h3 style="font-size: 17px; font-weight: 600">{{tx.cov2Title}} <span class="mono" style="font-weight: 500">1992–</span></h3>
+<p style="font-size: 14px; color: #444141">{{tx.cov2Body}}</p>
+<p class="mono" style="font-size: 12px; color: #605d5d">{{tx.cov2Meta}}</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+
+<footer class="foot">
+<div class="foot-in" style="max-width: 1320px">
+<nav aria-label="{{tx.footLabel}}"><a href="#">{{tx.glossary}}</a><a href="#">{{tx.help}}</a><a href="#">{{tx.feedback}}</a></nav>
+<span>{{tx.attrPre}} <a href="#">Wikipedia</a>{{tx.attrPost}}</span>
+</div>
+</footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"variant":{"editor":"enum","options":["A · read-only","B · try it"],"default":"A · read-only"},"state":{"editor":"enum","options":["normal","server waking","API error"],"default":"normal"},"lang":{"editor":"enum","options":["en","es"],"default":"en"},"headline":{"editor":"enum","options":["See what you’re still missing.","Your checklist, your rules.","Take your want list to the show."],"default":"See what you’re still missing."},"catalogCount":{"editor":"int","default":360},"checklistCount":{"editor":"int","default":5},"collectorSetCount":{"editor":"int","default":0},"$preview":{"width":1440,"height":2000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'all', touched: false, owned: null, tapped: false, autoNote: false, wake: false };
+  }
+  componentDidMount() {
+    var self = this;
+    var reduced = false;
+    try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    this.reduced = reduced;
+    if (!reduced) setTimeout(function () { if (!self.state.touched) self.setState({ filter: 'missing', autoNote: true }); }, 2500);
+    setTimeout(function () { self.setState({ wake: true }); }, 3000);
+  }
+  renderVals() {
+    var self = this, st = this.state, p = this.props;
+    var lang = p.lang === 'es' ? 'es' : 'en';
+    var D = {
+      en: {
+        navLabel: 'Main', navCatalog: 'Catalog', navChecklists: 'Checklists', navLogin: 'Log in', navSignup: 'Create account', language: 'Language',
+        heroEyebrow: 'For coin collectors',
+        h_missing: 'See what you’re still missing.', h_rules: 'Your checklist, your rules.', h_show: 'Take your want list to the show.',
+        heroBody: 'Build a checklist on your own terms, mark the coins you own, and the gaps show themselves. Free, no grading service needed, and browsing needs no account.',
+        ctaPrimary: 'Create a free account', ctaSecondary: 'Browse checklists', honest: 'Free. Built by a collector, for collectors.',
+        wantTitle: 'Want list', wantCoins: function (n) { return n + (n === 1 ? ' coin' : ' coins'); }, wantEmpty: 'Nothing missing. This set is complete.',
+        wantKey: '★ = key date', print: 'Print', csv: 'Download CSV', wantNote: 'The same list your own sets print and export.',
+        sampleBadge: 'Sample', sampleLabel: 'Sample checklist. Your own sets look like this.', tryHint: 'Tap a coin to mark it owned or missing.',
+        demoSub: 'Curated checklist · United States · 1 Cent · first 24 of 142 coins',
+        ofOwnedPre: 'of', ofOwnedPost: 'owned', progressLabel: 'Sample set completion', showLabel: 'Show', all: 'All', missing: 'Missing',
+        owned: 'Owned', missingSt: 'Missing', keyDate: 'Key date', ofN: function (a, b) { return a + ' of ' + b; },
+        autoNote: 'Showing only the gaps.', tapNote: 'Tap Missing to see only the gaps.',
+        markOwned: function (l) { return 'Mark ' + l + ' as owned (sample, not saved)'; }, markMissing: function (l) { return 'Mark ' + l + ' as missing (sample, not saved)'; },
+        saveNote: 'Nothing here is saved. Create an account to keep your own.',
+        demoFoot: 'Lincoln Wheat Cents, 1909–1916 shown.', seeFull: 'See the full checklist',
+        ptsHeading: 'How it works',
+        p1a: 'Catalog filter', p1b: 'Pick by hand', p1c: 'Curated checklist', p1Title: 'Your checklist, your rules', p1Body: 'Build a set from a catalog filter, pick coins one by one, or start from a curated checklist.',
+        p2Set: 'Lincoln Wheat Cent Key Dates', p2Title: 'Owned once, counted everywhere', p2Body: 'Mark a coin once and every set that contains it updates.',
+        p3Title: 'Take your want list to the show', p3Body: 'Print the missing list or download it as CSV.',
+        waysHeading: 'Start browsing', waking: 'Waking the server. This can take up to a minute on the first visit.', countsError: 'Couldn’t load the counts.', retry: 'Retry', loadingCount: 'Loading count',
+        w1t: 'Browse the catalog', w1b: 'Every coin, by country, denomination and year.', w1c: function (n) { return n + ' coins'; },
+        w2t: 'Curated checklists', w2b: 'Complete series lists, ready to start from.', w2c: function (n) { return n + (n === 1 ? ' checklist' : ' checklists'); },
+        w3t: 'Collectors’ sets', w3b: 'Sets other collectors have shared.', w3c: function (n) { return n === 0 ? 'None shared yet. Yours could be the first.' : n + (n === 1 ? ' set' : ' sets'); },
+        covHeading: 'What’s covered', covIntro: 'A small catalogue, checked by hand. It grows coin by coin.', covSubmit: 'Missing a coin? Submit it.',
+        cov1Title: 'Lincoln Wheat cents', cov1Body: 'Every date and mint mark, plus a key-dates checklist.', cov1Meta: '142 coins · 7 key dates',
+        cov2Title: 'Ukrainian coins', cov2Body: 'Circulation coins and circulating commemoratives, including We Are Strong. We Are Together.', cov2Meta: '187 circulation · 31 commemoratives',
+        footLabel: 'Footer', glossary: 'Glossary', help: 'Help', feedback: 'Send feedback', attrPre: 'Catalog data derived from', attrPost: ', used under CC BY-SA 4.0.'
+      },
+      es: {
+        navLabel: 'Principal', navCatalog: 'Catálogo', navChecklists: 'Listas', navLogin: 'Iniciar sesión', navSignup: 'Crear cuenta', language: 'Idioma',
+        heroEyebrow: 'Para coleccionistas de monedas',
+        h_missing: 'Mira lo que aún te falta.', h_rules: 'Tu lista, tus reglas.', h_show: 'Lleva tu lista de faltantes a la feria.',
+        heroBody: 'Arma una lista a tu manera, marca las monedas que tienes y los huecos aparecen solos. Gratis, sin servicios de certificación, y para explorar no necesitas cuenta.',
+        ctaPrimary: 'Crear una cuenta gratis', ctaSecondary: 'Ver listas', honest: 'Gratis. Hecho por un coleccionista, para coleccionistas.',
+        wantTitle: 'Lista de faltantes', wantCoins: function (n) { return n + (n === 1 ? ' moneda' : ' monedas'); }, wantEmpty: 'No falta nada. Esta colección está completa.',
+        wantKey: '★ = fecha clave', print: 'Imprimir', csv: 'Descargar CSV', wantNote: 'La misma lista que imprimen y exportan tus colecciones.',
+        sampleBadge: 'Ejemplo', sampleLabel: 'Lista de ejemplo. Tus colecciones se verán así.', tryHint: 'Toca una moneda para marcarla como conseguida o faltante.',
+        demoSub: 'Lista curada · Estados Unidos · 1 centavo · primeras 24 de 142 monedas',
+        ofOwnedPre: 'de', ofOwnedPost: 'conseguidas', progressLabel: 'Progreso de la colección de ejemplo', showLabel: 'Mostrar', all: 'Todas', missing: 'Faltantes',
+        owned: 'La tengo', missingSt: 'Falta', keyDate: 'Fecha clave', ofN: function (a, b) { return a + ' de ' + b; },
+        autoNote: 'Solo se muestran los huecos.', tapNote: 'Toca Faltantes para ver solo los huecos.',
+        markOwned: function (l) { return 'Marcar ' + l + ' como conseguida (ejemplo, no se guarda)'; }, markMissing: function (l) { return 'Marcar ' + l + ' como faltante (ejemplo, no se guarda)'; },
+        saveNote: 'Aquí no se guarda nada. Crea una cuenta para guardar la tuya.',
+        demoFoot: 'Se muestran centavos Lincoln Wheat de 1909–1916.', seeFull: 'Ver la lista completa',
+        ptsHeading: 'Cómo funciona',
+        p1a: 'Filtro del catálogo', p1b: 'Elegir a mano', p1c: 'Lista curada', p1Title: 'Tu lista, tus reglas', p1Body: 'Crea una colección con un filtro del catálogo, elige monedas una a una o parte de una lista curada.',
+        p2Set: 'Lincoln Wheat Cent Key Dates', p2Title: 'La marcas una vez, cuenta en todas', p2Body: 'Marca una moneda una vez y se actualizan todas las colecciones que la incluyen.',
+        p3Title: 'Lleva tu lista a la feria', p3Body: 'Imprime la lista de faltantes o descárgala en CSV.',
+        waysHeading: 'Empieza a explorar', waking: 'Despertando el servidor. En la primera visita puede tardar hasta un minuto.', countsError: 'No se pudieron cargar los totales.', retry: 'Reintentar', loadingCount: 'Cargando total',
+        w1t: 'Explorar el catálogo', w1b: 'Todas las monedas, por país, denominación y año.', w1c: function (n) { return n + ' monedas'; },
+        w2t: 'Listas curadas', w2b: 'Series completas, listas para empezar.', w2c: function (n) { return n + (n === 1 ? ' lista' : ' listas'); },
+        w3t: 'Colecciones de otros coleccionistas', w3b: 'Colecciones que otros han compartido.', w3c: function (n) { return n === 0 ? 'Aún no hay ninguna. La tuya puede ser la primera.' : n + (n === 1 ? ' colección' : ' colecciones'); },
+        covHeading: 'Qué incluye', covIntro: 'Un catálogo pequeño, revisado a mano. Crece moneda a moneda.', covSubmit: '¿Falta una moneda? Envíala.',
+        cov1Title: 'Centavos Lincoln Wheat', cov1Body: 'Cada fecha y ceca, más una lista de fechas clave.', cov1Meta: '142 monedas · 7 fechas clave',
+        cov2Title: 'Monedas de Ucrania', cov2Body: 'Monedas de circulación y conmemorativas de circulación, incluida «We Are Strong. We Are Together».', cov2Meta: '187 de circulación · 31 conmemorativas',
+        footLabel: 'Pie de página', glossary: 'Glosario', help: 'Ayuda', feedback: 'Enviar comentarios', attrPre: 'Datos del catálogo derivados de', attrPost: ', usados bajo CC BY-SA 4.0.'
+      }
+    };
+    var tx = D[lang];
+    var headlineKey = (p.headline || '').indexOf('rules') !== -1 ? 'h_rules' : (p.headline || '').indexOf('show') !== -1 ? 'h_show' : 'h_missing';
+
+    var rows = [['1909', ['', 'VDB', 'S', 'S VDB']], ['1910', ['', 'S']]];
+    ['1911', '1912', '1913', '1914', '1915', '1916'].forEach(function (y) { rows.push([y, ['', 'D', 'S']]); });
+    var missing0 = { '1909-S VDB': 1, '1909-S': 1, '1910-S': 1, '1912-S': 1, '1914-D': 1, '1914-S': 1, '1915-S': 1, '1916-S': 1 };
+    var keys = { '1909-S VDB': 1, '1909-S': 1, '1914-D': 1 };
+    function label(y, m) { if (!m) return y; if (m === 'VDB') return y + ' VDB'; return y + '-' + m; }
+    var owned = st.owned;
+    if (!owned) { owned = {}; rows.forEach(function (r) { r[1].forEach(function (m) { var l = label(r[0], m); owned[l] = !missing0[l]; }); }); }
+    var isB = (p.variant || '').charAt(0) === 'B';
+    var ownedCount = 0;
+    Object.keys(owned).forEach(function (k) { if (owned[k]) ownedCount++; });
+    var pct = Math.round(ownedCount / 24 * 100);
+    var groups = [], want = [];
+    rows.forEach(function (r) {
+      var y = r[0];
+      var all = r[1].map(function (m) { return { m: m, l: label(y, m) }; });
+      var miss = all.filter(function (c) { return !owned[c.l]; });
+      if (miss.length) want.push({ year: y, mints: miss.map(function (c) { return (c.m || '(plain)') + (keys[c.l] ? ' ★' : ''); }).join(' · ') });
+      var shown = st.filter === 'missing' ? miss : all;
+      if (!shown.length) return;
+      groups.push({
+        year: y, summary: tx.ofN(all.length - miss.length, all.length),
+        coins: shown.map(function (c) {
+          var o = !!owned[c.l];
+          return {
+            label: c.l, owned: o, key: !!keys[c.l],
+            cls: 'ccard ' + (o ? 'owned' : 'missing') + (isB ? ' tap' : ''),
+            checkCls: 'check' + (o ? ' on' : ''),
+            stCls: o ? 'st-owned' : 'st-missing', st: o ? tx.owned : tx.missingSt,
+            toggleLabel: o ? tx.markMissing(c.l) : tx.markOwned(c.l),
+            toggle: function () { var n = Object.assign({}, owned); n[c.l] = !o; self.setState({ owned: n, tapped: true, touched: true }); }
+          };
+        })
+      });
+    });
+    var missingCount = 24 - ownedCount;
+    var stt = p.state || 'normal';
+    var waking = stt === 'server waking', err = stt === 'API error';
+    var cc = typeof p.catalogCount === 'number' ? p.catalogCount : 360;
+    var cl = typeof p.checklistCount === 'number' ? p.checklistCount : 5;
+    var cs = typeof p.collectorSetCount === 'number' ? p.collectorSetCount : 0;
+    var ways = [[tx.w1t, tx.w1b, tx.w1c(cc)], [tx.w2t, tx.w2b, tx.w2c(cl)], [tx.w3t, tx.w3b, tx.w3c(cs)]].map(function (w) {
+      return { title: w[0], body: w[1], count: w[2], showCount: !waking && !err, loading: waking };
+    });
+    return {
+      lang: lang, isEn: lang === 'en', isEs: lang === 'es', tx: tx, headline: tx[headlineKey],
+      isA: !isB, isB: isB,
+      ownedCount: ownedCount, pct: pct, bar: 'width: ' + pct + '%', missingCount: missingCount,
+      fAll: st.filter === 'all', fMissing: st.filter === 'missing',
+      showAll: function () { self.setState({ filter: 'all', touched: true, autoNote: false }); },
+      showMissing: function () { self.setState({ filter: 'missing', touched: true, autoNote: false }); },
+      filterNote: st.autoNote ? tx.autoNote : (st.filter === 'all' && !st.touched && this.reduced ? tx.tapNote : ''),
+      groups: groups, want: want, wantEmpty: want.length === 0, wantCount: tx.wantCoins(missingCount),
+      showSaveNote: isB && st.tapped,
+      ways: ways, showWake: waking && st.wake, isErr: err
+    };
+  }
+}
+</script>
+</body>
+</html>
