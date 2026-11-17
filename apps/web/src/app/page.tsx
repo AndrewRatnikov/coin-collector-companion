@@ -1,20 +1,21 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { AccountDeletedNotice } from '@/components/settings/account-deleted-notice';
+import { Coverage } from '@/components/landing/coverage';
+import { LandingHero } from '@/components/landing/landing-hero';
+import { LandingPoints } from '@/components/landing/landing-points';
+import { WaysIn } from '@/components/landing/ways-in';
 import { getStoredToken } from '@/lib/auth-token';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import { useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
+import { useMediaQuery } from '@/lib/hooks/use-media-query';
 import { usePublicSets } from '@/lib/hooks/use-public-sets';
-import { useTranslation } from '@/lib/i18n/i18n-context';
-
-const ROW_CLASSES =
-  'flex items-baseline justify-between gap-6 border-b border-[color:var(--color-divider)] py-5 text-[color:var(--color-text)] transition-colors hover:text-[color:var(--color-accent)] hover:bg-[color-mix(in_srgb,var(--color-text)_3%,transparent)]';
+import { useSlowLoading } from '@/lib/hooks/use-slow-loading';
+import { getCoverageCounts, getFullChecklistHref } from '@/lib/landing/landing-data';
 
 export default function Home() {
-  const { t } = useTranslation();
   const router = useRouter();
   const [redirecting, setRedirecting] = useState(false);
 
@@ -36,67 +37,45 @@ export default function Home() {
   const canonicalSets = useCanonicalSets();
   const publicSets = usePublicSets({ page: 1, limit: 1 });
 
-  const catalogTotal = !catalog.isLoading && catalog.data ? catalog.data.total : null;
-  const canonicalTotal = !canonicalSets.isLoading && canonicalSets.data ? canonicalSets.data.length : null;
-  const publicTotal = !publicSets.isLoading && publicSets.data ? publicSets.data.total : null;
+  const showWaking = useSlowLoading(catalog.isLoading || canonicalSets.isLoading || publicSets.isLoading);
+  const compact = useMediaQuery('(max-width: 899px)');
+  const coverage = getCoverageCounts(canonicalSets.data);
+  const isError = catalog.isError || canonicalSets.isError || publicSets.isError;
+
+  function retryCounts() {
+    void catalog.refetch();
+    void canonicalSets.refetch();
+    void publicSets.refetch();
+  }
 
   if (redirecting) {
     return <main data-testid="home-redirecting" className="flex-1" />;
   }
 
+  // The demo is static sample data and never waits on these queries; only the ways-in counts,
+  // the full-checklist link and the coverage numbers come from the API.
   return (
-    <main
-      data-testid="home-page"
-      className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-8 px-[clamp(20px,5vw,48px)] py-16"
-    >
-      <AccountDeletedNotice />
-      <div className="flex flex-col gap-5">
-        <p
-          data-testid="home-eyebrow"
-          className="text-[11px] font-medium uppercase tracking-[.16em] text-[color:var(--color-neutral-600)]"
-        >
-          {t('home.eyebrow')}
-        </p>
-        <h1
-          data-testid="home-headline"
-          className="max-w-[18ch] font-[family-name:var(--font-heading)] text-[clamp(40px,6vw,68px)] font-normal leading-[1.05] text-[color:var(--color-text)]"
-        >
-          {t('home.headline')}
-        </h1>
-        <p
-          data-testid="home-paragraph"
-          className="max-w-[60ch] text-[15px] leading-relaxed text-[color:var(--color-neutral-700)]"
-        >
-          {t('home.paragraph')}
-        </p>
+    <main data-testid="home-page" className="flex w-full flex-1 flex-col">
+      <div className="mx-auto w-full max-w-[1320px] px-5 pt-6 empty:hidden min-[900px]:px-10">
+        <AccountDeletedNotice />
       </div>
-
-      <nav className="flex flex-col border-t border-[color:var(--color-divider)]">
-        <Link href="/catalog" data-testid="home-catalog-link" className={ROW_CLASSES}>
-          <span className="text-[17px]">{t('home.browseCatalogue')}</span>
-          {catalogTotal !== null && (
-            <span className="font-mono text-sm tabular-nums text-[color:var(--color-neutral-600)]">
-              {catalogTotal} {t('home.coinsUnit')}
-            </span>
-          )}
-        </Link>
-        <Link href="/sets/canonical" data-testid="home-canonical-link" className={ROW_CLASSES}>
-          <span className="text-[17px]">{t('home.browseCanonical')}</span>
-          {canonicalTotal !== null && (
-            <span className="font-mono text-sm tabular-nums text-[color:var(--color-neutral-600)]">
-              {canonicalTotal} {t('home.setsUnit')}
-            </span>
-          )}
-        </Link>
-        <Link href="/sets/public" data-testid="home-public-link" className={ROW_CLASSES}>
-          <span className="text-[17px]">{t('home.browsePublic')}</span>
-          {publicTotal !== null && (
-            <span className="font-mono text-sm tabular-nums text-[color:var(--color-neutral-600)]">
-              {publicTotal} {t('home.setsUnit')}
-            </span>
-          )}
-        </Link>
-      </nav>
+      <LandingHero
+        interactive={false}
+        compact={compact}
+        setCoinCount={coverage.coins}
+        fullChecklistHref={getFullChecklistHref(canonicalSets.data)}
+      />
+      <LandingPoints />
+      <WaysIn
+        catalogCount={catalog.data?.total ?? null}
+        checklistCount={canonicalSets.data?.length ?? null}
+        publicSetCount={publicSets.data?.total ?? null}
+        isError={isError}
+        showWaking={showWaking}
+        onRetry={retryCounts}
+        compact={compact}
+      />
+      <Coverage counts={coverage} />
     </main>
   );
 }
