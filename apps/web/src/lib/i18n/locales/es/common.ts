@@ -51,18 +51,9 @@ const common: Record<keyof typeof enCommon, string> = {
   'common.clear': 'Borrar',
   'common.close': 'Cerrar',
   'common.cancel': 'Cancelar',
+  'common.serverWaking': 'Despertando el servidor. En la primera visita puede tardar hasta un minuto.',
 
   // home
-  'home.title': 'Coin Collector Companion',
-  'home.eyebrow': 'Catálogo y registro personal',
-  'home.headline': 'Un lugar tranquilo para registrar lo que tienes, y lo que aún buscas.',
-  'home.paragraph':
-    'Define una colección a tu manera, marca las monedas que posees y ve los huecos que quedan. Explorar no requiere cuenta.',
-  'home.browseCatalogue': 'Explorar el catálogo',
-  'home.browseCanonical': 'Explorar colecciones canónicas',
-  'home.browsePublic': 'Explorar colecciones de coleccionistas',
-  'home.coinsUnit': 'monedas',
-  'home.setsUnit': 'colecciones',
   'home.accountDeletedNotice': 'Tu cuenta ha sido eliminada.',
 
   // footer

@@ -49,18 +49,9 @@ const common = {
   'common.clear': 'Clear',
   'common.close': 'Close',
   'common.cancel': 'Cancel',
+  'common.serverWaking': 'Waking the server. This can take up to a minute on the first visit.',
 
   // home
-  'home.title': 'Coin Collector Companion',
-  'home.eyebrow': 'Est. catalogue & personal ledger',
-  'home.headline': 'A quiet place to record what you have — and what you are still looking for.',
-  'home.paragraph':
-    'Define a set on your own terms, mark the coins you own, and see the gaps that remain. Browsing needs no account.',
-  'home.browseCatalogue': 'Browse the catalogue',
-  'home.browseCanonical': 'Browse canonical sets',
-  'home.browsePublic': "Browse collectors' sets",
-  'home.coinsUnit': 'coins',
-  'home.setsUnit': 'sets',
   'home.accountDeletedNotice': 'Your account has been deleted.',
 
   // footer

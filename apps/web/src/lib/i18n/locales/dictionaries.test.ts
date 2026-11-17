@@ -3,7 +3,9 @@
  * Contract source: runs/run_20260726_221855/plan.md § Interface Contract → Module: locale dictionaries
  *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/lib/i18n/locales/dictionaries.test.ts
  *                   runs/run_20261110_062926/plan.md § Interface Contract → dictionaries.test.ts
+ *                   runs/run_20261117_063301/plan.md § Interface Contract → Locale files
  * Covers criteria: #1, #2, #5 (from prd.md), plus #6, #7 of run_20261110_062926
+ *                  and #3, #19 of run_20261117_063301
  *
  * Note: key-parity between en/es is also enforced at compile time, per area, by each
  * es/<area>.ts's `Record<keyof typeof en<Area>, string>` annotation and for the whole
@@ -20,6 +22,10 @@
  * added at the end (key-count sum, prefix placement); the existing assertions are untouched.
  *
  * run_20261112_212821: 'notFound' is added to the common area's allowed prefixes (the only change).
+ *
+ * run_20261117_063301: the landing area is added (AREA_PREFIXES, EN_AREAS, ES_AREAS), and a new block
+ * covers common.serverWaking, the removed landing.waking and the removed home.* keys. Existing
+ * assertions are untouched.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -32,6 +38,7 @@ import enCollection from '@/lib/i18n/locales/en/collection';
 import enCommon from '@/lib/i18n/locales/en/common';
 import enGlossary from '@/lib/i18n/locales/en/glossary';
 import enGrades from '@/lib/i18n/locales/en/grades';
+import enLanding from '@/lib/i18n/locales/en/landing';
 import enSetNew from '@/lib/i18n/locales/en/set-new';
 import enSets from '@/lib/i18n/locales/en/sets';
 import es from '@/lib/i18n/locales/es';
@@ -43,6 +50,7 @@ import esCollection from '@/lib/i18n/locales/es/collection';
 import esCommon from '@/lib/i18n/locales/es/common';
 import esGlossary from '@/lib/i18n/locales/es/glossary';
 import esGrades from '@/lib/i18n/locales/es/grades';
+import esLanding from '@/lib/i18n/locales/es/landing';
 import esSetNew from '@/lib/i18n/locales/es/set-new';
 import esSets from '@/lib/i18n/locales/es/sets';
 
@@ -57,6 +65,7 @@ const AREA_PREFIXES: Record<string, readonly string[]> = {
   collection: ['collection', 'import'],
   grades: ['grade'],
   glossary: ['glossary'],
+  landing: ['landing'],
 };
 
 const EN_AREAS: Record<string, object> = {
@@ -70,6 +79,7 @@ const EN_AREAS: Record<string, object> = {
   collection: enCollection,
   grades: enGrades,
   glossary: enGlossary,
+  landing: enLanding,
 };
 
 const ES_AREAS: Record<string, object> = {
@@ -83,7 +93,12 @@ const ES_AREAS: Record<string, object> = {
   collection: esCollection,
   grades: esGrades,
   glossary: esGlossary,
+  landing: esLanding,
 };
+
+function placeholders(text: string): string[] {
+  return (text.match(/\{[A-Za-z]+\}/g) ?? []).sort();
+}
 
 describe('locale dictionaries', () => {
   describe('criterion 2: en/es key parity', () => {
@@ -162,6 +177,80 @@ describe('locale dictionaries', () => {
         expect(keys.length).toBeGreaterThan(0);
         const misplaced = keys.filter((key) => !AREA_PREFIXES[area].includes(key.split('.')[0]));
         expect(misplaced, `keys in ${area} with a prefix owned by another area`).toEqual([]);
+      }
+    });
+  });
+
+  describe('run_20261117_063301 criterion 3: common.serverWaking replaces landing.waking', () => {
+    it('defines common.serverWaking with the exact EN and ES text', () => {
+      expect(en['common.serverWaking']).toBe('Waking the server. This can take up to a minute on the first visit.');
+      expect(es['common.serverWaking']).toBe(
+        'Despertando el servidor. En la primera visita puede tardar hasta un minuto.',
+      );
+    });
+
+    it('keeps common.serverWaking in the common area files', () => {
+      expect((enCommon as Record<string, string>)['common.serverWaking']).toBe(en['common.serverWaking']);
+      expect((esCommon as Record<string, string>)['common.serverWaking']).toBe(es['common.serverWaking']);
+    });
+
+    it('does not define landing.waking in either locale or in the landing files', () => {
+      expect(en['landing.waking']).toBeUndefined();
+      expect(es['landing.waking']).toBeUndefined();
+      expect(Object.keys(enLanding)).not.toContain('landing.waking');
+      expect(Object.keys(esLanding)).not.toContain('landing.waking');
+    });
+  });
+
+  describe('run_20261117_063301 criterion 19: landing area and home.* cleanup', () => {
+    it('has the same landing keys in en and es', () => {
+      expect(Object.keys(esLanding).sort()).toEqual(Object.keys(enLanding).sort());
+      expect(Object.keys(enLanding).length).toBeGreaterThan(50);
+    });
+
+    it('uses the same {placeholders} in en and es for every landing key', () => {
+      const enMap = enLanding as Record<string, string>;
+      const esMap = esLanding as Record<string, string>;
+      for (const key of Object.keys(enMap)) {
+        expect(placeholders(esMap[key]), `placeholders of ${key}`).toEqual(placeholders(enMap[key]));
+      }
+    });
+
+    it('merges the landing area into the full dictionaries with the brief copy', () => {
+      expect(en['landing.headline']).toBe('See what you’re still missing.');
+      expect(en['landing.ctaPrimary']).toBe('Create a free account');
+      expect(en['landing.ctaSecondary']).toBe('Browse checklists');
+      expect(en['landing.metaDescription']).toBe(
+        'Free checklists for coin collectors. Mark what you own and see what you’re still missing.',
+      );
+      expect(es['landing.headline']).not.toBe(en['landing.headline']);
+    });
+
+    it('keeps home.accountDeletedNotice and drops the keys the old home page used', () => {
+      expect(en['home.accountDeletedNotice']).toBeDefined();
+      expect(es['home.accountDeletedNotice']).toBeDefined();
+      for (const key of [
+        'home.title',
+        'home.eyebrow',
+        'home.headline',
+        'home.paragraph',
+        'home.browseCatalogue',
+        'home.browseCanonical',
+        'home.browsePublic',
+        'home.coinsUnit',
+        'home.setsUnit',
+      ]) {
+        expect(en[key], `en ${key}`).toBeUndefined();
+        expect(es[key], `es ${key}`).toBeUndefined();
+      }
+    });
+
+    it('never claims a catalogue size in thousands', () => {
+      for (const [key, value] of Object.entries(en)) {
+        expect(value, key).not.toMatch(/thousands of coins/i);
+      }
+      for (const [key, value] of Object.entries(es)) {
+        expect(value, key).not.toMatch(/miles de monedas/i);
       }
     });
   });

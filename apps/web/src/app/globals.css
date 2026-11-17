@@ -148,4 +148,16 @@ h6 {
   button {
     display: none !important;
   }
+
+  body:has([data-print-region]) * {
+    visibility: hidden;
+  }
+  body:has([data-print-region]) [data-print-region],
+  body:has([data-print-region]) [data-print-region] * {
+    visibility: visible;
+  }
+  body:has([data-print-region]) [data-print-region] {
+    position: absolute;
+    inset: 0 0 auto 0;
+  }
 }

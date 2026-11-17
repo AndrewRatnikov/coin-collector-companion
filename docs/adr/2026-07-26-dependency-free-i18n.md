@@ -1,6 +1,6 @@
 # The web app uses a dependency-free i18n layer with compile-time key parity
 
-- **Status:** Accepted
+- **Status:** Accepted; the locale-choice clause (first render always `en`) is superseded by [2026-11-16-locale-cookie-read-in-root-layout](2026-11-16-locale-cookie-read-in-root-layout.md)
 - **Date:** 2026-07-26
 - **Source:** orchestrator run `run_20260726_221855` (i18n infrastructure for `apps/web`)
 - **Code:** `apps/web/src/lib/i18n/locales/en.ts`, `apps/web/src/lib/i18n/locales/es.ts`, `apps/web/src/lib/i18n/locales/dictionaries.test.ts`, `apps/web/src/lib/i18n/i18n-context.tsx`, `apps/web/src/lib/i18n/translate-field.ts`, `apps/web/src/components/layout/language-switcher.tsx`

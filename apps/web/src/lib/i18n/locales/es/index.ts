@@ -7,6 +7,7 @@ import collection from './collection';
 import common from './common';
 import glossary from './glossary';
 import grades from './grades';
+import landing from './landing';
 import setNew from './set-new';
 import sets from './sets';
 
@@ -30,6 +31,7 @@ const esShape: Record<MessageKey, string> = {
   ...setNew,
   ...glossary,
   ...addCoins,
+  ...landing,
 };
 
 const es: Record<string, string> = esShape;
