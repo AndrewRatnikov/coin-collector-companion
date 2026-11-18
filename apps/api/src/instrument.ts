@@ -3,6 +3,7 @@
 // in local dev. On Render the variables are already in the environment and there is no .env.
 import { existsSync } from 'node:fs';
 import * as Sentry from '@sentry/nestjs';
+import { SENTRY_DATA_COLLECTION } from './sentry-data-collection';
 
 if (existsSync('.env')) {
   process.loadEnvFile('.env');
@@ -17,5 +18,6 @@ Sentry.init({
   environment: process.env.SENTRY_ENVIRONMENT ?? (isProduction ? 'production' : 'development'),
   release: process.env.RENDER_GIT_COMMIT,
   // Every trace locally, 10% in production.
+  dataCollection: SENTRY_DATA_COLLECTION,
   tracesSampleRate: isProduction ? 0.1 : 1.0,
 });
