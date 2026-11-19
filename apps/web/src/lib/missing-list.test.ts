@@ -427,7 +427,7 @@ describe('buildWantGroups', () => {
 
   it('gives an empty label for a plain coin and trims the mint mark and variety', () => {
     const groups = buildWantGroups([
-      item('a', { mintMark: '', variety: '', year: 1911 }),
+      item('a', { mintMark: '', variety: '', year: 1911, isKeyDate: false }),
       item('b', { mintMark: ' D ', variety: '  VDB ', year: 1912 }),
     ] as never);
 
