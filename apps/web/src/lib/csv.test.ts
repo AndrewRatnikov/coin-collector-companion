@@ -1,7 +1,11 @@
 /**
  * Tests for: shared CSV primitives (@coin-collector/shared) and the refactored @/lib/missing-list
  * Contract source: runs/run_20261111_062918/plan.md § Interface Contract (Module: @coin-collector/shared (CSV primitives), Module: @/lib/missing-list)
- * Covers criteria: #3, #4, #8 (from prd.md)
+ *                   runs/run_20261119_210926/plan.md § Interface Contract → Module: missing-list
+ * Covers criteria: #3, #4, #8 (from prd.md), and #13 of run_20261119_210926
+ *
+ * run_20261119_210926: the golden bytes and the header constant carry the new Want, Grade and
+ * Target grade columns (an intended format change).
  *
  * CONTRACT_GAPs: none
  *
@@ -107,7 +111,7 @@ describe('formatLocalDate', () => {
   });
 });
 
-describe('buildMissingCsv golden bytes (byte-identical to the pre-refactor output)', () => {
+describe('buildMissingCsv golden bytes (hard-coded expected output, with the Want, Grade and Target grade columns)', () => {
   const baseCoin = {
     imageUrl: null,
     imageSource: null,
@@ -179,16 +183,18 @@ describe('buildMissingCsv golden bytes (byte-identical to the pre-refactor outpu
   it('equals the hard-coded expected string', () => {
     const expected =
       '﻿' +
-      'Name,Country,Denomination,Year,Mint mark,Variety,Key date,Mintage' +
+      'Name,Country,Denomination,Year,Mint mark,Variety,Key date,Mintage,Want,Grade,Target grade' +
       '\r\n' +
-      "'=SUM(A1),USA,1 Cent,1909,S,VDB,yes,484000" +
+      "'=SUM(A1),USA,1 Cent,1909,S,VDB,yes,484000,missing,," +
       '\r\n' +
-      '"Say ""hi"", friend",Ukraine,5 Kopiyok,2011,,"Line\nBreak",no,';
+      '"Say ""hi"", friend",Ukraine,5 Kopiyok,2011,,"Line\nBreak",no,,missing,,';
     expect(buildMissingCsv(gaps, 'Any set')).toBe(expected);
   });
 
   it('keeps the header constant and gives only BOM + header when nothing is missing', () => {
-    expect(MISSING_CSV_HEADER).toBe('Name,Country,Denomination,Year,Mint mark,Variety,Key date,Mintage');
+    expect(MISSING_CSV_HEADER).toBe(
+      'Name,Country,Denomination,Year,Mint mark,Variety,Key date,Mintage,Want,Grade,Target grade',
+    );
     expect(buildMissingCsv({ slots: [] } as never, 'Any set')).toBe(`${BOM}${MISSING_CSV_HEADER}`);
   });
 });
