@@ -10,6 +10,7 @@ import grades from './grades';
 import landing from './landing';
 import setNew from './set-new';
 import sets from './sets';
+import wantList from './want-list';
 
 // The keys live in one file per area (`./<area>.ts`), each explicitly typed
 // against its English counterpart (`Record<keyof typeof en<Area>, string>`), so
@@ -32,6 +33,7 @@ const esShape: Record<MessageKey, string> = {
   ...glossary,
   ...addCoins,
   ...landing,
+  ...wantList,
 };
 
 const es: Record<string, string> = esShape;

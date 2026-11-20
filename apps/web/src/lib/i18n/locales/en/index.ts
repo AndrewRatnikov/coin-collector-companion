@@ -9,6 +9,7 @@ import grades from './grades';
 import landing from './landing';
 import setNew from './set-new';
 import sets from './sets';
+import wantList from './want-list';
 
 // English is the source of truth: every value here must stay byte-identical to
 // the string that was hardcoded at each phrase's call site before i18n was
@@ -40,6 +41,7 @@ const enShape = {
   ...glossary,
   ...addCoins,
   ...landing,
+  ...wantList,
 } satisfies Record<string, string>;
 
 const en: Record<string, string> = enShape;
