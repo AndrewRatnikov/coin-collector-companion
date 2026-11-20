@@ -110,8 +110,8 @@ The registries show that collectors want to show a set and its progress; this is
 
 Raised in priority after the competitor check: a year-and-mint-mark want list is what users of the big catalogues ask for and build by hand today. If Steps 3 and 5 compete for time, do 5.1-5.4 first.
 
-- [ ] 5.1 Missing-coins page (`/sets/[id]/missing`) groups by denomination and year with mint marks on one line (for example "1914: D, S"), so it reads like a show list. Print and CSV follow the same order.
-- [ ] 5.2 When the set has a minimum grade, the want list gets a second section, "Upgrade wanted", listing owned coins below it with their current grade. Check first what the page shows today for those coins.
+- [x] 5.1 Missing-coins page (`/sets/[id]/missing`) groups by denomination and year with mint marks on one line (for example "1914: D, S"), so it reads like a show list. Print and CSV follow the same order. Done 2026-11-19: the page is a "Want list" grouped by (country, denomination) then year through the shared `WantListTable` (the landing sample uses it too), with Print and Download CSV; the CSV follows the page order and gains `Want,Grade,Target grade` columns (backlog_want-list.md Phase 1). 390px and print preview are a pending manual pass.
+- [x] 5.2 When the set has a minimum grade, the want list gets a second section, "Upgrade wanted", listing owned coins below it with their current grade. Check first what the page shows today for those coins. Done 2026-11-19: before this, owned coins below the minimum appeared nowhere on the page (it listed unowned coins only); they now show under "Upgrade wanted" as e.g. "D (F → VF)", and in the CSV as `upgrade` rows after the missing ones.
 - [ ] 5.3 One combined want list across all of the user's sets, deduplicated by coin, with the same grouping, print and CSV export.
 - [ ] 5.4 Web app manifest and icons so the app installs to a phone home screen, and offline read access to the want lists the user has opened (cache the last response and show its date).
 - [ ] 5.5 Mark a coin owned while offline; sync on reconnect (queue on top of the optimistic ownership hook). Cut this first if the step runs long.

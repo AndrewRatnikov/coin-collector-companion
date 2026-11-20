@@ -60,11 +60,18 @@ const sets: Record<keyof typeof enSets, string> = {
   'setAlbum.toggleError': 'No se pudo actualizar esta moneda. Inténtalo de nuevo.',
 
   // missing list
-  'missingList.heading': 'Monedas faltantes',
+  'missingList.title': 'Lista de faltantes',
+  'missingList.backToSet': '‹ {name}',
   'missingList.dateLabel': 'Fecha',
   'missingList.printButton': 'Imprimir',
-  'missingList.colKeyDate': 'Fecha clave',
-  'missingList.keyDateBadge': '★ Fecha clave',
+  'missingList.downloadCsv': 'Descargar CSV',
+  'missingList.sectionMissing': 'Faltan',
+  'missingList.sectionUpgrade': 'Por mejorar',
+  'missingList.upgradeNote': 'Las tienes, pero por debajo del grado mínimo de esta colección ({grade}).',
+  'missingList.nothingMissing': 'No falta nada.',
+  'missingList.plain': '(sin ceca)',
+  'missingList.keyLegend': '★ = fecha clave',
+  'missingList.noGrade': 'sin grado',
   'missingList.empty': 'Tienes todas las monedas de esta colección. No hay nada que imprimir.',
 
   // set progress (checklists and public sets)

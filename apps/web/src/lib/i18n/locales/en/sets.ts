@@ -58,11 +58,18 @@ const sets = {
   'setAlbum.toggleError': "Couldn't update this coin. Please try again.",
 
   // missing list
-  'missingList.heading': 'Missing coins',
+  'missingList.title': 'Want list',
+  'missingList.backToSet': '‹ {name}',
   'missingList.dateLabel': 'Date',
   'missingList.printButton': 'Print',
-  'missingList.colKeyDate': 'Key date',
-  'missingList.keyDateBadge': '★ Key date',
+  'missingList.downloadCsv': 'Download CSV',
+  'missingList.sectionMissing': 'Missing',
+  'missingList.sectionUpgrade': 'Upgrade wanted',
+  'missingList.upgradeNote': 'Owned, but below this set’s minimum grade ({grade}).',
+  'missingList.nothingMissing': 'Nothing missing.',
+  'missingList.plain': '(plain)',
+  'missingList.keyLegend': '★ = key date',
+  'missingList.noGrade': 'no grade',
   'missingList.empty': 'You own every coin in this set. Nothing to print.',
 
   // set progress (checklists and public sets)

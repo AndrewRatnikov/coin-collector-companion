@@ -356,7 +356,8 @@ function cleanText(value: string | null | undefined): string {
   return (value ?? '').trim();
 }
 
-function splitCoinVariety(variety: string): { series: string; design: string } {
+/** Splits a "Series: Design" variety into its parts; without the separator the whole variety is the design. */
+export function splitCoinVariety(variety: string): { series: string; design: string } {
   const index = variety.indexOf(COIN_NAME_VARIETY_SEPARATOR);
   if (index === -1) return { series: '', design: variety };
   const left = variety.slice(0, index).trim();
