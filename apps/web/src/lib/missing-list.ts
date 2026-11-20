@@ -7,6 +7,8 @@ import {
   type CoinGrade,
   type GapSlot,
   type GapViewResponse,
+  type WantCoin,
+  type WantListResponse,
 } from '@coin-collector/shared';
 
 export { formatLocalDate } from '@coin-collector/shared';
@@ -201,4 +203,50 @@ export function downloadMissingCsv(
   anchor.remove();
   // Revoking synchronously can cancel the download in some browsers.
   setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+export const WANT_LIST_CSV_HEADER = `${MISSING_CSV_HEADER},Sets`;
+
+function wantSetNames(entry: WantCoin): string {
+  return entry.sets.map((set) => set.name).join('; ');
+}
+
+/**
+ * The combined want list as CSV: missing rows, then upgrade rows, each in response order
+ * (the server already returns want-list order, so nothing is re-sorted). The last cell lists
+ * the names of the sets each coin is wanted for. Never mutates the input.
+ */
+export function buildWantListCsv(response: WantListResponse): string {
+  const missingRows = response.missing.map((entry) =>
+    csvRow([...coinCells(entry.coin), 'missing', '', '', wantSetNames(entry)]),
+  );
+  const upgradeRows = response.upgrades.map((entry) =>
+    csvRow([...coinCells(entry.coin), 'upgrade', entry.grade ?? '', entry.targetGrade, wantSetNames(entry)]),
+  );
+  return csvDocument([WANT_LIST_CSV_HEADER, ...missingRows, ...upgradeRows]);
+}
+
+export function wantListCsvFilename(date: Date): string {
+  return `want-list-${formatLocalDate(date)}.csv`;
+}
+
+export function downloadWantListCsv(response: WantListResponse, now: Date = new Date()): void {
+  const blob = new Blob([buildWantListCsv(response)], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = wantListCsvFilename(now);
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  // Revoking synchronously can cancel the download in some browsers.
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+/** A coin's label in the "Which sets?" list, e.g. "USA · 1 Cent · 1914-D". Empty parts are dropped. */
+export function wantCoinLabel(coin: CatalogCoin): string {
+  const mintMark = (coin.mintMark ?? '').trim();
+  const notation = mintMark ? `${coin.year}-${mintMark}` : `${coin.year}`;
+  const design = splitCoinVariety((coin.variety ?? '').trim()).design;
+  return [coin.country, coin.denomination, notation, design].filter(Boolean).join(' · ');
 }
