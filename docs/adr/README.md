@@ -54,6 +54,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-15](2026-11-15-api-security-headers-helmet-defaults-no-csp-relaxation.md) | The API sends helmet's default security headers unchanged, with no CSP relaxation, including on Swagger UI | Accepted |
 | [2026-11-15](2026-11-15-render-build-applies-migrations.md) | Every Render deploy applies pending migrations with `prisma migrate deploy` inside `buildCommand` | Accepted |
 | [2026-11-16](2026-11-16-locale-cookie-read-in-root-layout.md) | The root layout reads the visitor's locale from a `ccc-locale` cookie, so `<html lang>` and the first render match it, and every route renders dynamically | Accepted |
+| [2026-11-18](2026-11-18-combined-want-list-computed-on-the-server.md) | The combined want list is computed on the server by one GET /sets/wants in three queries, deduplicated per coin, while the per-set list stays in the browser | Accepted |
 | [2026-11-19](2026-11-19-missing-csv-in-want-list-order-with-upgrade-rows.md) | The missing-coins CSV is in want-list order, appends upgrade rows, and gains Want, Grade and Target grade columns | Accepted |
 | [2026-11-19](2026-11-19-one-want-list-table-component-for-every-want-list.md) | One presentational WantListTable renders every want list, grouped by country and denomination, then year | Accepted |
 
