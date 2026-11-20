@@ -220,6 +220,23 @@ export interface UserSetsSummaryResponse {
   suggestedSet: SuggestedCanonicalSet | null;
 }
 
+// GET /sets/wants: every coin the caller still wants across all their sets, each coin once.
+export interface WantCoin {
+  coin: CatalogCoin; // CATALOG_COIN_SELECT fields only
+  sets: { id: string; name: string }[]; // the caller's sets this entry applies to, ordered by name
+}
+
+export type UpgradeWant = WantCoin & {
+  grade: CoinGrade | null; // the caller's recorded grade; null when ungraded
+  targetGrade: CoinGrade; // the highest minGrade among the sets the coin fails
+};
+
+export interface WantListResponse {
+  setCount: number; // every set the caller owns, including sets with no coins
+  missing: WantCoin[];
+  upgrades: UpgradeWant[];
+}
+
 export interface UserSetCoinItem {
   id: string;
   position: number;
