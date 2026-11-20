@@ -21,9 +21,11 @@ import type {
   UserSetListItem,
   UserSetsSummaryResponse,
   UserSetSummary,
+  WantListResponse,
 } from '@coin-collector/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { CATALOG_COIN_SELECT } from '../catalog/catalog.service';
+import { buildWantList } from './want-list';
 import { CreateSetDto } from './dto/create-set.dto';
 import { UpdateSetDto } from './dto/update-set.dto';
 import { PatchSetCoinsDto } from './dto/patch-set-coins.dto';
@@ -178,6 +180,29 @@ export class SetsService {
     }
 
     return { uniqueMissingCount, collectionCount, suggestedSet };
+  }
+
+  /**
+   * Combined want list across the caller's sets. Exactly three independent queries in one
+   * round trip, whatever the number of sets; the ownership query is limited to coins in the
+   * caller's sets through a relation filter instead of a dependent `coinId IN (...)` query.
+   */
+  async getWantList(userId: string): Promise<WantListResponse> {
+    const [setCount, slots, ownerships] = await Promise.all([
+      this.prisma.userSet.count({ where: { userId } }),
+      this.prisma.userSetCoin.findMany({
+        where: { userSet: { userId } },
+        select: {
+          coin: { select: CATALOG_COIN_SELECT },
+          userSet: { select: { id: true, name: true, minGrade: true } },
+        },
+      }),
+      this.prisma.ownership.findMany({
+        where: { userId, coin: { userSetCoins: { some: { userSet: { userId } } } } },
+        select: { coinId: true, grade: true },
+      }),
+    ]);
+    return buildWantList(setCount, slots, ownerships);
   }
 
   async create(userId: string, dto: CreateSetDto): Promise<UserSetSummary> {

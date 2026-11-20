@@ -62,17 +62,17 @@ Source: growth backlog Step 5, items 5.1–5.3 ([backlog_growth.md](backlog_grow
 
 ## Phase 2: Combined want list API (5.3, server side)
 
-- [ ] 2.1 `packages/shared`: `WantListResponse = { setCount: number; missing: WantCoin[]; upgrades: UpgradeWant[] }`, with `WantCoin = { coin: CatalogCoin; sets: { id: string; name: string }[] }` and `UpgradeWant = WantCoin & { grade: CoinGrade | null; targetGrade: CoinGrade }`.
-- [ ] 2.2 `GET /sets/wants` (auth required, no `@Public()`), declared with `summary` **before** the `:id` routes. In `SetsService.getWantList(userId)`, with two or three queries, not one per set:
+- [x] 2.1 `packages/shared`: `WantListResponse = { setCount: number; missing: WantCoin[]; upgrades: UpgradeWant[] }`, with `WantCoin = { coin: CatalogCoin; sets: { id: string; name: string }[] }` and `UpgradeWant = WantCoin & { grade: CoinGrade | null; targetGrade: CoinGrade }`.
+- [x] 2.2 `GET /sets/wants` (auth required, no `@Public()`), declared with `summary` **before** the `:id` routes. In `SetsService.getWantList(userId)`, with two or three queries, not one per set:
   - every `UserSetCoin` of the caller's sets, with the coin through `CATALOG_COIN_SELECT` and the set's `id`, `name` and `minGrade`;
   - the caller's `Ownership` rows for those coins (`coinId`, `grade`).
   - **missing:** coins with no ownership row, one entry per coin, `sets` listing every caller set that contains it.
   - **upgrades:** owned coins that fail `meetsMinGrade` for at least one containing set; `targetGrade` is the highest `minGrade` among the sets it fails; `sets` lists those sets only.
   - A coin is never in both lists.
   - **Order:** country A–Z, then denomination with `localeCompare(…, { numeric: true })`, then year, then mint mark, then variety. `sets` ordered by name.
-- [ ] 2.3 Tests. Unit (`want-list.spec.ts`): dedupe across two sets; target grade is the highest failed minimum; an ungraded owned coin counts as an upgrade only where a minimum exists; ordering; empty account. E2E (`want-list.e2e-spec.ts`): 401 without a token; caller isolation against a second user; `missing.length` equals `uniqueMissingCount` from `GET /sets/summary`; `/sets/:id` routes still resolve (no route shadowing); the response coin has no `submittedByUserId`.
-- [ ] 2.4 ADR `docs/adr/2026-11-18-combined-want-list-computed-on-the-server.md`: why one endpoint (no N× `/gaps`), the dedupe and target-grade rules, and that the per-set list stays client-side.
-- [ ] 2.5 `docs/system-design_v2.md`: add the endpoint to the API contracts.
+- [x] 2.3 Tests. Unit (`want-list.spec.ts`): dedupe across two sets; target grade is the highest failed minimum; an ungraded owned coin counts as an upgrade only where a minimum exists; ordering; empty account. E2E (`want-list.e2e-spec.ts`): 401 without a token; caller isolation against a second user; `missing.length` equals `uniqueMissingCount` from `GET /sets/summary`; `/sets/:id` routes still resolve (no route shadowing); the response coin has no `submittedByUserId`.
+- [x] 2.4 ADR `docs/adr/2026-11-18-combined-want-list-computed-on-the-server.md`: why one endpoint (no N× `/gaps`), the dedupe and target-grade rules, and that the per-set list stays client-side.
+- [x] 2.5 `docs/system-design_v2.md`: add the endpoint to the API contracts.
 
 **Checkpoint:** one request returns every coin the caller wants across all sets, deduplicated, with upgrade targets.
 
@@ -101,7 +101,8 @@ Ship after Phase 2 is live on Render, so the page never calls a missing endpoint
   - [ ] Phase 3: 5.3.
 - [ ] One `docs/history.md` entry per phase, in the style of the existing entries.
   - [x] Phase 1 entry, 2026-11-19.
-  - [ ] Phase 2 and Phase 3 entries.
+  - [x] Phase 2 entry, 2026-11-20.
+  - [ ] Phase 3 entry.
 - [ ] `CLAUDE.md` "Built": add the want list in one line after Phase 3.
 
 ## Out of scope

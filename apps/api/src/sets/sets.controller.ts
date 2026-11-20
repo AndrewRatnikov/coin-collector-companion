@@ -11,6 +11,7 @@ import type {
   UserSetListItem,
   UserSetsSummaryResponse,
   UserSetSummary,
+  WantListResponse,
 } from '@coin-collector/shared';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Public } from '../auth/decorators/public.decorator';
@@ -51,6 +52,15 @@ export class SetsController {
   @ApiOkResponse({ description: 'Summary for the My sets page' })
   getSummary(@CurrentUser() user: AuthenticatedUser): Promise<UserSetsSummaryResponse> {
     return this.setsService.getSummary(user.userId);
+  }
+
+  @Get('wants')
+  @ApiOperation({
+    summary: "The caller's combined want list: missing coins and upgrade wants across all their sets, each coin once",
+  })
+  @ApiOkResponse({ description: "Want list across all of the caller's sets" })
+  getWantList(@CurrentUser() user: AuthenticatedUser): Promise<WantListResponse> {
+    return this.setsService.getWantList(user.userId);
   }
 
   @Public()
