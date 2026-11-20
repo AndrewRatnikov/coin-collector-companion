@@ -76,10 +76,10 @@ export function MySetsSummary({ sets, summary }: MySetsSummaryProps) {
           {summary.uniqueMissingCount}
         </span>
         <span className={LABEL_CLASS}>{t('dashboard.tileMissingLabel')}</span>
-        {closest && (
+        {summary.uniqueMissingCount > 0 && (
           <Link
             data-testid="dashboard-tile-missing-link"
-            href={`/sets/${closest.id}/missing`}
+            href="/want-list"
             className={LINK_CLASS}
           >
             {t('dashboard.tileMissingLink')}
