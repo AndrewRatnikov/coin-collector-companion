@@ -24,7 +24,7 @@ describe('PrivacyPage', () => {
 
       const root = screen.getByTestId('privacy-page');
       expect(root.tagName).toBe('MAIN');
-      expect(screen.queryByTestId('require-auth-pending')).not.toBeInTheDocument();
+      expect(within(root).getAllByRole('heading', { level: 1 })).toHaveLength(1);
     });
 
     it('has an h1 title and an intro paragraph', () => {
