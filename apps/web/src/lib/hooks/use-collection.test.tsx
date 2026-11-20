@@ -2,13 +2,15 @@
  * Tests for: use-collection hooks
  * Contract source: runs/run_20260721_171115/plan.md § Interface Contract → Module: use-collection.ts (CREATE)
  *                   runs/run_20261018_105617/plan.md § Interface Contract → Module: use-collection.ts (unchanged)
- * Covers criteria: #3, #6, #8 (from prd.md); #10 (from run_20261018_105617's prd.md)
+ *                   runs/run_20261120_215525/plan.md § Interface Contract → Optimistic patching (no code change)
+ * Covers criteria: #3, #6, #8 (from prd.md); #10 (from run_20261018_105617's prd.md);
+ *                  #3 (run_20261120_215525: the wants cache is never patched, only invalidated)
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { useBulkSetOwnership, useCollection, useSetOwnership } from '@/lib/hooks/use-collection';
+import { useBulkSetOwnership, useCollection, useSetGrade, useSetOwnership } from '@/lib/hooks/use-collection';
 import { getCollection, setOwnership, setOwnershipBulk } from '@/lib/collection-api';
 import { ApiError } from '@/lib/api-client';
 
@@ -232,6 +234,138 @@ describe('use-collection hooks', () => {
       expect(setOwnershipBulkMock).toHaveBeenCalledWith(['coin-1', 'coin-2'], true);
       expect(queryClient.getQueryState(['user-sets'])?.isInvalidated).toBe(true);
       expect(queryClient.getQueryState(['user-sets', 'summary'])?.isInvalidated).toBe(true);
+    });
+  });
+
+  describe('run_20261120_215525 criterion 3: the combined want list cache is never patched, only invalidated', () => {
+    const WANTS = {
+      setCount: 1,
+      missing: [{ coin: COIN, sets: [{ id: 'set-1', name: 'My Set' }] }],
+      upgrades: [],
+    };
+    const GAPS = {
+      setId: 'set-1',
+      ownedCount: 0,
+      totalCount: 1,
+      completionPercent: 0,
+      minGrade: null,
+      slots: [{ id: 'usc-1', position: 0, coin: COIN, owned: false, grade: null }],
+    };
+
+    function pendingOwnership() {
+      let finish!: () => void;
+      setOwnershipMock.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finish = () => resolve({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+          }),
+      );
+      return () => finish();
+    }
+
+    it('leaves the wants data as the same reference while a toggle is pending, but patches a real gap view', async () => {
+      const finish = pendingOwnership();
+      const { queryClient, wrapper } = makeWrapper();
+      queryClient.setQueryData(['user-sets', 'wants'], WANTS);
+      queryClient.setQueryData(['user-sets', 'set-1', 'gaps'], GAPS);
+
+      const { result } = renderHook(() => useSetOwnership(), { wrapper });
+      result.current.mutate({ coinId: 'coin-1', owned: true });
+      await waitFor(() => expect(setOwnershipMock).toHaveBeenCalled());
+
+      // control: the 3-part gaps key is patched optimistically ...
+      await waitFor(() => {
+        const gaps = queryClient.getQueryData<typeof GAPS>(['user-sets', 'set-1', 'gaps']);
+        expect(gaps?.slots[0].owned).toBe(true);
+      });
+      // ... the 2-part wants key is not
+      expect(queryClient.getQueryData(['user-sets', 'wants'])).toBe(WANTS);
+      expect(queryClient.getQueryData(['user-sets', 'wants'])).toEqual(WANTS);
+
+      finish();
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    });
+
+    it('marks the wants query invalidated after a toggle settles', async () => {
+      setOwnershipMock.mockResolvedValue({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+      const { queryClient, wrapper } = makeWrapper();
+      queryClient.setQueryData(['user-sets', 'wants'], WANTS);
+      expect(queryClient.getQueryState(['user-sets', 'wants'])?.isInvalidated).toBe(false);
+
+      const { result } = renderHook(() => useSetOwnership(), { wrapper });
+      result.current.mutate({ coinId: 'coin-1', owned: true });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(queryClient.getQueryState(['user-sets', 'wants'])?.isInvalidated).toBe(true);
+    });
+
+    it('refetches an active wants query after a toggle', async () => {
+      setOwnershipMock.mockResolvedValue({ coinId: 'coin-1', owned: true, ownedAt: new Date() } as never);
+      const { wrapper } = makeWrapper();
+      const wantsFn = vi.fn().mockResolvedValue(WANTS);
+
+      const { result } = renderHook(
+        () => ({
+          wants: useQuery({ queryKey: ['user-sets', 'wants'], queryFn: wantsFn }),
+          ownership: useSetOwnership(),
+        }),
+        { wrapper },
+      );
+      await waitFor(() => expect(result.current.wants.isSuccess).toBe(true));
+      expect(wantsFn).toHaveBeenCalledTimes(1);
+
+      result.current.ownership.mutate({ coinId: 'coin-1', owned: true });
+
+      await waitFor(() => expect(result.current.ownership.isSuccess).toBe(true));
+      expect(wantsFn).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not patch the wants data during a bulk change, and invalidates it after', async () => {
+      let finish!: () => void;
+      setOwnershipBulkMock.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            finish = () => resolve({ updated: 1 } as never);
+          }),
+      );
+      const { queryClient, wrapper } = makeWrapper();
+      queryClient.setQueryData(['user-sets', 'wants'], WANTS);
+      queryClient.setQueryData(['user-sets', 'set-1', 'gaps'], GAPS);
+
+      const { result } = renderHook(() => useBulkSetOwnership(), { wrapper });
+      result.current.mutate({ coinIds: ['coin-1'], owned: true });
+      await waitFor(() => expect(setOwnershipBulkMock).toHaveBeenCalled());
+
+      await waitFor(() => {
+        const gaps = queryClient.getQueryData<typeof GAPS>(['user-sets', 'set-1', 'gaps']);
+        expect(gaps?.slots[0].owned).toBe(true);
+      });
+      expect(queryClient.getQueryData(['user-sets', 'wants'])).toBe(WANTS);
+
+      finish();
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(queryClient.getQueryState(['user-sets', 'wants'])?.isInvalidated).toBe(true);
+    });
+
+    it('does not patch the wants data while a grade save is pending, and invalidates it after', async () => {
+      const finish = pendingOwnership();
+      const { queryClient, wrapper } = makeWrapper();
+      queryClient.setQueryData(['user-sets', 'wants'], WANTS);
+      queryClient.setQueryData(['user-sets', 'set-1', 'gaps'], { ...GAPS, slots: [{ ...GAPS.slots[0], owned: true }] });
+
+      const { result } = renderHook(() => useSetGrade(), { wrapper });
+      result.current.mutate({ coinId: 'coin-1', grade: 'VF' });
+      await waitFor(() => expect(setOwnershipMock).toHaveBeenCalledWith('coin-1', true, 'VF'));
+
+      await waitFor(() => {
+        const gaps = queryClient.getQueryData<typeof GAPS>(['user-sets', 'set-1', 'gaps']);
+        expect(gaps?.slots[0].grade).toBe('VF');
+      });
+      expect(queryClient.getQueryData(['user-sets', 'wants'])).toBe(WANTS);
+
+      finish();
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(queryClient.getQueryState(['user-sets', 'wants'])?.isInvalidated).toBe(true);
     });
   });
 
