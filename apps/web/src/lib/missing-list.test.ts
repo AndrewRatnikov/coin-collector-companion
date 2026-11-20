@@ -2,9 +2,13 @@
  * Tests for: @/lib/missing-list
  * Contract source: runs/run_20261001_205959/plan.md § Interface Contract → Module: missing-list
  *                   runs/run_20261117_063301/plan.md § Interface Contract → Function: groupWantList
- * Covers criteria: #1, #2, #3, #4, #5, #6, #9 (from prd.md), and #14 of run_20261117_063301
+ *                   runs/run_20261119_210926/plan.md § Interface Contract → Module: missing-list
+ * Covers criteria: #1, #2, #3, #4, #5, #6, #9 (from prd.md), #14 of run_20261117_063301,
+ *                  and #2, #3, #4, #13, #15 of run_20261119_210926
  *
- * run_20261117_063301: the existing tests are unchanged; the groupWantList block is added at the end.
+ * run_20261117_063301: the groupWantList block is unchanged.
+ * run_20261119_210926: the header constant and full-row expectations carry the new Want, Grade and
+ * Target grade columns; the buildWantGroups, getUpgradeSlots and CSV order/upgrade blocks are added.
  *
  * CONTRACT_GAPs: none
  */
@@ -14,9 +18,11 @@ import { waitFor } from '@testing-library/react';
 import {
   MISSING_CSV_HEADER,
   buildMissingCsv,
+  buildWantGroups,
   downloadMissingCsv,
   formatLocalDate,
   getMissingSlots,
+  getUpgradeSlots,
   groupWantList,
   missingCsvFilename,
   slugifySetName,
@@ -94,8 +100,10 @@ describe('getMissingSlots', () => {
 });
 
 describe('buildMissingCsv', () => {
-  it('exports the fixed English header constant', () => {
-    expect(MISSING_CSV_HEADER).toBe('Name,Country,Denomination,Year,Mint mark,Variety,Key date,Mintage');
+  it('exports the fixed English header constant with the Want, Grade and Target grade columns', () => {
+    expect(MISSING_CSV_HEADER).toBe(
+      'Name,Country,Denomination,Year,Mint mark,Variety,Key date,Mintage,Want,Grade,Target grade',
+    );
   });
 
   it('starts with the BOM, then the header, then rows in position order separated by CRLF with no trailing CRLF', () => {
@@ -112,8 +120,8 @@ describe('buildMissingCsv', () => {
       BOM +
         [
           MISSING_CSV_HEADER,
-          'First,USA,1 Cent,1910,S,VDB,yes,484000',
-          'Second,USA,1 Cent,1911,S,VDB,yes,484000',
+          'First,USA,1 Cent,1910,S,VDB,yes,484000,missing,,',
+          'Second,USA,1 Cent,1911,S,VDB,yes,484000,missing,,',
         ].join('\r\n'),
     );
     expect(csv.endsWith('\r\n')).toBe(false);
@@ -136,7 +144,7 @@ describe('buildMissingCsv', () => {
       'Set',
     );
 
-    expect(csv).toBe(BOM + [MISSING_CSV_HEADER, 'Lincoln Wheat Cent,USA,1 Cent,1909,,,no,'].join('\r\n'));
+    expect(csv).toBe(BOM + [MISSING_CSV_HEADER, 'Lincoln Wheat Cent,USA,1 Cent,1909,,,no,,missing,,'].join('\r\n'));
   });
 
   it('renders isKeyDate as yes or no and mintage without thousands separators', () => {
@@ -149,8 +157,8 @@ describe('buildMissingCsv', () => {
     );
     const lines = csv.split('\r\n');
 
-    expect(lines[1]).toBe('Lincoln Wheat Cent,USA,1 Cent,1909,S,VDB,yes,1234567');
-    expect(lines[2]).toBe('Lincoln Wheat Cent,USA,1 Cent,1909,S,VDB,no,0');
+    expect(lines[1]).toBe('Lincoln Wheat Cent,USA,1 Cent,1909,S,VDB,yes,1234567,missing,,');
+    expect(lines[2]).toBe('Lincoln Wheat Cent,USA,1 Cent,1909,S,VDB,no,0,missing,,');
   });
 
   it('wraps cells containing commas, quotes, CR or LF in quotes and doubles embedded quotes', () => {
@@ -200,7 +208,259 @@ describe('buildMissingCsv', () => {
   it('applies the formula prefix to non-name text cells such as variety', () => {
     const csv = buildMissingCsv(gapsOf([slot('a', 0, false, { variety: '@bad' })]), 'Set');
 
-    expect(csv.slice(BOM.length).split('\r\n')[1]).toBe("Lincoln Wheat Cent,USA,1 Cent,1909,S,'@bad,yes,484000");
+    expect(csv.slice(BOM.length).split('\r\n')[1]).toBe(
+      "Lincoln Wheat Cent,USA,1 Cent,1909,S,'@bad,yes,484000,missing,,",
+    );
+  });
+});
+
+describe('buildMissingCsv: want-list order and upgrade rows', () => {
+  it('orders missing rows by group, then year, keeping position order inside a year', () => {
+    const gaps = gapsOf([
+      slot('p0', 0, false, { name: 'P0', year: 1909 }),
+      slot('p1', 1, false, { name: 'P1', country: 'Ukraine', denomination: '5 Kopiyok', year: 2011 }),
+      slot('p2', 2, false, { name: 'P2', year: 1910 }),
+      slot('p3', 3, false, { name: 'P3', year: 1909 }),
+      slot('p4', 4, false, { name: 'P4', country: 'Ukraine', denomination: '5 Kopiyok', year: 2010 }),
+    ]);
+
+    const names = buildMissingCsv(gaps, 'Set')
+      .slice(BOM.length)
+      .split('\r\n')
+      .slice(1)
+      .map((line) => line.split(',')[0]);
+
+    // USA|1 Cent: 1909 (P0, P3), 1910 (P2); then Ukraine|5 Kopiyok: 2011 (P1), 2010 (P4)
+    expect(names).toEqual(['P0', 'P3', 'P2', 'P1', 'P4']);
+  });
+
+  it('appends upgrade rows after the missing rows with the owned grade and the target grade', () => {
+    const gaps = {
+      minGrade: 'VF',
+      slots: [
+        { ...slot('u', 0, true, { name: 'Upgrade me', year: 1909 }), grade: 'F', needsUpgrade: true },
+        { ...slot('m', 1, false, { name: 'Missing one', year: 1915 }), grade: null },
+        { ...slot('ok', 2, true, { name: 'Fine as is', year: 1920 }), grade: 'XF', needsUpgrade: false },
+      ],
+    } as never;
+
+    const lines = buildMissingCsv(gaps, 'Set').slice(BOM.length).split('\r\n');
+
+    expect(lines).toEqual([
+      MISSING_CSV_HEADER,
+      'Missing one,USA,1 Cent,1915,S,VDB,yes,484000,missing,,',
+      'Upgrade me,USA,1 Cent,1909,S,VDB,yes,484000,upgrade,F,VF',
+    ]);
+    expect(lines.join('\n')).not.toContain('Fine as is');
+  });
+
+  it('writes an empty Grade cell for an ungraded owned coin and follows the minGrade code', () => {
+    const make = (minGrade: string) =>
+      ({
+        minGrade,
+        slots: [{ ...slot('u', 0, true), grade: null, needsUpgrade: true }],
+      }) as never;
+
+    const vf = buildMissingCsv(make('VF'), 'Set').slice(BOM.length).split('\r\n')[1];
+    const unc = buildMissingCsv(make('UNC'), 'Set').slice(BOM.length).split('\r\n')[1];
+
+    expect(vf.endsWith(',upgrade,,VF')).toBe(true);
+    expect(unc.endsWith(',upgrade,,UNC')).toBe(true);
+  });
+
+  it('orders upgrade rows in want-list order too', () => {
+    const gaps = {
+      minGrade: 'VF',
+      slots: [
+        { ...slot('a', 0, true, { name: 'A', year: 1909 }), grade: 'G', needsUpgrade: true },
+        {
+          ...slot('b', 1, true, { name: 'B', country: 'Ukraine', denomination: '5 Kopiyok', year: 2011 }),
+          grade: 'G',
+          needsUpgrade: true,
+        },
+        { ...slot('c', 2, true, { name: 'C', year: 1910 }), grade: 'G', needsUpgrade: true },
+        { ...slot('d', 3, true, { name: 'D', year: 1909 }), grade: 'G', needsUpgrade: true },
+      ],
+    } as never;
+
+    const names = buildMissingCsv(gaps, 'Set')
+      .slice(BOM.length)
+      .split('\r\n')
+      .slice(1)
+      .map((line) => line.split(',')[0]);
+
+    expect(names).toEqual(['A', 'D', 'C', 'B']);
+  });
+
+  it('writes only missing rows when the set has no minimum grade', () => {
+    const csv = buildMissingCsv(gapsOf([slot('a', 0, false), slot('b', 1, true)]), 'Set');
+    const lines = csv.slice(BOM.length).split('\r\n');
+
+    expect(lines).toHaveLength(2);
+    expect(csv).not.toContain('upgrade');
+  });
+
+  it('is only the BOM plus header when nothing is missing and nothing needs an upgrade', () => {
+    const gaps = { minGrade: 'VF', slots: [{ ...slot('a', 0, true), grade: 'XF', needsUpgrade: false }] } as never;
+
+    expect(buildMissingCsv(gaps, 'Set')).toBe(BOM + MISSING_CSV_HEADER);
+  });
+});
+
+describe('getUpgradeSlots', () => {
+  it('returns owned slots with needsUpgrade true, ascending by position', () => {
+    const gaps = {
+      slots: [
+        { ...slot('c', 7, true), needsUpgrade: true },
+        { ...slot('skip-fine', 1, true), needsUpgrade: false },
+        { ...slot('a', 0, true), needsUpgrade: true },
+        { ...slot('skip-missing', 2, false) },
+        { ...slot('b', 3, true), needsUpgrade: true },
+      ],
+    } as never;
+
+    expect(getUpgradeSlots(gaps).map((s) => s.id)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('returns [] when no slot has needsUpgrade (set without a minimum grade)', () => {
+    expect(getUpgradeSlots(gapsOf([slot('a', 0, true), slot('b', 1, false)]))).toEqual([]);
+    expect(getUpgradeSlots(gapsOf([]))).toEqual([]);
+  });
+
+  it('does not mutate the input', () => {
+    const slots = [
+      { ...slot('c', 7, true), needsUpgrade: true },
+      { ...slot('a', 0, true), needsUpgrade: true },
+    ];
+    const before = [...slots];
+
+    const result = getUpgradeSlots({ slots } as never);
+
+    expect(slots.map((s) => s.id)).toEqual(before.map((s) => s.id));
+    expect(result).not.toBe(slots);
+  });
+});
+
+describe('buildWantGroups', () => {
+  function item(
+    id: string,
+    coin: Partial<Omit<typeof BASE_COIN, 'mintage'>> = {},
+    extra: { grade?: string | null; targetGrade?: string | null } = {},
+  ) {
+    return { coin: { ...BASE_COIN, id: `coin-${id}`, ...coin }, ...extra };
+  }
+
+  it('returns [] for no items', () => {
+    expect(buildWantGroups([])).toEqual([]);
+  });
+
+  it('builds one group with years in order of first appearance and mints in input order', () => {
+    const groups = buildWantGroups([
+      item('a', { year: 1914, mintMark: 'D', variety: '', isKeyDate: true }),
+      item('b', { year: 1909, mintMark: 'S', variety: 'VDB', isKeyDate: true }),
+      item('c', { year: 1914, mintMark: 'S', variety: '', isKeyDate: false }),
+    ] as never);
+
+    expect(groups).toEqual([
+      {
+        key: 'USA|1 Cent',
+        country: 'USA',
+        denomination: '1 Cent',
+        years: [
+          {
+            year: 1914,
+            mints: [
+              { label: 'D', isKeyDate: true },
+              { label: 'S', isKeyDate: false },
+            ],
+          },
+          { year: 1909, mints: [{ label: 'S VDB', isKeyDate: true }] },
+        ],
+      },
+    ]);
+  });
+
+  it('keeps two denominations of the same year in two groups, in order of first appearance', () => {
+    const groups = buildWantGroups([
+      item('a', { year: 1944, denomination: '1 Cent' }),
+      item('b', { year: 1944, denomination: '5 Cents' }),
+      item('c', { year: 1945, denomination: '1 Cent' }),
+      item('d', { year: 1944, country: 'Canada', denomination: '1 Cent' }),
+    ] as never);
+
+    expect(groups.map((g) => g.key)).toEqual(['USA|1 Cent', 'USA|5 Cents', 'Canada|1 Cent']);
+    expect(groups[0].years.map((y) => y.year)).toEqual([1944, 1945]);
+    expect(groups[1].years.map((y) => y.year)).toEqual([1944]);
+    expect(groups[2].country).toBe('Canada');
+    expect(groups[2].denomination).toBe('1 Cent');
+  });
+
+  it('never sorts: groups and years follow the caller order', () => {
+    const groups = buildWantGroups([
+      item('a', { year: 1930 }),
+      item('b', { year: 1910 }),
+      item('c', { year: 1920 }),
+    ] as never);
+
+    expect(groups[0].years.map((y) => y.year)).toEqual([1930, 1910, 1920]);
+  });
+
+  it('does not mutate the input', () => {
+    const items = [item('a', { year: 1930 }), item('b', { year: 1910 })];
+    const snapshot = JSON.stringify(items);
+
+    buildWantGroups(items as never);
+
+    expect(JSON.stringify(items)).toBe(snapshot);
+  });
+
+  it('labels a mint with the mint mark plus the design part of the variety', () => {
+    const groups = buildWantGroups([
+      item('a', { mintMark: 'S', variety: 'VDB' }),
+      item('b', { mintMark: '', variety: 'We Are Strong: Donetsk Oblast', year: 2025 }),
+      item('c', { mintMark: 'D', variety: 'We Are Strong: Kyiv Oblast', year: 2026 }),
+    ] as never);
+
+    const labels = groups[0].years.flatMap((y) => y.mints.map((m) => m.label));
+    expect(labels).toEqual(['S VDB', 'Donetsk Oblast', 'D Kyiv Oblast']);
+  });
+
+  it('gives an empty label for a plain coin and trims the mint mark and variety', () => {
+    const groups = buildWantGroups([
+      item('a', { mintMark: '', variety: '', year: 1911, isKeyDate: false }),
+      item('b', { mintMark: ' D ', variety: '  VDB ', year: 1912 }),
+    ] as never);
+
+    expect(groups[0].years[0].mints).toEqual([{ label: '', isKeyDate: false }]);
+    expect(groups[0].years[1].mints[0].label).toBe('D VDB');
+  });
+
+  it('reads isKeyDate from the coin', () => {
+    const groups = buildWantGroups([
+      item('a', { year: 1914, mintMark: 'D', variety: '', isKeyDate: true }),
+      item('b', { year: 1914, mintMark: 'S', variety: '', isKeyDate: false }),
+    ] as never);
+
+    expect(groups[0].years[0].mints.map((m) => m.isKeyDate)).toEqual([true, false]);
+  });
+
+  it('gives a missing mint exactly { label, isKeyDate } with no grade keys', () => {
+    const groups = buildWantGroups([item('a', { mintMark: 'D', variety: '', isKeyDate: false })] as never);
+
+    expect(groups[0].years[0].mints[0]).toEqual({ label: 'D', isKeyDate: false });
+    expect(Object.keys(groups[0].years[0].mints[0]).sort()).toEqual(['isKeyDate', 'label']);
+  });
+
+  it('copies grade and targetGrade onto the mint, including a null grade', () => {
+    const groups = buildWantGroups([
+      item('a', { year: 1912, mintMark: 'D', variety: '' }, { grade: 'F', targetGrade: 'VF' }),
+      item('b', { year: 1912, mintMark: 'S', variety: '' }, { grade: null, targetGrade: 'VF' }),
+    ] as never);
+
+    expect(groups[0].years[0].mints).toEqual([
+      { label: 'D', isKeyDate: true, grade: 'F', targetGrade: 'VF' },
+      { label: 'S', isKeyDate: true, grade: null, targetGrade: 'VF' },
+    ]);
   });
 });
 

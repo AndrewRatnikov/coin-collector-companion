@@ -1,17 +1,39 @@
-import { csvDocument, csvRow, formatLocalDate, type GapSlot, type GapViewResponse } from '@coin-collector/shared';
+import {
+  csvDocument,
+  csvRow,
+  formatLocalDate,
+  splitCoinVariety,
+  type CatalogCoin,
+  type CoinGrade,
+  type GapSlot,
+  type GapViewResponse,
+} from '@coin-collector/shared';
 
 export { formatLocalDate } from '@coin-collector/shared';
 
-export const MISSING_CSV_HEADER = 'Name,Country,Denomination,Year,Mint mark,Variety,Key date,Mintage';
+export const MISSING_CSV_HEADER =
+  'Name,Country,Denomination,Year,Mint mark,Variety,Key date,Mintage,Want,Grade,Target grade';
+
+/** The gaps a want-list CSV needs: the slots, plus the set's minimum grade when known. */
+export type MissingCsvGaps = Pick<GapViewResponse, 'slots'> & Partial<Pick<GapViewResponse, 'minGrade'>>;
 
 /** Unowned slots, ascending by position. Never mutates the input. */
 export function getMissingSlots(gaps: Pick<GapViewResponse, 'slots'>): GapSlot[] {
   return [...gaps.slots].filter((slot) => !slot.owned).sort((a, b) => a.position - b.position);
 }
 
+/** Owned slots below the set's minimum grade (`needsUpgrade`), ascending by position. Never mutates the input. */
+export function getUpgradeSlots(gaps: Pick<GapViewResponse, 'slots'>): GapSlot[] {
+  return [...gaps.slots]
+    .filter((slot) => slot.owned && slot.needsUpgrade === true)
+    .sort((a, b) => a.position - b.position);
+}
+
 export interface WantListMint {
   label: string;
   isKeyDate: boolean;
+  grade?: CoinGrade | null; // upgrade rows: the owned grade (null = ungraded)
+  targetGrade?: CoinGrade | null; // upgrade rows: the set's minGrade
 }
 
 export interface WantListYear {
@@ -46,25 +68,105 @@ export function groupWantList(
   return rows;
 }
 
+export interface WantGroup {
+  key: string; // `${country}|${denomination}`
+  country: string;
+  denomination: string;
+  years: WantListYear[];
+}
+
+export interface WantItem {
+  coin: CatalogCoin;
+  grade?: CoinGrade | null;
+  targetGrade?: CoinGrade | null;
+}
+
+function wantGroupKey(coin: Pick<CatalogCoin, 'country' | 'denomination'>): string {
+  return `${coin.country}|${coin.denomination}`;
+}
+
+/**
+ * Groups items by (country, denomination), then by year, keeping the caller's order: groups and years
+ * in order of first appearance, mints in input order. Never sorts and never mutates the input.
+ * A mint's label is "mintMark design" (the variety without its series prefix; '' for a plain coin).
+ */
+export function buildWantGroups(items: readonly WantItem[]): WantGroup[] {
+  const groups: WantGroup[] = [];
+  const byKey = new Map<string, { group: WantGroup; byYear: Map<number, WantListYear> }>();
+  for (const item of items) {
+    const { coin } = item;
+    const key = wantGroupKey(coin);
+    let entry = byKey.get(key);
+    if (!entry) {
+      entry = {
+        group: { key, country: coin.country, denomination: coin.denomination, years: [] },
+        byYear: new Map(),
+      };
+      byKey.set(key, entry);
+      groups.push(entry.group);
+    }
+    let row = entry.byYear.get(coin.year);
+    if (!row) {
+      row = { year: coin.year, mints: [] };
+      entry.byYear.set(coin.year, row);
+      entry.group.years.push(row);
+    }
+    const mint: WantListMint = {
+      label: [(coin.mintMark ?? '').trim(), splitCoinVariety((coin.variety ?? '').trim()).design]
+        .filter(Boolean)
+        .join(' '),
+      isKeyDate: coin.isKeyDate,
+    };
+    if (item.grade !== undefined) mint.grade = item.grade;
+    if (item.targetGrade !== undefined) mint.targetGrade = item.targetGrade;
+    row.mints.push(mint);
+  }
+  return groups;
+}
+
+/** Reorders slots (already in position order) into want-list order: by group, then year, stable inside a year. */
+function orderByWantList(slots: readonly GapSlot[]): GapSlot[] {
+  const byGroup = new Map<string, Map<number, GapSlot[]>>();
+  for (const slot of slots) {
+    const key = wantGroupKey(slot.coin);
+    let byYear = byGroup.get(key);
+    if (!byYear) {
+      byYear = new Map();
+      byGroup.set(key, byYear);
+    }
+    const bucket = byYear.get(slot.coin.year);
+    if (bucket) bucket.push(slot);
+    else byYear.set(slot.coin.year, [slot]);
+  }
+  return [...byGroup.values()].flatMap((byYear) => [...byYear.values()].flat());
+}
+
+function coinCells(coin: CatalogCoin): string[] {
+  return [
+    coin.name,
+    coin.country,
+    coin.denomination,
+    String(coin.year),
+    coin.mintMark,
+    coin.variety,
+    coin.isKeyDate ? 'yes' : 'no',
+    coin.mintage === null ? '' : String(coin.mintage),
+  ];
+}
+
 export function buildMissingCsv(
-  gaps: Pick<GapViewResponse, 'slots'>,
+  gaps: MissingCsvGaps,
   // Kept in the signature per the PRD; the CSV body itself doesn't include the set name.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   setName: string,
 ): string {
-  const rows = getMissingSlots(gaps).map(({ coin }) =>
-    csvRow([
-      coin.name,
-      coin.country,
-      coin.denomination,
-      String(coin.year),
-      coin.mintMark,
-      coin.variety,
-      coin.isKeyDate ? 'yes' : 'no',
-      coin.mintage === null ? '' : String(coin.mintage),
-    ]),
+  const missingRows = orderByWantList(getMissingSlots(gaps)).map(({ coin }) =>
+    csvRow([...coinCells(coin), 'missing', '', '']),
   );
-  return csvDocument([MISSING_CSV_HEADER, ...rows]);
+  const upgradeRows = orderByWantList(getUpgradeSlots(gaps)).map((slot) =>
+    csvRow([...coinCells(slot.coin), 'upgrade', slot.grade ?? '', gaps.minGrade ?? '']),
+  );
+  return csvDocument([MISSING_CSV_HEADER, ...missingRows, ...upgradeRows]);
 }
 
 export function slugifySetName(name: string): string {
@@ -85,7 +187,7 @@ export function missingCsvFilename(setName: string, date: Date): string {
 }
 
 export function downloadMissingCsv(
-  gaps: Pick<GapViewResponse, 'slots'>,
+  gaps: MissingCsvGaps,
   setName: string,
   now: Date = new Date(),
 ): void {

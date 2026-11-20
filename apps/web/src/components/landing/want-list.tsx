@@ -1,6 +1,7 @@
 'use client';
 
 import type { GapSlot } from '@coin-collector/shared';
+import { WantListTable } from '@/components/want-list/want-list-table';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { fill } from '@/lib/fill-template';
 import { downloadMissingCsv, groupWantList } from '@/lib/missing-list';
@@ -57,31 +58,20 @@ export function WantList({ slots, keyDateIds }: WantListProps) {
           {t('landing.wantEmpty')}
         </p>
       ) : (
-        <table className="mt-3 w-full border-collapse font-mono text-[13px]">
-          <tbody>
-            {rows.map((row) => (
-              <tr
-                key={row.year}
-                data-testid="want-list-row"
-                data-year={row.year}
-                className="border-b border-dashed border-neutral-300 last:border-b-0"
-              >
-                <th
-                  scope="row"
-                  data-testid="want-list-year"
-                  className="w-16 py-1.5 text-left align-top font-medium text-text"
-                >
-                  {row.year}
-                </th>
-                <td data-testid="want-list-mints" className="py-1.5 text-neutral-800">
-                  {row.mints
-                    .map((mint) => `${mint.label || t('landing.plain')}${mint.isKeyDate ? ' ★' : ''}`)
-                    .join(' · ')}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <WantListTable
+          groups={[
+            {
+              key: 'sample',
+              country: slots[0]?.coin.country ?? '',
+              denomination: slots[0]?.coin.denomination ?? '',
+              years: rows,
+            },
+          ]}
+          showGroupHeadings={false}
+          plainLabel={t('landing.plain')}
+          variant="missing"
+          className="mt-3"
+        />
       )}
 
       <p data-testid="want-list-legend" className="mt-2 text-xs text-neutral-700">
