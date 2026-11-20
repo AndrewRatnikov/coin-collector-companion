@@ -4,8 +4,9 @@
  *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/lib/i18n/locales/dictionaries.test.ts
  *                   runs/run_20261110_062926/plan.md § Interface Contract → dictionaries.test.ts
  *                   runs/run_20261117_063301/plan.md § Interface Contract → Locale files
+ *                   runs/run_20261120_215525/plan.md § Interface Contract → Locale files
  * Covers criteria: #1, #2, #5 (from prd.md), plus #6, #7 of run_20261110_062926
- *                  and #3, #19 of run_20261117_063301
+ *                  and #3, #19 of run_20261117_063301, and #15 of run_20261120_215525
  *
  * Note: key-parity between en/es is also enforced at compile time, per area, by each
  * es/<area>.ts's `Record<keyof typeof en<Area>, string>` annotation and for the whole
@@ -26,6 +27,9 @@
  * run_20261117_063301: the landing area is added (AREA_PREFIXES, EN_AREAS, ES_AREAS), and a new block
  * covers common.serverWaking, the removed landing.waking and the removed home.* keys. Existing
  * assertions are untouched.
+ *
+ * run_20261120_215525: the want-list area is added (AREA_PREFIXES, EN_AREAS, ES_AREAS) and a new block
+ * pins its keys, copy and placeholders. Existing assertions are untouched.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -41,6 +45,7 @@ import enGrades from '@/lib/i18n/locales/en/grades';
 import enLanding from '@/lib/i18n/locales/en/landing';
 import enSetNew from '@/lib/i18n/locales/en/set-new';
 import enSets from '@/lib/i18n/locales/en/sets';
+import enWantList from '@/lib/i18n/locales/en/want-list';
 import es from '@/lib/i18n/locales/es';
 import esAccount from '@/lib/i18n/locales/es/account';
 import esAddCoins from '@/lib/i18n/locales/es/add-coins';
@@ -53,6 +58,7 @@ import esGrades from '@/lib/i18n/locales/es/grades';
 import esLanding from '@/lib/i18n/locales/es/landing';
 import esSetNew from '@/lib/i18n/locales/es/set-new';
 import esSets from '@/lib/i18n/locales/es/sets';
+import esWantList from '@/lib/i18n/locales/es/want-list';
 
 const AREA_PREFIXES: Record<string, readonly string[]> = {
   common: ['nav', 'footer', 'languageSwitcher', 'home', 'common', 'ui', 'notFound'],
@@ -66,6 +72,7 @@ const AREA_PREFIXES: Record<string, readonly string[]> = {
   grades: ['grade'],
   glossary: ['glossary'],
   landing: ['landing'],
+  'want-list': ['wantList'],
 };
 
 const EN_AREAS: Record<string, object> = {
@@ -80,6 +87,7 @@ const EN_AREAS: Record<string, object> = {
   grades: enGrades,
   glossary: enGlossary,
   landing: enLanding,
+  'want-list': enWantList,
 };
 
 const ES_AREAS: Record<string, object> = {
@@ -94,6 +102,7 @@ const ES_AREAS: Record<string, object> = {
   grades: esGrades,
   glossary: esGlossary,
   landing: esLanding,
+  'want-list': esWantList,
 };
 
 function placeholders(text: string): string[] {
@@ -251,6 +260,68 @@ describe('locale dictionaries', () => {
       }
       for (const [key, value] of Object.entries(es)) {
         expect(value, key).not.toMatch(/miles de monedas/i);
+      }
+    });
+  });
+
+  describe('run_20261120_215525 criterion 15: want-list area', () => {
+    const KEYS = [
+      'wantList.title',
+      'wantList.subtitle',
+      'wantList.printButton',
+      'wantList.downloadCsv',
+      'wantList.sectionMissing',
+      'wantList.sectionUpgrade',
+      'wantList.upgradeNote',
+      'wantList.nothingMissing',
+      'wantList.nothingWanted',
+      'wantList.plain',
+      'wantList.keyLegend',
+      'wantList.whichSets',
+      'wantList.loadingLabel',
+      'wantList.errorTitle',
+      'wantList.errorBody',
+      'wantList.retry',
+      'wantList.noSets',
+      'wantList.newSetLink',
+      'wantList.allSetsLink',
+    ];
+
+    it('has exactly the contract keys in both want-list files', () => {
+      expect(Object.keys(enWantList).sort()).toEqual([...KEYS].sort());
+      expect(Object.keys(esWantList).sort()).toEqual([...KEYS].sort());
+    });
+
+    it('merges every want-list key into the full dictionaries', () => {
+      for (const key of KEYS) {
+        expect(en[key], `en ${key}`).toBe((enWantList as Record<string, string>)[key]);
+        expect(es[key], `es ${key}`).toBe((esWantList as Record<string, string>)[key]);
+      }
+    });
+
+    it('uses the same {placeholders} in en and es for every want-list key', () => {
+      const enMap = enWantList as Record<string, string>;
+      const esMap = esWantList as Record<string, string>;
+      for (const key of KEYS) {
+        expect(placeholders(esMap[key]), `placeholders of ${key}`).toEqual(placeholders(enMap[key]));
+      }
+      expect(placeholders(enMap['wantList.subtitle'])).toEqual(['{k}', '{m}', '{n}']);
+    });
+
+    it('has the exact EN copy of the page text the tests and the backlog rely on', () => {
+      expect(en['wantList.title']).toBe('Want list');
+      expect(en['wantList.subtitle']).toBe('Across your {n} sets · {m} missing · {k} to upgrade');
+      expect(en['wantList.nothingWanted']).toBe('Nothing missing across your sets.');
+      expect(en['wantList.whichSets']).toBe('Which sets?');
+      expect(en['wantList.allSetsLink']).toBe('Want list for all your sets');
+      expect(en['wantList.newSetLink']).toBe('Create a set');
+    });
+
+    it('translates the want-list copy into Spanish', () => {
+      expect(es['wantList.title']).toBe('Lista de faltantes');
+      expect(es['wantList.whichSets']).toBe('¿Qué colecciones?');
+      for (const key of ['wantList.title', 'wantList.whichSets', 'wantList.nothingWanted', 'wantList.noSets']) {
+        expect(es[key], key).not.toBe(en[key]);
       }
     });
   });

@@ -6,6 +6,7 @@ import type {
   PatchSetCoinsRequest,
   UserSetCoinSummary,
   UserSetSummary,
+  WantListResponse,
 } from '@coin-collector/shared';
 import { ApiError } from '@/lib/api-client';
 import { removeCoinsFromGaps } from '@/lib/set-page';
@@ -16,6 +17,7 @@ import {
   getSetGaps,
   getSetsSummary,
   getUserSets,
+  getWantList,
   patchSetCoins,
   renameSet,
   updateSetMinGrade,
@@ -37,6 +39,16 @@ export function useSetsSummary() {
   return useQuery({
     queryKey: ['user-sets', 'summary'],
     queryFn: getSetsSummary,
+  });
+}
+
+// The combined want list across every set. Under the ['user-sets'] prefix so every set and
+// ownership mutation's invalidation refetches it; the 2-part key keeps it out of the optimistic
+// gap patching (isGapsKey matches 3-part keys only).
+export function useWantList() {
+  return useQuery<WantListResponse>({
+    queryKey: ['user-sets', 'wants'],
+    queryFn: getWantList,
   });
 }
 

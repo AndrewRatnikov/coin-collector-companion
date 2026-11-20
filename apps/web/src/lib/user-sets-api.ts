@@ -7,6 +7,7 @@ import type {
   UserSetListItem,
   UserSetsSummaryResponse,
   UserSetSummary,
+  WantListResponse,
 } from '@coin-collector/shared';
 import { apiFetch } from './api-client';
 
@@ -16,6 +17,11 @@ export async function getUserSets(): Promise<UserSetListItem[]> {
 
 export async function getSetsSummary(): Promise<UserSetsSummaryResponse> {
   return apiFetch<UserSetsSummaryResponse>('/sets/summary');
+}
+
+/** The combined want list across every set the caller owns. */
+export async function getWantList(): Promise<WantListResponse> {
+  return apiFetch<WantListResponse>('/sets/wants');
 }
 
 export async function createSet(body: CreateSetRequestBody): Promise<UserSetSummary> {

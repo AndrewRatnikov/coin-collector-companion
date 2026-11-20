@@ -2,11 +2,14 @@
  * Tests for: SetMissingPage
  * Contract source: runs/run_20261001_205959/plan.md § Interface Contract → Page (new): SetMissingPage
  *                   runs/run_20261119_210926/plan.md § Interface Contract → Page: SetMissingPage
- * Covers criteria: #10, #11 (from prd.md), and #7, #8, #9, #10, #11, #13, #15 of run_20261119_210926
+ *                   runs/run_20261120_215525/plan.md § Interface Contract → Page: SetMissingPage (MODIFY)
+ * Covers criteria: #10, #11 (from prd.md), and #7, #8, #9, #10, #11, #13, #15 of run_20261119_210926,
+ *                  and #14 of run_20261120_215525 (the quiet "Want list for all your sets" link)
  *
  * run_20261119_210926: the page is rewritten as a grouped want list. Tests that used the removed ids
  * (set-missing-table, set-missing-row, set-missing-cell-*, set-missing-key-date) are replaced by tests
  * on the WantListTable rows; the auth, states, date and print-button tests are kept.
+ * run_20261120_215525: a "want list link" block is added; every other test is unchanged.
  *
  * CONTRACT_GAPs: none
  */
@@ -645,6 +648,55 @@ describe('SetMissingPage', () => {
       await screen.findByTestId('set-missing-print-region');
       expect(screen.getByTestId('set-missing-print-button').closest('.print\\:hidden')).not.toBeNull();
       expect(screen.getByTestId('set-missing-csv-button').closest('.print\\:hidden')).not.toBeNull();
+    });
+  });
+
+  describe('run_20261120_215525 criterion 14: want list link for all sets', () => {
+    beforeEach(() => {
+      setStoredToken('token');
+    });
+
+    it('links to /want-list with the all-sets text in the list state', async () => {
+      renderPage();
+
+      const link = await screen.findByTestId('set-missing-want-list-link');
+      expect(link.tagName).toBe('A');
+      expect(link).toHaveAttribute('href', '/want-list');
+      expect(link).toHaveTextContent(en['wantList.allSetsLink']);
+      expect(link).toHaveTextContent('Want list for all your sets');
+    });
+
+    it('is also shown in the empty state', async () => {
+      useSetGapsMock.mockReturnValue(queryResult({ data: GAPS_ALL_OWNED }));
+      renderPage();
+
+      await screen.findByTestId('set-missing-empty');
+      expect(screen.getByTestId('set-missing-want-list-link')).toHaveAttribute('href', '/want-list');
+    });
+
+    it('sits outside the print region and is hidden in print', async () => {
+      renderPage();
+
+      const region = await screen.findByTestId('set-missing-print-region');
+      const link = screen.getByTestId('set-missing-want-list-link');
+      expect(region.contains(link)).toBe(false);
+      expect(link.closest('.print\\:hidden')).not.toBeNull();
+    });
+
+    it('is not rendered while loading', async () => {
+      usePublicSetMock.mockReturnValue(queryResult({ isLoading: true }));
+      renderPage();
+
+      await screen.findByTestId('set-missing-loading');
+      expect(screen.queryByTestId('set-missing-want-list-link')).not.toBeInTheDocument();
+    });
+
+    it('is not rendered on an error', async () => {
+      useSetGapsMock.mockReturnValue(queryResult({ isError: true }));
+      renderPage();
+
+      await screen.findByTestId('set-missing-error');
+      expect(screen.queryByTestId('set-missing-want-list-link')).not.toBeInTheDocument();
     });
   });
 });
