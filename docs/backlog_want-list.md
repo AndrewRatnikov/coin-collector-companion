@@ -80,30 +80,30 @@ Source: growth backlog Step 5, items 5.1–5.3 ([backlog_growth.md](backlog_grow
 
 Ship after Phase 2 is live on Render, so the page never calls a missing endpoint.
 
-- [ ] 3.1 `lib/user-sets-api.ts` `getWantList()` and a `useWantList()` hook with the query key `['user-sets', 'wants']`, so the existing ownership and grade invalidations of `['user-sets']` refresh it. Check `ownership-cache.ts`: optimistic patching must skip this key (like the canonical gaps query), and a refetch after settle is enough.
-- [ ] 3.2 New route `app/want-list/page.tsx` (`RequireAuth`), same layout and components as the per-set page:
+- [x] 3.1 `lib/user-sets-api.ts` `getWantList()` and a `useWantList()` hook with the query key `['user-sets', 'wants']`, so the existing ownership and grade invalidations of `['user-sets']` refresh it. Check `ownership-cache.ts`: optimistic patching must skip this key (like the canonical gaps query), and a refetch after settle is enough.
+- [x] 3.2 New route `app/want-list/page.tsx` (`RequireAuth`), same layout and components as the per-set page:
   - `h1` "Want list"; subtitle "Across your {n} sets · {m} missing · {k} to upgrade" (counts in mono); Print and Download CSV.
   - Missing and Upgrade wanted sections built with `buildWantGroups` and `WantListTable`; group headings always shown here (sets can mix series).
   - Under each section, a small "Which sets?" disclosure (a native `details` element, closed by default and not printed) listing each coin's sets as links, so the printed list stays compact.
   - **States:** loading (skeleton plus the shared `ServerWakingNotice`), error with Retry, no sets (link to `/sets/new`), nothing wanted ("Nothing missing across your sets.").
-- [ ] 3.3 CSV `buildWantListCsv(response)`: the per-set header plus a final `Sets` column (set names joined with "; "); filename `want-list-YYYY-MM-DD.csv` via `formatLocalDate`.
-- [ ] 3.4 Links: the dashboard tile "See what to look for" goes to `/want-list` and shows whenever `uniqueMissingCount > 0` (not only when there is a closest set); the per-set missing page gets a quiet link "Want list for all your sets". No nav or tab-bar change.
-- [ ] 3.5 i18n: a new `want-list` area (`locales/en/want-list.ts`, `locales/es/want-list.ts`) with the `wantList.` prefix added to `AREA_PREFIXES`.
-- [ ] 3.6 Tests: the page (grouping across two sets, the disclosure, every state, CSV), the dashboard tile link (update `my-sets-summary` tests), the hook's query key.
+- [x] 3.3 CSV `buildWantListCsv(response)`: the per-set header plus a final `Sets` column (set names joined with "; "); filename `want-list-YYYY-MM-DD.csv` via `formatLocalDate`.
+- [x] 3.4 Links: the dashboard tile "See what to look for" goes to `/want-list` and shows whenever `uniqueMissingCount > 0` (not only when there is a closest set); the per-set missing page gets a quiet link "Want list for all your sets". No nav or tab-bar change.
+- [x] 3.5 i18n: a new `want-list` area (`locales/en/want-list.ts`, `locales/es/want-list.ts`) with the `wantList.` prefix added to `AREA_PREFIXES`.
+- [x] 3.6 Tests: the page (grouping across two sets, the disclosure, every state, CSV), the dashboard tile link (update `my-sets-summary` tests), the hook's query key.
 - [ ] 3.7 **Pending manual pass:** on the live site with a throwaway account, two sets sharing coins, one with a minimum grade. The combined list dedupes and shows the upgrade; Print and CSV work on a phone and a desktop; delete the account afterwards.
 
 **Checkpoint:** a collector opens one page, or one printout, with every coin they still need and every coin they want in a better grade, across all their sets.
 
 ## Docs, per phase
 
-- [ ] Tick the matching growth items in `backlog_growth.md` (5.1 and 5.2 after Phase 1, 5.3 after Phase 3) with a one-line "Done 2026-…" note.
+- [x] Tick the matching growth items in `backlog_growth.md` (5.1 and 5.2 after Phase 1, 5.3 after Phase 3) with a one-line "Done 2026-…" note.
   - [x] Phase 1: 5.1 and 5.2 ticked, done 2026-11-19.
-  - [ ] Phase 3: 5.3.
-- [ ] One `docs/history.md` entry per phase, in the style of the existing entries.
+  - [x] Phase 3: 5.3 ticked, done 2026-11-20.
+- [x] One `docs/history.md` entry per phase, in the style of the existing entries.
   - [x] Phase 1 entry, 2026-11-19.
   - [x] Phase 2 entry, 2026-11-20.
-  - [ ] Phase 3 entry.
-- [ ] `CLAUDE.md` "Built": add the want list in one line after Phase 3.
+  - [x] Phase 3 entry, 2026-11-20.
+- [x] `CLAUDE.md` "Built": add the want list in one line after Phase 3.
 
 ## Out of scope
 

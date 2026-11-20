@@ -4,15 +4,18 @@
  *                   runs/run_20261018_105617/plan.md § Interface Contract → Module: user-sets-api.ts (MODIFY)
  *                   runs/run_20261103_192441/plan.md § Interface Contract → Module: user-sets-api (MODIFY)
  *                   runs/run_20261109_220451/plan.md § Interface Contract → Function: getCanonicalSetGaps
+ *                   runs/run_20261120_215525/plan.md § Interface Contract → Module: user-sets-api.ts (MODIFY)
  * Covers criteria: #1 (from prd.md); #2, #3 (from run_20261018_105617's prd.md);
  *                  #2 (run_20261103_192441: updateSetMinGrade payloads, untranslated codes);
- *                  #2 (run_20261109_220451: getCanonicalSetGaps)
+ *                  #2 (run_20261109_220451: getCanonicalSetGaps);
+ *                  #1 (run_20261120_215525: getWantList)
  *
  * This file supersedes the prior run's version of the same file, adding
  * patchSetCoins coverage alongside the existing getUserSets/createSet/renameSet/
  * deleteSet/getSetGaps tests (all unchanged from before), and getSetsSummary.
  * run_20261103_192441 adds updateSetMinGrade.
  * run_20261109_220451 adds getCanonicalSetGaps.
+ * run_20261120_215525 adds getWantList.
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -24,6 +27,7 @@ import {
   getSetGaps,
   getSetsSummary,
   getUserSets,
+  getWantList,
   patchSetCoins,
   renameSet,
   updateSetMinGrade,
@@ -115,6 +119,44 @@ describe('user-sets-api', () => {
     it('propagates a rejection when the request fails', async () => {
       stubFetchResolving(500, { message: 'Internal error' });
       await expect(getSetsSummary()).rejects.toThrow();
+    });
+  });
+
+  describe('run_20261120_215525 criterion 1: getWantList calls GET /sets/wants', () => {
+    it('requests /sets/wants with a plain GET and returns the WantListResponse body', async () => {
+      const body = {
+        setCount: 2,
+        missing: [{ coin: { id: 'coin-1' }, sets: [{ id: 'u1', name: 'My Set' }] }],
+        upgrades: [{ coin: { id: 'coin-2' }, sets: [{ id: 'u1', name: 'My Set' }], grade: null, targetGrade: 'VF' }],
+      };
+      const fetchMock = stubFetchResolving(200, body);
+      const result = await getWantList();
+      const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit | undefined];
+      expect(url.endsWith('/sets/wants')).toBe(true);
+      expect(init?.method ?? 'GET').toBe('GET');
+      expect(init?.body).toBeUndefined();
+      expect(result).toEqual(body);
+    });
+
+    it('does not request the plain /sets list or the summary', async () => {
+      const fetchMock = stubFetchResolving(200, { setCount: 0, missing: [], upgrades: [] });
+      await getWantList();
+      const [url] = fetchMock.mock.calls[0] as [string];
+      expect(url.endsWith('/sets')).toBe(false);
+      expect(url.endsWith('/sets/summary')).toBe(false);
+    });
+
+    it('returns an empty response unchanged', async () => {
+      stubFetchResolving(200, { setCount: 0, missing: [], upgrades: [] });
+      const result = await getWantList();
+      expect(result.setCount).toBe(0);
+      expect(result.missing).toEqual([]);
+      expect(result.upgrades).toEqual([]);
+    });
+
+    it('propagates a rejection when the request fails', async () => {
+      stubFetchResolving(500, { message: 'Internal error' });
+      await expect(getWantList()).rejects.toThrow();
     });
   });
 

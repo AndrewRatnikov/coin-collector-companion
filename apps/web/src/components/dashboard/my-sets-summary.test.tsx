@@ -1,8 +1,11 @@
 /**
  * Tests for: MySetsSummary
  * Contract source: runs/run_20261018_105617/plan.md § Interface Contract → Component: MySetsSummary
- * Covers criteria: #4 (three tiles, closest excludes complete, complete state) (from prd.md)
+ *                   runs/run_20261120_215525/plan.md § Interface Contract → Component: MySetsSummary (MODIFY)
+ * Covers criteria: #4 (three tiles, closest excludes complete, complete state) (from prd.md);
+ *                  #13 (run_20261120_215525: the tile link opens /want-list whenever uniqueMissingCount > 0)
  * Fixture-only change (run_20261102_194108): the UserSetListItem factory gains `minGrade: null`.
+ * run_20261120_215525: the four link tests are rewritten to the uniqueMissingCount rule; the rest is unchanged.
  *
  * CONTRACT_GAPS: none
  */
@@ -72,34 +75,54 @@ describe('MySetsSummary: missing tile', () => {
     expect(screen.getByTestId('dashboard-tile-missing-value')).toHaveTextContent(/^0$/);
   });
 
-  it('links "See what to look for" to the missing list of the closest set', () => {
+  it('links "See what to look for" to the combined want list', () => {
     renderSummary([
       makeSet({ id: 'far', name: 'Far', ownedCount: 1, totalCount: 10 }),
       makeSet({ id: 'near', name: 'Near', ownedCount: 9, totalCount: 10 }),
     ]);
 
     const link = screen.getByTestId('dashboard-tile-missing-link');
-    expect(link).toHaveAttribute('href', '/sets/near/missing');
+    expect(link).toHaveAttribute('href', '/want-list');
     expect(link).toHaveTextContent('See what to look for');
   });
 
-  it('points the link at a different set when the closest set differs', () => {
+  it('points at /want-list whichever set is the closest, never at a set missing page', () => {
     renderSummary([
       makeSet({ id: 'far', name: 'Far', ownedCount: 9, totalCount: 10 }),
       makeSet({ id: 'near', name: 'Near', ownedCount: 1, totalCount: 10 }),
     ]);
 
-    expect(screen.getByTestId('dashboard-tile-missing-link')).toHaveAttribute('href', '/sets/far/missing');
+    const href = screen.getByTestId('dashboard-tile-missing-link').getAttribute('href');
+    expect(href).toBe('/want-list');
+    expect(href).not.toContain('/sets/');
   });
 
-  it('does not render the link when every set is complete', () => {
+  it('renders the link when something is missing even though every set is complete or empty', () => {
     renderSummary([makeSet({ id: 'done', name: 'Done', ownedCount: 4, totalCount: 4 })]);
+    expect(screen.getByTestId('dashboard-tile-missing-link')).toHaveAttribute('href', '/want-list');
+    expect(screen.queryByTestId('dashboard-tile-closest-name')).not.toBeInTheDocument();
+  });
+
+  it('renders the link when there is no incomplete set with coins but uniqueMissingCount is above 0', () => {
+    renderSummary([makeSet({ id: 'empty', name: 'Empty', ownedCount: 0, totalCount: 0 })]);
+
+    expect(screen.getByTestId('dashboard-tile-missing-link')).toHaveAttribute('href', '/want-list');
+  });
+
+  it('does not render the link when uniqueMissingCount is 0', () => {
+    renderSummary([makeSet({ id: 'done', name: 'Done', ownedCount: 4, totalCount: 4 })], {
+      ...SUMMARY,
+      uniqueMissingCount: 0,
+    });
 
     expect(screen.queryByTestId('dashboard-tile-missing-link')).not.toBeInTheDocument();
   });
 
-  it('does not render the link when there is no incomplete set with coins', () => {
-    renderSummary([makeSet({ id: 'empty', name: 'Empty', ownedCount: 0, totalCount: 0 })]);
+  it('does not render the link for a 0 count even when an incomplete set exists', () => {
+    renderSummary([makeSet({ id: 's1', name: 'Set', ownedCount: 1, totalCount: 4 })], {
+      ...SUMMARY,
+      uniqueMissingCount: 0,
+    });
 
     expect(screen.queryByTestId('dashboard-tile-missing-link')).not.toBeInTheDocument();
   });

@@ -175,6 +175,16 @@ function SetMissingList({ id }: { id: string }) {
           </>
         )}
       </div>
+
+      <p className="text-[13px] text-neutral-700 print:hidden">
+        <Link
+          href="/want-list"
+          data-testid="set-missing-want-list-link"
+          className="inline-flex min-h-9 items-center hover:text-accent-700 hover:underline"
+        >
+          {t('wantList.allSetsLink')}
+        </Link>
+      </p>
     </main>
   );
 }

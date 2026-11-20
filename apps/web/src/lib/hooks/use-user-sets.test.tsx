@@ -5,8 +5,9 @@
  *              runs/run_20261018_105617/plan.md § Interface Contract → Module: use-user-sets.ts (MODIFY)
  *              runs/run_20261103_192441/plan.md § Interface Contract → Hook: useUpdateSetMinGrade
  *              runs/run_20261109_220451/plan.md § Interface Contract → Hook: useCanonicalSetGaps
+ *              runs/run_20261120_215525/plan.md § Interface Contract → Hook: useWantList
  * Covers criteria: #1, #2 (run_20260721_171115); #12 (run_20261017_210503); #3, #10 (run_20261018_105617);
- *                  #3, #9 (run_20261103_192441); #2 (run_20261109_220451)
+ *                  #3, #9 (run_20261103_192441); #2 (run_20261109_220451); #2 (run_20261120_215525)
  *
  * All earlier tests are kept unchanged. Added: optimistic remove in usePatchSetCoins, the extra
  * ['user-sets'] invalidation, useAddCoinsToSet, and useSetsSummary.
@@ -14,12 +15,13 @@
  * gain `minGrade: null`.
  * run_20261103_192441 adds useUpdateSetMinGrade (non-optimistic, pending until the gap view refetched).
  * run_20261109_220451 adds useCanonicalSetGaps (and getCanonicalSetGaps to the api mock factory).
+ * run_20261120_215525 adds useWantList (and getWantList to the api mock factory).
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import type { CatalogCoin, GapViewResponse } from '@coin-collector/shared';
+import type { CatalogCoin, GapViewResponse, WantListResponse } from '@coin-collector/shared';
 import { ApiError } from '@/lib/api-client';
 import {
   useAddCoinsToSet,
@@ -32,6 +34,7 @@ import {
   useSetsSummary,
   useUpdateSetMinGrade,
   useUserSets,
+  useWantList,
 } from '@/lib/hooks/use-user-sets';
 import {
   createSet,
@@ -40,6 +43,7 @@ import {
   getSetGaps,
   getSetsSummary,
   getUserSets,
+  getWantList,
   patchSetCoins,
   renameSet,
   updateSetMinGrade,
@@ -48,6 +52,7 @@ import {
 vi.mock('@/lib/user-sets-api', () => ({
   getUserSets: vi.fn(),
   getSetsSummary: vi.fn(),
+  getWantList: vi.fn(),
   createSet: vi.fn(),
   renameSet: vi.fn(),
   updateSetMinGrade: vi.fn(),
@@ -59,6 +64,7 @@ vi.mock('@/lib/user-sets-api', () => ({
 
 const getUserSetsMock = vi.mocked(getUserSets);
 const getSetsSummaryMock = vi.mocked(getSetsSummary);
+const getWantListMock = vi.mocked(getWantList);
 const createSetMock = vi.mocked(createSet);
 const renameSetMock = vi.mocked(renameSet);
 const updateSetMinGradeMock = vi.mocked(updateSetMinGrade);
@@ -147,6 +153,7 @@ describe('use-user-sets hooks', () => {
   beforeEach(() => {
     getUserSetsMock.mockReset();
     getSetsSummaryMock.mockReset();
+    getWantListMock.mockReset();
     createSetMock.mockReset();
     renameSetMock.mockReset();
     updateSetMinGradeMock.mockReset();
@@ -243,6 +250,66 @@ describe('use-user-sets hooks', () => {
       await waitFor(() => {
         expect(result.current.isError).toBe(true);
       });
+    });
+  });
+
+  describe('run_20261120_215525 criterion 2: useWantList wraps getWantList under ["user-sets", "wants"]', () => {
+    const WANTS: WantListResponse = {
+      setCount: 2,
+      missing: [{ coin: makeCoin('coin-1', 1909), sets: [{ id: 'u1', name: 'My Set' }] }],
+      upgrades: [],
+    };
+
+    it('calls getWantList and exposes the resolved response as data', async () => {
+      getWantListMock.mockResolvedValue(WANTS);
+      const { wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useWantList(), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.data).toEqual(WANTS);
+      });
+      expect(getWantListMock).toHaveBeenCalledTimes(1);
+      expect(getUserSetsMock).not.toHaveBeenCalled();
+      expect(getSetsSummaryMock).not.toHaveBeenCalled();
+    });
+
+    it('stores the result under exactly ["user-sets", "wants"]', async () => {
+      getWantListMock.mockResolvedValue(WANTS);
+      const { queryClient, wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useWantList(), { wrapper });
+
+      await waitFor(() => expect(result.current.data).toEqual(WANTS));
+      expect(queryClient.getQueryData(['user-sets', 'wants'])).toEqual(WANTS);
+      expect(queryClient.getQueryData(['user-sets', 'summary'])).toBeUndefined();
+      expect(queryClient.getQueryData(['user-sets'])).toBeUndefined();
+      expect(queryClient.getQueryData(['wants'])).toBeUndefined();
+    });
+
+    it('refetches when the ["user-sets"] prefix is invalidated (how ownership changes refresh it)', async () => {
+      getWantListMock.mockResolvedValueOnce(WANTS);
+      getWantListMock.mockResolvedValueOnce({ ...WANTS, missing: [] });
+      const { queryClient, wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useWantList(), { wrapper });
+      await waitFor(() => expect(result.current.data?.missing).toHaveLength(1));
+
+      await act(async () => {
+        await queryClient.invalidateQueries({ queryKey: ['user-sets'] });
+      });
+
+      await waitFor(() => expect(result.current.data?.missing).toHaveLength(0));
+      expect(getWantListMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('exposes an error when getWantList rejects', async () => {
+      getWantListMock.mockRejectedValue(new ApiError(500, 'Internal server error'));
+      const { wrapper } = makeWrapper();
+
+      const { result } = renderHook(() => useWantList(), { wrapper });
+
+      await waitFor(() => expect(result.current.isError).toBe(true));
     });
   });
 
