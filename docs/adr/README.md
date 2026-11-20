@@ -57,6 +57,8 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-18](2026-11-18-combined-want-list-computed-on-the-server.md) | The combined want list is computed on the server by one GET /sets/wants in three queries, deduplicated per coin, while the per-set list stays in the browser | Accepted |
 | [2026-11-19](2026-11-19-missing-csv-in-want-list-order-with-upgrade-rows.md) | The missing-coins CSV is in want-list order, appends upgrade rows, and gains Want, Grade and Target grade columns | Accepted |
 | [2026-11-19](2026-11-19-one-want-list-table-component-for-every-want-list.md) | One presentational WantListTable renders every want list, grouped by country and denomination, then year | Accepted |
+| [2026-11-20](2026-11-20-want-list-query-refetched-not-patched.md) | The combined want list query is keyed `['user-sets', 'wants']` and is refetched, never optimistically patched | Accepted |
+| [2026-11-20](2026-11-20-want-list-csv-adds-sets-column.md) | The want-list CSV is the per-set CSV's eleven columns plus a final `Sets` column, in server order | Accepted |
 
 ## Where else decisions live
 
