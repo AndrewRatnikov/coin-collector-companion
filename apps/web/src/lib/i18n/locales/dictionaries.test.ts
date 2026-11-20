@@ -5,8 +5,10 @@
  *                   runs/run_20261110_062926/plan.md § Interface Contract → dictionaries.test.ts
  *                   runs/run_20261117_063301/plan.md § Interface Contract → Locale files
  *                   runs/run_20261120_215525/plan.md § Interface Contract → Locale files
+ *                   runs/run_20261120_225014/plan.md § Interface Contract → i18n
  * Covers criteria: #1, #2, #5 (from prd.md), plus #6, #7 of run_20261110_062926
- *                  and #3, #19 of run_20261117_063301, and #15 of run_20261120_215525
+ *                  and #3, #19 of run_20261117_063301, and #15 of run_20261120_215525,
+ *                  and #14 of run_20261120_225014
  *
  * Note: key-parity between en/es is also enforced at compile time, per area, by each
  * es/<area>.ts's `Record<keyof typeof en<Area>, string>` annotation and for the whole
@@ -30,6 +32,9 @@
  *
  * run_20261120_215525: the want-list area is added (AREA_PREFIXES, EN_AREAS, ES_AREAS) and a new block
  * pins its keys, copy and placeholders. Existing assertions are untouched.
+ *
+ * run_20261120_225014: the privacy area is added (AREA_PREFIXES, EN_AREAS, ES_AREAS) and a new block
+ * pins its eight keys, the footer.privacy key and the copy. Existing assertions are untouched.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -43,6 +48,7 @@ import enCommon from '@/lib/i18n/locales/en/common';
 import enGlossary from '@/lib/i18n/locales/en/glossary';
 import enGrades from '@/lib/i18n/locales/en/grades';
 import enLanding from '@/lib/i18n/locales/en/landing';
+import enPrivacy from '@/lib/i18n/locales/en/privacy';
 import enSetNew from '@/lib/i18n/locales/en/set-new';
 import enSets from '@/lib/i18n/locales/en/sets';
 import enWantList from '@/lib/i18n/locales/en/want-list';
@@ -56,6 +62,7 @@ import esCommon from '@/lib/i18n/locales/es/common';
 import esGlossary from '@/lib/i18n/locales/es/glossary';
 import esGrades from '@/lib/i18n/locales/es/grades';
 import esLanding from '@/lib/i18n/locales/es/landing';
+import esPrivacy from '@/lib/i18n/locales/es/privacy';
 import esSetNew from '@/lib/i18n/locales/es/set-new';
 import esSets from '@/lib/i18n/locales/es/sets';
 import esWantList from '@/lib/i18n/locales/es/want-list';
@@ -73,6 +80,7 @@ const AREA_PREFIXES: Record<string, readonly string[]> = {
   glossary: ['glossary'],
   landing: ['landing'],
   'want-list': ['wantList'],
+  privacy: ['privacy'],
 };
 
 const EN_AREAS: Record<string, object> = {
@@ -88,6 +96,7 @@ const EN_AREAS: Record<string, object> = {
   glossary: enGlossary,
   landing: enLanding,
   'want-list': enWantList,
+  privacy: enPrivacy,
 };
 
 const ES_AREAS: Record<string, object> = {
@@ -103,6 +112,7 @@ const ES_AREAS: Record<string, object> = {
   glossary: esGlossary,
   landing: esLanding,
   'want-list': esWantList,
+  privacy: esPrivacy,
 };
 
 function placeholders(text: string): string[] {
@@ -323,6 +333,59 @@ describe('locale dictionaries', () => {
       for (const key of ['wantList.title', 'wantList.whichSets', 'wantList.nothingWanted', 'wantList.noSets']) {
         expect(es[key], key).not.toBe(en[key]);
       }
+    });
+  });
+
+  describe('run_20261120_225014 criterion 14: privacy area', () => {
+    const KEYS = [
+      'privacy.title',
+      'privacy.intro',
+      'privacy.storedHeading',
+      'privacy.storedBody',
+      'privacy.errorsHeading',
+      'privacy.errorsBody',
+      'privacy.analyticsHeading',
+      'privacy.analyticsBody',
+    ];
+
+    it('has exactly the eight contract keys in both privacy files', () => {
+      expect(Object.keys(enPrivacy).sort()).toEqual([...KEYS].sort());
+      expect(Object.keys(esPrivacy).sort()).toEqual([...KEYS].sort());
+    });
+
+    it('merges every privacy key into the full dictionaries', () => {
+      for (const key of KEYS) {
+        expect(en[key], `en ${key}`).toBe((enPrivacy as Record<string, string>)[key]);
+        expect(es[key], `es ${key}`).toBe((esPrivacy as Record<string, string>)[key]);
+      }
+    });
+
+    it('has the exact EN headings and a Spanish translation that differs from them', () => {
+      expect(en['privacy.title']).toBe('Privacy');
+      expect(en['privacy.storedHeading']).toBe('What the app stores');
+      expect(en['privacy.errorsHeading']).toBe('Error reports');
+      expect(en['privacy.analyticsHeading']).toBe('Visit counts');
+      expect(es['privacy.title']).toBe('Privacidad');
+      expect(es['privacy.storedHeading']).toBe('Qué guarda la app');
+      for (const key of KEYS) {
+        expect(es[key], key).not.toBe(en[key]);
+      }
+    });
+
+    it('names Sentry and PostHog and says no cookies in the right sections', () => {
+      expect(en['privacy.errorsBody']).toContain('Sentry');
+      expect(en['privacy.analyticsBody']).toContain('PostHog');
+      expect(en['privacy.analyticsBody']).toContain('cookies');
+      expect(es['privacy.errorsBody']).toContain('Sentry');
+      expect(es['privacy.analyticsBody']).toContain('PostHog');
+      expect(es['privacy.analyticsBody']).toContain('cookies');
+    });
+
+    it('defines footer.privacy in the common area, EN and ES', () => {
+      expect(en['footer.privacy']).toBe('Privacy');
+      expect(es['footer.privacy']).toBe('Privacidad');
+      expect((enCommon as Record<string, string>)['footer.privacy']).toBe('Privacy');
+      expect((esCommon as Record<string, string>)['footer.privacy']).toBe('Privacidad');
     });
   });
 });
