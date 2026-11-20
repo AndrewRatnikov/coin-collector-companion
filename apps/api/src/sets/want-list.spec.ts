@@ -226,6 +226,30 @@ describe('buildWantList', () => {
       expect(ids(result.missing)).toEqual(['t-1', 't-2', 'v-a', 'v-b', 'y1951-d', 'y1951-s', 'y1952']);
     });
 
+    it('denomination takes precedence over year (numeric compare)', () => {
+      const result = buildWantList(
+        1,
+        [
+          slot(coin('d10', { denomination: '10 Kopiyok', year: 1900 }), 's', 'S'),
+          slot(coin('d2', { denomination: '2 Kopiyky', year: 2000 }), 's', 'S'),
+        ],
+        [],
+      );
+      expect(ids(result.missing)).toEqual(['d2', 'd10']);
+    });
+
+    it('mint mark takes precedence over variety', () => {
+      const result = buildWantList(
+        1,
+        [
+          slot(coin('m-s', { mintMark: 'S', variety: 'A' }), 's', 'S'),
+          slot(coin('m-d', { mintMark: 'D', variety: 'Z' }), 's', 'S'),
+        ],
+        [],
+      );
+      expect(ids(result.missing)).toEqual(['m-d', 'm-s']);
+    });
+
     it('country takes precedence over denomination and year', () => {
       const result = buildWantList(
         1,
