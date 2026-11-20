@@ -17,7 +17,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-07-26](2026-07-26-dependency-free-i18n.md) | The web app uses a dependency-free i18n layer with compile-time key parity | Accepted; the locale-choice clause (first render always `en`) is superseded by [2026-11-16-locale-cookie-read-in-root-layout](2026-11-16-locale-cookie-read-in-root-layout.md) |
 | [2026-10-01](2026-10-01-account-deletion-is-a-hard-delete.md) | Account deletion is an immediate hard delete in one transaction; submitted coins stay, anonymised | Accepted |
 | [2026-10-01](2026-10-01-jwt-validation-checks-the-user-exists.md) | Every authenticated request checks that the user still exists | Accepted |
-| [2026-10-01](2026-10-01-missing-list-built-in-the-browser.md) | The missing-coins CSV and print view are built in the browser from the gap data | Accepted |
+| [2026-10-01](2026-10-01-missing-list-built-in-the-browser.md) | The missing-coins CSV and print view are built in the browser from the gap data | Superseded by [2026-11-19-missing-csv-in-want-list-order-with-upgrade-rows](2026-11-19-missing-csv-in-want-list-order-with-upgrade-rows.md) |
 | [2026-10-01](2026-10-01-rate-limiting-per-client-ip-behind-render.md) | Rate limits are per client IP, using an explicit proxy hop count | Accepted |
 | [2026-10-02](2026-10-02-in-app-admin-role.md) | Catalog submissions are reviewed in-app by an admin role that is read from the database | Accepted |
 | [2026-10-02](2026-10-02-submission-review-rules.md) | Review decisions are final, rejection reasons are visible only to the submitter, and duplicate warnings are advisory | Accepted |
@@ -54,6 +54,8 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-15](2026-11-15-api-security-headers-helmet-defaults-no-csp-relaxation.md) | The API sends helmet's default security headers unchanged, with no CSP relaxation, including on Swagger UI | Accepted |
 | [2026-11-15](2026-11-15-render-build-applies-migrations.md) | Every Render deploy applies pending migrations with `prisma migrate deploy` inside `buildCommand` | Accepted |
 | [2026-11-16](2026-11-16-locale-cookie-read-in-root-layout.md) | The root layout reads the visitor's locale from a `ccc-locale` cookie, so `<html lang>` and the first render match it, and every route renders dynamically | Accepted |
+| [2026-11-19](2026-11-19-missing-csv-in-want-list-order-with-upgrade-rows.md) | The missing-coins CSV is in want-list order, appends upgrade rows, and gains Want, Grade and Target grade columns | Accepted |
+| [2026-11-19](2026-11-19-one-want-list-table-component-for-every-want-list.md) | One presentational WantListTable renders every want list, grouped by country and denomination, then year | Accepted |
 
 ## Where else decisions live
 

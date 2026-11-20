@@ -1,6 +1,6 @@
 # The missing-coins CSV and print view are built in the browser from the gap data
 
-- **Status:** Accepted
+- **Status:** Superseded by [2026-11-19-missing-csv-in-want-list-order-with-upgrade-rows](2026-11-19-missing-csv-in-want-list-order-with-upgrade-rows.md)
 - **Date:** 2026-10-01
 - **Source:** orchestrator run `run_20261001_205959` (offline missing-coins list)
 - **Code:** `apps/web/src/lib/missing-list.ts`, `apps/web/src/app/sets/[id]/missing/page.tsx`, the `@media print` block in `apps/web/src/app/globals.css`
