@@ -18,6 +18,7 @@ import {
 } from '@/lib/hooks/use-user-sets';
 import { useBulkSetOwnership, useSetOwnership } from '@/lib/hooks/use-collection';
 import { downloadMissingCsv } from '@/lib/missing-list';
+import { track } from '@/lib/analytics';
 import type { CoinCardStatus } from '@/components/ui/coin-card';
 import { UndoToastProvider, useUndoToast } from '@/components/ui/undo-toast';
 import { AddCoinsSheet } from '@/components/sets/add-coins-sheet';
@@ -450,7 +451,10 @@ function SetEditor({ id }: { id: string }) {
             <SetActionsMenu
               onRename={startRename}
               onDelete={() => setDeleteConfirmOpen(true)}
-              onDownloadMissing={() => downloadMissingCsv(gaps, set.name)}
+              onDownloadMissing={() => {
+                downloadMissingCsv(gaps, set.name);
+                track('want_list_exported', { format: 'csv', scope: 'set' });
+              }}
               printMissingHref={`/sets/${id}/missing`}
               nothingMissing={nothingMissing}
               onSelectCoins={isAlbum ? enterSelectMode : undefined}
