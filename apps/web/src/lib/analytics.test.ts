@@ -273,7 +273,9 @@ describe('initAnalytics: on with a token', () => {
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_REGION', 'mars');
     const other = await load();
     await other.mod.initAnalytics();
-    expect(vi.mocked(other.posthog.init).mock.calls[0][1]).toEqual(
+    // The posthog-js mock is a single cached instance across resetModules, so the second init is the last call.
+    expect(vi.mocked(other.posthog.init)).toHaveBeenLastCalledWith(
+      expect.anything(),
       expect.objectContaining({ ui_host: 'https://eu.posthog.com' }),
     );
   });
