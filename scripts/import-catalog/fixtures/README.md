@@ -163,10 +163,15 @@ pending manual pass under growth backlog 2.9.
 
 ## `ukraine-commemorative-1-hryvnia.json` / `ukraine-commemorative-10-hryvnias.json`
 
-31 circulating commemorative coins of Ukraine, matching uCoin's "Commemorative coins" list for the
-State of Ukraine (1992–2026) as of 2026-09-28: 5 × 1 hryvnia (2004–2015, aluminium bronze, 26 mm,
-6.8 g) and 26 × 10 hryvnias (2022–2026, nickel-plated zinc alloy, 23.5 mm, 6.4 g), including 12 from
-the "We Are Strong. We Are Together" oblast series.
+46 circulating commemorative coins of Ukraine: 6 × 1 hryvnia (2004–2016, aluminium bronze, 26 mm,
+6.8 g) and 40 × 10 hryvnias. Of the 10-hryvnia coins, 14 are first-type (2018–2022, nickel-plated
+zinc alloy, 30 mm, 12.4 g, 2.8 mm, reeded edge) and 26 are second-type (2022–2026, 23.5 mm, 6.4 g),
+including 12 from the "We Are Strong. We Are Together" oblast series. The file-level specs are the
+second type's; each first-type coin overrides diameter, weight and thickness in its own `specs` and
+inherits the material (the edge isn't stored). The original 31 coins match uCoin's "Commemorative
+coins" list for the State of Ukraine (1992–2026) as of 2026-09-28; the 15 added on 2026-11-21 (the
+14 first-type coins and the 2016 "20 Years of Monetary Reform in Ukraine" 1 hryvnia) aren't in that
+list and were added to close the "Ukraine gaps" in docs/catalog-expansion-research.md.
 
 **Coin subject goes in `variety`.** The `Coin` natural key is (country, denomination, year, mintMark,
 variety) with no per-coin name, and many of these share a year and denomination (four 10-hryvnia
@@ -179,12 +184,23 @@ so nothing from it is copied. Subjects, years, mintages and specs come from Ukra
 [docs/catalog-data-licensing.md](../../../docs/catalog-data-licensing.md) §1). Subject names are our
 own English renderings of the NBU's official Ukrainian titles. uCoin's "Service of the Armed Forces
 of Ukraine" (2024) is the NBU's "Сили логістики ЗСУ" coin, so it's named "Logistics Forces" here.
-Mintages: 5 million for each 1-hryvnia coin (7 million for 2015); 10 million for each 10-hryvnia
-coin from 2022–2025; 2 million for 2026 issues and for the oblast series.
+Mintages: 5 million for each 1-hryvnia coin (7 million for 2015); 60,000 for the 2016 coin (10,000
+in the "Монети України" set + 50,000 in souvenir packaging; the source calls it a circulating coin
+but doesn't say it entered circulation); 10 million for each second-type 10-hryvnia coin from
+2022–2025; 2 million for 2026 issues and for the oblast series. The 14 first-type coins have a
+`null` mintage: the article gives one shared figure (1,000,000) for the type, not one per coin.
 
-**Not included.** The 14 first-type 30 mm, 12.4 g 10-hryvnia commemoratives from 2018–2022 and the
-2016 "20 years of monetary reform" 1 hryvnia aren't in uCoin's list. Images aren't included either:
-they need the Commons `extmetadata` check before they can be added.
+**Provenance of the 15 coins added on 2026-11-21.** Fetched through the MediaWiki API on 2026-11-21
+from Ukrainian Wikipedia: "10 гривень (монета)" revision 49191096 (section "Монети першого типу",
+read in full), "1 гривня (монета)" revision 49130450 (the fetch was truncated, but the 2016 entry was
+in the part read) and "Монети української гривні" revision 49199060 (shows that the 2016 monetary
+reform collector set holds the "Volodymyr the Great" 1 hryvnia, not this coin). **No raw captures
+were saved under `sources/`**, and **the NBU cross-check was not done** because bank.gov.ua returned
+HTTP 403; both are still to do. Nothing is copied from uCoin. The English subject names are our own
+renderings of the NBU titles; each added coin records its Ukrainian title in `titleUk`, which the
+import ignores. Each fixture's `sources` lists these revisions.
+
+**Not included.** Images: they need the Commons `extmetadata` check before they can be added.
 
 ## `ukraine-<denomination>.json` (10 files: 1 kopiyka through 10 hryvnias)
 
@@ -214,5 +230,8 @@ years: "Brass-plated steel" for kopiyky; "Volodymyr the Great" and "2018 design"
 **Materials** follow Wikipedia, so the 1992–2016 10/25/50 kopiyok are "Aluminium bronze" (uCoin says
 brass for 1992–1996). Thickness is null for 2 kopiyky and 2 hryvni, where the source doesn't give it.
 
-**Not included.** The 1 kopiyka 2019, which exists but falls outside uCoin's 2000–2018 range.
+**Not included.** The 1 kopiyka 2019, left out by decision on 2026-11-21. "Монети української
+гривні" (revision 49199060) marks it `***` (officially not issued, but exists) with no mintage
+figure, and it isn't in the 2019 collector set; it also falls outside uCoin's 2000–2018 range. The
+`***` rule above would otherwise include it, so this is a deliberate exception.
 `isKeyDate` is false throughout, since no source flags key dates. There are no images.
