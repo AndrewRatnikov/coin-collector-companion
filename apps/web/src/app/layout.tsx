@@ -7,6 +7,7 @@ import { SiteNav } from '@/components/layout/site-nav';
 import { I18nProvider } from '@/lib/i18n/i18n-context';
 import { LOCALE_COOKIE_NAME, parseLocale } from '@/lib/i18n/locale-cookie';
 import enLanding from '@/lib/i18n/locales/en/landing';
+import { siteMetadataBase } from '@/lib/site-url';
 import './globals.css';
 
 // Heading font (Cormorant Garamond, weight 600 ceiling) — Classical design system.
@@ -30,7 +31,11 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ['400', '500'],
 });
 
+// Absolute base for Open Graph / Twitter image URLs. Unset: Next's own default.
+const metadataBase = siteMetadataBase(process.env.NEXT_PUBLIC_SITE_URL);
+
 export const metadata: Metadata = {
+  ...(metadataBase ? { metadataBase } : {}),
   title: 'Coin Collector Companion',
   // Metadata is static, so it stays English.
   description: enLanding['landing.metaDescription'],
