@@ -43,15 +43,15 @@ describe('next.config.ts /relay proxy', () => {
     expect(config.skipTrailingSlashRedirect).toBe(true);
   });
 
-  it('defaults to the eu region, with the three rewrites in this exact order', async () => {
-    expect(await rewritesFor(undefined)).toEqual(expected('eu'));
+  it('defaults to the us region, with the three rewrites in this exact order', async () => {
+    expect(await rewritesFor(undefined)).toEqual(expected('us'));
   });
 
-  it('uses the us hosts when the region is us', async () => {
-    const result = await rewritesFor('us');
+  it('uses the eu hosts when the region is eu', async () => {
+    const result = await rewritesFor('eu');
 
-    expect(result).toEqual(expected('us'));
-    expect(result).not.toEqual(expected('eu'));
+    expect(result).toEqual(expected('eu'));
+    expect(result).not.toEqual(expected('us'));
   });
 
   it('reads the region at call time, so changing it changes the result', async () => {
@@ -63,12 +63,12 @@ describe('next.config.ts /relay proxy', () => {
     expect(JSON.stringify(eu)).not.toContain('us.i.posthog.com');
   });
 
-  it.each(['', 'xx', 'EU', 'global'])('falls back to eu for the region %j', async (region) => {
-    expect(await rewritesFor(region)).toEqual(expected('eu'));
+  it.each(['', 'xx', 'US', 'global'])('falls back to us for the region %j', async (region) => {
+    expect(await rewritesFor(region)).toEqual(expected('us'));
   });
 
-  it.each([' US ', 'Us'])('accepts %j as us', async (region) => {
-    expect(await rewritesFor(region)).toEqual(expected('us'));
+  it.each([' EU ', 'Eu'])('accepts %j as eu', async (region) => {
+    expect(await rewritesFor(region)).toEqual(expected('eu'));
   });
 
   it('puts the specific static and array rewrites before the catch-all', async () => {

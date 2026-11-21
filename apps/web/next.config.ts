@@ -5,9 +5,9 @@ const nextConfig: NextConfig = {
   // PostHog's /relay proxy requests end in slashes; don't redirect them.
   skipTrailingSlashRedirect: true,
   async rewrites() {
-    // Same rule as analyticsRegion() in src/lib/analytics.ts: 'us' only when asked for, else 'eu'.
+    // Same rule as analyticsRegion() in src/lib/analytics.ts: 'eu' only when asked for, else 'us'.
     // Read at call time; this file can't import from src/.
-    const region = process.env.NEXT_PUBLIC_POSTHOG_REGION?.trim().toLowerCase() === 'us' ? 'us' : 'eu';
+    const region = process.env.NEXT_PUBLIC_POSTHOG_REGION?.trim().toLowerCase() === 'eu' ? 'eu' : 'us';
     return [
       { source: '/relay/static/:path*', destination: `https://${region}-assets.i.posthog.com/static/:path*` },
       { source: '/relay/array/:path*', destination: `https://${region}-assets.i.posthog.com/array/:path*` },

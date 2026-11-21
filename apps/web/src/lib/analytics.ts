@@ -30,7 +30,7 @@ let initStarted = false;
 let firstTouch: string | null = null;
 
 export function analyticsRegion(raw: string | undefined): AnalyticsRegion {
-  return raw?.trim().toLowerCase() === 'us' ? 'us' : 'eu';
+  return raw?.trim().toLowerCase() === 'eu' ? 'eu' : 'us';
 }
 
 function isUrlLike(value: string): boolean {

@@ -40,16 +40,16 @@ afterEach(() => {
 });
 
 describe('analyticsRegion', () => {
-  it.each([undefined, '', 'EU', 'eu', 'xx', 'usa'])('falls back to eu for %j', async (raw) => {
-    const { mod } = await load();
-
-    expect(mod.analyticsRegion(raw)).toBe('eu');
-  });
-
-  it.each(['us', ' US ', 'Us'])('returns us for %j', async (raw) => {
+  it.each([undefined, '', 'US', 'us', 'xx', 'usa'])('falls back to us for %j', async (raw) => {
     const { mod } = await load();
 
     expect(mod.analyticsRegion(raw)).toBe('us');
+  });
+
+  it.each(['eu', ' EU ', 'Eu'])('returns eu for %j', async (raw) => {
+    const { mod } = await load();
+
+    expect(mod.analyticsRegion(raw)).toBe('eu');
   });
 });
 
@@ -251,7 +251,7 @@ describe('initAnalytics: on with a token', () => {
       'phc_test',
       expect.objectContaining({
         api_host: '/relay',
-        ui_host: 'https://eu.posthog.com',
+        ui_host: 'https://us.posthog.com',
         defaults: '2026-08-30',
         cookieless_mode: 'always',
         person_profiles: 'never',
@@ -262,12 +262,12 @@ describe('initAnalytics: on with a token', () => {
     );
   });
 
-  it('uses the us ui host when the region is us, and eu for an unknown region', async () => {
-    vi.stubEnv('NEXT_PUBLIC_POSTHOG_REGION', 'us');
-    const us = await load();
-    await us.mod.initAnalytics();
-    expect(vi.mocked(us.posthog.init).mock.calls[0][1]).toEqual(
-      expect.objectContaining({ ui_host: 'https://us.posthog.com' }),
+  it('uses the eu ui host when the region is eu, and us for an unknown region', async () => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_REGION', 'eu');
+    const eu = await load();
+    await eu.mod.initAnalytics();
+    expect(vi.mocked(eu.posthog.init).mock.calls[0][1]).toEqual(
+      expect.objectContaining({ ui_host: 'https://eu.posthog.com' }),
     );
 
     vi.stubEnv('NEXT_PUBLIC_POSTHOG_REGION', 'mars');
@@ -276,7 +276,7 @@ describe('initAnalytics: on with a token', () => {
     // The posthog-js mock is a single cached instance across resetModules, so the second init is the last call.
     expect(vi.mocked(other.posthog.init)).toHaveBeenLastCalledWith(
       expect.anything(),
-      expect.objectContaining({ ui_host: 'https://eu.posthog.com' }),
+      expect.objectContaining({ ui_host: 'https://us.posthog.com' }),
     );
   });
 
