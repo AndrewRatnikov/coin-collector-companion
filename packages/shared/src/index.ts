@@ -123,23 +123,66 @@ export interface CatalogFacets {
   denominations: string[]; // distinct denomination of approved coins, scoped to ?country= when given
 }
 
-/** The number shown in a coin placeholder: "10 Hryvnias" -> "10", "Cent" -> "1". */
-export function getDenominationNumeral(denomination: string): string {
+// US coin words with no number, matched against the whole (trimmed, lower-cased) string only,
+// so "Half Dollar" is never read as "Dollar". hundredths = face value in hundredths of a dollar.
+const US_DENOMINATION_WORDS: Record<string, { hundredths: number; numeral: string }> = {
+  cent: { hundredths: 1, numeral: '1' },
+  nickel: { hundredths: 5, numeral: '5' },
+  dime: { hundredths: 10, numeral: '10' },
+  quarter: { hundredths: 25, numeral: '25' },
+  'half dollar': { hundredths: 50, numeral: '50' },
+  dollar: { hundredths: 100, numeral: '1' },
+};
+
+// Checked before the main-unit words, so "50 Euro Cent" is minor even though it contains "euro".
+const MINOR_UNIT_WORD = /\b(?:kopiyka|kopiyky|kopiyok|euro cents?|cents?)\b/i;
+
+function usDenominationWord(denomination: string) {
+  const key = denomination.trim().replace(/\s+/g, ' ').toLowerCase();
+  return Object.prototype.hasOwnProperty.call(US_DENOMINATION_WORDS, key)
+    ? US_DENOMINATION_WORDS[key]
+    : undefined;
+}
+
+/** The leading number as written, else the first number anywhere, else null. */
+function firstDenominationNumber(denomination: string): string | null {
   const leading = /^\s*(\d+(?:[.,]\d+)?)/.exec(denomination);
   if (leading) return leading[1];
   const anywhere = /(\d+(?:[.,]\d+)?)/.exec(denomination);
   if (anywhere) return anywhere[1];
-  return '1';
+  return null;
 }
 
-function denominationValue(denomination: string): number {
-  const value = parseFloat(getDenominationNumeral(denomination).replace(',', '.'));
-  return Number.isNaN(value) ? 0 : value;
+/**
+ * The number shown in a coin placeholder, the coin's own number: "10 Hryvnias" -> "10",
+ * "50 Kopiyok" -> "50", "Nickel" -> "5", "Cent" -> "1".
+ */
+export function getDenominationNumeral(denomination: string): string {
+  const word = usDenominationWord(denomination);
+  if (word) return word.numeral;
+  return firstDenominationNumber(denomination) ?? '1';
 }
 
-/** Facet order: numeral numerically (',' read as '.'), then by name. */
+// Face value in hundredths of the main unit, so ties such as "Dime" vs "10 Kopiyok" are exact.
+// Main-unit words (hryvnia, euro, dollar) and unrecognised words keep the plain number.
+function denominationHundredths(denomination: string): number {
+  const word = usDenominationWord(denomination);
+  if (word) return word.hundredths;
+  const numeral = firstDenominationNumber(denomination);
+  if (numeral === null) return 100;
+  const value = parseFloat(numeral.replace(',', '.'));
+  if (Number.isNaN(value)) return 0;
+  return MINOR_UNIT_WORD.test(denomination) ? value : value * 100;
+}
+
+/** Face value in the currency's main unit: "50 Kopiyok" -> 0.5, "Quarter" -> 0.25, "2 Euro" -> 2. */
+export function getDenominationFaceValue(denomination: string): number {
+  return denominationHundredths(denomination) / 100;
+}
+
+/** Facet order: face value in the main unit, then by name. */
 export function compareDenominations(a: string, b: string): number {
-  const diff = denominationValue(a) - denominationValue(b);
+  const diff = denominationHundredths(a) - denominationHundredths(b);
   if (diff !== 0) return diff;
   return a.localeCompare(b, 'en');
 }
