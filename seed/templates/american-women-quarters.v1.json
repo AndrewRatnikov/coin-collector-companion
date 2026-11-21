@@ -1,0 +1,286 @@
+{
+  "name": "American Women Quarters",
+  "description": "Every American Women quarter in release order, 2022-2025, Philadelphia and Denver: 20 designs, 40 coins.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Maya Angelou"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Maya Angelou"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Dr. Sally Ride"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Dr. Sally Ride"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Wilma Mankiller"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Wilma Mankiller"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Nina Otero-Warren"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Nina Otero-Warren"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Anna May Wong"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Anna May Wong"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Bessie Coleman"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Bessie Coleman"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Edith Kanakaʻole"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Edith Kanakaʻole"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Eleanor Roosevelt"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Eleanor Roosevelt"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Jovita Idar"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Jovita Idar"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Maria Tallchief"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Maria Tallchief"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Dr. Pauli Murray"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Dr. Pauli Murray"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Patsy Mink"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Patsy Mink"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Dr. Mary Edwards Walker"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Dr. Mary Edwards Walker"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Celia Cruz"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Celia Cruz"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Zitkala-Ša"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Zitkala-Ša"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Ida B. Wells"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Ida B. Wells"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Juliette Gordon Low"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Juliette Gordon Low"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Dr. Vera Rubin"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Dr. Vera Rubin"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Stacey Milbern"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Stacey Milbern"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Althea Gibson"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Althea Gibson"
+    }
+  ]
+}

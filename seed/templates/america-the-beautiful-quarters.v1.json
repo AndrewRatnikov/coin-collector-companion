@@ -1,0 +1,860 @@
+{
+  "name": "America the Beautiful Quarters",
+  "description": "Every America the Beautiful quarter in release order, 2010-2021, Philadelphia and Denver, plus the 2019-2020 West Point (W) quarters: 56 designs, 122 coins.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2010,
+      "mintMark": "P",
+      "variety": "Hot Springs"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2010,
+      "mintMark": "D",
+      "variety": "Hot Springs"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2010,
+      "mintMark": "P",
+      "variety": "Yellowstone"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2010,
+      "mintMark": "D",
+      "variety": "Yellowstone"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2010,
+      "mintMark": "P",
+      "variety": "Yosemite"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2010,
+      "mintMark": "D",
+      "variety": "Yosemite"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2010,
+      "mintMark": "P",
+      "variety": "Grand Canyon"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2010,
+      "mintMark": "D",
+      "variety": "Grand Canyon"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2010,
+      "mintMark": "P",
+      "variety": "Mount Hood"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2010,
+      "mintMark": "D",
+      "variety": "Mount Hood"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2011,
+      "mintMark": "P",
+      "variety": "Gettysburg"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2011,
+      "mintMark": "D",
+      "variety": "Gettysburg"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2011,
+      "mintMark": "P",
+      "variety": "Glacier"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2011,
+      "mintMark": "D",
+      "variety": "Glacier"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2011,
+      "mintMark": "P",
+      "variety": "Olympic"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2011,
+      "mintMark": "D",
+      "variety": "Olympic"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2011,
+      "mintMark": "P",
+      "variety": "Vicksburg"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2011,
+      "mintMark": "D",
+      "variety": "Vicksburg"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2011,
+      "mintMark": "P",
+      "variety": "Chickasaw"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2011,
+      "mintMark": "D",
+      "variety": "Chickasaw"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2012,
+      "mintMark": "P",
+      "variety": "El Yunque"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2012,
+      "mintMark": "D",
+      "variety": "El Yunque"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2012,
+      "mintMark": "P",
+      "variety": "Chaco Culture"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2012,
+      "mintMark": "D",
+      "variety": "Chaco Culture"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2012,
+      "mintMark": "P",
+      "variety": "Acadia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2012,
+      "mintMark": "D",
+      "variety": "Acadia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2012,
+      "mintMark": "P",
+      "variety": "Hawai'i Volcanoes"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2012,
+      "mintMark": "D",
+      "variety": "Hawai'i Volcanoes"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2012,
+      "mintMark": "P",
+      "variety": "Denali"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2012,
+      "mintMark": "D",
+      "variety": "Denali"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2013,
+      "mintMark": "P",
+      "variety": "White Mountain"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2013,
+      "mintMark": "D",
+      "variety": "White Mountain"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2013,
+      "mintMark": "P",
+      "variety": "Perry's Victory"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2013,
+      "mintMark": "D",
+      "variety": "Perry's Victory"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2013,
+      "mintMark": "P",
+      "variety": "Great Basin"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2013,
+      "mintMark": "D",
+      "variety": "Great Basin"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2013,
+      "mintMark": "P",
+      "variety": "Fort McHenry"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2013,
+      "mintMark": "D",
+      "variety": "Fort McHenry"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2013,
+      "mintMark": "P",
+      "variety": "Mount Rushmore"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2013,
+      "mintMark": "D",
+      "variety": "Mount Rushmore"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2014,
+      "mintMark": "P",
+      "variety": "Great Smoky Mountains"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2014,
+      "mintMark": "D",
+      "variety": "Great Smoky Mountains"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2014,
+      "mintMark": "P",
+      "variety": "Shenandoah"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2014,
+      "mintMark": "D",
+      "variety": "Shenandoah"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2014,
+      "mintMark": "P",
+      "variety": "Arches"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2014,
+      "mintMark": "D",
+      "variety": "Arches"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2014,
+      "mintMark": "P",
+      "variety": "Great Sand Dunes"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2014,
+      "mintMark": "D",
+      "variety": "Great Sand Dunes"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2014,
+      "mintMark": "P",
+      "variety": "Everglades"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2014,
+      "mintMark": "D",
+      "variety": "Everglades"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2015,
+      "mintMark": "P",
+      "variety": "Homestead"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2015,
+      "mintMark": "D",
+      "variety": "Homestead"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2015,
+      "mintMark": "P",
+      "variety": "Kisatchie"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2015,
+      "mintMark": "D",
+      "variety": "Kisatchie"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2015,
+      "mintMark": "P",
+      "variety": "Blue Ridge Parkway"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2015,
+      "mintMark": "D",
+      "variety": "Blue Ridge Parkway"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2015,
+      "mintMark": "P",
+      "variety": "Bombay Hook"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2015,
+      "mintMark": "D",
+      "variety": "Bombay Hook"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2015,
+      "mintMark": "P",
+      "variety": "Saratoga"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2015,
+      "mintMark": "D",
+      "variety": "Saratoga"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2016,
+      "mintMark": "P",
+      "variety": "Shawnee"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2016,
+      "mintMark": "D",
+      "variety": "Shawnee"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2016,
+      "mintMark": "P",
+      "variety": "Cumberland Gap"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2016,
+      "mintMark": "D",
+      "variety": "Cumberland Gap"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2016,
+      "mintMark": "P",
+      "variety": "Harpers Ferry"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2016,
+      "mintMark": "D",
+      "variety": "Harpers Ferry"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2016,
+      "mintMark": "P",
+      "variety": "Theodore Roosevelt"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2016,
+      "mintMark": "D",
+      "variety": "Theodore Roosevelt"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2016,
+      "mintMark": "P",
+      "variety": "Fort Moultrie"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2016,
+      "mintMark": "D",
+      "variety": "Fort Moultrie"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2017,
+      "mintMark": "P",
+      "variety": "Effigy Mounds"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2017,
+      "mintMark": "D",
+      "variety": "Effigy Mounds"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2017,
+      "mintMark": "P",
+      "variety": "Frederick Douglass"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2017,
+      "mintMark": "D",
+      "variety": "Frederick Douglass"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2017,
+      "mintMark": "P",
+      "variety": "Ozark Riverways"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2017,
+      "mintMark": "D",
+      "variety": "Ozark Riverways"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2017,
+      "mintMark": "P",
+      "variety": "Ellis Island"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2017,
+      "mintMark": "D",
+      "variety": "Ellis Island"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2017,
+      "mintMark": "P",
+      "variety": "George Rogers Clark"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2017,
+      "mintMark": "D",
+      "variety": "George Rogers Clark"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2018,
+      "mintMark": "P",
+      "variety": "Pictured Rocks"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2018,
+      "mintMark": "D",
+      "variety": "Pictured Rocks"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2018,
+      "mintMark": "P",
+      "variety": "Apostle Islands"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2018,
+      "mintMark": "D",
+      "variety": "Apostle Islands"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2018,
+      "mintMark": "P",
+      "variety": "Voyageurs"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2018,
+      "mintMark": "D",
+      "variety": "Voyageurs"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2018,
+      "mintMark": "P",
+      "variety": "Cumberland Island"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2018,
+      "mintMark": "D",
+      "variety": "Cumberland Island"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2018,
+      "mintMark": "P",
+      "variety": "Block Island"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2018,
+      "mintMark": "D",
+      "variety": "Block Island"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "Lowell"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "Lowell"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "W",
+      "variety": "Lowell"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "American Memorial Park"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "American Memorial Park"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "W",
+      "variety": "American Memorial Park"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "War In The Pacific"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "War In The Pacific"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "W",
+      "variety": "War In The Pacific"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "San Antonio Missions"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "San Antonio Missions"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "W",
+      "variety": "San Antonio Missions"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "River Of No Return"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "River Of No Return"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2019,
+      "mintMark": "W",
+      "variety": "River Of No Return"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "National Park"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "National Park"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "W",
+      "variety": "National Park"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "Weir Farm"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "Weir Farm"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "W",
+      "variety": "Weir Farm"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "Salt River Bay"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "Salt River Bay"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "W",
+      "variety": "Salt River Bay"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "Marsh-Billings-Rockefeller"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "Marsh-Billings-Rockefeller"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "W",
+      "variety": "Marsh-Billings-Rockefeller"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "Tallgrass Prairie"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "Tallgrass Prairie"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2020,
+      "mintMark": "W",
+      "variety": "Tallgrass Prairie"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2021,
+      "mintMark": "P",
+      "variety": "Tuskegee Airmen"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2021,
+      "mintMark": "D",
+      "variety": "Tuskegee Airmen"
+    }
+  ]
+}

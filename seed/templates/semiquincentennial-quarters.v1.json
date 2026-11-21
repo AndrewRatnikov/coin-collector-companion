@@ -1,0 +1,76 @@
+{
+  "name": "Semiquincentennial Quarters",
+  "description": "The 2026 Semiquincentennial quarter program in release order, Philadelphia and Denver: 5 designs, 10 coins.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Mayflower Compact"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Mayflower Compact"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Revolutionary War"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Revolutionary War"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Declaration of Independence"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Declaration of Independence"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Constitution"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Constitution"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Gettysburg Address"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Gettysburg Address"
+    }
+  ]
+}

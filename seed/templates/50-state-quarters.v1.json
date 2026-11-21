@@ -1,0 +1,706 @@
+{
+  "name": "50 State Quarters",
+  "description": "Every 50 State quarter in release order, 1999-2008, Philadelphia and Denver: 50 designs, 100 coins.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 1999,
+      "mintMark": "P",
+      "variety": "Delaware"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 1999,
+      "mintMark": "D",
+      "variety": "Delaware"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 1999,
+      "mintMark": "P",
+      "variety": "Pennsylvania"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 1999,
+      "mintMark": "D",
+      "variety": "Pennsylvania"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 1999,
+      "mintMark": "P",
+      "variety": "New Jersey"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 1999,
+      "mintMark": "D",
+      "variety": "New Jersey"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 1999,
+      "mintMark": "P",
+      "variety": "Georgia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 1999,
+      "mintMark": "D",
+      "variety": "Georgia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 1999,
+      "mintMark": "P",
+      "variety": "Connecticut"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 1999,
+      "mintMark": "D",
+      "variety": "Connecticut"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2000,
+      "mintMark": "P",
+      "variety": "Massachusetts"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2000,
+      "mintMark": "D",
+      "variety": "Massachusetts"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2000,
+      "mintMark": "P",
+      "variety": "Maryland"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2000,
+      "mintMark": "D",
+      "variety": "Maryland"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2000,
+      "mintMark": "P",
+      "variety": "South Carolina"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2000,
+      "mintMark": "D",
+      "variety": "South Carolina"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2000,
+      "mintMark": "P",
+      "variety": "New Hampshire"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2000,
+      "mintMark": "D",
+      "variety": "New Hampshire"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2000,
+      "mintMark": "P",
+      "variety": "Virginia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2000,
+      "mintMark": "D",
+      "variety": "Virginia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2001,
+      "mintMark": "P",
+      "variety": "New York"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2001,
+      "mintMark": "D",
+      "variety": "New York"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2001,
+      "mintMark": "P",
+      "variety": "North Carolina"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2001,
+      "mintMark": "D",
+      "variety": "North Carolina"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2001,
+      "mintMark": "P",
+      "variety": "Rhode Island"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2001,
+      "mintMark": "D",
+      "variety": "Rhode Island"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2001,
+      "mintMark": "P",
+      "variety": "Vermont"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2001,
+      "mintMark": "D",
+      "variety": "Vermont"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2001,
+      "mintMark": "P",
+      "variety": "Kentucky"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2001,
+      "mintMark": "D",
+      "variety": "Kentucky"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2002,
+      "mintMark": "P",
+      "variety": "Tennessee"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2002,
+      "mintMark": "D",
+      "variety": "Tennessee"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2002,
+      "mintMark": "P",
+      "variety": "Ohio"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2002,
+      "mintMark": "D",
+      "variety": "Ohio"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2002,
+      "mintMark": "P",
+      "variety": "Louisiana"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2002,
+      "mintMark": "D",
+      "variety": "Louisiana"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2002,
+      "mintMark": "P",
+      "variety": "Indiana"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2002,
+      "mintMark": "D",
+      "variety": "Indiana"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2002,
+      "mintMark": "P",
+      "variety": "Mississippi"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2002,
+      "mintMark": "D",
+      "variety": "Mississippi"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2003,
+      "mintMark": "P",
+      "variety": "Illinois"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2003,
+      "mintMark": "D",
+      "variety": "Illinois"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2003,
+      "mintMark": "P",
+      "variety": "Alabama"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2003,
+      "mintMark": "D",
+      "variety": "Alabama"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2003,
+      "mintMark": "P",
+      "variety": "Maine"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2003,
+      "mintMark": "D",
+      "variety": "Maine"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2003,
+      "mintMark": "P",
+      "variety": "Missouri"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2003,
+      "mintMark": "D",
+      "variety": "Missouri"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2003,
+      "mintMark": "P",
+      "variety": "Arkansas"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2003,
+      "mintMark": "D",
+      "variety": "Arkansas"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2004,
+      "mintMark": "P",
+      "variety": "Michigan"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2004,
+      "mintMark": "D",
+      "variety": "Michigan"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2004,
+      "mintMark": "P",
+      "variety": "Florida"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2004,
+      "mintMark": "D",
+      "variety": "Florida"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2004,
+      "mintMark": "P",
+      "variety": "Texas"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2004,
+      "mintMark": "D",
+      "variety": "Texas"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2004,
+      "mintMark": "P",
+      "variety": "Iowa"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2004,
+      "mintMark": "D",
+      "variety": "Iowa"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2004,
+      "mintMark": "P",
+      "variety": "Wisconsin"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2004,
+      "mintMark": "D",
+      "variety": "Wisconsin"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2005,
+      "mintMark": "P",
+      "variety": "California"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2005,
+      "mintMark": "D",
+      "variety": "California"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2005,
+      "mintMark": "P",
+      "variety": "Minnesota"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2005,
+      "mintMark": "D",
+      "variety": "Minnesota"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2005,
+      "mintMark": "P",
+      "variety": "Oregon"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2005,
+      "mintMark": "D",
+      "variety": "Oregon"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2005,
+      "mintMark": "P",
+      "variety": "Kansas"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2005,
+      "mintMark": "D",
+      "variety": "Kansas"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2005,
+      "mintMark": "P",
+      "variety": "West Virginia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2005,
+      "mintMark": "D",
+      "variety": "West Virginia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2006,
+      "mintMark": "P",
+      "variety": "Nevada"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2006,
+      "mintMark": "D",
+      "variety": "Nevada"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2006,
+      "mintMark": "P",
+      "variety": "Nebraska"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2006,
+      "mintMark": "D",
+      "variety": "Nebraska"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2006,
+      "mintMark": "P",
+      "variety": "Colorado"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2006,
+      "mintMark": "D",
+      "variety": "Colorado"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2006,
+      "mintMark": "P",
+      "variety": "North Dakota"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2006,
+      "mintMark": "D",
+      "variety": "North Dakota"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2006,
+      "mintMark": "P",
+      "variety": "South Dakota"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2006,
+      "mintMark": "D",
+      "variety": "South Dakota"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "Montana"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "Montana"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "Washington"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "Washington"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "Idaho"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "Idaho"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "Wyoming"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "Wyoming"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "Utah"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "Utah"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "Oklahoma"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "Oklahoma"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "New Mexico"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "New Mexico"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "Arizona"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "Arizona"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "Alaska"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "Alaska"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "Hawaii"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "Hawaii"
+    }
+  ]
+}
