@@ -1,0 +1,316 @@
+{
+  "$schema-note": "Read by hand (scratch script over the saved wikitext) from the saved Wikipedia response for \"American Women quarters\", whose one-column-per-mint table the generator does not parse (see fixtures/README.md); raw source-shaped fixture, pre-sanitization: the import script normalizes mintMark/variety to the DB identity fields. Every coin here carries its mint mark and its design as the variety. mintage is null where the source gives no figure.",
+  "sources": [
+    {
+      "type": "year / mint mark / variety / mintage",
+      "origin": "English Wikipedia \"American Women quarters\" (https://en.wikipedia.org/wiki/American_Women_quarters), revision 1386003407, fetched 2026-11-21 through the MediaWiki API (action=parse)",
+      "url": "https://en.wikipedia.org/wiki/American_Women_quarters",
+      "revisionId": 1386003407,
+      "fetchedAt": "2026-11-21",
+      "rawResponse": "sources/American_Women_quarters.2026-11-21.json",
+      "license": "Wikipedia text is CC BY-SA 4.0; the year/mint-mark/variety/mintage facts reproduced here are historical facts, not copyrightable expression -- no attribution obligation for the facts themselves, though the app footer still credits Wikipedia generally",
+      "note": "Rows read by hand (scratch script over the saved response's wikitext) from its one-column-per-mint table, which the generator does not parse: Philadelphia and Denver columns only (P, D); the other mint and total columns are ignored."
+    },
+    {
+      "type": "physical specs",
+      "origin": "Wikipedia \"50 State quarters\" and \"American Women quarters\" infoboxes, in the saved responses under sources/: diameter 24.26 mm, thickness 1.75 mm, mass 5.67 g (Cu-Ni), composition 91.67% Cu, 8.33% Ni (standard)",
+      "license": "Numeric facts, not copyrightable expression (docs/catalog-data-licensing.md §1)"
+    }
+  ],
+  "rules-note": "P and D business strikes only (plus W for the 2019-2020 America the Beautiful designs): no S coins of any kind (proof, silver proof, Uncirculated or Enhanced uncirculated), no silver bullion, no privy-mark specials. Every coin carries its mint mark. variety is the design name as displayed in the source. Mintages come only from the saved source; null where it gives no figure. Release order: designs in source order, then P, D (then W). isKeyDate is false throughout; no images. This file: the \"List of designs\" table of \"American Women quarters\" (20 designs, 2022-2025). Its Mintage columns are Denver, Philadelphia, San Francisco, Total (Denver first); rows have 10 or 11 cells, so mintages are read from the end of the row: P = Philadelphia, D = Denver; San Francisco and Total are ignored. variety is the woman as displayed ({{sortname|First|Last}} rendered \"First Last\", including the \"Dr.\" prefix).",
+  "country": "USA",
+  "denomination": "Quarter",
+  "name": "American Women Quarters",
+  "yearRange": [
+    2022,
+    2025
+  ],
+  "specs": {
+    "diameterMm": 24.26,
+    "weightG": 5.67,
+    "thicknessMm": 1.75,
+    "material": "Copper-nickel clad copper (91.67% copper, 8.33% nickel)"
+  },
+  "coins": [
+    {
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Maya Angelou",
+      "isKeyDate": false,
+      "mintage": 237600000
+    },
+    {
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Maya Angelou",
+      "isKeyDate": false,
+      "mintage": 258200000
+    },
+    {
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Dr. Sally Ride",
+      "isKeyDate": false,
+      "mintage": 275200000
+    },
+    {
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Dr. Sally Ride",
+      "isKeyDate": false,
+      "mintage": 278000000
+    },
+    {
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Wilma Mankiller",
+      "isKeyDate": false,
+      "mintage": 310000000
+    },
+    {
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Wilma Mankiller",
+      "isKeyDate": false,
+      "mintage": 296800000
+    },
+    {
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Nina Otero-Warren",
+      "isKeyDate": false,
+      "mintage": 225000000
+    },
+    {
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Nina Otero-Warren",
+      "isKeyDate": false,
+      "mintage": 219200000
+    },
+    {
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Anna May Wong",
+      "isKeyDate": false,
+      "mintage": 226800000
+    },
+    {
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Anna May Wong",
+      "isKeyDate": false,
+      "mintage": 240800000
+    },
+    {
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Bessie Coleman",
+      "isKeyDate": false,
+      "mintage": 302000000
+    },
+    {
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Bessie Coleman",
+      "isKeyDate": false,
+      "mintage": 317200000
+    },
+    {
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Edith Kanakaʻole",
+      "isKeyDate": false,
+      "mintage": 372800000
+    },
+    {
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Edith Kanakaʻole",
+      "isKeyDate": false,
+      "mintage": 368600000
+    },
+    {
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Eleanor Roosevelt",
+      "isKeyDate": false,
+      "mintage": 284000000
+    },
+    {
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Eleanor Roosevelt",
+      "isKeyDate": false,
+      "mintage": 271800000
+    },
+    {
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Jovita Idar",
+      "isKeyDate": false,
+      "mintage": 190600000
+    },
+    {
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Jovita Idar",
+      "isKeyDate": false,
+      "mintage": 184800000
+    },
+    {
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Maria Tallchief",
+      "isKeyDate": false,
+      "mintage": 185800000
+    },
+    {
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Maria Tallchief",
+      "isKeyDate": false,
+      "mintage": 184800000
+    },
+    {
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Dr. Pauli Murray",
+      "isKeyDate": false,
+      "mintage": 168400000
+    },
+    {
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Dr. Pauli Murray",
+      "isKeyDate": false,
+      "mintage": 185500000
+    },
+    {
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Patsy Mink",
+      "isKeyDate": false,
+      "mintage": 210200000
+    },
+    {
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Patsy Mink",
+      "isKeyDate": false,
+      "mintage": 187200000
+    },
+    {
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Dr. Mary Edwards Walker",
+      "isKeyDate": false,
+      "mintage": 141200000
+    },
+    {
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Dr. Mary Edwards Walker",
+      "isKeyDate": false,
+      "mintage": 159400000
+    },
+    {
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Celia Cruz",
+      "isKeyDate": false,
+      "mintage": 149600000
+    },
+    {
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Celia Cruz",
+      "isKeyDate": false,
+      "mintage": 156200000
+    },
+    {
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Zitkala-Ša",
+      "isKeyDate": false,
+      "mintage": 152600000
+    },
+    {
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Zitkala-Ša",
+      "isKeyDate": false,
+      "mintage": 170200000
+    },
+    {
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Ida B. Wells",
+      "isKeyDate": false,
+      "mintage": 166200000
+    },
+    {
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Ida B. Wells",
+      "isKeyDate": false,
+      "mintage": 143200000
+    },
+    {
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Juliette Gordon Low",
+      "isKeyDate": false,
+      "mintage": 200400000
+    },
+    {
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Juliette Gordon Low",
+      "isKeyDate": false,
+      "mintage": 130200000
+    },
+    {
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Dr. Vera Rubin",
+      "isKeyDate": false,
+      "mintage": 55800000
+    },
+    {
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Dr. Vera Rubin",
+      "isKeyDate": false,
+      "mintage": 63000000
+    },
+    {
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Stacey Milbern",
+      "isKeyDate": false,
+      "mintage": 94800000
+    },
+    {
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Stacey Milbern",
+      "isKeyDate": false,
+      "mintage": 59400000
+    },
+    {
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Althea Gibson",
+      "isKeyDate": false,
+      "mintage": 35200000
+    },
+    {
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Althea Gibson",
+      "isKeyDate": false,
+      "mintage": 31600000
+    }
+  ]
+}
