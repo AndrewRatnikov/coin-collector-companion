@@ -63,6 +63,8 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-21](2026-11-21-custom-domain-makes-web-and-api-same-site.md) | Web and API move under one registrable domain, so the SameSite=Lax refresh cookie is same-site and works unchanged | Accepted |
 | [2026-11-21](2026-11-21-denominations-ordered-by-face-value-parsed-from-the-string.md) | Denominations sort by face value in the main unit, parsed from the string with a fixed word table | Accepted |
 | [2026-11-21](2026-11-21-catalog-import-diffs-per-file-and-writes-one-transaction.md) | The catalog import diffs each fixture file against the database in memory and writes only the difference in one transaction | Accepted |
+| [2026-11-21](2026-11-21-fixture-generator-reads-wikipedia-wikitext-tables.md) | The fixture generator parses the article's wikitext with a built-in table reader, not rendered HTML with a parser library | Accepted |
+| [2026-11-21](2026-11-21-generated-varieties-only-where-rows-need-telling-apart.md) | Generated fixtures give a row a variety only where it is needed to tell rows apart, and leftover duplicate keys are flagged, never merged | Accepted |
 
 ## Where else decisions live
 
