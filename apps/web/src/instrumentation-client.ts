@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs';
+import { initAnalytics } from '@/lib/analytics';
 import { SENTRY_DATA_COLLECTION } from '@/lib/sentry-data-collection';
 
 // Without NEXT_PUBLIC_SENTRY_DSN the SDK stays disabled (tests, CI, local runs without it).
@@ -14,5 +15,8 @@ Sentry.init({
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,
 });
+
+// Cookieless product analytics; stays off without NEXT_PUBLIC_POSTHOG_TOKEN.
+void initAnalytics();
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
