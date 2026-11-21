@@ -74,7 +74,7 @@ These rules are here because each of them has broken production before.
 - `GET /health` must stay `@Public()`, because Render's health check calls it without a token.
 - Every catalog read uses the shared `CATALOG_COIN_SELECT`, so `submittedByUserId` is never exposed. Use it for any new read path too.
 - Optional-auth routes use `OptionalJwtAuthGuard` plus `@Public()` (details in `.claude/rules/api.md`).
-- Catalog imports must pass the license gate in [docs/catalog-data-licensing.md](docs/catalog-data-licensing.md): Commons image license checks, and US designs from March 1989 onward need a per-design check. Wikipedia API calls need a descriptive `User-Agent`.
+- Catalog imports must pass the license gate in [docs/catalog-data-licensing.md](docs/catalog-data-licensing.md): every image passes the Commons license check, and an image of a US design from March 1989 onward also needs the per-design check. That check decides images, not catalog rows: identity facts and mintages are facts either way. Wikipedia API calls need a descriptive `User-Agent`.
 
 ## Scope discipline
 
