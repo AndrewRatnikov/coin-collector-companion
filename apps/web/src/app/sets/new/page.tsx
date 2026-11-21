@@ -16,6 +16,7 @@ import { useCreateSet } from '@/lib/hooks/use-user-sets';
 import { buildCoinPreview, formatYearRange, summarizeSourceCoins } from '@/lib/new-set-preview';
 import { readEntry, type EntryParams, type Step, type StartOption } from '@/lib/new-set-entry';
 import { fill } from '@/lib/fill-template';
+import { track } from '@/lib/analytics';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
 
@@ -144,8 +145,22 @@ function NewSetForm() {
             cloneFrom: { type: option === 'canonical' ? 'canonical' : 'user', id: activeSourceId },
           };
 
+    const submittedOption = option;
+    const sourceCoinCount =
+      submittedOption === 'blank' ? 0 : detail ? detail.coins.length : (summary?.coinCount ?? 0);
+
     createSet.mutate(body, {
-      onSuccess: (set) => router.push(`/sets/${set.id}`),
+      onSuccess: (set) => {
+        if (submittedOption === 'blank') {
+          track('set_created', { method: 'blank', coin_count: 0 });
+        } else {
+          track('set_cloned', {
+            source: submittedOption === 'canonical' ? 'canonical' : 'public',
+            coin_count: sourceCoinCount,
+          });
+        }
+        router.push(`/sets/${set.id}`);
+      },
       onError: (err: unknown) => {
         setError(err instanceof Error && err.message ? err.message : t('setNew.defaultError'));
       },
