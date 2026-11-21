@@ -8,9 +8,39 @@ import { PrismaClient } from '../../apps/api/src/generated/prisma/client';
 import { sanitizeIdentityField } from '@coin-collector/shared';
 import { toImageFields } from './lib/image';
 import { toSpecFields } from './lib/specs';
+import { chunk, planCoinImport } from './lib/plan';
+import type { DesiredCoinRow } from './lib/plan';
 import type { RawFixtureFile } from './lib/types';
 
 const FIXTURES_DIR = join(__dirname, 'fixtures');
+
+// 15 columns x 1000 rows stays far below Postgres's 65,535 bind-parameter limit.
+const CREATE_CHUNK_SIZE = 1000;
+// Room for thousands of per-row updates at Neon round-trip latency (e.g. after a spec
+// field is added to every row of a file).
+const TRANSACTION_TIMEOUT_MS = 600_000;
+// Neon autosuspend wake-up.
+const TRANSACTION_MAX_WAIT_MS = 30_000;
+
+// Exactly the natural key, the id and the ten columns the import writes and compares.
+const EXISTING_COIN_SELECT = {
+  id: true,
+  country: true,
+  denomination: true,
+  year: true,
+  mintMark: true,
+  variety: true,
+  name: true,
+  imageUrl: true,
+  imageSource: true,
+  imageLicense: true,
+  diameterMm: true,
+  weightG: true,
+  thicknessMm: true,
+  material: true,
+  mintage: true,
+  isKeyDate: true,
+} as const;
 
 function resolveFixturePaths(args: string[]): string[] {
   if (args.length > 0) return args.map((arg) => resolve(arg));
@@ -23,39 +53,48 @@ function resolveFixturePaths(args: string[]): string[] {
 async function importFixtureFile(prisma: PrismaClient, filePath: string): Promise<void> {
   const raw = JSON.parse(readFileSync(filePath, 'utf-8')) as RawFixtureFile;
 
+  const desired: DesiredCoinRow[] = raw.coins.map((entry) => ({
+    country: raw.country,
+    denomination: raw.denomination,
+    year: entry.year,
+    mintMark: sanitizeIdentityField(entry.mintMark),
+    variety: sanitizeIdentityField(entry.variety),
+    name: raw.name,
+    ...toImageFields(entry.image),
+    ...toSpecFields(raw, entry),
+  }));
+
+  // One read for the whole file: every coin already stored for its (country, denomination).
+  const existing = await prisma.coin.findMany({
+    where: { country: raw.country, denomination: raw.denomination },
+    select: EXISTING_COIN_SELECT,
+  });
+
+  const plan = planCoinImport(desired, existing);
+
   let created = 0;
-  let updated = 0;
-
-  for (const entry of raw.coins) {
-    const naturalKey = {
-      country: raw.country,
-      denomination: raw.denomination,
-      year: entry.year,
-      mintMark: sanitizeIdentityField(entry.mintMark),
-      variety: sanitizeIdentityField(entry.variety),
-    };
-    const imageFields = toImageFields(entry.image);
-    const specFields = toSpecFields(raw, entry);
-
-    const existing = await prisma.coin.findUnique({
-      where: { country_denomination_year_mintMark_variety: naturalKey },
-    });
-
-    if (existing) {
-      await prisma.coin.update({
-        where: { id: existing.id },
-        data: { name: raw.name, ...imageFields, ...specFields },
-      });
-      updated++;
-    } else {
-      await prisma.coin.create({
-        data: { ...naturalKey, name: raw.name, ...imageFields, ...specFields },
-      });
-      created++;
-    }
+  // Nothing to write (e.g. a re-run on an imported database): open no transaction at all.
+  if (plan.toCreate.length > 0 || plan.toUpdate.length > 0) {
+    // All writes go through `tx`, so a throw rolls back the whole file.
+    await prisma.$transaction(
+      async (tx) => {
+        for (const rows of chunk(plan.toCreate, CREATE_CHUNK_SIZE)) {
+          created += (await tx.coin.createMany({ data: rows, skipDuplicates: true })).count;
+        }
+        for (const update of plan.toUpdate) {
+          await tx.coin.update({ where: { id: update.id }, data: update.data });
+        }
+      },
+      { maxWait: TRANSACTION_MAX_WAIT_MS, timeout: TRANSACTION_TIMEOUT_MS },
+    );
   }
 
-  console.log(`${raw.name} (${filePath}): ${created} created, ${updated} updated, ${raw.coins.length} total`);
+  const updated = plan.toUpdate.length;
+  const unchanged = plan.unchanged.length;
+  const total = plan.toCreate.length + plan.toUpdate.length + plan.unchanged.length;
+  console.log(
+    `${raw.name} (${filePath}): ${created} created, ${updated} updated, ${unchanged} unchanged, ${total} total`,
+  );
 }
 
 async function main() {
@@ -74,7 +113,8 @@ async function main() {
   try {
     // Sequential, not Promise.all: fails loudly and stops on the first bad file rather
     // than partially importing several at once (system-design_v2.md §4.3/§4.5) — safe
-    // to do because re-running is idempotent (upsert-by-natural-key, per file above).
+    // to do because re-running is idempotent: each file is diffed against the database by
+    // natural key and only the difference is written, in one transaction per file.
     for (const filePath of fixturePaths) {
       await importFixtureFile(prisma, filePath);
     }

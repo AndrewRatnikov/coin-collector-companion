@@ -62,6 +62,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-20](2026-11-20-posthog-cookieless-analytics.md) | Product analytics is PostHog Cloud in cookieless mode, never identifying users, behind a same-origin /relay proxy | Accepted |
 | [2026-11-21](2026-11-21-custom-domain-makes-web-and-api-same-site.md) | Web and API move under one registrable domain, so the SameSite=Lax refresh cookie is same-site and works unchanged | Accepted |
 | [2026-11-21](2026-11-21-denominations-ordered-by-face-value-parsed-from-the-string.md) | Denominations sort by face value in the main unit, parsed from the string with a fixed word table | Accepted |
+| [2026-11-21](2026-11-21-catalog-import-diffs-per-file-and-writes-one-transaction.md) | The catalog import diffs each fixture file against the database in memory and writes only the difference in one transaction | Accepted |
 
 ## Where else decisions live
 
