@@ -35,10 +35,26 @@ export interface RawCoinEntry {
   image?: RawCoinImage | null;
 }
 
+// One entry of a fixture file's `sources` block: where the data came from and under
+// which licence. Hand-written fixtures fill type/origin/license/note; files written by
+// `pnpm run generate` also record the article URL, revision id, fetch date and the
+// path of the saved raw API response. import-coins.ts ignores this block.
+export interface FixtureSource {
+  type: string;
+  origin: string;
+  license: string;
+  note?: string;
+  url?: string;
+  revisionId?: number;
+  fetchedAt?: string;
+  rawResponse?: string;
+}
+
 export interface RawFixtureFile {
   country: string;
   denomination: string;
   name: string;
+  sources?: FixtureSource[];
   specs?: RawCoinSpecs;
   coins: RawCoinEntry[];
 }
