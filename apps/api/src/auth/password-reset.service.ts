@@ -2,6 +2,7 @@ import { randomBytes } from 'crypto';
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import { parseCorsOrigins } from '../configure-app';
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { BCRYPT_COST } from './auth.service';
@@ -85,11 +86,13 @@ export class PasswordResetService {
     await this.prisma.passwordResetToken.deleteMany({ where: { userId: token.userId, usedAt: null } });
   }
 
-  // FRONTEND_URL is where reset links point. Falls back to CORS_ORIGIN (already set to the
-  // Vercel origin in production) and then to the local web dev server.
+  // FRONTEND_URL is where reset links point. Falls back to the first CORS_ORIGIN entry (never
+  // the raw comma-separated list) and then to the local web dev server.
   private frontendUrl(): string {
     const url =
-      this.config.get<string>('FRONTEND_URL') || this.config.get<string>('CORS_ORIGIN') || 'http://localhost:3000';
+      this.config.get<string>('FRONTEND_URL') ||
+      parseCorsOrigins(this.config.get<string>('CORS_ORIGIN'))[0] ||
+      'http://localhost:3000';
     return url.replace(/\/+$/, '');
   }
 }

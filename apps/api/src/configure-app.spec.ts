@@ -2,7 +2,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { configureApp, parseTrustProxyHops } from './configure-app';
+import { configureApp, parseCorsOrigins, parseTrustProxyHops } from './configure-app';
 import { HealthController } from './health/health.controller';
 
 describe('parseTrustProxyHops', () => {
@@ -22,6 +22,21 @@ describe('parseTrustProxyHops', () => {
 
   it('trims surrounding whitespace', () => {
     expect(parseTrustProxyHops(' 2 ')).toEqual({ hops: 2, invalid: false });
+  });
+});
+
+describe('parseCorsOrigins', () => {
+  it.each([
+    [undefined, []],
+    ['', []],
+    [' , ', []],
+    ['https://a.example', ['https://a.example']],
+    [' https://a.example , https://b.example ', ['https://a.example', 'https://b.example']],
+    [',https://a.example,,https://b.example,', ['https://a.example', 'https://b.example']],
+    ['https://b.example,https://a.example', ['https://b.example', 'https://a.example']],
+    ['https://a.example/', ['https://a.example/']],
+  ])('parses %j', (raw, expected) => {
+    expect(parseCorsOrigins(raw)).toEqual(expected);
   });
 });
 
@@ -177,5 +192,121 @@ describe('configureApp security headers', () => {
       .set('Origin', 'http://evil.example.com');
 
     expect(res.headers['access-control-allow-origin']).not.toBe('http://evil.example.com');
+  });
+});
+
+describe('configureApp CORS_ORIGIN list', () => {
+  const originalHops = process.env.TRUST_PROXY_HOPS;
+  const originalCors = process.env.CORS_ORIGIN;
+  const ONE = 'https://web-one.example';
+  const TWO = 'https://web-two.example';
+  const EVIL = 'https://evil.example';
+  const LOCAL = 'http://localhost:3000';
+
+  const buildApp = async (corsOrigin: string): Promise<NestExpressApplication> => {
+    delete process.env.TRUST_PROXY_HOPS;
+    process.env.CORS_ORIGIN = corsOrigin;
+    const moduleRef = await Test.createTestingModule({
+      controllers: [HealthController],
+    }).compile();
+    const built = moduleRef.createNestApplication<NestExpressApplication>();
+    configureApp(built);
+    await built.init();
+    return built;
+  };
+
+  const restoreEnv = () => {
+    if (originalHops === undefined) {
+      delete process.env.TRUST_PROXY_HOPS;
+    } else {
+      process.env.TRUST_PROXY_HOPS = originalHops;
+    }
+    if (originalCors === undefined) {
+      delete process.env.CORS_ORIGIN;
+    } else {
+      process.env.CORS_ORIGIN = originalCors;
+    }
+  };
+
+  describe('two comma-separated origins', () => {
+    let app: NestExpressApplication;
+
+    beforeAll(async () => {
+      app = await buildApp(`${ONE}, ${TWO}`);
+    });
+
+    afterAll(async () => {
+      await app.close();
+      restoreEnv();
+    });
+
+    it.each([ONE, TWO, LOCAL])('GET from %s gets the origin and credentials headers', async (origin) => {
+      const res = await request(app.getHttpServer()).get('/api/v1/health').set('Origin', origin);
+
+      expect(res.status).toBe(200);
+      expect(res.headers['access-control-allow-origin']).toBe(origin);
+      expect(res.headers['access-control-allow-credentials']).toBe('true');
+    });
+
+    it.each([ONE, TWO, LOCAL])('preflight from %s gets 204 and both headers', async (origin) => {
+      const res = await request(app.getHttpServer())
+        .options('/api/v1/health')
+        .set('Origin', origin)
+        .set('Access-Control-Request-Method', 'POST');
+
+      expect(res.status).toBe(204);
+      expect(res.headers['access-control-allow-origin']).toBe(origin);
+      expect(res.headers['access-control-allow-credentials']).toBe('true');
+    });
+
+    it('gives an unlisted origin no allow-origin header on a real request', async () => {
+      const res = await request(app.getHttpServer()).get('/api/v1/health').set('Origin', EVIL);
+
+      expect(res.headers['access-control-allow-origin']).toBeUndefined();
+    });
+
+    it('gives an unlisted origin no allow-origin header on the preflight', async () => {
+      const res = await request(app.getHttpServer())
+        .options('/api/v1/health')
+        .set('Origin', EVIL)
+        .set('Access-Control-Request-Method', 'POST');
+
+      expect(res.headers['access-control-allow-origin']).toBeUndefined();
+    });
+  });
+
+  describe('a single value without commas', () => {
+    let app: NestExpressApplication;
+
+    beforeAll(async () => {
+      app = await buildApp(ONE);
+    });
+
+    afterAll(async () => {
+      await app.close();
+      restoreEnv();
+    });
+
+    it('allows that origin on a real request and on the preflight', async () => {
+      const get = await request(app.getHttpServer()).get('/api/v1/health').set('Origin', ONE);
+      expect(get.headers['access-control-allow-origin']).toBe(ONE);
+      expect(get.headers['access-control-allow-credentials']).toBe('true');
+
+      const preflight = await request(app.getHttpServer())
+        .options('/api/v1/health')
+        .set('Origin', ONE)
+        .set('Access-Control-Request-Method', 'POST');
+      expect(preflight.status).toBe(204);
+      expect(preflight.headers['access-control-allow-origin']).toBe(ONE);
+      expect(preflight.headers['access-control-allow-credentials']).toBe('true');
+    });
+
+    it('still allows localhost and refuses a different origin', async () => {
+      const local = await request(app.getHttpServer()).get('/api/v1/health').set('Origin', LOCAL);
+      expect(local.headers['access-control-allow-origin']).toBe(LOCAL);
+
+      const other = await request(app.getHttpServer()).get('/api/v1/health').set('Origin', TWO);
+      expect(other.headers['access-control-allow-origin']).toBeUndefined();
+    });
   });
 });

@@ -60,6 +60,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-20](2026-11-20-want-list-query-refetched-not-patched.md) | The combined want list query is keyed `['user-sets', 'wants']` and is refetched, never optimistically patched | Accepted |
 | [2026-11-20](2026-11-20-want-list-csv-adds-sets-column.md) | The want-list CSV is the per-set CSV's eleven columns plus a final `Sets` column, in server order | Accepted |
 | [2026-11-20](2026-11-20-posthog-cookieless-analytics.md) | Product analytics is PostHog Cloud in cookieless mode, never identifying users, behind a same-origin /relay proxy | Accepted |
+| [2026-11-21](2026-11-21-custom-domain-makes-web-and-api-same-site.md) | Web and API move under one registrable domain, so the SameSite=Lax refresh cookie is same-site and works unchanged | Accepted |
 
 ## Where else decisions live
 
