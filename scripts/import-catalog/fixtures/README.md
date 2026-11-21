@@ -32,6 +32,61 @@ cleared: Lincoln Wheat Cents (1909–1958) are pre-1989, so the coin designs are
 rule, and the year/mint-mark/variety facts pulled from Wikipedia aren't independently copyrightable
 regardless. Images still need the per-file `extmetadata` check before being added to this fixture.
 
+## `us-cents-lincoln-memorial-bronze.json` / `us-cents-lincoln-memorial-zinc.json` / `us-cents-lincoln-bicentennial.json` / `us-cents-lincoln-shield.json`
+
+146 Lincoln cent business strikes, 1959–2025 (`country: "USA"`, `denomination: "Cent"`), in four
+files: `us-cents-lincoln-memorial-bronze.json` (Lincoln Memorial Cent, 1959–1982, 52 coins),
+`us-cents-lincoln-memorial-zinc.json` (Lincoln Memorial Cent, 1982–2008, 54 coins),
+`us-cents-lincoln-bicentennial.json` (Lincoln Bicentennial Cent, 2009, 8 coins) and
+`us-cents-lincoln-shield.json` (Lincoln Shield Cent, 2010–2025, 32 coins).
+
+**Provenance.** Generated with `pnpm run generate` (`../generate-fixture.ts`) from English
+Wikipedia's "Lincoln cent mintage figures", revision 1365409408, fetched 2026-11-21. The raw API
+response is saved unmodified as `../sources/Lincoln_cent_mintage_figures.2026-11-21.json` and cited
+in each file's `sources[0]`. "United States cent mintage figures" was not used: its Lincoln section
+only links to "Lincoln cent mintage figures" and has no tables, so the generator finds no rows in it.
+The generator's draft (176 rows) was curated by hand into these four files and was not committed:
+the import reads every `*.json` in this directory.
+
+**Selection rules** (also in each file's `rules-note`):
+- Business strikes only. Proofs and patterns are skipped by the generator; collector-only strikes are
+  dropped by their comment: the 1965–1967 Special Mint Set coins, the eight 2009 Satin uncirculated
+  coins, 2017 S "Enhanced uncirculated" and 2019 W "Uncirculated".
+- 1968 S (258,270,001) is restored by hand. It is a business strike, but its comment ("Lowest minted
+  non-proof memorial coin") matched the generator's proof rule.
+- Mint marks are as on the coin. A Mint cell in parentheses (`(P)`, `(D)`, `(S)`, `(W)`) means the coin
+  has no mark. Unmarked coins from branch mints can't be told apart from Philadelphia ones, so each
+  year with such rows is one no-mark coin whose mintage is the sum of the source figures, listed per
+  year in the bronze file's `mintageSums` (which the import ignores): 1964, 1965, 1966, 1967, 1974,
+  1975, 1976, 1977, 1978, 1979 and 1980. 1981 and 1983–1986 are not summed: their `(W)` figure is `^`
+  (included above). The generator's note-varieties on these rows ("... struck in 1965", "First time
+  West Point produced the cent") are dropped.
+- 1982 has the varieties `Copper` (bronze file) and `Zinc` (zinc file) for no mark and D.
+- 2009 has the four designs as varieties, `Birthplace`, `Formative Years`, `Professional Life` and
+  `Presidency`, for no mark and D, each with its design table's business-strike figure.
+- 2017 carries a `P` mint mark, the only year it does.
+- No other varieties: comments like "Doubled-Die varieties have been found" or "Small and Large date
+  varieties" have no separate row or figure.
+
+**Specs.** Diameter, weight and composition from the "Lincoln cent" infobox, with the compositions
+cross-checked against the saved source's table captions: 19.05 mm everywhere; bronze 3.11 g, "Bronze
+(95% copper, 5% zinc)" as the bronze file default, with a per-coin override to "Bronze (95% copper,
+5% tin and zinc)" for 1959–1961; copper-plated zinc 2.5 g, "Copper-plated zinc (97.5% zinc, 2.5%
+copper)" for the zinc, Bicentennial and Shield files. The Memorial cent is split into two files by
+composition so each file's defaults fit its coins. Thickness is not set, as in the Wheat fixture.
+
+**Null mintages.** Only the four 1982 rows. The source gives one combined figure per mint for both
+compositions (10,712,525,000 without a mark, West Point included; 6,012,979,368 D), with `^` on the
+copper-plated zinc rows, so neither variety gets a figure of its own.
+
+**Excluded.** Proofs (including reverse proofs), Special Mint Set and other set-only strikes,
+patterns, and 2026, whose cents are collector-only. `isKeyDate` is false throughout, since no source
+flags key dates. There are no images: US designs from 1989 on need the per-design check in
+[docs/catalog-data-licensing.md](../../../docs/catalog-data-licensing.md) before any are added.
+
+**Not in production yet.** Running the import and `seed:canonical` against production is the
+pending manual pass under growth backlog 2.9.
+
 ## `ukraine-commemorative-1-hryvnia.json` / `ukraine-commemorative-10-hryvnias.json`
 
 31 circulating commemorative coins of Ukraine, matching uCoin's "Commemorative coins" list for the
