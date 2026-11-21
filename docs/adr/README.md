@@ -66,6 +66,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-21](2026-11-21-fixture-generator-reads-wikipedia-wikitext-tables.md) | The fixture generator parses the article's wikitext with a built-in table reader, not rendered HTML with a parser library | Accepted |
 | [2026-11-21](2026-11-21-generated-varieties-only-where-rows-need-telling-apart.md) | Generated fixtures give a row a variety only where it is needed to tell rows apart, and leftover duplicate keys are flagged, never merged | Accepted |
 | [2026-11-21](2026-11-21-unmarked-branch-mint-strikes-summed-into-one-coin.md) | Unmarked branch-mint business strikes are one no-mark coin per year, with the source figures summed and listed in the fixture | Accepted |
+| [2026-11-21](2026-11-21-post-1989-design-check-gates-images-not-catalog-rows.md) | The per-design check for US designs from March 1989 onward gates images only; catalog rows for those designs are imported without it | Accepted |
 
 ## Where else decisions live
 
