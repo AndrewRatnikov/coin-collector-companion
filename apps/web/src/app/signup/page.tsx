@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { FormField } from '@/components/auth/form-field';
 import { register } from '@/lib/auth-api';
+import { getFirstTouchChannel, track } from '@/lib/analytics';
 import { ApiError } from '@/lib/api-client';
 import { fieldErrorsFrom } from '@/lib/form-errors';
 import { useTranslation } from '@/lib/i18n/i18n-context';
@@ -35,6 +36,7 @@ export default function SignupPage() {
 
     try {
       await register({ email, password });
+      track('user_signed_up', { channel: getFirstTouchChannel() });
       router.push('/dashboard');
     } catch (error) {
       if (error instanceof ApiError) {

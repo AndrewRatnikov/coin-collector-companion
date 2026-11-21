@@ -60,6 +60,7 @@ const common = {
   'footer.attributionSuffix': ', used under CC BY-SA 4.0.',
   'footer.navLabel': 'Footer',
   'footer.sendFeedback': 'Send feedback',
+  'footer.privacy': 'Privacy',
 
   // shared ui components (components/ui): coin card, status toggle, badges, set card, undo toast
   'ui.coin.statusOwned': 'In collection',

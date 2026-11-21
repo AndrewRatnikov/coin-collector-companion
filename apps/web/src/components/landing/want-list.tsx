@@ -4,6 +4,7 @@ import type { GapSlot } from '@coin-collector/shared';
 import { WantListTable } from '@/components/want-list/want-list-table';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { fill } from '@/lib/fill-template';
+import { track } from '@/lib/analytics';
 import { downloadMissingCsv, groupWantList } from '@/lib/missing-list';
 import { LINCOLN_SAMPLE_CSV_NAME, LINCOLN_SAMPLE_SET_NAME } from '@/lib/landing/lincoln-sample';
 
@@ -79,13 +80,24 @@ export function WantList({ slots, keyDateIds }: WantListProps) {
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-neutral-300 pt-3 print:hidden">
-        <button type="button" data-testid="want-list-print" onClick={() => window.print()} className={ACTION_CLASSES}>
+        <button
+          type="button"
+          data-testid="want-list-print"
+          onClick={() => {
+            window.print();
+            track('want_list_exported', { format: 'print', scope: 'sample' });
+          }}
+          className={ACTION_CLASSES}
+        >
           {t('landing.wantPrint')}
         </button>
         <button
           type="button"
           data-testid="want-list-csv"
-          onClick={() => downloadMissingCsv({ slots }, LINCOLN_SAMPLE_CSV_NAME)}
+          onClick={() => {
+            downloadMissingCsv({ slots }, LINCOLN_SAMPLE_CSV_NAME);
+            track('want_list_exported', { format: 'csv', scope: 'sample' });
+          }}
           className={ACTION_CLASSES}
         >
           {t('landing.wantCsv')}

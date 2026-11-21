@@ -5,6 +5,7 @@ import type {
   ImportConfirmResponse,
   ImportPreviewResponse,
 } from '@coin-collector/shared';
+import { track } from '@/lib/analytics';
 import { ApiError } from '@/lib/api-client';
 import { confirmImport, previewImport } from '@/lib/collection-import-api';
 
@@ -23,13 +24,14 @@ export function useConfirmImport() {
   const queryClient = useQueryClient();
   return useMutation<ImportConfirmResponse, ApiError, ImportConfirmRequest>({
     mutationFn: ({ coinIds, grades }) => confirmImport(coinIds, grades ?? []),
-    onSuccess: () => {
+    onSuccess: (data) => {
       // Ownership is global, so every collection, set and gap view (the dashboard reads
       // ['user-sets', id, 'gaps']) may have changed.
       queryClient.invalidateQueries({ queryKey: ['collection'] });
       queryClient.invalidateQueries({ queryKey: ['user-sets'] });
       queryClient.invalidateQueries({ queryKey: ['public-sets'] });
       queryClient.invalidateQueries({ queryKey: ['canonical-sets'] });
+      if (data.created > 0) track('coins_marked_owned', { via: 'import', count: data.created });
     },
   });
 }

@@ -10,6 +10,7 @@ import { WantListSetsDisclosure } from '@/components/want-list/want-list-sets-di
 import { WantListTable } from '@/components/want-list/want-list-table';
 import { useSlowLoading } from '@/lib/hooks/use-slow-loading';
 import { useWantList } from '@/lib/hooks/use-user-sets';
+import { track } from '@/lib/analytics';
 import { buildWantGroups, downloadWantListCsv } from '@/lib/missing-list';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 
@@ -164,7 +165,10 @@ function WantListContent() {
               <button
                 type="button"
                 data-testid="want-list-print-button"
-                onClick={() => window.print()}
+                onClick={() => {
+                  window.print();
+                  track('want_list_exported', { format: 'print', scope: 'all' });
+                }}
                 className={ACTION_CLASSES}
               >
                 {t('wantList.printButton')}
@@ -172,7 +176,10 @@ function WantListContent() {
               <button
                 type="button"
                 data-testid="want-list-csv-button"
-                onClick={() => downloadWantListCsv(data)}
+                onClick={() => {
+                  downloadWantListCsv(data);
+                  track('want_list_exported', { format: 'csv', scope: 'all' });
+                }}
                 className={ACTION_CLASSES}
               >
                 {t('wantList.downloadCsv')}

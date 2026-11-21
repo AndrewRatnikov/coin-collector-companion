@@ -7,6 +7,7 @@ import common from './common';
 import glossary from './glossary';
 import grades from './grades';
 import landing from './landing';
+import privacy from './privacy';
 import setNew from './set-new';
 import sets from './sets';
 import wantList from './want-list';
@@ -42,6 +43,7 @@ const enShape = {
   ...addCoins,
   ...landing,
   ...wantList,
+  ...privacy,
 } satisfies Record<string, string>;
 
 const en: Record<string, string> = enShape;

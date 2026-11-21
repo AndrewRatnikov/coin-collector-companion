@@ -9,6 +9,7 @@ import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import { useSetGaps } from '@/lib/hooks/use-user-sets';
 import { buildWantGroups, downloadMissingCsv, getMissingSlots, getUpgradeSlots } from '@/lib/missing-list';
 import { fill } from '@/lib/fill-template';
+import { track } from '@/lib/analytics';
 import { gradeShortLabel } from '@/lib/grades';
 import { useTranslation } from '@/lib/i18n/i18n-context';
 import { resolveLocalizedText } from '@/lib/i18n/translate-field';
@@ -99,7 +100,10 @@ function SetMissingList({ id }: { id: string }) {
             <button
               type="button"
               data-testid="set-missing-print-button"
-              onClick={() => window.print()}
+              onClick={() => {
+                window.print();
+                track('want_list_exported', { format: 'print', scope: 'set' });
+              }}
               className={ACTION_CLASSES}
             >
               {t('missingList.printButton')}
@@ -107,7 +111,10 @@ function SetMissingList({ id }: { id: string }) {
             <button
               type="button"
               data-testid="set-missing-csv-button"
-              onClick={() => downloadMissingCsv(gaps, name)}
+              onClick={() => {
+                downloadMissingCsv(gaps, name);
+                track('want_list_exported', { format: 'csv', scope: 'set' });
+              }}
               className={ACTION_CLASSES}
             >
               {t('missingList.downloadCsv')}
