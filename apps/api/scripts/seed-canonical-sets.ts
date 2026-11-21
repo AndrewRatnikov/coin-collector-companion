@@ -24,12 +24,43 @@ export interface SeedTemplate {
 // only these three properties instead of a full PrismaClient (and no `as any` cast).
 export type SeedPrismaClient = Pick<PrismaClient, 'coin' | 'canonicalSet' | 'canonicalSetCoin'>;
 
+const VERSIONED_TEMPLATE = /^(.*)\.v(\d+)\.json$/;
+
+/**
+ * Keeps, for each template slug (the file name without its `.vN.json` suffix), only the
+ * path with the highest N (compared as numbers, so v10 beats v2). Paths keep their input
+ * order. A path without a version suffix is kept as is, so seedTemplateFile still rejects
+ * it with parseTemplateVersion's error.
+ */
+export function latestTemplateVersions(paths: string[]): string[] {
+  const newest = new Map<string, { path: string; version: number }>();
+  for (const path of paths) {
+    const match = basename(path).match(VERSIONED_TEMPLATE);
+    if (!match) continue;
+    const [, slug, version] = match;
+    const current = newest.get(slug);
+    if (!current || Number(version) > current.version) {
+      newest.set(slug, { path, version: Number(version) });
+    }
+  }
+
+  return paths.filter((path) => {
+    const match = basename(path).match(VERSIONED_TEMPLATE);
+    return !match || newest.get(match[1])?.path === path;
+  });
+}
+
+// A published template version file is never edited: a correction is a new `.vN+1.json`
+// beside it, and only the newest version of each template is seeded when no files are
+// named. An operator who names files explicitly gets exactly those, old versions included.
 export function resolveTemplatePaths(args: string[]): string[] {
   if (args.length > 0) return args.map((arg) => resolve(arg));
 
-  return readdirSync(TEMPLATES_DIR)
-    .filter((file) => file.endsWith('.json'))
-    .map((file) => join(TEMPLATES_DIR, file));
+  return latestTemplateVersions(
+    readdirSync(TEMPLATES_DIR)
+      .filter((file) => file.endsWith('.json'))
+      .map((file) => join(TEMPLATES_DIR, file)),
+  );
 }
 
 export function parseTemplateVersion(filePath: string): string {
