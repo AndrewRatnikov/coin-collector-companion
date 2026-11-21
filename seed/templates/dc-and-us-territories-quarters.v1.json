@@ -1,0 +1,90 @@
+{
+  "name": "DC and US Territories Quarters",
+  "description": "The 2009 District of Columbia and US Territories quarters in release order, Philadelphia and Denver: 6 designs, 12 coins.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2009,
+      "mintMark": "P",
+      "variety": "District of Columbia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2009,
+      "mintMark": "D",
+      "variety": "District of Columbia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2009,
+      "mintMark": "P",
+      "variety": "Puerto Rico"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2009,
+      "mintMark": "D",
+      "variety": "Puerto Rico"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2009,
+      "mintMark": "P",
+      "variety": "Guam"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2009,
+      "mintMark": "D",
+      "variety": "Guam"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2009,
+      "mintMark": "P",
+      "variety": "American Samoa"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2009,
+      "mintMark": "D",
+      "variety": "American Samoa"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2009,
+      "mintMark": "P",
+      "variety": "US Virgin Islands"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2009,
+      "mintMark": "D",
+      "variety": "US Virgin Islands"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2009,
+      "mintMark": "P",
+      "variety": "Northern Mariana Islands"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2009,
+      "mintMark": "D",
+      "variety": "Northern Mariana Islands"
+    }
+  ]
+}

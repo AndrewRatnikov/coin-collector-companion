@@ -1,0 +1,736 @@
+{
+  "$schema-note": "Read by hand (scratch script over the saved wikitext) from the saved Wikipedia response for \"50 State quarters\", whose one-column-per-mint table the generator does not parse (see fixtures/README.md); raw source-shaped fixture, pre-sanitization: the import script normalizes mintMark/variety to the DB identity fields. Every coin here carries its mint mark and its design as the variety. mintage is null where the source gives no figure.",
+  "sources": [
+    {
+      "type": "year / mint mark / variety / mintage",
+      "origin": "English Wikipedia \"50 State quarters\" (https://en.wikipedia.org/wiki/50_State_quarters), revision 1385898672, fetched 2026-11-21 through the MediaWiki API (action=parse)",
+      "url": "https://en.wikipedia.org/wiki/50_State_quarters",
+      "revisionId": 1385898672,
+      "fetchedAt": "2026-11-21",
+      "rawResponse": "sources/50_State_quarters.2026-11-21.json",
+      "license": "Wikipedia text is CC BY-SA 4.0; the year/mint-mark/variety/mintage facts reproduced here are historical facts, not copyrightable expression -- no attribution obligation for the facts themselves, though the app footer still credits Wikipedia generally",
+      "note": "Rows read by hand (scratch script over the saved response's wikitext) from its one-column-per-mint table, which the generator does not parse: Philadelphia and Denver columns only (P, D); the other mint and total columns are ignored."
+    },
+    {
+      "type": "physical specs",
+      "origin": "Wikipedia \"50 State quarters\" and \"American Women quarters\" infoboxes, in the saved responses under sources/: diameter 24.26 mm, thickness 1.75 mm, mass 5.67 g (Cu-Ni), composition 91.67% Cu, 8.33% Ni (standard)",
+      "license": "Numeric facts, not copyrightable expression (docs/catalog-data-licensing.md §1)"
+    }
+  ],
+  "rules-note": "P and D business strikes only (plus W for the 2019-2020 America the Beautiful designs): no S coins of any kind (proof, silver proof, Uncirculated or Enhanced uncirculated), no silver bullion, no privy-mark specials. Every coin carries its mint mark. variety is the design name as displayed in the source. Mintages come only from the saved source; null where it gives no figure. Release order: designs in source order, then P, D (then W). isKeyDate is false throughout; no images. This file: the \"Designs\" table of \"50 State quarters\", one row per state (No. 1-50, five a year 1999-2008); P = Philadelphia column, D = Denver column; the San Francisco column (proofs) is ignored. variety is the state.",
+  "country": "USA",
+  "denomination": "Quarter",
+  "name": "50 State Quarters",
+  "yearRange": [
+    1999,
+    2008
+  ],
+  "specs": {
+    "diameterMm": 24.26,
+    "weightG": 5.67,
+    "thicknessMm": 1.75,
+    "material": "Copper-nickel clad copper (91.67% copper, 8.33% nickel)"
+  },
+  "coins": [
+    {
+      "year": 1999,
+      "mintMark": "P",
+      "variety": "Delaware",
+      "isKeyDate": false,
+      "mintage": 373400000
+    },
+    {
+      "year": 1999,
+      "mintMark": "D",
+      "variety": "Delaware",
+      "isKeyDate": false,
+      "mintage": 401424000
+    },
+    {
+      "year": 1999,
+      "mintMark": "P",
+      "variety": "Pennsylvania",
+      "isKeyDate": false,
+      "mintage": 349000000
+    },
+    {
+      "year": 1999,
+      "mintMark": "D",
+      "variety": "Pennsylvania",
+      "isKeyDate": false,
+      "mintage": 358332000
+    },
+    {
+      "year": 1999,
+      "mintMark": "P",
+      "variety": "New Jersey",
+      "isKeyDate": false,
+      "mintage": 363200000
+    },
+    {
+      "year": 1999,
+      "mintMark": "D",
+      "variety": "New Jersey",
+      "isKeyDate": false,
+      "mintage": 299028000
+    },
+    {
+      "year": 1999,
+      "mintMark": "P",
+      "variety": "Georgia",
+      "isKeyDate": false,
+      "mintage": 451188000
+    },
+    {
+      "year": 1999,
+      "mintMark": "D",
+      "variety": "Georgia",
+      "isKeyDate": false,
+      "mintage": 488744000
+    },
+    {
+      "year": 1999,
+      "mintMark": "P",
+      "variety": "Connecticut",
+      "isKeyDate": false,
+      "mintage": 688744000
+    },
+    {
+      "year": 1999,
+      "mintMark": "D",
+      "variety": "Connecticut",
+      "isKeyDate": false,
+      "mintage": 657880000
+    },
+    {
+      "year": 2000,
+      "mintMark": "P",
+      "variety": "Massachusetts",
+      "isKeyDate": false,
+      "mintage": 628600000
+    },
+    {
+      "year": 2000,
+      "mintMark": "D",
+      "variety": "Massachusetts",
+      "isKeyDate": false,
+      "mintage": 535184000
+    },
+    {
+      "year": 2000,
+      "mintMark": "P",
+      "variety": "Maryland",
+      "isKeyDate": false,
+      "mintage": 678200000
+    },
+    {
+      "year": 2000,
+      "mintMark": "D",
+      "variety": "Maryland",
+      "isKeyDate": false,
+      "mintage": 556532000
+    },
+    {
+      "year": 2000,
+      "mintMark": "P",
+      "variety": "South Carolina",
+      "isKeyDate": false,
+      "mintage": 373400000
+    },
+    {
+      "year": 2000,
+      "mintMark": "D",
+      "variety": "South Carolina",
+      "isKeyDate": false,
+      "mintage": 401424000
+    },
+    {
+      "year": 2000,
+      "mintMark": "P",
+      "variety": "New Hampshire",
+      "isKeyDate": false,
+      "mintage": 673040000
+    },
+    {
+      "year": 2000,
+      "mintMark": "D",
+      "variety": "New Hampshire",
+      "isKeyDate": false,
+      "mintage": 495976000
+    },
+    {
+      "year": 2000,
+      "mintMark": "P",
+      "variety": "Virginia",
+      "isKeyDate": false,
+      "mintage": 943000000
+    },
+    {
+      "year": 2000,
+      "mintMark": "D",
+      "variety": "Virginia",
+      "isKeyDate": false,
+      "mintage": 651616000
+    },
+    {
+      "year": 2001,
+      "mintMark": "P",
+      "variety": "New York",
+      "isKeyDate": false,
+      "mintage": 619640000
+    },
+    {
+      "year": 2001,
+      "mintMark": "D",
+      "variety": "New York",
+      "isKeyDate": false,
+      "mintage": 655400000
+    },
+    {
+      "year": 2001,
+      "mintMark": "P",
+      "variety": "North Carolina",
+      "isKeyDate": false,
+      "mintage": 627600000
+    },
+    {
+      "year": 2001,
+      "mintMark": "D",
+      "variety": "North Carolina",
+      "isKeyDate": false,
+      "mintage": 427876000
+    },
+    {
+      "year": 2001,
+      "mintMark": "P",
+      "variety": "Rhode Island",
+      "isKeyDate": false,
+      "mintage": 423000000
+    },
+    {
+      "year": 2001,
+      "mintMark": "D",
+      "variety": "Rhode Island",
+      "isKeyDate": false,
+      "mintage": 447100000
+    },
+    {
+      "year": 2001,
+      "mintMark": "P",
+      "variety": "Vermont",
+      "isKeyDate": false,
+      "mintage": 423400000
+    },
+    {
+      "year": 2001,
+      "mintMark": "D",
+      "variety": "Vermont",
+      "isKeyDate": false,
+      "mintage": 459404000
+    },
+    {
+      "year": 2001,
+      "mintMark": "P",
+      "variety": "Kentucky",
+      "isKeyDate": false,
+      "mintage": 353000000
+    },
+    {
+      "year": 2001,
+      "mintMark": "D",
+      "variety": "Kentucky",
+      "isKeyDate": false,
+      "mintage": 370564000
+    },
+    {
+      "year": 2002,
+      "mintMark": "P",
+      "variety": "Tennessee",
+      "isKeyDate": false,
+      "mintage": 361600000
+    },
+    {
+      "year": 2002,
+      "mintMark": "D",
+      "variety": "Tennessee",
+      "isKeyDate": false,
+      "mintage": 286468000
+    },
+    {
+      "year": 2002,
+      "mintMark": "P",
+      "variety": "Ohio",
+      "isKeyDate": false,
+      "mintage": 217200000
+    },
+    {
+      "year": 2002,
+      "mintMark": "D",
+      "variety": "Ohio",
+      "isKeyDate": false,
+      "mintage": 414832000
+    },
+    {
+      "year": 2002,
+      "mintMark": "P",
+      "variety": "Louisiana",
+      "isKeyDate": false,
+      "mintage": 362000000
+    },
+    {
+      "year": 2002,
+      "mintMark": "D",
+      "variety": "Louisiana",
+      "isKeyDate": false,
+      "mintage": 402204000
+    },
+    {
+      "year": 2002,
+      "mintMark": "P",
+      "variety": "Indiana",
+      "isKeyDate": false,
+      "mintage": 362600000
+    },
+    {
+      "year": 2002,
+      "mintMark": "D",
+      "variety": "Indiana",
+      "isKeyDate": false,
+      "mintage": 327200000
+    },
+    {
+      "year": 2002,
+      "mintMark": "P",
+      "variety": "Mississippi",
+      "isKeyDate": false,
+      "mintage": 290000000
+    },
+    {
+      "year": 2002,
+      "mintMark": "D",
+      "variety": "Mississippi",
+      "isKeyDate": false,
+      "mintage": 289600000
+    },
+    {
+      "year": 2003,
+      "mintMark": "P",
+      "variety": "Illinois",
+      "isKeyDate": false,
+      "mintage": 225800000
+    },
+    {
+      "year": 2003,
+      "mintMark": "D",
+      "variety": "Illinois",
+      "isKeyDate": false,
+      "mintage": 237400000
+    },
+    {
+      "year": 2003,
+      "mintMark": "P",
+      "variety": "Alabama",
+      "isKeyDate": false,
+      "mintage": 225000000
+    },
+    {
+      "year": 2003,
+      "mintMark": "D",
+      "variety": "Alabama",
+      "isKeyDate": false,
+      "mintage": 232400000
+    },
+    {
+      "year": 2003,
+      "mintMark": "P",
+      "variety": "Maine",
+      "isKeyDate": false,
+      "mintage": 217400000
+    },
+    {
+      "year": 2003,
+      "mintMark": "D",
+      "variety": "Maine",
+      "isKeyDate": false,
+      "mintage": 231400000
+    },
+    {
+      "year": 2003,
+      "mintMark": "P",
+      "variety": "Missouri",
+      "isKeyDate": false,
+      "mintage": 225000000
+    },
+    {
+      "year": 2003,
+      "mintMark": "D",
+      "variety": "Missouri",
+      "isKeyDate": false,
+      "mintage": 228200000
+    },
+    {
+      "year": 2003,
+      "mintMark": "P",
+      "variety": "Arkansas",
+      "isKeyDate": false,
+      "mintage": 228000000
+    },
+    {
+      "year": 2003,
+      "mintMark": "D",
+      "variety": "Arkansas",
+      "isKeyDate": false,
+      "mintage": 229800000
+    },
+    {
+      "year": 2004,
+      "mintMark": "P",
+      "variety": "Michigan",
+      "isKeyDate": false,
+      "mintage": 233800000
+    },
+    {
+      "year": 2004,
+      "mintMark": "D",
+      "variety": "Michigan",
+      "isKeyDate": false,
+      "mintage": 225800000
+    },
+    {
+      "year": 2004,
+      "mintMark": "P",
+      "variety": "Florida",
+      "isKeyDate": false,
+      "mintage": 240200000
+    },
+    {
+      "year": 2004,
+      "mintMark": "D",
+      "variety": "Florida",
+      "isKeyDate": false,
+      "mintage": 241600000
+    },
+    {
+      "year": 2004,
+      "mintMark": "P",
+      "variety": "Texas",
+      "isKeyDate": false,
+      "mintage": 278800000
+    },
+    {
+      "year": 2004,
+      "mintMark": "D",
+      "variety": "Texas",
+      "isKeyDate": false,
+      "mintage": 263000000
+    },
+    {
+      "year": 2004,
+      "mintMark": "P",
+      "variety": "Iowa",
+      "isKeyDate": false,
+      "mintage": 213800000
+    },
+    {
+      "year": 2004,
+      "mintMark": "D",
+      "variety": "Iowa",
+      "isKeyDate": false,
+      "mintage": 251400000
+    },
+    {
+      "year": 2004,
+      "mintMark": "P",
+      "variety": "Wisconsin",
+      "isKeyDate": false,
+      "mintage": 226400000
+    },
+    {
+      "year": 2004,
+      "mintMark": "D",
+      "variety": "Wisconsin",
+      "isKeyDate": false,
+      "mintage": 226800000
+    },
+    {
+      "year": 2005,
+      "mintMark": "P",
+      "variety": "California",
+      "isKeyDate": false,
+      "mintage": 257200000
+    },
+    {
+      "year": 2005,
+      "mintMark": "D",
+      "variety": "California",
+      "isKeyDate": false,
+      "mintage": 263200000
+    },
+    {
+      "year": 2005,
+      "mintMark": "P",
+      "variety": "Minnesota",
+      "isKeyDate": false,
+      "mintage": 239600000
+    },
+    {
+      "year": 2005,
+      "mintMark": "D",
+      "variety": "Minnesota",
+      "isKeyDate": false,
+      "mintage": 248400000
+    },
+    {
+      "year": 2005,
+      "mintMark": "P",
+      "variety": "Oregon",
+      "isKeyDate": false,
+      "mintage": 316200000
+    },
+    {
+      "year": 2005,
+      "mintMark": "D",
+      "variety": "Oregon",
+      "isKeyDate": false,
+      "mintage": 404000000
+    },
+    {
+      "year": 2005,
+      "mintMark": "P",
+      "variety": "Kansas",
+      "isKeyDate": false,
+      "mintage": 263400000
+    },
+    {
+      "year": 2005,
+      "mintMark": "D",
+      "variety": "Kansas",
+      "isKeyDate": false,
+      "mintage": 300000000
+    },
+    {
+      "year": 2005,
+      "mintMark": "P",
+      "variety": "West Virginia",
+      "isKeyDate": false,
+      "mintage": 365400000
+    },
+    {
+      "year": 2005,
+      "mintMark": "D",
+      "variety": "West Virginia",
+      "isKeyDate": false,
+      "mintage": 356200000
+    },
+    {
+      "year": 2006,
+      "mintMark": "P",
+      "variety": "Nevada",
+      "isKeyDate": false,
+      "mintage": 277000000
+    },
+    {
+      "year": 2006,
+      "mintMark": "D",
+      "variety": "Nevada",
+      "isKeyDate": false,
+      "mintage": 312800000
+    },
+    {
+      "year": 2006,
+      "mintMark": "P",
+      "variety": "Nebraska",
+      "isKeyDate": false,
+      "mintage": 318000000
+    },
+    {
+      "year": 2006,
+      "mintMark": "D",
+      "variety": "Nebraska",
+      "isKeyDate": false,
+      "mintage": 276400000
+    },
+    {
+      "year": 2006,
+      "mintMark": "P",
+      "variety": "Colorado",
+      "isKeyDate": false,
+      "mintage": 274800000
+    },
+    {
+      "year": 2006,
+      "mintMark": "D",
+      "variety": "Colorado",
+      "isKeyDate": false,
+      "mintage": 294200000
+    },
+    {
+      "year": 2006,
+      "mintMark": "P",
+      "variety": "North Dakota",
+      "isKeyDate": false,
+      "mintage": 305800000
+    },
+    {
+      "year": 2006,
+      "mintMark": "D",
+      "variety": "North Dakota",
+      "isKeyDate": false,
+      "mintage": 359000000
+    },
+    {
+      "year": 2006,
+      "mintMark": "P",
+      "variety": "South Dakota",
+      "isKeyDate": false,
+      "mintage": 245000000
+    },
+    {
+      "year": 2006,
+      "mintMark": "D",
+      "variety": "South Dakota",
+      "isKeyDate": false,
+      "mintage": 265800000
+    },
+    {
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "Montana",
+      "isKeyDate": false,
+      "mintage": 257000000
+    },
+    {
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "Montana",
+      "isKeyDate": false,
+      "mintage": 265240000
+    },
+    {
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "Washington",
+      "isKeyDate": false,
+      "mintage": 265200000
+    },
+    {
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "Washington",
+      "isKeyDate": false,
+      "mintage": 280000000
+    },
+    {
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "Idaho",
+      "isKeyDate": false,
+      "mintage": 294600000
+    },
+    {
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "Idaho",
+      "isKeyDate": false,
+      "mintage": 286800000
+    },
+    {
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "Wyoming",
+      "isKeyDate": false,
+      "mintage": 243600000
+    },
+    {
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "Wyoming",
+      "isKeyDate": false,
+      "mintage": 320800000
+    },
+    {
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "Utah",
+      "isKeyDate": false,
+      "mintage": 255000000
+    },
+    {
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "Utah",
+      "isKeyDate": false,
+      "mintage": 253200000
+    },
+    {
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "Oklahoma",
+      "isKeyDate": false,
+      "mintage": 222000000
+    },
+    {
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "Oklahoma",
+      "isKeyDate": false,
+      "mintage": 194600000
+    },
+    {
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "New Mexico",
+      "isKeyDate": false,
+      "mintage": 244200000
+    },
+    {
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "New Mexico",
+      "isKeyDate": false,
+      "mintage": 244400000
+    },
+    {
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "Arizona",
+      "isKeyDate": false,
+      "mintage": 244600000
+    },
+    {
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "Arizona",
+      "isKeyDate": false,
+      "mintage": 265000000
+    },
+    {
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "Alaska",
+      "isKeyDate": false,
+      "mintage": 251800000
+    },
+    {
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "Alaska",
+      "isKeyDate": false,
+      "mintage": 254000000
+    },
+    {
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "Hawaii",
+      "isKeyDate": false,
+      "mintage": 254000000
+    },
+    {
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "Hawaii",
+      "isKeyDate": false,
+      "mintage": 263600000
+    }
+  ]
+}

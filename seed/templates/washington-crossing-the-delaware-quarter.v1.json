@@ -1,0 +1,20 @@
+{
+  "name": "Washington Crossing the Delaware Quarter",
+  "description": "The 2021 Washington Crossing the Delaware quarter, Philadelphia and Denver: 2 coins.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2021,
+      "mintMark": "P",
+      "variety": "Washington Crossing the Delaware"
+    },
+    {
+      "country": "USA",
+      "denomination": "Quarter",
+      "year": 2021,
+      "mintMark": "D",
+      "variety": "Washington Crossing the Delaware"
+    }
+  ]
+}
