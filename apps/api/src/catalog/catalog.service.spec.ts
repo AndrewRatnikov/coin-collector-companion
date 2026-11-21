@@ -6,12 +6,14 @@
  *                   runs/run_20261001_224939/plan.md § Interface Contract → Service: CatalogService (MODIFY)
  *                   runs/run_20261011_105146/plan.md § Interface Contract → Service: CatalogService (MODIFY)
  *                   runs/run_20261019_221037/plan.md § Interface Contract → Service: CatalogService.findAll (API, MODIFY)
+ *                   runs/run_20261121_170400/plan.md § Interface Contract → Consumers (findFacets)
  * Covers criteria: #2, #3, #4, #5, #6, #7, #8, #9, #11 (from run_20260719_190933's prd.md),
  *                  #1, #2, #3, #4 (from run_20260725_140648's prd.md),
  *                  #1, #2, #3, #4, #5 (from run_20260731_132040's prd.md),
  *                  #13, #14 (from run_20261001_224939's prd.md),
  *                  #1, #2, #3, #4, #5 (from run_20261011_105146's prd.md),
- *                  #1, #2, #3, #4, #5 (from run_20261019_221037's prd.md)
+ *                  #1, #2, #3, #4, #5 (from run_20261019_221037's prd.md),
+ *                  #9 (from run_20261121_170400's prd.md: facets follow face-value order)
  *
  * CONTRACT_GAP: none.
  *
@@ -46,6 +48,9 @@
  * batched queries (ownership.findMany, userSetCoin.findMany). The mock gets those two models; the
  * one exact-items assertion of the submittedByMe response-shape test changes on purpose. New
  * describe block "findAll — viewer fields".
+ *
+ * run_20261121_170400: the findFacets denomination order is now face value in the main unit, then
+ * name. The old "by numeral" expectation is updated and a US-words case is added.
  */
 
 import { ConflictException, NotFoundException } from '@nestjs/common';
@@ -919,12 +924,29 @@ describe('CatalogService', () => {
       expect(result.countries).toEqual(['Albania', 'Zimbabwe']);
     });
 
-    it('sorts denominations by numeral numerically, then by name', async () => {
+    it('sorts denominations by face value, then by name', async () => {
       mockFacetRows([], ['50 Kopiyok', '10 Hryvnias', 'Cent', '1 Hryvnia', '10 Kopiyok']);
 
       const result = await service.findFacets();
 
-      expect(result.denominations).toEqual(['1 Hryvnia', 'Cent', '10 Hryvnias', '10 Kopiyok', '50 Kopiyok']);
+      expect(result.denominations).toEqual(['Cent', '10 Kopiyok', '50 Kopiyok', '1 Hryvnia', '10 Hryvnias']);
+    });
+
+    it('sorts US word denominations by face value, mixed with kopiyok and hryvnias', async () => {
+      mockFacetRows([], ['Dollar', 'Quarter', 'Half Dollar', 'Cent', 'Dime', 'Nickel', '25 Kopiyok', '1 Hryvnia']);
+
+      const result = await service.findFacets();
+
+      expect(result.denominations).toEqual([
+        'Cent',
+        'Nickel',
+        'Dime',
+        '25 Kopiyok',
+        'Quarter',
+        'Half Dollar',
+        '1 Hryvnia',
+        'Dollar',
+      ]);
     });
 
     it('reads a comma as a decimal point when ordering numerals', async () => {

@@ -3,6 +3,7 @@
  * Contract source: runs/run_20261019_073415/plan.md § Interface Contract → Module: collection-view
  * Covers criteria: #2, #3, #4, #5, #6, #8 (from prd.md)
  * Fixture-only change (run_20261102_194108): the OwnershipItem factory gains `grade: null`.
+ * run_20261121_170400: groupCollection orders denomination subgroups by face value (criterion #9).
  *
  * CONTRACT_GAPS: none
  */
@@ -349,6 +350,30 @@ describe('groupCollection', () => {
       '25 Kopiyok',
     ]);
     expect(ukraine.subgroups.map((s) => s.kind)).toEqual(['series', 'denomination', 'denomination']);
+  });
+
+  it('orders denomination subgroups by face value, kopiyok before hryvnias', () => {
+    const nameless = (id: string, denomination: string) =>
+      item(coin({ id, country: 'Ukraine', denomination, name: '' }));
+    const [ukraine] = groupCollection([
+      nameless('h10', '10 Hryvnias'),
+      nameless('k50', '50 Kopiyok'),
+      nameless('h1', '1 Hryvnia'),
+    ]);
+
+    expect(ukraine.subgroups.map((s) => s.name)).toEqual(['50 Kopiyok', '1 Hryvnia', '10 Hryvnias']);
+  });
+
+  it('orders US word denomination subgroups by face value', () => {
+    const nameless = (id: string, denomination: string) => item(coin({ id, country: 'USA', denomination, name: '' }));
+    const [usa] = groupCollection([
+      nameless('q', 'Quarter'),
+      nameless('c', 'Cent'),
+      nameless('n', 'Nickel'),
+      nameless('d', 'Dime'),
+    ]);
+
+    expect(usa.subgroups.map((s) => s.name)).toEqual(['Cent', 'Nickel', 'Dime', 'Quarter']);
   });
 
   it('keys each subgroup as country|name', () => {
