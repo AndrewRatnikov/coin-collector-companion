@@ -8,6 +8,7 @@ import common from './common';
 import glossary from './glossary';
 import grades from './grades';
 import landing from './landing';
+import privacy from './privacy';
 import setNew from './set-new';
 import sets from './sets';
 import wantList from './want-list';
@@ -34,6 +35,7 @@ const esShape: Record<MessageKey, string> = {
   ...addCoins,
   ...landing,
   ...wantList,
+  ...privacy,
 };
 
 const es: Record<string, string> = esShape;

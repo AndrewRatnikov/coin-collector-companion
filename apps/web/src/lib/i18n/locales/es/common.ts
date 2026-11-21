@@ -62,6 +62,7 @@ const common: Record<keyof typeof enCommon, string> = {
   'footer.attributionSuffix': ', utilizados bajo CC BY-SA 4.0.',
   'footer.navLabel': 'Pie de página',
   'footer.sendFeedback': 'Enviar comentarios',
+  'footer.privacy': 'Privacidad',
 
   // shared ui components (components/ui): coin card, status toggle, badges, set card, undo toast
   'ui.coin.statusOwned': 'En tu colección',

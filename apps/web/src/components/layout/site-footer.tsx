@@ -23,6 +23,9 @@ export function SiteFooter() {
           <Link href="/settings/feedback" data-testid="site-footer-feedback-link" className={footerLinkClassName}>
             {t('footer.sendFeedback')}
           </Link>
+          <Link href="/privacy" data-testid="site-footer-privacy-link" className={footerLinkClassName}>
+            {t('footer.privacy')}
+          </Link>
         </nav>
         <p className="text-xs text-[var(--color-neutral-600)]">
           {t('footer.attributionPrefix')}{' '}
