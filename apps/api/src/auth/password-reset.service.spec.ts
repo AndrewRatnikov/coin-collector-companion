@@ -120,6 +120,51 @@ describe('PasswordResetService', () => {
       const [, resetUrl] = emailService.sendPasswordResetEmail.mock.calls[0];
       expect(resetUrl.startsWith('https://web.example.vercel.app/reset-password?token=')).toBe(true);
     });
+
+    it('uses only the first CORS_ORIGIN entry when FRONTEND_URL is not set and the list has two', async () => {
+      configValues = { CORS_ORIGIN: 'https://web-one.example, https://web-two.example' };
+      prisma.user.findUnique.mockResolvedValue(USER);
+
+      await service.forgotPassword({ email: USER.email });
+
+      const [, resetUrl] = emailService.sendPasswordResetEmail.mock.calls[0];
+      expect(resetUrl.startsWith('https://web-one.example/reset-password?token=')).toBe(true);
+      expect(resetUrl).not.toContain(',');
+      expect(new URL(resetUrl).origin).toBe('https://web-one.example');
+    });
+
+    it('strips a trailing slash from the first CORS_ORIGIN entry', async () => {
+      configValues = { CORS_ORIGIN: 'https://web-one.example/, https://web-two.example' };
+      prisma.user.findUnique.mockResolvedValue(USER);
+
+      await service.forgotPassword({ email: USER.email });
+
+      const [, resetUrl] = emailService.sendPasswordResetEmail.mock.calls[0];
+      expect(resetUrl.startsWith('https://web-one.example/reset-password?token=')).toBe(true);
+    });
+
+    it('prefers FRONTEND_URL over a CORS_ORIGIN list', async () => {
+      configValues = {
+        FRONTEND_URL: 'https://front.example',
+        CORS_ORIGIN: 'https://web-one.example,https://web-two.example',
+      };
+      prisma.user.findUnique.mockResolvedValue(USER);
+
+      await service.forgotPassword({ email: USER.email });
+
+      const [, resetUrl] = emailService.sendPasswordResetEmail.mock.calls[0];
+      expect(resetUrl.startsWith('https://front.example/reset-password?token=')).toBe(true);
+    });
+
+    it('falls back to localhost when neither FRONTEND_URL nor CORS_ORIGIN is set', async () => {
+      configValues = {};
+      prisma.user.findUnique.mockResolvedValue(USER);
+
+      await service.forgotPassword({ email: USER.email });
+
+      const [, resetUrl] = emailService.sendPasswordResetEmail.mock.calls[0];
+      expect(resetUrl.startsWith('http://localhost:3000/reset-password?token=')).toBe(true);
+    });
   });
 
   describe('resetPassword', () => {
