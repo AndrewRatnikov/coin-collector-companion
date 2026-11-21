@@ -34,6 +34,21 @@ export function parseTrustProxyHops(raw: string | undefined): TrustProxyHopsResu
 }
 
 /**
+ * Parses CORS_ORIGIN: a comma-separated list of browser origins allowed in addition to
+ * http://localhost:3000. Each entry is trimmed and empty entries are dropped; entries are
+ * otherwise kept exactly as given and in order (the reset-link fallback uses the first one).
+ */
+export function parseCorsOrigins(raw: string | undefined): string[] {
+  if (raw === undefined) {
+    return [];
+  }
+  return raw
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== '');
+}
+
+/**
  * Shared app setup used by main.ts and the e2e tests: trust proxy, security headers (helmet),
  * cookie parsing, credentialed CORS, the api/v1 prefix and the validation pipe.
  */
@@ -53,7 +68,7 @@ export function configureApp(app: NestExpressApplication): void {
   app.use(cookieParser());
 
   app.enableCors({
-    origin: [process.env.CORS_ORIGIN, 'http://localhost:3000'].filter((o): o is string => Boolean(o)),
+    origin: [...parseCorsOrigins(process.env.CORS_ORIGIN), 'http://localhost:3000'],
     credentials: true,
   });
 
