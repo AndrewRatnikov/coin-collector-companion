@@ -1,0 +1,169 @@
+==Flowing Hair large cent==
+{| class="wikitable sortable" style="min-width:65%; text-align:center;"
+|+Flowing Hair large cent, 1793 (Copper)
+|-
+! width="10%" |Year
+! width="10%" |Mint
+! width="20%" |Mintage
+! width="60%" |Comments
+|-
+| rowspan="2" |1793
+|(P)
+| align="right" |36,103
+|[[Chain cent|Chain reverse]]
+|-
+|(P)
+| align="right" |63,353
+|[[Wreath cent|Wreath reverse]]
+|}
+
+==Liberty Cap large cent==
+{{Main articles|Liberty Cap large cent}}
+{| class="wikitable sortable" style="min-width:65%; text-align:center;"
+|+Liberty Cap large cent, 1793–1796 (Copper)
+|-
+! width="10%" |Year
+! width="10%" |Mint
+! width="20%" |Mintage
+! width="60%" |Comments
+|-
+|1793
+|(P)
+| align="right" |11,056
+|
+|-
+|1794
+|(P)
+| align="right" |918,521
+|
+|-
+| rowspan="3" |1795
+|(P)
+| align="right" |37,000
+|Lettered edge
+|-
+|(P)
+| align="right" |501,500
+|Plain edge
+|-
+|(P)
+| align="right" |c9
+|Reeded edge, 9 known<ref>{{cite book|title=A Guide Book of United States Coins|last1=Yeoman|first1=R.S.|last2=Bressett|first2=Kenneth|last3=Garrett|first3=Jeff|last4=Bowers|first4=Q. David|date=2019|publisher=Whitman Publishing|edition=72nd|location=Pelham, Alabama|page=111}}</ref>
+|-
+|1796
+|(P)
+| align="right" |109,825
+|
+|}
+
+==Indian Head cent==
+{{Main articles|Indian Head cent}}
+
+===Cupronickel Indian cent===
+{| class="wikitable sortable" style="min-width:65%; text-align:center;"
+|+No shield on reverse, 1859 ({{tooltip|2=75% copper, 25% nickel|Cupronickel|link=yes}})
+|-
+! width="10%" |Year
+! width="10%" |Mint
+! width="20%" |Mintage
+! width="60%" |Comments
+|-
+| rowspan="2" |1859
+|(P)
+| align="right" |36,400,000
+|
+|-
+|(P)
+| align="right" |800
+|Proof
+|}
+
+{| class="wikitable sortable" style="min-width:65%; text-align:center;"
+|+Shield on reverse, 1860–1864 ({{tooltip|2=75% copper, 25% nickel|Cupronickel|link=yes}})
+|-
+! width="10%" |Year
+! width="10%" |Mint
+! width="20%" |Mintage
+! width="60%" |Comments
+|-
+| rowspan="2" |1860
+|(P)
+| align="right" |20,566,000
+|
+|-
+|(P)
+| align="right" |1,000
+|Proof
+|-
+| rowspan="2" |1861
+|(P)
+| align="right" |10,100,000
+|
+|-
+|(P)
+| align="right" |1,000
+|Proof
+|-
+| rowspan="2" |1862
+|(P)
+| align="right" |28,075,000
+|
+|-
+|(P)
+| align="right" |550
+|Proof
+|-
+| rowspan="2" |1863
+|(P)
+| align="right" |49,840,000
+|
+|-
+|(P)
+| align="right" |460
+|Proof
+|-
+| rowspan="2" |1864
+|(P)
+| align="right" |13,740,000
+|
+|-
+|(P)
+| align="right" |370
+|Proof
+|}
+
+===Bronze Indian cent===
+{| class="wikitable sortable" style="min-width:65%; text-align:center;"
+|+Shield on reverse, 1864–1909 ({{tooltip|2=95% copper, 2.5% tin, 2.5% zinc|Bronze}})
+|-
+! width="10%" |Year
+! width="10%" |Mint
+! width="20%" |Mintage
+! width="60%" |Comments
+|-
+| rowspan="4" |1864
+|(P)
+| align="right" |39,233,714
+|
+|-
+|(P)
+| align="right" |^
+|L on ribbon
+|-
+|(P)
+| align="right" |150
+|Proof
+|-
+|(P)
+| align="right" |35
+|Proof, L on ribbon
+|-
+| rowspan="2" |1865
+|(P)
+| align="right" |35,429,286
+|
+|-
+|(P)
+| align="right" |500
+|Proof
+|}

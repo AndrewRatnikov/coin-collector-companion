@@ -4,7 +4,8 @@
   "private": true,
   "description": "Offline, resumable/idempotent catalog import from open sources (docs/system-design_v2.md §4.3) — not part of the API's request path.",
   "scripts": {
-    "import": "ts-node --transpile-only import-coins.ts"
+    "import": "ts-node --transpile-only import-coins.ts",
+    "generate": "ts-node --transpile-only generate-fixture.ts"
   },
   "dependencies": {
     "@coin-collector/shared": "workspace:*",
