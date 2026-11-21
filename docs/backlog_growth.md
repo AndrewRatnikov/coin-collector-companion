@@ -68,7 +68,7 @@ Order of work: make production safe (Step 0), fix what a first visitor sees (Ste
 
 Every series passes the license gate in [docs/catalog-data-licensing.md](catalog-data-licensing.md) (US designs from March 1989 onward need a per-design check) and ships with at least one curated set in `seed/templates`.
 
-- [ ] 2.1 Lincoln Memorial cents 1959-2008 and Shield cents 2010 onward.
+- [x] 2.1 Lincoln Memorial cents 1959-2008 and Shield cents 2010 onward. Done 2026-11-21: fixtures (1959-2025, business strikes) and the "Lincoln Memorial and Shield Cents 1959-2025" and "Lincoln Cents 1909-2025" sets. Not yet in production: the import and `seed:canonical` are the pending manual pass under 2.9.
 - [ ] 2.2 Jefferson nickels.
 - [ ] 2.3 Roosevelt dimes.
 - [ ] 2.4 Washington quarters 1932-1998.
