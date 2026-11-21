@@ -16,6 +16,7 @@ import type {
   PaginatedResponse,
   SetOwnershipResponse,
 } from '@coin-collector/shared';
+import { track } from '@/lib/analytics';
 import { ApiError } from '@/lib/api-client';
 import type { CatalogFilters } from '@/lib/catalog-api';
 import {
@@ -285,6 +286,11 @@ export function useSetOwnership({ onSettled }: UseSetOwnershipOptions = {}): Use
       markFailed([coinId], true);
     },
 
+    // Counted only once the server confirmed it, and only for marking owned.
+    onSuccess: (_data, { owned }) => {
+      if (owned) track('coins_marked_owned', { via: 'toggle', count: 1 });
+    },
+
     // Returning the promise makes the mutation (and onSettled) wait for the refetch,
     // so a caller that re-enables a control on settle shows the server's real state.
     onSettled: async (_data, error, variables) => {
@@ -324,6 +330,10 @@ export function useBulkSetOwnership({ onSettled }: UseBulkSetOwnershipOptions = 
     onError: (_error, { coinIds }, context) => {
       restoreSnapshots(queryClient, context);
       markFailed(coinIds, true);
+    },
+
+    onSuccess: (_data, { coinIds, owned }) => {
+      if (owned && coinIds.length > 0) track('coins_marked_owned', { via: 'bulk', count: coinIds.length });
     },
 
     onSettled: async (_data, error, variables) => {
