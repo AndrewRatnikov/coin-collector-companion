@@ -17,3 +17,6 @@ paths:
 ## `apiFetch` (`src/lib/api-client.ts`)
 - On a 401 with a token attached, it first tries one silent `POST /auth/refresh` + retry, then clears the token and redirects to `/login`.
 - Some guarded mutations legitimately return 401 without the session being invalid (e.g. `PATCH /auth/password` for a wrong current password). Their API wrapper must pass the third argument `{ skipAuthRedirectOn401: true }`, otherwise a typo logs the user out. Reuse this opt-out; don't invent a new mechanism.
+
+## `vi.resetModules()` does not reset `vi.mock` instances
+Symptom: a test that calls `vi.resetModules()` and re-imports a module twice reads `mock.calls[0]` and sees the first import's call. Cause: the `vi.mock(..., () => ({ default: { fn: vi.fn() } }))` factory result is cached in Vitest's mock registry, so both imports share the same `vi.fn()`. Fix: assert on `toHaveBeenLastCalledWith` / `mock.calls.at(-1)`, or `mockClear()` between loads.
