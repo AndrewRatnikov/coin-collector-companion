@@ -87,6 +87,80 @@ flags key dates. There are no images: US designs from 1989 on need the per-desig
 **Not in production yet.** Running the import and `seed:canonical` against production is the
 pending manual pass under growth backlog 2.9.
 
+## `us-quarters-*.json` (six files: 50 State through Semiquincentennial)
+
+286 Washington quarter business strikes, 1999–2026 (`country: "USA"`, `denomination: "Quarter"`),
+one file per program, each `name` being the program:
+`us-quarters-50-state.json` (50 State Quarters, 1999–2008, 100 coins),
+`us-quarters-dc-and-territories.json` (DC and US Territories Quarters, 2009, 12 coins),
+`us-quarters-america-the-beautiful.json` (America the Beautiful Quarters, 2010–2021, 122 coins),
+`us-quarters-crossing-the-delaware.json` (Washington Crossing the Delaware Quarter, 2021, 2 coins),
+`us-quarters-american-women.json` (American Women Quarters, 2022–2025, 40 coins) and
+`us-quarters-semiquincentennial.json` (Semiquincentennial Quarters, 2026, 10 coins).
+
+**Provenance.** Five English Wikipedia articles, each fetched once on 2026-11-21 through the
+MediaWiki API, with the raw responses saved unmodified under `../sources/` and cited in each file's
+`sources[0]`:
+- "Washington quarter mintage figures", revision 1330533271
+  (`../sources/Washington_quarter_mintage_figures.2026-11-21.json`): DC and US Territories, and
+  Washington Crossing the Delaware.
+- "50 State quarters", revision 1385898672 (`../sources/50_State_quarters.2026-11-21.json`).
+- "America the Beautiful quarter mintage figures", revision 1330531176
+  (`../sources/America_the_Beautiful_quarter_mintage_figures.2026-11-21.json`).
+- "American Women quarters", revision 1386003407 (`../sources/American_Women_quarters.2026-11-21.json`).
+- "United States Semiquincentennial coinage", revision 1384530658
+  (`../sources/United_States_Semiquincentennial_coinage.2026-11-21.json`).
+
+Five, not one: for 1999–2026 "Washington quarter mintage figures" only has tables for the 2009 DC
+and Territories quarters and the 2021 Crossing quarter; its 50 State, America the Beautiful and
+American Women sections just link to their own articles, and it has nothing for 2026. The DC,
+Crossing and America the Beautiful files were generated with `pnpm run generate`
+(`../generate-fixture.ts`) and curated by hand. The 50 State, American Women and Semiquincentennial
+articles have one wide table with a column per mint, which the generator doesn't parse (it saves the
+source, then exits with "No usable rows"), so those rows were read by hand from the saved wikitext;
+their `sources[0].note` says so. The generator's drafts were not committed: the import reads every
+`*.json` in this directory.
+
+**Selection rules** (also in each file's `rules-note`):
+- P and D business strikes only, plus the West Point (`W`) quarters of the ten 2019–2020 America the
+  Beautiful designs. Excluded: all S coins (proofs, silver proofs, and the 2012–2021 "Uncirculated"
+  and 2017 "Enhanced uncirculated" bag coins), silver bullion, `(P)` rows, and the 250,000 2026
+  "JULY 4th" privy-mark Declaration quarters without a mint mark. Every coin carries its mint mark,
+  so `mintMark` is never null.
+- America the Beautiful curation of the generator's draft: the first P and first D row of each park,
+  plus W for 2019 and 2020; the ten 2017 note-varieties and the second 2020 Salt River Bay P row (an
+  unlabelled bullion row, mintage "TBA") are dropped; 2021 gets `Tuskegee Airmen` (the article has
+  only one 2021 table, so the generator leaves it null), and "Grand Cany" is corrected to the table
+  caption's "Grand Canyon". The 2020 W "V75 privy mark" comment is not a variety: every 2020 W
+  quarter carries it.
+- `variety` is always set: the state, territory, park, woman or 2026 design, as displayed in the
+  source. Link labels are used (`[[Target|Label]]` gives "Label"), `{{sortname|First|Last}}` is
+  rendered "First Last" with any "Dr." prefix kept, and non-ASCII letters are written literally
+  ("Edith Kanakaʻole", "Zitkala-Ša"). The 2021 Crossing quarter is `Washington Crossing the Delaware`.
+  The Semiquincentennial Subject cells are bare links to the full article titles, so their varieties
+  are the short design names `Revolutionary War`, `Declaration of Independence` and `Constitution`
+  (with `Mayflower Compact` and `Gettysburg Address`).
+- Column order differs between articles: American Women and Semiquincentennial list Denver before
+  Philadelphia, and American Women rows have 10 or 11 cells, so mintages are read from the end of
+  the row. San Francisco, West Point (2026) and Total columns are ignored.
+- Coins are in release order: designs in source order, then P, D (then W).
+
+**Specs.** One file-level `specs` block, no overrides, from the "50 State quarters" and "American
+Women quarters" infoboxes in the saved responses: 24.26 mm, 5.67 g, "Copper-nickel clad copper
+(91.67% copper, 8.33% nickel)". Thickness (1.75 mm) is set, because the infobox gives it.
+
+**Null mintages.** Only the four 2026 Constitution and Gettysburg Address coins (P and D): the source
+lists them with empty mintage cells at this revision. Every other mintage is the source figure.
+
+**Excluded.** Besides the rows above: `isKeyDate` is false throughout, since no source flags key
+dates, and there are no images. These designs are from after March 1989, so any image needs the
+per-design check in [docs/catalog-data-licensing.md](../../../docs/catalog-data-licensing.md) (plus
+the per-file `extmetadata` gate) before it is added; the catalog rows themselves are facts and need
+no such check.
+
+**Not in production yet.** Running the import and `seed:canonical` against production is the
+pending manual pass under growth backlog 2.9.
+
 ## `ukraine-commemorative-1-hryvnia.json` / `ukraine-commemorative-10-hryvnias.json`
 
 31 circulating commemorative coins of Ukraine, matching uCoin's "Commemorative coins" list for the
