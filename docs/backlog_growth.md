@@ -66,13 +66,13 @@ Order of work: make production safe (Step 0), fix what a first visitor sees (Ste
 
 ## Step 2: Catalog breadth
 
-Every series passes the license gate in [docs/catalog-data-licensing.md](catalog-data-licensing.md) (US designs from March 1989 onward need a per-design check) and ships with at least one curated set in `seed/templates`.
+Every series passes the license gate in [docs/catalog-data-licensing.md](catalog-data-licensing.md) (images of US designs from March 1989 onward need a per-design check; catalog rows don't) and ships with at least one curated set in `seed/templates`.
 
 - [x] 2.1 Lincoln Memorial cents 1959-2008 and Shield cents 2010 onward. Done 2026-11-21: fixtures (1959-2025, business strikes) and the "Lincoln Memorial and Shield Cents 1959-2025" and "Lincoln Cents 1909-2025" sets. Not yet in production: the import and `seed:canonical` are the pending manual pass under 2.9.
 - [ ] 2.2 Jefferson nickels.
 - [ ] 2.3 Roosevelt dimes.
 - [ ] 2.4 Washington quarters 1932-1998.
-- [ ] 2.5 50 State Quarters, then America the Beautiful quarters.
+- [x] 2.5 50 State Quarters, then America the Beautiful quarters. Done 2026-11-21: fixtures for 1999-2026 (P and D business strikes plus the 2019-2020 W quarters, 286 coins) and one canonical set per program: "50 State Quarters", "DC and US Territories Quarters", "America the Beautiful Quarters", "Washington Crossing the Delaware Quarter", "American Women Quarters", "Semiquincentennial Quarters". Not yet in production: the import and `seed:canonical` are the pending manual pass under 2.9.
 - [ ] 2.6 Morgan and Peace dollars, with a key-dates set for each.
 - [ ] 2.7 Euro circulation coins by country, and the €2 commemoratives.
 - [ ] 2.8 Ukrainian UI locale (`locales/uk/`, typed against `en/` like `es/`), since the Ukrainian catalog is already the second largest.
