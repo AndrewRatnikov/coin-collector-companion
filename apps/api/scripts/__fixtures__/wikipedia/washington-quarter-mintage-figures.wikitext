@@ -1,0 +1,208 @@
+== Eagle reverse (1932–1974) ==
+
+=== Silver ===
+{| class="wikitable sortable" style="min-width:65%; text-align:center;"
+|+Eagle reverse, 1932–1964 (Silver)
+! width="10%" |Year
+! width="10%" |Mint
+! width="20%" |Mintage<ref name=":0">{{Cite web|url=https://washingtonquarters.org/washington-quarter-mintage/|title=Washington Quarter Mintages|date=21 February 2010 |language=en-US|access-date=2019-07-15}}</ref><ref name=":1">{{Cite web|url=https://washingtonquarters.org/proof-washington-quarters/|title=Proof Washington Quarters|date=4 February 2010 |language=en-US|access-date=2019-07-15}}</ref>
+! width="60%" |Comments
+|-
+| rowspan="3" |1932
+|(P)
+|5,404,000
+|
+|-
+|D
+|436,800
+|
+|-
+|S
+|408,000
+|
+|-
+| rowspan="2" |1934
+|(P)
+|31,912,052
+|Doubled die errors are known.<ref>{{Cite web|url=https://www.usacoinbook.com/coins/2034/quarters/washington/1934-P/doubled-die/|title=1934 Washington Silver Quarter Doubled Die Coin Value Prices, Photos & Info|website=USA Coin Book|language=en|access-date=2019-07-15}}</ref>
+|-
+|D
+|3,527,200
+|
+|-
+| rowspan="3" |1935
+|(P)
+|32,484,000
+|
+|-
+|D
+|5,780,000
+|
+|-
+|S
+|5,660,000
+|
+|-
+| rowspan="4" |1936
+|(P)
+|41,300,000
+|
+|-
+|D
+|5,374,000
+|
+|-
+|S
+|3,828,000
+|
+|-
+|(P)
+|3,837
+|Proof
+|}
+
+=== Clad ===
+{| class="wikitable sortable" style="min-width:65%; text-align:center;"
+|+Eagle reverse, 1965–1974 (Nickel-clad copper)
+! width="10%" |Year
+! width="10%" |Mint
+! width="20%" |Mintage<ref name=":0" /><ref name=":1" />
+! width="60%" |Comments
+|-
+| rowspan="4" |1965
+|(P)
+|1,819,717,540
+|
+|-
+|(D)
+|^
+|
+|-
+|(S)
+|^
+|
+|-
+|(S)
+|2,360,000<ref>{{Cite web|url=https://www.pcgs.com/coinfacts/coin/1965-25c-sms/5997|title=1965 25C SMS (Special Strike) Washington Quarter - PCGS CoinFacts|website=PCGS|access-date=2019-07-15}}</ref>
+|Satin finish, Special Mint Set
+|}
+
+== Bicentennial reverse (1976) ==
+{{Main articles|United States Bicentennial coinage}}
+{| class="wikitable sortable" style="min-width:65%; text-align:center;"
+|+Bicentennial reverse, 1976 (Nickel-clad copper unless otherwise noted)
+! width="10%" |Year
+! width="10%" |Mint
+! width="20%" |Mintage<ref>{{Cite web|url=https://www.usacoinbook.com/coins/quarters/washington/|title=Washington Quarters - Price Charts & Coin Values|website=www.usacoinbook.com|access-date=2019-07-15}}</ref>
+! width="60%" |Comments
+|-
+| rowspan="7" |1976
+|(P)
+|809,784,016
+|Struck in 1975 and 1976
+|-
+|D
+|860,118,839
+|Struck in 1975 and 1976
+|-
+|S
+|4,908,319
+|Uncirculated, silver-clad copper
+|-
+|S
+|2,845,450<ref>{{Cite web|url=https://proofsetguide.com/1975-proof-set/|title=1975 Proof Set {{!}} United States Mint Proof Sets|date=3 April 2009 |language=en-US|access-date=2019-07-15}}</ref>
+|Proof, struck in 1975
+|-
+|S
+|4,149,730<ref>{{Cite web|url=https://proofsetguide.com/1976-proof-set/|title=1976 Proof Set {{!}} United States Mint Proof Sets|date=5 April 2009 |language=en-US|access-date=2019-07-15}}</ref>
+|Proof, struck in 1976
+|-
+|S
+|3,998,621
+|Proof, silver-clad copper
+|-
+|(P)
+|c3-4<ref>{{Cite web|url=http://uspatterns.com/p2085.html|title=J2161/P2085|website=uspatterns.com|access-date=2019-07-15}}</ref>
+|Pattern, silver-clad copper
+|}
+
+== Eagle reverse (1977–1998) ==
+{| class="wikitable sortable" style="min-width:65%; text-align:center;"
+|+Eagle reverse, 1977–1998 (Nickel-clad copper unless otherwise noted)
+! width="10%" |Year
+! width="10%" |Mint
+! width="20%" |Mintage<ref name=":0" /><ref name=":1" />
+! width="60%" |Comments
+|-
+| rowspan="4" |1977
+|(P)
+|468,556,000
+|
+|-
+|(W)
+|^
+|First time West Point produced the quarter
+|-
+|D
+|256,524,978
+|
+|-
+|S
+|3,251,152
+|Proof only
+|}
+
+== District of Columbia and United States Territories quarters (2009) ==
+{{Main articles|District of Columbia and United States Territories Quarters}}
+
+=== District of Columbia ===
+{| class="wikitable sortable" style="min-width:65%; text-align:center;"
+|+District of Columbia reverse, 2009 (Nickel-clad copper unless otherwise noted)
+! width="10%" |Year
+! width="10%" |Mint
+! width="20%" |Mintage<ref name=":2">{{Cite web|url=https://www.usacoinbook.com/coins/quarters/50-states-and-territories/|title=50 States and Territories Quarters - Price Charts & Coin Values|website=www.usacoinbook.com|access-date=2019-07-16}}</ref>
+! width="60%" |Comments
+|-
+| rowspan="4" |2009
+|P
+|83,600,000
+|
+|-
+|D
+|88,800,000
+|
+|-
+|S
+|2,113,390
+|Proof
+|-
+|S
+|993,589
+|Silver proof
+|}
+
+=== Puerto Rico ===
+{| class="wikitable sortable" style="min-width:65%; text-align:center;"
+|+Puerto Rico reverse, 2009 (Nickel-clad copper unless otherwise noted)
+! width="10%" |Year
+! width="10%" |Mint
+! width="20%" |Mintage<ref name=":2" />
+! width="60%" |Comments
+|-
+| rowspan="4" |2009
+|P
+|53,000,000
+|
+|-
+|D
+|86,000,000
+|
+|-
+|S
+|2,113,390
+|Proof
+|-
+|S
+|993,589
+|Silver proof
+|}
