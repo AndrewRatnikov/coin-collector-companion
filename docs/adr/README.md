@@ -61,6 +61,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-20](2026-11-20-want-list-csv-adds-sets-column.md) | The want-list CSV is the per-set CSV's eleven columns plus a final `Sets` column, in server order | Accepted |
 | [2026-11-20](2026-11-20-posthog-cookieless-analytics.md) | Product analytics is PostHog Cloud in cookieless mode, never identifying users, behind a same-origin /relay proxy | Accepted |
 | [2026-11-21](2026-11-21-custom-domain-makes-web-and-api-same-site.md) | Web and API move under one registrable domain, so the SameSite=Lax refresh cookie is same-site and works unchanged | Accepted |
+| [2026-11-21](2026-11-21-denominations-ordered-by-face-value-parsed-from-the-string.md) | Denominations sort by face value in the main unit, parsed from the string with a fixed word table | Accepted |
 
 ## Where else decisions live
 
