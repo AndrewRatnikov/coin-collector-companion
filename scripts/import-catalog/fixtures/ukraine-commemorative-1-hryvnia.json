@@ -10,8 +10,27 @@
       "type": "coin identity, issue years, mintages and physical specs",
       "origin": "Ukrainian Wikipedia '1 гривня (монета)' (uk.wikipedia.org/wiki/1_гривня_(монета)), which cites National Bank of Ukraine releases",
       "license": "Wikipedia text is CC BY-SA 4.0; only facts (subject, year, mintage, specs) are reproduced, which aren't copyrightable (docs/catalog-data-licensing.md §1); the app footer's Wikipedia credit covers attribution."
+    },
+    {
+      "type": "2016 '20 Years of Monetary Reform in Ukraine' coin: subject, year, mintage, specs",
+      "origin": "Ukrainian Wikipedia '1 гривня (монета)'",
+      "url": "https://uk.wikipedia.org/wiki/1_гривня_(монета)",
+      "revisionId": 49130450,
+      "fetchedAt": "2026-11-21",
+      "license": "Wikipedia text is CC BY-SA 4.0; only facts (subject, year, mintage, specs) are reproduced, which aren't copyrightable (docs/catalog-data-licensing.md §1); the app footer's Wikipedia credit covers attribution.",
+      "note": "Fetched through the MediaWiki API; no raw capture saved under sources/. The fetch was truncated (39,767 of 49,177 characters), but the 2016 entry was in the part read. Mintage 60,000 = 10,000 in the 'Монети України' set + 50,000 in souvenir packaging; the article calls it a circulating coin but does not say it entered circulation. Issued 1 Sep 2016, withdrawal from circulation began 1 Oct 2020. Specs (aluminium bronze, 26 mm, 1.85 mm, 6.8 g) equal the file-level specs; the edge inscription 'ОДНА ГРИВНЯ' is not stored. NBU cross-check not done: bank.gov.ua returned HTTP 403. Scope came from the task; nothing is copied from uCoin."
+    },
+    {
+      "type": "cross-check: the 2016 monetary reform set holds a different 1 hryvnia",
+      "origin": "Ukrainian Wikipedia 'Монети української гривні'",
+      "url": "https://uk.wikipedia.org/wiki/Монети_української_гривні",
+      "revisionId": 49199060,
+      "fetchedAt": "2026-11-21",
+      "license": "Wikipedia text is CC BY-SA 4.0; only facts are used, nothing reproduced.",
+      "note": "Shows that the 2016 '20 років грошовій реформі в Україні' collector set (10,000) contains the 1-50 kopiyky and the 'Volodymyr the Great' 1 hryvnia (ukraine-1-hryvnia.json), not this commemorative coin, so the two keep separate natural keys. No raw capture saved; NBU cross-check not done (HTTP 403)."
     }
   ],
+  "titles-note": "`titleUk` is the coin's Ukrainian title as given by the cited Wikipedia revision; the import ignores it. Only the coins added on 2026-11-21 carry it.",
   "country": "Ukraine",
   "denomination": "1 Hryvnia",
   "name": "Ukraine Commemorative 1 Hryvnia",
@@ -51,6 +70,13 @@
       "mintMark": null,
       "variety": "70th Anniversary of Victory in WWII",
       "mintage": 7000000
+    },
+    {
+      "year": 2016,
+      "mintMark": null,
+      "variety": "20 Years of Monetary Reform in Ukraine",
+      "titleUk": "20 років грошовій реформі в Україні",
+      "mintage": 60000
     }
   ]
 }
