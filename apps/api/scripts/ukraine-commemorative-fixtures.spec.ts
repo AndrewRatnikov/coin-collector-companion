@@ -117,7 +117,7 @@ const FIRST_TYPE: Array<{ year: number; variety: string; titleUk: string }> = [
     variety: 'Air Assault Forces of the Armed Forces of Ukraine',
     titleUk: 'Десантно-штурмові війська Збройних Сил України',
   },
-  { year: 2021, variety: 'Armed Forces of Ukraine', titleUk: 'Збройні сили України' },
+  { year: 2021, variety: 'Ukrainian Armed Forces', titleUk: 'Збройні сили України' },
   {
     year: 2021,
     variety: 'Ground Forces of the Armed Forces of Ukraine',
