@@ -1,0 +1,14 @@
+{
+  "batchcomplete": true,
+  "query": {
+    "categorymembers": [
+      { "pageid": 201, "ns": 6, "title": "File:10 hryvnias 2018 Defenders of Donetsk Airport reverse.jpg" },
+      { "pageid": 202, "ns": 6, "title": "File:10 hryvnias 2018 Defenders of Donetsk Airport obverse.jpg" },
+      { "pageid": 203, "ns": 6, "title": "File:10 hryvnias 2020 Zaporozhian Sich reverse a.jpg" },
+      { "pageid": 204, "ns": 6, "title": "File:10 hryvnias 2020 Zaporozhian Sich reverse b.jpg" },
+      { "pageid": 205, "ns": 6, "title": "File:10 hryvnias 2021 Kyiv Fortress reverse.jpg" },
+      { "pageid": 102, "ns": 6, "title": "File:Ukraine 2018 10 hryvnias reverse.jpg" },
+      { "pageid": 206, "ns": 14, "title": "Category:Coins of Ukraine" }
+    ]
+  }
+}

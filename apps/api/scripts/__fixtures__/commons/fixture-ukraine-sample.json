@@ -1,0 +1,54 @@
+{
+  "country": "Ukraine",
+  "denomination": "10 Hryvnias",
+  "name": "Ukraine 10 Hryvnias Commemorative",
+  "sources": [
+    {
+      "type": "hand-written",
+      "origin": "National Bank of Ukraine",
+      "license": "Public domain (excluded from copyright)",
+      "note": "Inert text: \"coins\": [ } { ] stays untouched"
+    }
+  ],
+  "specs": {
+    "diameterMm": 27.0,
+    "weightG": 4.0,
+    "material": "Nickel silver"
+  },
+  "coins": [
+    {
+      "year": 2018,
+      "mintMark": null,
+      "variety": "Defenders of Donetsk Airport",
+      "titleUk": "Захисникам Донецького аеропорту",
+      "mintage": 100000
+    },
+    {
+      "year": 2019,
+      "variety": "Hero of Mariupol",
+      "mintage": 90000,
+      "image": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/old.jpg",
+        "source": "Old",
+        "license": "Public domain",
+        "copyrighted": false
+      }
+    },
+    {
+      "year": 2020,
+      "variety": "Zaporozhian Sich",
+      "mintage": null,
+      "specs": {
+        "weightG": 3.0
+      }
+    },
+    {
+      "year": 2021,
+      "variety": "Kyiv Fortress"
+    },
+    {
+      "year": 2022,
+      "variety": "Unknown Subject"
+    }
+  ]
+}
