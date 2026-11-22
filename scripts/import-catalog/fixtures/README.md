@@ -198,7 +198,11 @@ reform collector set holds the "Volodymyr the Great" 1 hryvnia, not this coin). 
 were saved under `sources/`**, and **the NBU cross-check was not done** because bank.gov.ua returned
 HTTP 403; both are still to do. Nothing is copied from uCoin. The English subject names are our own
 renderings of the NBU titles; each added coin records its Ukrainian title in `titleUk`, which the
-import ignores. Each fixture's `sources` lists these revisions.
+import ignores. Each fixture's `sources` lists these revisions. The 2021 «Збройні сили України»
+coin is `Ukrainian Armed Forces` rather than "Armed Forces of Ukraine", because the collection
+import's variety matching would otherwise confuse it with the two other 2021 coins whose names
+contain "of the Armed Forces of Ukraine" (a variety must not be a word-for-word subset of another
+variety of the same year).
 
 **Not included.** Images: they need the Commons `extmetadata` check before they can be added.
 
