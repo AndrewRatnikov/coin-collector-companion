@@ -204,7 +204,11 @@ import's variety matching would otherwise confuse it with the two other 2021 coi
 contain "of the Armed Forces of Ukraine" (a variety must not be a word-for-word subset of another
 variety of the same year).
 
-**Not included.** Images: they need the Commons `extmetadata` check before they can be added.
+**Images.** None yet. Ukrainian coins are excluded from copyright (Commons tags such files
+`{{PD-UAGov-Money}}`), but a photo can carry its own licence, so each file still needs the
+Commons `extmetadata` check. `pnpm run find-images` (see `../README.md`, "Finding images") adds
+an `image` block only where one Commons file clears that check; running it is a pending manual
+step.
 
 ## `ukraine-<denomination>.json` (10 files: 1 kopiyka through 10 hryvnias)
 
@@ -238,4 +242,6 @@ brass for 1992–1996). Thickness is null for 2 kopiyky and 2 hryvni, where the 
 гривні" (revision 49199060) marks it `***` (officially not issued, but exists) with no mintage
 figure, and it isn't in the 2019 collector set; it also falls outside uCoin's 2000–2018 range. The
 `***` rule above would otherwise include it, so this is a deliberate exception.
-`isKeyDate` is false throughout, since no source flags key dates. There are no images.
+`isKeyDate` is false throughout, since no source flags key dates. There are no images yet: they
+are added by `pnpm run find-images` (see `../README.md`, "Finding images") after the per-file
+Commons licence check, a pending manual step.

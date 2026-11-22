@@ -128,3 +128,83 @@ hand for every duplicate key the summary lists, and check the note varieties it 
 The parser's tests (`apps/api/scripts/import-catalog-wikitext.spec.ts`,
 `import-catalog-mintage-tables.spec.ts`, `import-catalog-generate.spec.ts`) run offline with
 `pnpm --filter api test`, against real excerpts saved in `apps/api/scripts/__fixtures__/wikipedia/`.
+
+## Finding images
+
+```
+cd scripts/import-catalog
+WIKIPEDIA_CONTACT='you@example.org' pnpm run find-images -- fixtures/ukraine-*.json --dry-run
+```
+
+`find-images` looks for a Wikimedia Commons photo of each coin in the given Ukrainian fixtures
+and writes an `image` block into the fixture where exactly one file clears every rule below.
+Ukrainian coins are excluded from copyright (Commons tags such files `{{PD-UAGov-Money}}`), but a
+photo can carry its own licence, so the per-file gate of `docs/catalog-data-licensing.md` §2
+still decides. Pass **all** Ukrainian fixtures in one run: coins of the same denomination and
+year in other files (a circulation coin and a commemorative, say) are used to tell files apart.
+
+| Flag | Effect |
+|------|--------|
+| `--dry-run` | Do everything, print the summary, write nothing |
+| `--overwrite` | Also look for coins that already have an `image` (by default they are skipped); an existing image is never removed |
+
+Paths are relative to `scripts/import-catalog`. A missing path, an unknown flag or a path not
+ending in `.json` prints the usage and exits 2; so does a fixture that can't be read, isn't JSON
+or isn't Ukrainian (`country` other than `Ukraine`), before any request is made.
+
+**The requests.** One breadth-first crawl of `Category:Coins of Ukraine` and its subcategories
+(4 levels deep, `list=categorymembers`, 500 per page, following `continue`), then
+`prop=imageinfo` with `extmetadata` (Artist, Credit, LicenseShortName, Copyrighted,
+AttributionRequired) for the candidate files only, at most 5 files per request. Requests go one
+at a time, with no retry, and carry the same `User-Agent` as the generator (add a contact with
+`WIKIPEDIA_CONTACT`). A failed request or an API error exits 1 and writes nothing: all writes
+happen after the last request.
+
+**Matching.** A wrong picture is worse than none, so the rules are strict:
+
+1. Text is compared after normalising: lowercase, apostrophes dropped, every other non-letter,
+   non-digit character a space. A file's text is its title (without `File:` and the extension)
+   plus the names of the categories it was found in.
+2. The file must name the coin's denomination (a number followed by a unit: `hryvnia`/`hryvni`/
+   `hrivna`/`гривня`/`грн`, `kopiyka`/`kopiyok`/`kopek`/`копійка`/`коп`, …) and its year.
+3. A circulation coin ignores files with a commemorative marker ("commemorative",
+   "anniversary", "пам'ятна", "ювілейна", "річчя", "роковини").
+4. Subject: every meaningful word (3+ letters, not "the", "of", …) of the coin's `variety`, or of
+   its `titleUk`, must be in the file's text. Files that name another coin of the same year and
+   denomination instead are dropped.
+5. A commemorative coin needs its subject. A circulation coin that is the only type of its year
+   may take a file that names no subject; if the year has several types and the file names
+   none of them, the coin is listed as ambiguous.
+6. The file must be a single side: width / height between 0.8 and 1.25 (side-by-side obverse
+   and reverse composites are left out, a round crop would cut them in half).
+7. The file must pass the existing licence gate in `lib/image.ts`: `Copyrighted` false or
+   `AttributionRequired` false. Anything else (e.g. CC BY-SA) is rejected and listed.
+8. Of what's left the reverse (the design side: "reverse", "rev", "реверс" in the title) wins;
+   with no reverse, any side. One file left is a match; several are listed for a human.
+
+**What is written.** `"image": { "url", "source", "license", "copyrighted",
+"attributionRequired" }`, inserted after the coin's last member without reformatting anything
+else in the file. `url` is Commons' 500 px thumbnail on `upload.wikimedia.org` (the original file
+when there is no thumbnail): the web app hotlinks it and nothing is re-hosted. `source` is the
+file's Artist (or its Credit when there is no Artist), HTML stripped; `license` is its
+LicenseShortName; empty fields are left out.
+
+**Output.** Per file and in total, `matched`, `ambiguous`, `none` and `skipped` (already had an
+image) counts, how many of the none were rejected by the licence gate, then three lists to work
+through by hand: ambiguous coins with their candidate files, coins rejected by the licence gate
+with the files, and coins with no file (`no-match`, or `not-single-side` when only composites
+were found).
+
+**Manual steps (pending).** The tests (`apps/api/scripts/import-catalog-commons.spec.ts`,
+`import-catalog-image-match.spec.ts`, `import-catalog-fixture-writer.spec.ts`,
+`import-catalog-find-images.spec.ts`, run offline by `pnpm --filter api test` on recorded
+responses in `apps/api/scripts/__fixtures__/commons/`) never touch the network. The real run is
+done on Andrew's machine:
+
+1. Run it with `WIKIPEDIA_CONTACT` set and `--dry-run`, read the three lists, then run it again
+   without `--dry-run`.
+2. Review the fixture diff: only `image` blocks should be added. Open a few URLs to check each
+   is the right coin and side. Add an ambiguous coin's image by hand if you want it.
+3. Commit the fixtures, then run the production import (`pnpm run import`) under growth 2.9.
+4. Check a Ukrainian coin page, the catalog list, the collection and a set album on a phone
+   (320-390 px): round photos, not stretched, and the footer's Wikipedia credit still there.
