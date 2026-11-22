@@ -2,7 +2,9 @@
  * Tests for: apps/api/scripts/seed-canonical-sets.ts
  * Contract source: runs/run_20260720_121716/plan.md § Interface Contract
  *                   (Script: apps/api/scripts/seed-canonical-sets.ts)
+ *                   runs/run_20261121_222133/plan.md § Step D, Step E (latestTemplateVersions)
  * Covers criteria: #3, #4, #5, #6 (from runs/run_20260720_121716/prd.md)
+ *                  #6 (from runs/run_20261121_222133/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -13,6 +15,7 @@
 
 import { readFileSync, readdirSync } from 'node:fs';
 import {
+  latestTemplateVersions,
   resolveTemplatePaths,
   parseTemplateVersion,
   loadTemplate,
@@ -77,6 +80,53 @@ describe('seed-canonical-sets', () => {
     });
   });
 
+  describe('latestTemplateVersions', () => {
+    it('keeps v2 over v1 of the same template', () => {
+      expect(
+        latestTemplateVersions(['/t/a.v1.json', '/t/a.v2.json']),
+      ).toEqual(['/t/a.v2.json']);
+      expect(
+        latestTemplateVersions(['/t/a.v2.json', '/t/a.v1.json']),
+      ).toEqual(['/t/a.v2.json']);
+    });
+
+    it('compares versions as numbers, so v10 beats v2', () => {
+      expect(
+        latestTemplateVersions(['/t/a.v2.json', '/t/a.v10.json']),
+      ).toEqual(['/t/a.v10.json']);
+      expect(
+        latestTemplateVersions(['/t/a.v10.json', '/t/a.v2.json']),
+      ).toEqual(['/t/a.v10.json']);
+    });
+
+    it('keeps different slugs that share a prefix', () => {
+      const result = latestTemplateVersions([
+        '/t/lincoln-wheat-cents.v1.json',
+        '/t/lincoln-wheat-cents-key-dates.v1.json',
+      ]);
+      expect(result).toHaveLength(2);
+      expect(result).toContain('/t/lincoln-wheat-cents.v1.json');
+      expect(result).toContain('/t/lincoln-wheat-cents-key-dates.v1.json');
+    });
+
+    it('keeps the input order of the kept paths', () => {
+      expect(
+        latestTemplateVersions(['/t/b.v1.json', '/t/a.v1.json', '/t/c.v3.json', '/t/c.v1.json']),
+      ).toEqual(['/t/b.v1.json', '/t/a.v1.json', '/t/c.v3.json']);
+    });
+
+    it('keeps a path with no version suffix', () => {
+      const result = latestTemplateVersions(['/t/a.v1.json', '/t/notes.json']);
+      expect(result).toContain('/t/notes.json');
+      expect(result).toContain('/t/a.v1.json');
+      expect(result).toHaveLength(2);
+    });
+
+    it('returns an empty list for no paths', () => {
+      expect(latestTemplateVersions([])).toEqual([]);
+    });
+  });
+
   describe('resolveTemplatePaths', () => {
     it('resolves explicit argv paths when given', () => {
       const result = resolveTemplatePaths(['seed/templates/a.v1.json', 'seed/templates/b.v1.json']);
@@ -99,6 +149,24 @@ describe('seed-canonical-sets', () => {
       expect(result.some((p) => p.endsWith('lincoln-wheat-cents.v1.json'))).toBe(true);
       expect(result.some((p) => p.endsWith('lincoln-wheat-cents-key-dates.v1.json'))).toBe(true);
       expect(result.some((p) => p.endsWith('README.md'))).toBe(false);
+    });
+
+    it('with no args returns only the newest version of each template', () => {
+      mockedReaddirSync.mockReturnValue(['x.v1.json', 'x.v2.json', 'y.v1.json']);
+
+      const result = resolveTemplatePaths([]);
+
+      expect(result).toHaveLength(2);
+      expect(result.some((p) => p.endsWith('x.v2.json'))).toBe(true);
+      expect(result.some((p) => p.endsWith('y.v1.json'))).toBe(true);
+      expect(result.some((p) => p.endsWith('x.v1.json'))).toBe(false);
+    });
+
+    it('with explicit args still returns an old version that was named on purpose', () => {
+      const result = resolveTemplatePaths(['seed/templates/x.v1.json']);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toContain('x.v1.json');
     });
   });
 

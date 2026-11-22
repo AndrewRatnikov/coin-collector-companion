@@ -15,9 +15,19 @@
       "type": "cross-check",
       "origin": "NV Business report on the NBU's 28 July 2026 issue of the 'In Memory of Those Executed, Tortured or Killed in Captivity' coin (biz.nv.ua)",
       "license": "Used only to confirm the 2,000,000 mintage and zinc-alloy/nickel-plated composition; nothing reproduced."
+    },
+    {
+      "type": "first-type coins (2018-2022): subjects, years, specs",
+      "origin": "Ukrainian Wikipedia '10 гривень (монета)', section 'Монети першого типу'",
+      "url": "https://uk.wikipedia.org/wiki/10_гривень_(монета)",
+      "revisionId": 49191096,
+      "fetchedAt": "2026-11-21",
+      "license": "Wikipedia text is CC BY-SA 4.0; only facts (subject, year, mintage, specs) are reproduced, which aren't copyrightable (docs/catalog-data-licensing.md §1); the app footer's Wikipedia credit covers attribution.",
+      "note": "Fetched through the MediaWiki API; no raw capture saved under sources/. NBU cross-check not done: bank.gov.ua returned HTTP 403. The article gives one shared specs row for the type (zinc alloy with nickel plating, 12.4 g, 30 mm, 2.8 mm, reeded edge) and one shared mintage figure of 1,000,000, with no figure per coin, so `mintage` is null. Scope came from the task (uCoin's 'Commemorative coins' list does not include these coins); nothing is copied from uCoin."
     }
   ],
-  "specs-note": "Covers only the second-type (2022+) 23.5 mm circulating commemoratives. The 14 first-type 30 mm / 12.4 g coins of 2018-2022 aren't in uCoin's 'Commemorative coins' list and are not included here.",
+  "specs-note": "File-level specs are the second-type (2022 onward) 23.5 mm circulating commemoratives. The 14 first-type coins of 2018-2022 override diameter, weight and thickness per coin (30 mm, 12.4 g, 2.8 mm) and inherit the material; their reeded edge is not stored.",
+  "titles-note": "`titleUk` is the coin's Ukrainian title as given by the cited Wikipedia revision; the import ignores it. Only the coins added on 2026-11-21 carry it.",
   "country": "Ukraine",
   "denomination": "10 Hryvnias",
   "name": "Ukraine Commemorative 10 Hryvnias",
@@ -28,6 +38,174 @@
     "material": "Nickel-plated zinc alloy"
   },
   "coins": [
+    {
+      "year": 2018,
+      "mintMark": null,
+      "variety": "Defenders of Donetsk Airport",
+      "titleUk": "Захисникам Донецького аеропорту",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2018,
+      "mintMark": null,
+      "variety": "Day of the Ukrainian Volunteer",
+      "titleUk": "День українського добровольця",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2018,
+      "mintMark": null,
+      "variety": "100th Anniversary of the Ukrainian Navy",
+      "titleUk": "100-річчя створення Українського військово-морського флоту",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2019,
+      "mintMark": null,
+      "variety": "Participants of Combat Operations in Other Countries",
+      "titleUk": "Учасникам бойових дій на території інших держав",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2019,
+      "mintMark": null,
+      "variety": "On Guard of Life (Military Medics)",
+      "titleUk": "На варті життя (присвячується військовим медикам)",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2019,
+      "mintMark": null,
+      "variety": "KrAZ-6322 \"Soldier\"",
+      "titleUk": "КрАЗ-6322 «Солдат»",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2020,
+      "mintMark": null,
+      "variety": "Air Force of the Armed Forces of Ukraine",
+      "titleUk": "Повітряні Сили Збройних Сил України",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2020,
+      "mintMark": null,
+      "variety": "Day of Remembrance of Fallen Defenders of Ukraine",
+      "titleUk": "День пам'яті полеглих захисників України",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2020,
+      "mintMark": null,
+      "variety": "State Border Guard Service of Ukraine",
+      "titleUk": "Державна прикордонна служба України",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2021,
+      "mintMark": null,
+      "variety": "Air Assault Forces of the Armed Forces of Ukraine",
+      "titleUk": "Десантно-штурмові війська Збройних Сил України",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2021,
+      "mintMark": null,
+      "variety": "Ukrainian Armed Forces",
+      "titleUk": "Збройні сили України",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2021,
+      "mintMark": null,
+      "variety": "Ground Forces of the Armed Forces of Ukraine",
+      "titleUk": "Сухопутні війська Збройних Сил України",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2022,
+      "mintMark": null,
+      "variety": "Navy of the Armed Forces of Ukraine",
+      "titleUk": "Військово-морські Сили Збройних Сил України",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
+    {
+      "year": 2022,
+      "mintMark": null,
+      "variety": "Special Operations Forces of the Armed Forces of Ukraine",
+      "titleUk": "Сили спеціальних операцій Збройних Сил України",
+      "mintage": null,
+      "specs": {
+        "diameterMm": 30,
+        "weightG": 12.4,
+        "thicknessMm": 2.8
+      }
+    },
     {
       "year": 2022,
       "mintMark": null,
