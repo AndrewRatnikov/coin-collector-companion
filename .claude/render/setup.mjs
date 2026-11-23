@@ -307,7 +307,7 @@ async function installAlias(page, fx) {
         const outHeaders = {}
         for (const [k, v] of Object.entries(res.headers())) if (!STRIP_RESPONSE.has(k)) outHeaders[k] = v
         await route.fulfill({ status: res.status(), headers: { ...outHeaders, ...cors }, body })
-      } catch (e) {
+      } catch {
         await route.abort().catch(() => {})
       }
     },

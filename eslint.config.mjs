@@ -32,6 +32,22 @@ export default tseslint.config(
     },
   },
   {
+    // Plain Node ESM script for the render-review harness. It runs under Node (URL, fetch,
+    // process, ...) and passes callbacks to Playwright's page.evaluate(), which run in the
+    // browser (window), so it needs both sets of globals.
+    files: ['.claude/render/**/*.mjs'],
+    languageOptions: {
+      globals: {
+        URL: 'readonly',
+        fetch: 'readonly',
+        process: 'readonly',
+        setTimeout: 'readonly',
+        AbortSignal: 'readonly',
+        window: 'readonly',
+      },
+    },
+  },
+  {
     // handleRequest overrides Passport's AuthGuard signature positionally (err, user, info,
     // context, status) — the trailing params after the last used one (`user`) must stay
     // present to match the base signature/call sites, but are otherwise unused.
