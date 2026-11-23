@@ -12,6 +12,13 @@ export interface AnalyticsEvents {
   set_cloned: { source: 'canonical' | 'public'; coin_count: number };
   coins_marked_owned: { via: 'toggle' | 'bulk' | 'import'; count: number };
   want_list_exported: { format: 'print' | 'csv'; scope: 'set' | 'all' | 'sample' };
+  catalog_no_results: {
+    country: string | null;
+    denomination: string | null;
+    year_from: string | null;
+    year_to: string | null;
+    name: string | null;
+  };
 }
 
 export type AnalyticsEventName = keyof AnalyticsEvents;
