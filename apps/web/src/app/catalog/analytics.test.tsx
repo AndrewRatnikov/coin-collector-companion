@@ -33,11 +33,11 @@ vi.mock('@/lib/hooks/use-catalog', () => ({
 }));
 
 vi.mock('@/components/catalog/submit-coin-form', () => ({
-  default: () => <div data-testid="mock-submit-coin-form" />,
+  default: () => null,
 }));
 
 vi.mock('@/components/catalog/submission-confirmation', () => ({
-  default: () => <div data-testid="mock-submission-confirmation" />,
+  default: () => null,
 }));
 
 const trackMock = vi.mocked(track);
