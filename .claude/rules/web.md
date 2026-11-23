@@ -13,6 +13,7 @@ paths:
 ## Component patterns
 - **Don't seed editable local state from query data with `useEffect`.** The first render after data arrives paints the stale initial value, and RTL's `waitFor` can resolve on that paint, which makes the test flaky. Use the render-time "adjust state" pattern instead: keep a ref of the last-synced query result, and when it differs, call the setter during render. (Hit in `sets/[id]/page.tsx`'s rename input.)
 - **`fieldErrorsFrom(details, fields)` should only run on HTTP 400.** It matches messages by field-name prefix, so a 409 like `"Email already registered"` gets misrouted into the email field. Only the `ValidationPipe`'s 400 returns per-field messages; treat every other status as a page-level error.
+- **Catalog query data can be the previous filters' result.** `useCatalog` uses `placeholderData: keepPreviousData`, so right after a filter change `data` (and the rendered `catalog-empty` / result list) still belongs to the old filters. An effect that reacts to "what the query returned" (analytics, auto-redirects, focus moves) must also check `!isPlaceholderData`, or it attributes the old result to the new filters. Tests can force the case by returning `isPlaceholderData: true` from the mocked hook.
 
 ## `apiFetch` (`src/lib/api-client.ts`)
 - On a 401 with a token attached, it first tries one silent `POST /auth/refresh` + retry, then clears the token and redirects to `/login`.
