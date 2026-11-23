@@ -13,6 +13,7 @@ import { useCatalog, useCatalogFacets } from '@/lib/hooks/use-catalog';
 import {
   CATALOG_PAGE_SIZE,
   EMPTY_CATALOG_VIEW_STATE,
+  catalogNoResultsProps,
   catalogViewStateToFilters,
   catalogViewStateToSearchParams,
   countActiveFilters,
@@ -20,6 +21,7 @@ import {
   type CatalogViewState,
 } from '@/lib/catalog-view';
 import { getStoredToken } from '@/lib/auth-token';
+import { track } from '@/lib/analytics';
 import { useSlowLoading } from '@/lib/hooks/use-slow-loading';
 import { ServerWakingNotice } from '@/components/ui/server-waking-notice';
 import { useTranslation } from '@/lib/i18n/i18n-context';
@@ -84,9 +86,23 @@ function CatalogPageContent() {
   );
 
   const filters = useMemo(() => catalogViewStateToFilters(view, isLoggedIn), [view, isLoggedIn]);
-  const { data, isLoading, isError } = useCatalog(filters);
+  const { data, isLoading, isError, isPlaceholderData } = useCatalog(filters);
   const slow = useSlowLoading(isLoading && !data);
   const { data: facets } = useCatalogFacets(view.country || undefined);
+
+  // catalog_no_results: once per distinct set of sent properties for this page's life.
+  // Placeholder data is the previous combination's result, so it never counts.
+  const reportedNoResultsRef = useRef<Set<string>>(new Set());
+  const noResults = !isError && !isPlaceholderData && data !== undefined && data.items.length === 0;
+  const noResultsProps = useMemo(() => catalogNoResultsProps(view), [view]);
+
+  useEffect(() => {
+    if (!noResults) return;
+    const key = JSON.stringify(noResultsProps);
+    if (reportedNoResultsRef.current.has(key)) return;
+    reportedNoResultsRef.current.add(key);
+    track('catalog_no_results', noResultsProps);
+  }, [noResults, noResultsProps]);
 
   function update(next: CatalogViewState) {
     viewRef.current = next;

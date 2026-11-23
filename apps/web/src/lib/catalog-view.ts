@@ -4,6 +4,7 @@
 import { CATALOG_SORTS, DEFAULT_CATALOG_SORT, type CatalogCoin, type CatalogSort } from '@coin-collector/shared';
 import type { CatalogFilters } from '@/lib/catalog-api';
 import { splitVariety } from '@/lib/album-layout';
+import type { AnalyticsEvents } from '@/lib/analytics';
 
 export const CATALOG_PAGE_SIZE = 20;
 
@@ -117,6 +118,22 @@ export function countActiveFilters(state: CatalogViewState, isLoggedIn: boolean)
   if (state.keyDateOnly) count += 1;
   if (state.hideOwned && isLoggedIn) count += 1;
   return count;
+}
+
+/** Longest search text the catalog_no_results event carries. */
+export const CATALOG_NO_RESULTS_NAME_MAX_LENGTH = 40;
+
+/** The catalog_no_results properties for a view: applied filters as strings, null when unset. */
+export function catalogNoResultsProps(state: CatalogViewState): AnalyticsEvents['catalog_no_results'] {
+  const country = state.country.trim();
+  const name = state.name.trim();
+  return {
+    country: country === '' ? null : country,
+    denomination: state.denominations.length === 0 ? null : [...state.denominations].sort().join(','),
+    year_from: state.yearMin === undefined ? null : String(state.yearMin),
+    year_to: state.yearMax === undefined ? null : String(state.yearMax),
+    name: name === '' ? null : name.toLowerCase().slice(0, CATALOG_NO_RESULTS_NAME_MAX_LENGTH),
+  };
 }
 
 export type PaginationItem = number | 'ellipsis';

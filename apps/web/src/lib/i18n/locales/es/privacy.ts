@@ -13,7 +13,7 @@ const privacy: Record<keyof typeof enPrivacy, string> = {
     'Cuando algo falla, se envía un informe de error a Sentry. No incluye tu email, tu dirección IP, cookies, el contenido de formularios ni la parte de consulta de las direcciones. Algunas visitas también envían una grabación del diseño de la página con todo el texto, los campos y las imágenes ocultos.',
   'privacy.analyticsHeading': 'Recuento de visitas',
   'privacy.analyticsBody':
-    'PostHog cuenta visitas y algunas acciones (registrarse, crear o copiar una colección, marcar monedas como tuyas, imprimir o descargar una lista de búsqueda). No usa cookies, no guarda nada en tu navegador y nunca recibe tu email, el id de tu cuenta, los nombres de tus colecciones ni tus búsquedas.',
+    'PostHog cuenta visitas y algunas acciones (registrarse, crear o copiar una colección, marcar monedas como tuyas, imprimir o descargar una lista de búsqueda, y búsquedas en el catálogo sin resultados). De una búsqueda en el catálogo sin resultados solo recibe los filtros y el texto buscado, recortado a 40 caracteres. No usa cookies, no guarda nada en tu navegador y nunca recibe tu email, el id de tu cuenta ni los nombres de tus colecciones.',
 };
 
 export default privacy;
