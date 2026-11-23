@@ -28,9 +28,12 @@ echo "[render-stack] api build"
 pnpm --filter api build
 
 echo "[render-stack] starting API on :$CCC_RENDER_API_PORT"
+# Capture the web origin before PORT is reassigned below: bash expands prefix assignments left to
+# right, so CORS_ORIGIN="http://localhost:$PORT" after PORT=... would allow the API's own port.
+WEB_ORIGIN="http://localhost:$PORT"
 (
   cd apps/api
-  PORT="$CCC_RENDER_API_PORT" CORS_ORIGIN="http://localhost:$PORT" exec node dist/main
+  PORT="$CCC_RENDER_API_PORT" CORS_ORIGIN="$WEB_ORIGIN" exec node dist/main
 ) &
 
 for _ in $(seq 1 120); do
