@@ -1,15 +1,18 @@
 /**
  * Tests for: catalog-view (pure URL/state/pagination/row-text helpers)
  * Contract source: runs/run_20261011_105146/plan.md § Interface Contract → Module: catalog-view.ts (CREATE)
- * Covers criteria: #10, #11, #13, #14, #16 (from prd.md)
+ *                   runs/run_20261123_220432/plan.md § Interface Contract → Function: catalogNoResultsProps
+ * Covers criteria: #10, #11, #13, #14, #16 (from prd.md), and #3, #6 of run_20261123_220432
  *
  * CONTRACT_GAP: none.
  */
 
 import { describe, expect, it } from 'vitest';
 import {
+  CATALOG_NO_RESULTS_NAME_MAX_LENGTH,
   CATALOG_PAGE_SIZE,
   EMPTY_CATALOG_VIEW_STATE,
+  catalogNoResultsProps,
   catalogViewStateToFilters,
   catalogViewStateToSearchParams,
   countActiveFilters,
@@ -362,5 +365,99 @@ describe('getCatalogRowText (criterion #13)', () => {
     expect(getCatalogRowText({ year: 1992, mintMark: '', variety: '', denomination: '25 Kopiyok' }).title).not.toContain(
       '1992',
     );
+  });
+});
+
+describe('catalogNoResultsProps (run_20261123_220432 criteria #3, #6)', () => {
+  const KEYS = ['country', 'denomination', 'year_from', 'year_to', 'name'];
+
+  it('the empty state gives five nulls, with exactly the five keys in order', () => {
+    const props = catalogNoResultsProps(EMPTY_CATALOG_VIEW_STATE);
+
+    expect(props).toEqual({ country: null, denomination: null, year_from: null, year_to: null, name: null });
+    expect(Object.keys(props)).toEqual(KEYS);
+  });
+
+  it('builds strings from a fully filtered view and does not mutate the denominations', () => {
+    const denominations = ['50 Cents', '1 Cent'];
+
+    const props = catalogNoResultsProps(
+      state({
+        country: 'Ukraine',
+        denominations,
+        yearMin: 1900,
+        yearMax: 1950,
+        name: '  Lincoln WHEAT  ',
+      }),
+    );
+
+    expect(props).toEqual({
+      country: 'Ukraine',
+      denomination: '1 Cent,50 Cents',
+      year_from: '1900',
+      year_to: '1950',
+      name: 'lincoln wheat',
+    });
+    expect(denominations).toEqual(['50 Cents', '1 Cent']);
+  });
+
+  it('sends a single denomination as is', () => {
+    expect(catalogNoResultsProps(state({ denominations: ['1 Cent'] })).denomination).toBe('1 Cent');
+  });
+
+  it('gives the same denomination string whatever the click order', () => {
+    const a = catalogNoResultsProps(state({ denominations: ['5 Cents', '1 Cent'] }));
+    const b = catalogNoResultsProps(state({ denominations: ['1 Cent', '5 Cents'] }));
+
+    expect(a.denomination).toBe('1 Cent,5 Cents');
+    expect(b.denomination).toBe(a.denomination);
+  });
+
+  it('only yearMax set gives year_from null and year_to a string', () => {
+    const props = catalogNoResultsProps(state({ yearMax: 1999 }));
+
+    expect(props.year_from).toBeNull();
+    expect(props.year_to).toBe('1999');
+  });
+
+  it('only yearMin set gives year_to null and year_from a string', () => {
+    const props = catalogNoResultsProps(state({ yearMin: 1850 }));
+
+    expect(props.year_from).toBe('1850');
+    expect(props.year_to).toBeNull();
+  });
+
+  it('trims the country, and an all-space country is null', () => {
+    expect(catalogNoResultsProps(state({ country: '  USA ' })).country).toBe('USA');
+    expect(catalogNoResultsProps(state({ country: '   ' })).country).toBeNull();
+  });
+
+  it('cuts a 50-character name to its first 40 characters, lowercased', () => {
+    const name = 'AbCdEfGhIj'.repeat(5);
+
+    const props = catalogNoResultsProps(state({ name }));
+
+    expect(CATALOG_NO_RESULTS_NAME_MAX_LENGTH).toBe(40);
+    expect(props.name).toHaveLength(40);
+    expect(props.name).toBe(name.slice(0, 40).toLowerCase());
+  });
+
+  it('keeps a name shorter than the limit whole', () => {
+    expect(catalogNoResultsProps(state({ name: 'Wheat' })).name).toBe('wheat');
+  });
+
+  it('a whitespace-only name is null', () => {
+    expect(catalogNoResultsProps(state({ name: '   ' })).name).toBeNull();
+  });
+
+  it('ignores sort, page, hideOwned and keyDateOnly', () => {
+    const base = catalogNoResultsProps(state({ country: 'USA', name: 'x' }));
+
+    const withExtras = catalogNoResultsProps(
+      state({ country: 'USA', name: 'x', sort: 'name_asc', page: 4, hideOwned: true, keyDateOnly: true }),
+    );
+
+    expect(withExtras).toEqual(base);
+    expect(Object.keys(withExtras)).toEqual(KEYS);
   });
 });
