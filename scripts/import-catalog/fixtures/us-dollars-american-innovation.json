@@ -1,0 +1,498 @@
+{
+  "$schema-note": "Read by hand (scratch script over the saved wikitext) from the saved Wikipedia response for \"American Innovation dollars\", whose layout the generator does not parse (see fixtures/README.md); raw source-shaped fixture, pre-sanitization: the import script normalizes mintMark/variety to the DB identity fields. Every coin here carries a mint mark. mintage is null where the source gives no figure.",
+  "sources": [
+    {
+      "type": "year / mint mark / variety / mintage",
+      "origin": "English Wikipedia \"American Innovation dollars\" (https://en.wikipedia.org/wiki/American_Innovation_dollars), revision 1384552479, fetched 2026-11-24 through the MediaWiki API (action=parse)",
+      "url": "https://en.wikipedia.org/wiki/American_Innovation_dollars",
+      "revisionId": 1384552479,
+      "fetchedAt": "2026-11-24",
+      "rawResponse": "sources/American_Innovation_dollars.2026-11-24.json",
+      "license": "Wikipedia text is CC BY-SA 4.0; the year/mint-mark/variety/mintage facts reproduced here are historical facts, not copyrightable expression -- no attribution obligation for the facts themselves, though the app footer still credits Wikipedia generally",
+      "note": "Rows read by hand (scratch script over the saved response's wikitext) from its one-column-per-mint \"Coin designs\" table, which the generator does not parse: Mintage columns Philadelphia, Denver, San Francisco Proof, San Francisco Reverse proof; rows have 10 or 12 cells, so mintages are read from the end of the row: P = Philadelphia, D = Denver; both San Francisco columns are ignored. \"TBA\" gives null. Rows from 2027 on (Feature \"TBA\") are excluded."
+    },
+    {
+      "type": "physical specs",
+      "origin": "Wikipedia \"American Innovation dollars\" infobox, in the saved response under sources/: diameter 26.49 mm, thickness 2.00 mm, mass 8.100 g, composition overall 88.5% Cu, 6% Zn, 3.5% Mn, 2% Ni (manganese brass cladding on a pure copper core)",
+      "license": "Numeric facts, not copyrightable expression (docs/catalog-data-licensing.md §1)"
+    }
+  ],
+  "rules-note": "Business strikes only, including the P and D coins the Mint sold only in rolls, bags and boxes: no proofs or reverse proofs, no Special Mint Set, special finish set or other set-only special strikes (Burnished, Enhanced Uncirculated), no silver or bullion strikes. Every coin carries a mint mark (mintMark is never null). variety is the design as displayed in the source, null where one design covers the year; a variety is listed only where the source has a separate row with its own figure, and edge-lettering errors are not varieties. Mintages come only from the saved source, null where it gives no figure; nothing is summed, split or estimated, and totals are ignored. Release order: designs in source order, then the mints. isKeyDate is false throughout because no cited source names key dates; no images. This file: the \"Coin designs\" table of \"American Innovation dollars\", 33 designs 2018-2026. year is the Year cell (rowspan), so the 2020 South Carolina coin released in January 2021 is 2020. variety is the Jurisdiction cell as displayed (\"Introductory\" for 2018). P = Philadelphia, D = Denver; the San Francisco proof and reverse proof columns are ignored. The 2026 mintages are \"TBA\" in the source, so those coins have null mintage. The announced 2027 and later designs (Feature \"TBA\") are excluded.",
+  "country": "USA",
+  "denomination": "Dollar",
+  "name": "American Innovation Dollars",
+  "yearRange": [
+    2018,
+    2026
+  ],
+  "specs": {
+    "diameterMm": 26.49,
+    "weightG": 8.1,
+    "thicknessMm": 2,
+    "material": "Manganese brass clad copper (88.5% copper, 6% zinc, 3.5% manganese, 2% nickel)"
+  },
+  "coins": [
+    {
+      "year": 2018,
+      "mintMark": "P",
+      "variety": "Introductory",
+      "isKeyDate": false,
+      "mintage": 2143925
+    },
+    {
+      "year": 2018,
+      "mintMark": "D",
+      "variety": "Introductory",
+      "isKeyDate": false,
+      "mintage": 2148525
+    },
+    {
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "Delaware",
+      "isKeyDate": false,
+      "mintage": 866850
+    },
+    {
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "Delaware",
+      "isKeyDate": false,
+      "mintage": 866400
+    },
+    {
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "Pennsylvania",
+      "isKeyDate": false,
+      "mintage": 884000
+    },
+    {
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "Pennsylvania",
+      "isKeyDate": false,
+      "mintage": 886325
+    },
+    {
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "New Jersey",
+      "isKeyDate": false,
+      "mintage": 621675
+    },
+    {
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "New Jersey",
+      "isKeyDate": false,
+      "mintage": 559675
+    },
+    {
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "Georgia",
+      "isKeyDate": false,
+      "mintage": 399900
+    },
+    {
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "Georgia",
+      "isKeyDate": false,
+      "mintage": 368475
+    },
+    {
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "Connecticut",
+      "isKeyDate": false,
+      "mintage": 440771
+    },
+    {
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "Connecticut",
+      "isKeyDate": false,
+      "mintage": 438209
+    },
+    {
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "Massachusetts",
+      "isKeyDate": false,
+      "mintage": 436750
+    },
+    {
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "Massachusetts",
+      "isKeyDate": false,
+      "mintage": 436825
+    },
+    {
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "Maryland",
+      "isKeyDate": false,
+      "mintage": 438700
+    },
+    {
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "Maryland",
+      "isKeyDate": false,
+      "mintage": 434454
+    },
+    {
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "South Carolina",
+      "isKeyDate": false,
+      "mintage": 432850
+    },
+    {
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "South Carolina",
+      "isKeyDate": false,
+      "mintage": 397800
+    },
+    {
+      "year": 2021,
+      "mintMark": "P",
+      "variety": "New Hampshire",
+      "isKeyDate": false,
+      "mintage": 454325
+    },
+    {
+      "year": 2021,
+      "mintMark": "D",
+      "variety": "New Hampshire",
+      "isKeyDate": false,
+      "mintage": 454425
+    },
+    {
+      "year": 2021,
+      "mintMark": "P",
+      "variety": "Virginia",
+      "isKeyDate": false,
+      "mintage": 454975
+    },
+    {
+      "year": 2021,
+      "mintMark": "D",
+      "variety": "Virginia",
+      "isKeyDate": false,
+      "mintage": 453025
+    },
+    {
+      "year": 2021,
+      "mintMark": "P",
+      "variety": "New York",
+      "isKeyDate": false,
+      "mintage": 453750
+    },
+    {
+      "year": 2021,
+      "mintMark": "D",
+      "variety": "New York",
+      "isKeyDate": false,
+      "mintage": 453825
+    },
+    {
+      "year": 2021,
+      "mintMark": "P",
+      "variety": "North Carolina",
+      "isKeyDate": false,
+      "mintage": 454150
+    },
+    {
+      "year": 2021,
+      "mintMark": "D",
+      "variety": "North Carolina",
+      "isKeyDate": false,
+      "mintage": 454450
+    },
+    {
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Rhode Island",
+      "isKeyDate": false,
+      "mintage": 454150
+    },
+    {
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Rhode Island",
+      "isKeyDate": false,
+      "mintage": 453775
+    },
+    {
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Vermont",
+      "isKeyDate": false,
+      "mintage": 454275
+    },
+    {
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Vermont",
+      "isKeyDate": false,
+      "mintage": 452875
+    },
+    {
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Kentucky",
+      "isKeyDate": false,
+      "mintage": 451900
+    },
+    {
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Kentucky",
+      "isKeyDate": false,
+      "mintage": 452625
+    },
+    {
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Tennessee",
+      "isKeyDate": false,
+      "mintage": 453425
+    },
+    {
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Tennessee",
+      "isKeyDate": false,
+      "mintage": 453850
+    },
+    {
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Ohio",
+      "isKeyDate": false,
+      "mintage": 496275
+    },
+    {
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Ohio",
+      "isKeyDate": false,
+      "mintage": 448225
+    },
+    {
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Louisiana",
+      "isKeyDate": false,
+      "mintage": 465025
+    },
+    {
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Louisiana",
+      "isKeyDate": false,
+      "mintage": 430625
+    },
+    {
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Indiana",
+      "isKeyDate": false,
+      "mintage": 500950
+    },
+    {
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Indiana",
+      "isKeyDate": false,
+      "mintage": 452350
+    },
+    {
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Mississippi",
+      "isKeyDate": false,
+      "mintage": 399275
+    },
+    {
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Mississippi",
+      "isKeyDate": false,
+      "mintage": 383600
+    },
+    {
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Illinois",
+      "isKeyDate": false,
+      "mintage": 498675
+    },
+    {
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Illinois",
+      "isKeyDate": false,
+      "mintage": 460200
+    },
+    {
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Alabama",
+      "isKeyDate": false,
+      "mintage": 524750
+    },
+    {
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Alabama",
+      "isKeyDate": false,
+      "mintage": 481075
+    },
+    {
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Maine",
+      "isKeyDate": false,
+      "mintage": 512025
+    },
+    {
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Maine",
+      "isKeyDate": false,
+      "mintage": 421000
+    },
+    {
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Missouri",
+      "isKeyDate": false,
+      "mintage": 524325
+    },
+    {
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Missouri",
+      "isKeyDate": false,
+      "mintage": 449975
+    },
+    {
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Arkansas",
+      "isKeyDate": false,
+      "mintage": 520900
+    },
+    {
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Arkansas",
+      "isKeyDate": false,
+      "mintage": 405000
+    },
+    {
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Michigan",
+      "isKeyDate": false,
+      "mintage": 586550
+    },
+    {
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Michigan",
+      "isKeyDate": false,
+      "mintage": 540375
+    },
+    {
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Florida",
+      "isKeyDate": false,
+      "mintage": 590350
+    },
+    {
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Florida",
+      "isKeyDate": false,
+      "mintage": 544775
+    },
+    {
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Texas",
+      "isKeyDate": false,
+      "mintage": 591125
+    },
+    {
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Texas",
+      "isKeyDate": false,
+      "mintage": 545600
+    },
+    {
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Iowa",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Iowa",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Wisconsin",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Wisconsin",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "California",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "California",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Minnesota",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Minnesota",
+      "isKeyDate": false,
+      "mintage": null
+    }
+  ]
+}
