@@ -96,7 +96,14 @@ export function PlaceholderCoin({
       className={classes}
     >
       {imageUrl ? (
-        <img data-testid="placeholder-coin-image" src={imageUrl} alt="" className="size-full rounded-full object-cover" />
+        <img
+          data-testid="placeholder-coin-image"
+          src={imageUrl}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          className="size-full rounded-full object-cover"
+        />
       ) : (
         <>
           {showRing && (

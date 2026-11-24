@@ -2,6 +2,8 @@
  * Tests for: PlaceholderCoin
  * Contract source: runs/run_20261017_142658/plan.md § Interface Contract → Component: PlaceholderCoin
  * Covers criteria: #7 (from prd.md)
+ * Extended by: runs/run_20261122_084533/plan.md § Interface Contract → Component: PlaceholderCoin (modified)
+ *   (lazy, async-decoded photo; criterion 13)
  *
  * CONTRACT_GAPS: none
  */
@@ -228,6 +230,38 @@ describe('PlaceholderCoin', () => {
     expect(screen.queryByTestId('placeholder-coin-numeral')).not.toBeInTheDocument();
     expect(screen.queryByTestId('placeholder-coin-unit')).not.toBeInTheDocument();
     expect(screen.getByTestId('placeholder-coin')).toContainElement(image);
+  });
+
+  it('lazy-loads and async-decodes a Commons photo without changing its source or alt text', () => {
+    const url =
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Coin.jpg/500px-Coin.jpg';
+    renderCoin({ imageUrl: url });
+
+    const image = screen.getByTestId('placeholder-coin-image');
+    expect(image).toHaveAttribute('loading', 'lazy');
+    expect(image).toHaveAttribute('decoding', 'async');
+    expect(image).toHaveAttribute('src', url);
+    expect(image).toHaveAttribute('alt', '');
+  });
+
+  it('lazy-loads the photo at every size, so a page of many coins does not fetch them all at once', () => {
+    const sizes: PlaceholderCoinSize[] = [28, 40, 72, 96, 180, 260, 'fluid'];
+    for (const size of sizes) {
+      const { unmount } = renderCoin({ imageUrl: 'https://example.com/coin.jpg', size });
+      const image = screen.getByTestId('placeholder-coin-image');
+      expect(image).toHaveAttribute('loading', 'lazy');
+      expect(image).toHaveAttribute('decoding', 'async');
+      unmount();
+    }
+  });
+
+  it('still crops the photo to the round disc', () => {
+    renderCoin({ imageUrl: 'https://example.com/coin.jpg' });
+
+    const image = screen.getByTestId('placeholder-coin-image');
+    expect(image.className).toContain('size-full');
+    expect(image.className).toContain('rounded-full');
+    expect(image.className).toContain('object-cover');
   });
 
   it('renders no photo when imageUrl is null or missing', () => {

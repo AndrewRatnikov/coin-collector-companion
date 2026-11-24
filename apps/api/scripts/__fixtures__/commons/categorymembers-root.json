@@ -1,0 +1,13 @@
+{
+  "batchcomplete": false,
+  "continue": {
+    "cmcontinue": "file|5a617068|103",
+    "continue": "-||"
+  },
+  "query": {
+    "categorymembers": [
+      { "pageid": 101, "ns": 14, "title": "Category:10 hryvnias coins of Ukraine" },
+      { "pageid": 102, "ns": 6, "title": "File:Ukraine 2018 10 hryvnias reverse.jpg" }
+    ]
+  }
+}
