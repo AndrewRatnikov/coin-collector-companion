@@ -1,0 +1,83 @@
+{
+  "name": "Susan B. Anthony Dollars",
+  "description": "Every Susan B. Anthony dollar business strike, 1979-1981 and 1999, by year and mint: 11 coins.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1979,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1979,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1979,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1980,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1980,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1980,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1981,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1981,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1981,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1999,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1999,
+      "mintMark": "D",
+      "variety": ""
+    }
+  ]
+}

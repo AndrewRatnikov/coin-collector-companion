@@ -1,0 +1,468 @@
+{
+  "name": "American Innovation Dollars",
+  "description": "Every American Innovation dollar in release order, 2018-2026, Philadelphia and Denver: 33 designs, 66 coins.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2018,
+      "mintMark": "P",
+      "variety": "Introductory"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2018,
+      "mintMark": "D",
+      "variety": "Introductory"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "Delaware"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "Delaware"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "Pennsylvania"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "Pennsylvania"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "New Jersey"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "New Jersey"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "Georgia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "Georgia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "Connecticut"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "Connecticut"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "Massachusetts"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "Massachusetts"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "Maryland"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "Maryland"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "South Carolina"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "South Carolina"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2021,
+      "mintMark": "P",
+      "variety": "New Hampshire"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2021,
+      "mintMark": "D",
+      "variety": "New Hampshire"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2021,
+      "mintMark": "P",
+      "variety": "Virginia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2021,
+      "mintMark": "D",
+      "variety": "Virginia"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2021,
+      "mintMark": "P",
+      "variety": "New York"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2021,
+      "mintMark": "D",
+      "variety": "New York"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2021,
+      "mintMark": "P",
+      "variety": "North Carolina"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2021,
+      "mintMark": "D",
+      "variety": "North Carolina"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Rhode Island"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Rhode Island"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Vermont"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Vermont"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Kentucky"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Kentucky"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Tennessee"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Tennessee"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Ohio"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Ohio"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Louisiana"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Louisiana"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Indiana"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Indiana"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Mississippi"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Mississippi"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Illinois"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Illinois"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Alabama"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Alabama"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Maine"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Maine"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Missouri"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Missouri"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Arkansas"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Arkansas"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Michigan"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Michigan"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Florida"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Florida"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Texas"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Texas"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Iowa"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Iowa"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Wisconsin"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Wisconsin"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "California"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "California"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Minnesota"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Minnesota"
+    }
+  ]
+}

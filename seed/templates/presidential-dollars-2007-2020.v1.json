@@ -1,0 +1,566 @@
+{
+  "name": "Presidential Dollars 2007-2020",
+  "description": "Every Presidential dollar in release order, 2007-2016 and the 2020 George H. W. Bush coin, Philadelphia and Denver: 40 designs, 80 coins.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "George Washington"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "George Washington"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "John Adams"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "John Adams"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "Thomas Jefferson"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "Thomas Jefferson"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2007,
+      "mintMark": "P",
+      "variety": "James Madison"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2007,
+      "mintMark": "D",
+      "variety": "James Madison"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "James Monroe"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "James Monroe"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "John Quincy Adams"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "John Quincy Adams"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "Andrew Jackson"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "Andrew Jackson"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2008,
+      "mintMark": "P",
+      "variety": "Martin Van Buren"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2008,
+      "mintMark": "D",
+      "variety": "Martin Van Buren"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2009,
+      "mintMark": "P",
+      "variety": "William Henry Harrison"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2009,
+      "mintMark": "D",
+      "variety": "William Henry Harrison"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2009,
+      "mintMark": "P",
+      "variety": "John Tyler"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2009,
+      "mintMark": "D",
+      "variety": "John Tyler"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2009,
+      "mintMark": "P",
+      "variety": "James K. Polk"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2009,
+      "mintMark": "D",
+      "variety": "James K. Polk"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2009,
+      "mintMark": "P",
+      "variety": "Zachary Taylor"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2009,
+      "mintMark": "D",
+      "variety": "Zachary Taylor"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2010,
+      "mintMark": "P",
+      "variety": "Millard Fillmore"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2010,
+      "mintMark": "D",
+      "variety": "Millard Fillmore"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2010,
+      "mintMark": "P",
+      "variety": "Franklin Pierce"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2010,
+      "mintMark": "D",
+      "variety": "Franklin Pierce"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2010,
+      "mintMark": "P",
+      "variety": "James Buchanan"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2010,
+      "mintMark": "D",
+      "variety": "James Buchanan"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2010,
+      "mintMark": "P",
+      "variety": "Abraham Lincoln"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2010,
+      "mintMark": "D",
+      "variety": "Abraham Lincoln"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2011,
+      "mintMark": "P",
+      "variety": "Andrew Johnson"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2011,
+      "mintMark": "D",
+      "variety": "Andrew Johnson"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2011,
+      "mintMark": "P",
+      "variety": "Ulysses S. Grant"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2011,
+      "mintMark": "D",
+      "variety": "Ulysses S. Grant"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2011,
+      "mintMark": "P",
+      "variety": "Rutherford B. Hayes"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2011,
+      "mintMark": "D",
+      "variety": "Rutherford B. Hayes"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2011,
+      "mintMark": "P",
+      "variety": "James A. Garfield"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2011,
+      "mintMark": "D",
+      "variety": "James A. Garfield"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2012,
+      "mintMark": "P",
+      "variety": "Chester A. Arthur"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2012,
+      "mintMark": "D",
+      "variety": "Chester A. Arthur"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2012,
+      "mintMark": "P",
+      "variety": "Grover Cleveland (1st term)"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2012,
+      "mintMark": "D",
+      "variety": "Grover Cleveland (1st term)"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2012,
+      "mintMark": "P",
+      "variety": "Benjamin Harrison"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2012,
+      "mintMark": "D",
+      "variety": "Benjamin Harrison"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2012,
+      "mintMark": "P",
+      "variety": "Grover Cleveland (2nd term)"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2012,
+      "mintMark": "D",
+      "variety": "Grover Cleveland (2nd term)"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2013,
+      "mintMark": "P",
+      "variety": "William McKinley"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2013,
+      "mintMark": "D",
+      "variety": "William McKinley"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2013,
+      "mintMark": "P",
+      "variety": "Theodore Roosevelt"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2013,
+      "mintMark": "D",
+      "variety": "Theodore Roosevelt"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2013,
+      "mintMark": "P",
+      "variety": "William Howard Taft"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2013,
+      "mintMark": "D",
+      "variety": "William Howard Taft"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2013,
+      "mintMark": "P",
+      "variety": "Woodrow Wilson"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2013,
+      "mintMark": "D",
+      "variety": "Woodrow Wilson"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2014,
+      "mintMark": "P",
+      "variety": "Warren G. Harding"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2014,
+      "mintMark": "D",
+      "variety": "Warren G. Harding"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2014,
+      "mintMark": "P",
+      "variety": "Calvin Coolidge"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2014,
+      "mintMark": "D",
+      "variety": "Calvin Coolidge"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2014,
+      "mintMark": "P",
+      "variety": "Herbert Hoover"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2014,
+      "mintMark": "D",
+      "variety": "Herbert Hoover"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2014,
+      "mintMark": "P",
+      "variety": "Franklin D. Roosevelt"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2014,
+      "mintMark": "D",
+      "variety": "Franklin D. Roosevelt"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2015,
+      "mintMark": "P",
+      "variety": "Harry S. Truman"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2015,
+      "mintMark": "D",
+      "variety": "Harry S. Truman"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2015,
+      "mintMark": "P",
+      "variety": "Dwight D. Eisenhower"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2015,
+      "mintMark": "D",
+      "variety": "Dwight D. Eisenhower"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2015,
+      "mintMark": "P",
+      "variety": "John F. Kennedy"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2015,
+      "mintMark": "D",
+      "variety": "John F. Kennedy"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2015,
+      "mintMark": "P",
+      "variety": "Lyndon B. Johnson"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2015,
+      "mintMark": "D",
+      "variety": "Lyndon B. Johnson"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2016,
+      "mintMark": "P",
+      "variety": "Richard Nixon"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2016,
+      "mintMark": "D",
+      "variety": "Richard Nixon"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2016,
+      "mintMark": "P",
+      "variety": "Gerald Ford"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2016,
+      "mintMark": "D",
+      "variety": "Gerald Ford"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2016,
+      "mintMark": "P",
+      "variety": "Ronald Reagan"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2016,
+      "mintMark": "D",
+      "variety": "Ronald Reagan"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "George H. W. Bush"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "George H. W. Bush"
+    }
+  ]
+}

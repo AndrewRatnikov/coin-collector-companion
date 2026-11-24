@@ -1,0 +1,118 @@
+{
+  "name": "Eisenhower Dollars",
+  "description": "Every circulating copper-nickel Eisenhower dollar, 1971-1978, Philadelphia and Denver, with both 1976 Bicentennial reverse types: 16 coins.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1971,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1971,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1972,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1972,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1973,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1973,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1974,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1974,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1976,
+      "mintMark": "P",
+      "variety": "Type I"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1976,
+      "mintMark": "D",
+      "variety": "Type I"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1976,
+      "mintMark": "P",
+      "variety": "Type II"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1976,
+      "mintMark": "D",
+      "variety": "Type II"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1977,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1977,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1978,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1978,
+      "mintMark": "D",
+      "variety": ""
+    }
+  ]
+}
