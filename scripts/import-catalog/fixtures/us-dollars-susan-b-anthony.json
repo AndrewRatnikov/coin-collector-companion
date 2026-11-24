@@ -1,0 +1,113 @@
+{
+  "$schema-note": "Read by hand (scratch script over the saved wikitext) from the saved Wikipedia response for \"Susan B. Anthony dollar\", whose layout the generator does not parse (see fixtures/README.md); raw source-shaped fixture, pre-sanitization: the import script normalizes mintMark/variety to the DB identity fields. Every coin here carries a mint mark. mintage is null where the source gives no figure.",
+  "sources": [
+    {
+      "type": "year / mint mark / variety / mintage",
+      "origin": "English Wikipedia \"Susan B. Anthony dollar\" (https://en.wikipedia.org/wiki/Susan_B._Anthony_dollar), revision 1385912112, fetched 2026-11-24 through the MediaWiki API (action=parse)",
+      "url": "https://en.wikipedia.org/wiki/Susan_B._Anthony_dollar",
+      "revisionId": 1385912112,
+      "fetchedAt": "2026-11-24",
+      "rawResponse": "sources/Susan_B._Anthony_dollar.2026-11-24.json",
+      "license": "Wikipedia text is CC BY-SA 4.0; the year/mint-mark/variety/mintage facts reproduced here are historical facts, not copyrightable expression -- no attribution obligation for the facts themselves, though the app footer still credits Wikipedia generally",
+      "note": "Read by hand from the saved response's article prose, because the article has no mintage table at all: 1979 \"757,813,744 dollar coins dated 1979 were struck for circulation at the Philadelphia, Denver and San Francisco Mints\" (total only); 1980 \"the circulation strikes for that year totaled 89,660,708\" (total only; mints from the infobox, P, D, S); 1981 \"9,742,000 1981 dollars were struck across all three Mints\" (total only); 1999 \"29,592,000 at the Philadelphia mint and 11,776,000 at the Denver mint\" (\"no 1999 dollars were struck at the San Francisco mint\"). Only the 1999 figures are per mint."
+    },
+    {
+      "type": "physical specs",
+      "origin": "Wikipedia \"Susan B. Anthony dollar\" infobox, in the saved response under sources/: diameter 26.5 mm, thickness 2.00 mm, mass 8.1 g, composition .75 copper, .25 nickel, clad to pure copper core",
+      "license": "Numeric facts, not copyrightable expression (docs/catalog-data-licensing.md §1)"
+    }
+  ],
+  "rules-note": "Business strikes only, including the P and D coins the Mint sold only in rolls, bags and boxes: no proofs or reverse proofs, no Special Mint Set, special finish set or other set-only special strikes (Burnished, Enhanced Uncirculated), no silver or bullion strikes. Every coin carries a mint mark (mintMark is never null). variety is the design as displayed in the source, null where one design covers the year; a variety is listed only where the source has a separate row with its own figure, and edge-lettering errors are not varieties. Mintages come only from the saved source, null where it gives no figure; nothing is summed, split or estimated, and totals are ignored. Release order: designs in source order, then the mints. isKeyDate is false throughout because no cited source names key dates; no images. This file: the prose of \"Susan B. Anthony dollar\" (no mintage table). 1979, 1980 and 1981 P, D, S and 1999 P, D; variety is null throughout. The 1979-1981 coins have null mintage because the source gives only yearly totals, which are never split or assigned to one mint; the 1980 mints come from the infobox (P, D, S), since the prose does not name them. The 1981 coins, issued only to collectors in mint sets, are the year's business strikes and are included. The 1979 \"near date\" (wide rim) P has no figure of its own and is not a variety. Excluded: every proof (S and the 1999 P proof).",
+  "country": "USA",
+  "denomination": "Dollar",
+  "name": "Susan B. Anthony Dollars",
+  "yearRange": [
+    1979,
+    1999
+  ],
+  "specs": {
+    "diameterMm": 26.5,
+    "weightG": 8.1,
+    "thicknessMm": 2,
+    "material": "Copper-nickel clad copper (75% copper, 25% nickel outer layers, pure copper core)"
+  },
+  "coins": [
+    {
+      "year": 1979,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 1979,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 1979,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 1980,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 1980,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 1980,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 1981,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 1981,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 1981,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 1999,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 29592000
+    },
+    {
+      "year": 1999,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 11776000
+    }
+  ]
+}
