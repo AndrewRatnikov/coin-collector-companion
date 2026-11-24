@@ -4,13 +4,45 @@ import type { RawCoinImage } from './types';
 // Wikimedia Commons API client for `pnpm run find-images`: one breadth-first crawl of a
 // category tree, and imageinfo + extmetadata for a list of files in small batches.
 // Requests are sent one at a time, each with the descriptive User-Agent that
-// docs/catalog-data-licensing.md §1 requires. No retries, no coin knowledge here.
+// docs/catalog-data-licensing.md §1 requires, after a short pause (REQUEST_DELAY_MS) so
+// Wikimedia's rate limiter isn't tripped. HTTP 429, 5xx and network failures are retried a
+// few times with a capped wait. The sleep is injected (CommonsPacing.sleep): this module
+// never waits on a real timer itself. No coin knowledge here.
 
 export const COMMONS_API_URL = 'https://commons.wikimedia.org/w/api.php';
 export const ROOT_CATEGORY = 'Category:Coins of Ukraine';
 export const MAX_CATEGORY_DEPTH = 4;
 export const IMAGEINFO_BATCH_SIZE = 5;
 export const THUMB_WIDTH = 500;
+
+export const REQUEST_DELAY_MS = 1000; // pause before every request
+export const MAX_ATTEMPTS = 4; // attempts per request, the first included
+export const RETRY_BASE_DELAY_MS = 2000; // backoff 2000, 4000, 8000 …
+export const MAX_RETRY_WAIT_MS = 60000; // cap on one wait; a longer Retry-After gives up
+
+export type Sleep = (ms: number) => Promise<void>;
+
+export interface CommonsPacing {
+  sleep: Sleep;
+  delayMs?: number;
+  maxAttempts?: number;
+  retryBaseDelayMs?: number;
+  maxRetryWaitMs?: number;
+  onRetry?: (line: string) => void;
+}
+
+// Retry-After in integer seconds -> milliseconds. An HTTP-date or anything else is null,
+// and the exponential backoff applies instead.
+export function parseRetryAfter(value: string | null | undefined): number | null {
+  if (value === null || value === undefined) return null;
+  const trimmed = value.trim();
+  if (!/^\d+$/.test(trimmed)) return null;
+  return Number(trimmed) * 1000;
+}
+
+export function isRetryableStatus(status: number): boolean {
+  return status === 429 || (status >= 500 && status <= 599);
+}
 
 const EXTMETADATA_FIELDS = ['Artist', 'Credit', 'LicenseShortName', 'Copyrighted', 'AttributionRequired'];
 
@@ -76,24 +108,67 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-// One awaited request: non-OK HTTP, a body that isn't JSON, or an API `error` object
-// all become a CommonsApiError.
-async function requestJson(url: string, fetchFn: FetchLike, userAgent: string, what: string): Promise<unknown> {
+type Attempt = { body: string } | { failure: string; retryAfter: string | null };
+
+// One attempt: a retryable failure (429, 5xx, a thrown fetch or body read) is returned,
+// any other non-OK status throws at once.
+async function attemptRequest(url: string, fetchFn: FetchLike, userAgent: string, what: string): Promise<Attempt> {
   let response: FetchResponseLike;
-  let body: string;
   try {
     response = await fetchFn(url, { headers: { 'User-Agent': userAgent } });
-    if (!response.ok) {
+  } catch (err) {
+    return { failure: errorMessage(err), retryAfter: null };
+  }
+  if (!response.ok) {
+    const detail = `HTTP ${response.status} ${response.statusText}`.trim();
+    if (isRetryableStatus(response.status)) {
+      return { failure: detail, retryAfter: response.headers?.get('Retry-After') ?? null };
+    }
+    throw new CommonsApiError(`Commons API request for ${what} failed: ${detail}`);
+  }
+  try {
+    return { body: await response.text() };
+  } catch (err) {
+    return { failure: errorMessage(err), retryAfter: null };
+  }
+}
+
+// One awaited request, paced and retried (see CommonsPacing). After the last attempt, or
+// when Commons asks for a longer wait than the cap, a CommonsApiError. A body that isn't
+// JSON or carries an API `error` object is a CommonsApiError without retry.
+async function requestJson(
+  url: string,
+  fetchFn: FetchLike,
+  userAgent: string,
+  what: string,
+  pacing: CommonsPacing,
+): Promise<unknown> {
+  const delayMs = pacing.delayMs ?? REQUEST_DELAY_MS;
+  const maxAttempts = pacing.maxAttempts ?? MAX_ATTEMPTS;
+  const retryBaseDelayMs = pacing.retryBaseDelayMs ?? RETRY_BASE_DELAY_MS;
+  const maxRetryWaitMs = pacing.maxRetryWaitMs ?? MAX_RETRY_WAIT_MS;
+
+  let wait = delayMs;
+  for (let attempt = 1; ; attempt += 1) {
+    await pacing.sleep(wait);
+    const result = await attemptRequest(url, fetchFn, userAgent, what);
+    if ('body' in result) return parseBody(result.body, what);
+    const failed = `Commons API request for ${what} failed: ${result.failure}`;
+    if (attempt >= maxAttempts) {
+      throw new CommonsApiError(`${failed} (gave up after ${maxAttempts} attempts)`);
+    }
+    const asked = parseRetryAfter(result.retryAfter);
+    if (asked !== null && asked > maxRetryWaitMs) {
       throw new CommonsApiError(
-        `Commons API request for ${what} failed: HTTP ${response.status} ${response.statusText}`.trim(),
+        `${failed}; Commons asked to wait ${asked / 1000} s, more than the ${maxRetryWaitMs / 1000} s limit`,
       );
     }
-    body = await response.text();
-  } catch (err) {
-    if (err instanceof CommonsApiError) throw err;
-    throw new CommonsApiError(`Commons API request for ${what} failed: ${errorMessage(err)}`);
+    wait = asked !== null ? Math.max(asked, delayMs) : Math.min(retryBaseDelayMs * 2 ** (attempt - 1), maxRetryWaitMs);
+    pacing.onRetry?.(`${failed}; retrying in ${wait / 1000} s (attempt ${attempt + 1} of ${maxAttempts})`);
   }
+}
 
+function parseBody(body: string, what: string): unknown {
   let json: unknown;
   try {
     json = JSON.parse(body);
@@ -129,6 +204,7 @@ function compareStrings(a: string, b: string): number {
 export async function listCategoryFiles(
   fetchFn: FetchLike,
   userAgent: string,
+  pacing: CommonsPacing,
   root: string = ROOT_CATEGORY,
   maxDepth: number = MAX_CATEGORY_DEPTH,
 ): Promise<CommonsFile[]> {
@@ -145,6 +221,7 @@ export async function listCategoryFiles(
         fetchFn,
         userAgent,
         `"${category}"`,
+        pacing,
       )) as CategoryMembersResponse;
 
       for (const member of data.query?.categorymembers ?? []) {
@@ -216,6 +293,7 @@ export async function fetchImageInfo(
   titles: readonly string[],
   fetchFn: FetchLike,
   userAgent: string,
+  pacing: CommonsPacing,
 ): Promise<Map<string, CommonsImageInfo>> {
   const unique = [...new Set(titles)];
   const infos = new Map<string, CommonsImageInfo>();
@@ -226,6 +304,7 @@ export async function fetchImageInfo(
       fetchFn,
       userAgent,
       `imageinfo of ${batch.length} file(s)`,
+      pacing,
     )) as { query?: { pages?: ImageInfoPage[] } };
     for (const page of data.query?.pages ?? []) {
       const info = toImageInfo(page);

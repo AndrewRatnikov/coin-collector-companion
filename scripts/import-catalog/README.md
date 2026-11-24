@@ -156,9 +156,15 @@ or isn't Ukrainian (`country` other than `Ukraine`), before any request is made.
 (4 levels deep, `list=categorymembers`, 500 per page, following `continue`), then
 `prop=imageinfo` with `extmetadata` (Artist, Credit, LicenseShortName, Copyrighted,
 AttributionRequired) for the candidate files only, at most 5 files per request. Requests go one
-at a time, with no retry, and carry the same `User-Agent` as the generator (add a contact with
-`WIKIPEDIA_CONTACT`). A failed request or an API error exits 1 and writes nothing: all writes
-happen after the last request.
+at a time and carry the same `User-Agent` as the generator (add a contact with
+`WIKIPEDIA_CONTACT`). Each request waits 1 s before it is sent, so Wikimedia's rate limiter isn't
+tripped; a full crawl of a few hundred categories takes a few minutes. HTTP 429, HTTP 5xx and
+network failures are retried, up to 4 attempts in total: the wait honours `Retry-After` (in
+seconds) or otherwise backs off 2 s, 4 s, 8 s, and each wait is capped at 60 s. Every retry prints
+a line to stderr. A `Retry-After` above 60 s, a 4th failure, any other failed request or an API
+error exits 1 and writes nothing: all writes happen after the last request. If 429s persist, wait
+a while, make sure `WIKIPEDIA_CONTACT` is set, and run again (nothing was written, so re-running
+is safe).
 
 **Matching.** A wrong picture is worse than none, so the rules are strict:
 

@@ -158,6 +158,8 @@ export interface FetchResponseLike {
   status: number;
   statusText: string;
   text(): Promise<string>;
+  // Read by find-images (lib/commons.ts) for Retry-After; the generator doesn't use it.
+  headers?: { get(name: string): string | null };
 }
 
 export type FetchLike = (url: string, init: { headers: Record<string, string> }) => Promise<FetchResponseLike>;

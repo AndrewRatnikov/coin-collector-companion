@@ -8,6 +8,8 @@ import type { FetchLike } from './lib/generate';
 
 runFindImages(process.argv.slice(2), {
   fetch: ((url, init) => fetch(url, init)) as FetchLike,
+  // The only real timer: lib/ gets the pause between Commons requests through this.
+  sleep: (ms) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
   baseDir: __dirname,
   contact: process.env.WIKIPEDIA_CONTACT,
   readFile: (path) => readFileSync(path, 'utf8'),

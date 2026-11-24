@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 
 import { CommonsApiError, fetchImageInfo, listCategoryFiles } from './commons';
+import type { CommonsPacing, Sleep } from './commons';
 import { FixtureFormatError, setCoinImages } from './fixture-writer';
 import { UsageError, buildUserAgent } from './generate';
 import type { FetchLike } from './generate';
@@ -11,7 +12,8 @@ import type { RawCoinImage, RawFixtureFile } from './types';
 // `pnpm run find-images`: find a Wikimedia Commons image for each coin of the given
 // Ukrainian fixtures and write an `image` block where exactly one file clears the
 // matching rules and the licence gate. Every side effect (fetch, file reads/writes,
-// console) comes in through FindImagesDeps, so this module is testable offline.
+// console, the pause between Commons requests) comes in through FindImagesDeps, so this
+// module is testable offline.
 
 export const FIND_IMAGES_USAGE = [
   'Usage: pnpm run find-images -- fixtures/ukraine-*.json [--dry-run] [--overwrite]',
@@ -37,6 +39,7 @@ export interface CoinResult {
 
 export interface FindImagesDeps {
   fetch: FetchLike;
+  sleep: Sleep;
   baseDir: string;
   contact?: string;
   readFile: (path: string) => string;
@@ -175,11 +178,13 @@ export async function runFindImages(argv: readonly string[], deps: FindImagesDep
   const toProcess = queries.filter((q) => args.overwrite || !q.hasImage);
   const results: CoinResult[] = [];
   const userAgent = buildUserAgent(deps.contact);
+  // Retry lines go to stderr, so a slow run shows why it is waiting.
+  const pacing: CommonsPacing = { sleep: deps.sleep, onRetry: deps.error };
 
   try {
     const outcomes = new Map<CoinQuery, MatchOutcome>();
     if (toProcess.length > 0) {
-      const files = await listCategoryFiles(deps.fetch, userAgent);
+      const files = await listCategoryFiles(deps.fetch, userAgent, pacing);
       const textMatches = new Map<CoinQuery, TextMatch>();
       const titles: string[] = [];
       for (const q of toProcess) {
@@ -187,7 +192,7 @@ export async function runFindImages(argv: readonly string[], deps: FindImagesDep
         textMatches.set(q, match);
         if (match.kind === 'candidates') titles.push(...match.titles);
       }
-      const infos = titles.length > 0 ? await fetchImageInfo(titles, deps.fetch, userAgent) : new Map();
+      const infos = titles.length > 0 ? await fetchImageInfo(titles, deps.fetch, userAgent, pacing) : new Map();
       for (const q of toProcess) {
         const match = textMatches.get(q) as TextMatch;
         outcomes.set(
