@@ -74,6 +74,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-22](2026-11-22-commons-requests-paced-and-retried-with-a-cap.md) | Commons requests are paced at 1 s and retried on 429, 5xx and network failures, with at most 4 attempts and 60 s per wait | Accepted |
 | [2026-11-23](2026-11-23-empty-catalog-searches-sent-to-posthog-with-search-text.md) | Empty catalog searches are sent to PostHog as `catalog_no_results`, with the filters and a 40-character search text | Accepted |
 | [2026-11-23](2026-11-23-no-results-event-fires-once-per-sent-properties-per-page-mount.md) | The `catalog_no_results` event fires once per distinct set of sent properties per page mount, never from placeholder data | Accepted |
+| [2026-11-24](2026-11-24-unmarked-philadelphia-dollars-get-mint-mark-p.md) | Philadelphia coins struck without a mint mark get `mintMark` "P" in the dollar fixtures, so `mintMark` is never null | Accepted |
 
 ## Where else decisions live
 

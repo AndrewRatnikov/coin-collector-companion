@@ -1,0 +1,384 @@
+{
+  "name": "Sacagawea and Native American Dollars",
+  "description": "Every Sacagawea (2000-2008) and Native American (2009-2026) dollar by year, Philadelphia and Denver, with each year's reverse design from 2009: 54 coins.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2000,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2000,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2001,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2001,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2002,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2002,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2003,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2003,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2004,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2004,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2005,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2005,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2006,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2006,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2007,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2007,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2008,
+      "mintMark": "P",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2008,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2009,
+      "mintMark": "P",
+      "variety": "Three Sisters"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2009,
+      "mintMark": "D",
+      "variety": "Three Sisters"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2010,
+      "mintMark": "P",
+      "variety": "Great Law of Peace"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2010,
+      "mintMark": "D",
+      "variety": "Great Law of Peace"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2011,
+      "mintMark": "P",
+      "variety": "Wampanoag Treaty"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2011,
+      "mintMark": "D",
+      "variety": "Wampanoag Treaty"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2012,
+      "mintMark": "P",
+      "variety": "Trade Routes of the 17th Century"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2012,
+      "mintMark": "D",
+      "variety": "Trade Routes of the 17th Century"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2013,
+      "mintMark": "P",
+      "variety": "Treaty with the Delawares"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2013,
+      "mintMark": "D",
+      "variety": "Treaty with the Delawares"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2014,
+      "mintMark": "P",
+      "variety": "Native Hospitality"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2014,
+      "mintMark": "D",
+      "variety": "Native Hospitality"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2015,
+      "mintMark": "P",
+      "variety": "Mohawk Ironworkers"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2015,
+      "mintMark": "D",
+      "variety": "Mohawk Ironworkers"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2016,
+      "mintMark": "P",
+      "variety": "Code Talkers"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2016,
+      "mintMark": "D",
+      "variety": "Code Talkers"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2017,
+      "mintMark": "P",
+      "variety": "Sequoyah"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2017,
+      "mintMark": "D",
+      "variety": "Sequoyah"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2018,
+      "mintMark": "P",
+      "variety": "Jim Thorpe"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2018,
+      "mintMark": "D",
+      "variety": "Jim Thorpe"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "American Indians in Space"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "American Indians in Space"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "Elizabeth Peratrovich and Alaska's Anti-Discrimination Law"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "Elizabeth Peratrovich and Alaska's Anti-Discrimination Law"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2021,
+      "mintMark": "P",
+      "variety": "American Indians in the U.S. Military"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2021,
+      "mintMark": "D",
+      "variety": "American Indians in the U.S. Military"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Ely S. Parker"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Ely S. Parker"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Maria Tallchief and American Indians in Ballet"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Maria Tallchief and American Indians in Ballet"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Indian Citizenship Act of 1924"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Indian Citizenship Act of 1924"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Mary Kawena Pukui"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Mary Kawena Pukui"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Oneida Indian Nation at Valley Forge"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Oneida Indian Nation at Valley Forge"
+    }
+  ]
+}

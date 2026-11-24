@@ -77,6 +77,7 @@ Every series passes the license gate in [docs/catalog-data-licensing.md](catalog
 - [ ] 2.7 Euro circulation coins by country, and the €2 commemoratives.
 - [ ] 2.8 Ukrainian UI locale (`locales/uk/`, typed against `en/` like `es/`), since the Ukrainian catalog is already the second largest.
 - [ ] 2.9 **Pending manual pass** after each import: run the import and `seed:canonical` against production, spot-check counts and images.
+- [x] 2.10 Modern US dollars: Presidential, Sacagawea and Native American, American Innovation, Eisenhower, Susan B. Anthony. Done 2026-11-24: fixtures for the five programs (227 business strikes: Presidential 2007-2016 and 2020, Sacagawea and Native American 2000-2026, American Innovation 2018-2026, Eisenhower 1971-1978, Susan B. Anthony 1979-1981 and 1999) and one canonical set per program: "Presidential Dollars 2007-2020", "Sacagawea and Native American Dollars", "American Innovation Dollars", "Eisenhower Dollars", "Susan B. Anthony Dollars". Not yet in production: the import and `seed:canonical` are the pending manual pass under 2.9.
 
 **Checkpoint:** a US or eurozone collector of a mainstream series finds their coins and a ready-made checklist.
 

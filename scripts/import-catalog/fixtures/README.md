@@ -161,6 +161,101 @@ no such check.
 **Not in production yet.** Running the import and `seed:canonical` against production is the
 pending manual pass under growth backlog 2.9.
 
+## us-dollars-*.json (five files: Presidential through Susan B. Anthony)
+
+227 small-size dollar business strikes, 1971–2026 (`country: "USA"`, `denomination: "Dollar"`),
+one file per program, each `name` being the program:
+`us-dollars-presidential.json` (Presidential Dollars, 2007–2016 and 2020, 40 designs, 80 coins),
+`us-dollars-sacagawea-and-native-american.json` (Sacagawea and Native American Dollars, 2000–2026,
+54 coins),
+`us-dollars-american-innovation.json` (American Innovation Dollars, 2018–2026, 33 designs, 66 coins),
+`us-dollars-eisenhower.json` (Eisenhower Dollars, 1971–1978, 16 coins) and
+`us-dollars-susan-b-anthony.json` (Susan B. Anthony Dollars, 1979–1981 and 1999, 11 coins).
+
+**Provenance.** Five English Wikipedia articles, each fetched once on 2026-11-24 with
+`pnpm run generate` (`../generate-fixture.ts`), with the raw responses saved unmodified under
+`../sources/` and cited in each file's `sources[0]`:
+- "Presidential dollar coins", revision 1386046416
+  (`../sources/Presidential_dollar_coins.2026-11-24.json`; "Presidential dollar coin" and
+  "Presidential $1 Coin Program" redirect to it).
+- "Sacagawea dollar", revision 1385999246 (`../sources/Sacagawea_dollar.2026-11-24.json`): both the
+  Sacagawea and the Native American coins, since "Native American dollar" redirects to it.
+- "American Innovation dollars", revision 1384552479
+  (`../sources/American_Innovation_dollars.2026-11-24.json`).
+- "Eisenhower dollar", revision 1384170327 (`../sources/Eisenhower_dollar.2026-11-24.json`).
+- "Susan B. Anthony dollar", revision 1385912112 (`../sources/Susan_B._Anthony_dollar.2026-11-24.json`).
+
+None of the five layouts is a Year/Mint/Mintage table the generator parses: it saved each source,
+then exited with "No usable rows", so every file was read by hand (a scratch script over the saved
+wikitext) and its `sources[0].note` says so. The layouts:
+- Presidential: one wide "Coin details" table with a column per mint and no Year column; `year` is
+  the year of the Release date cell, and Denver Mintage comes before Philadelphia Mintage.
+- Sacagawea and Native American: the "Mintage figures" table (Year, Philadelphia, Denver, San
+  Francisco, Total; rows 2000–2022) for the mintages, and the "Designs by year" table, whose Theme
+  column gives the 2009–2026 reverse design.
+- American Innovation: one wide "Coin designs" table (Year as a rowspan, Jurisdiction, ..., then
+  Philadelphia, Denver, San Francisco Proof, San Francisco Reverse proof). Rows have 10 or 12 cells,
+  so mintages are read from the end of the row.
+- Eisenhower: no table; "Mintage figures" is three bulleted lists, and only "Circulation strikes:"
+  is used.
+- Susan B. Anthony: no mintage table at all; the coins come from the article prose and infobox.
+
+No generator draft was written or committed: the import reads every `*.json` in this directory.
+
+**Selection rules** (also in each file's `rules-note`):
+- Business strikes only, including the P and D coins the Mint sold only in rolls, bags and boxes
+  (Presidential 2012–2016 and 2020, Native American 2012 onward, all American Innovation). Every
+  coin carries its mint mark, so `mintMark` is never null. The Philadelphia Eisenhower dollars carry
+  no mint mark on the coin but are `"P"` here (unlike the unmarked Lincoln cents above). S appears
+  only in the Anthony file: the 1979, 1980 and 1981 S business strikes.
+- `variety` is the design as displayed in the source (`[[Target|Label]]` gives "Label"): the
+  president for Presidential, with the two Grover Cleveland rows as "Grover Cleveland (1st term)" and
+  "Grover Cleveland (2nd term)"; the year's Native American reverse theme from 2009 (null for the
+  Sacagawea reverse, 2000–2008); the jurisdiction for American Innovation ("Introductory" for 2018,
+  and the 2020 South Carolina coin released in January 2021 stays 2020, its Year cell); "Type I" and
+  "Type II" for the 1776–1976 Eisenhower dollars, which have separate rows with their own figures.
+  Every other Eisenhower coin and every Anthony coin has variety null.
+- A variety is listed only where the source has a separate row with its own figure: the 1972
+  Eisenhower reverse types and the 1979 Anthony "near date" (wide rim) are not varieties. The
+  Presidential edge-lettering errors ("Minting errors" section) are not varieties either.
+- Mintages come only from the saved source, with separators removed, and are never summed, split or
+  estimated; Total columns are ignored.
+- Coins are in release order: designs in source order, then P, D (Anthony 1979–1981: P, D, S).
+
+**Specs.** One file-level `specs` block per file, from that program's own infobox in the saved
+response, with no per-coin overrides (no infobox shows a composition change; the Sacagawea edge
+change of 2009 isn't stored):
+- Presidential, Sacagawea and Native American, American Innovation: 26.49 mm, 8.1 g, 2.00 mm,
+  "Manganese brass clad copper (88.5% copper, 6% zinc, 3.5% manganese, 2% nickel)".
+- Eisenhower: 38.1 mm, 22.68 g, 2.58 mm, "Copper-nickel clad copper (91.67% copper, 8.33% nickel)".
+- Susan B. Anthony: 26.5 mm, 8.1 g, 2.00 mm, "Copper-nickel clad copper (75% copper, 25% nickel
+  outer layers, pure copper core)".
+
+**Null mintages.** 25 coins, each because the source gives no figure for it:
+- Native American 2023–2026 (8 coins): the "Mintage figures" table ends at 2022.
+- American Innovation 2026 (8 coins): the mintage cells are "TBA".
+- Susan B. Anthony 1979–1981 (9 coins): the prose gives only yearly totals (757,813,744 for 1979,
+  89,660,708 for 1980, 9,742,000 for 1981), which are never split or assigned to one mint. The 1980
+  mints are the infobox's P, D, S, since the prose doesn't name them. Only the 1999 P and D figures
+  are per mint.
+
+Presidential and Eisenhower have no null mintages.
+
+**Excluded.** Proofs and reverse proofs (every San Francisco column, the Eisenhower "Proof:" list,
+every Anthony proof), Special Mint Set and other set-only special finishes (the Sacagawea "Special
+finish sets": 2000-D Burnished, 2014-D, 2015-W, 2016-S, 2017-S, 2019-P Enhanced Uncirculated), the
+Eisenhower 40% silver S coins ("Uncirculated silver:" list and silver proofs), bullion, the 2000
+"Cheerios" and other special strikes without rows of their own, and the announced but unissued
+designs (the italic Native American 2027 row and every American Innovation row from 2027, Feature
+"TBA"). `isKeyDate` is false throughout, since no cited source names key dates (the Eisenhower
+article even says no Eisenhower dollar is rare), and there are no images. The designs from after
+March 1989 need the per-design check in
+[docs/catalog-data-licensing.md](../../../docs/catalog-data-licensing.md) before any image is added;
+the catalog rows themselves are facts and need no such check.
+
+**Not in production yet.** Running the import and `seed:canonical` against production is the
+pending manual pass under growth backlog 2.9.
+
 ## `ukraine-commemorative-1-hryvnia.json` / `ukraine-commemorative-10-hryvnias.json`
 
 46 circulating commemorative coins of Ukraine: 6 × 1 hryvnia (2004–2016, aluminium bronze, 26 mm,

@@ -1,0 +1,414 @@
+{
+  "$schema-note": "Read by hand (scratch script over the saved wikitext) from the saved Wikipedia response for \"Sacagawea dollar\", whose layout the generator does not parse (see fixtures/README.md); raw source-shaped fixture, pre-sanitization: the import script normalizes mintMark/variety to the DB identity fields. Every coin here carries a mint mark. mintage is null where the source gives no figure.",
+  "sources": [
+    {
+      "type": "year / mint mark / variety / mintage",
+      "origin": "English Wikipedia \"Sacagawea dollar\" (https://en.wikipedia.org/wiki/Sacagawea_dollar), revision 1385999246, fetched 2026-11-24 through the MediaWiki API (action=parse)",
+      "url": "https://en.wikipedia.org/wiki/Sacagawea_dollar",
+      "revisionId": 1385999246,
+      "fetchedAt": "2026-11-24",
+      "rawResponse": "sources/Sacagawea_dollar.2026-11-24.json",
+      "license": "Wikipedia text is CC BY-SA 4.0; the year/mint-mark/variety/mintage facts reproduced here are historical facts, not copyrightable expression -- no attribution obligation for the facts themselves, though the app footer still credits Wikipedia generally",
+      "note": "Rows read by hand (scratch script over the saved response's wikitext) from two tables the generator does not parse: the one-column-per-mint \"Mintage figures\" table (Year, Philadelphia, Denver, San Francisco, Total; rows 2000-2022): P = Philadelphia, D = Denver, the San Francisco (proof) and Total columns ignored; and the \"Designs by year\" table, whose Theme column gives the 2009-2026 variety as displayed. The italic, not yet issued 2027 row is excluded."
+    },
+    {
+      "type": "physical specs",
+      "origin": "Wikipedia \"Sacagawea dollar\" infobox, in the saved response under sources/: diameter 26.49 mm, thickness 2.00 mm, mass 8.100 g, composition overall 88.5% Cu, 6% Zn, 3.5% Mn, 2% Ni (manganese brass cladding on a pure copper core)",
+      "license": "Numeric facts, not copyrightable expression (docs/catalog-data-licensing.md §1)"
+    }
+  ],
+  "rules-note": "Business strikes only, including the P and D coins the Mint sold only in rolls, bags and boxes: no proofs or reverse proofs, no Special Mint Set, special finish set or other set-only special strikes (Burnished, Enhanced Uncirculated), no silver or bullion strikes. Every coin carries a mint mark (mintMark is never null). variety is the design as displayed in the source, null where one design covers the year; a variety is listed only where the source has a separate row with its own figure, and edge-lettering errors are not varieties. Mintages come only from the saved source, null where it gives no figure; nothing is summed, split or estimated, and totals are ignored. Release order: designs in source order, then the mints. isKeyDate is false throughout because no cited source names key dates; no images. This file: the \"Sacagawea dollar\" article (\"Native American dollar\" redirects to it), 2000-2026, P and D each year. variety is null for the Sacagawea reverse (2000-2008) and, from 2009, the year's Native American reverse: the Theme cell of the \"Designs by year\" table as displayed. Mintages from the \"Mintage figures\" table (P = Philadelphia, D = Denver); it has no rows after 2022, so the 2023-2026 coins have null mintage. Excluded: the San Francisco proofs, the \"Special finish sets\" coins (2000-D Burnished, 2014-D, 2015-W, 2016-S, 2017-S, 2019-P Enhanced Uncirculated), the 2000 \"Cheerios\" and other special strikes (no rows of their own), and the unissued 2027 design.",
+  "country": "USA",
+  "denomination": "Dollar",
+  "name": "Sacagawea and Native American Dollars",
+  "yearRange": [
+    2000,
+    2026
+  ],
+  "specs": {
+    "diameterMm": 26.49,
+    "weightG": 8.1,
+    "thicknessMm": 2,
+    "material": "Manganese brass clad copper (88.5% copper, 6% zinc, 3.5% manganese, 2% nickel)"
+  },
+  "coins": [
+    {
+      "year": 2000,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 767150500
+    },
+    {
+      "year": 2000,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 518916000
+    },
+    {
+      "year": 2001,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 62468000
+    },
+    {
+      "year": 2001,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 70939500
+    },
+    {
+      "year": 2002,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 3865610
+    },
+    {
+      "year": 2002,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 3732000
+    },
+    {
+      "year": 2003,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 3080000
+    },
+    {
+      "year": 2003,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 3080000
+    },
+    {
+      "year": 2004,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2660000
+    },
+    {
+      "year": 2004,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2660000
+    },
+    {
+      "year": 2005,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2520000
+    },
+    {
+      "year": 2005,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2520000
+    },
+    {
+      "year": 2006,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 4900000
+    },
+    {
+      "year": 2006,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2800000
+    },
+    {
+      "year": 2007,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 3640000
+    },
+    {
+      "year": 2007,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 3920000
+    },
+    {
+      "year": 2008,
+      "mintMark": "P",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1820000
+    },
+    {
+      "year": 2008,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1820000
+    },
+    {
+      "year": 2009,
+      "mintMark": "P",
+      "variety": "Three Sisters",
+      "isKeyDate": false,
+      "mintage": 37380000
+    },
+    {
+      "year": 2009,
+      "mintMark": "D",
+      "variety": "Three Sisters",
+      "isKeyDate": false,
+      "mintage": 33880000
+    },
+    {
+      "year": 2010,
+      "mintMark": "P",
+      "variety": "Great Law of Peace",
+      "isKeyDate": false,
+      "mintage": 32060000
+    },
+    {
+      "year": 2010,
+      "mintMark": "D",
+      "variety": "Great Law of Peace",
+      "isKeyDate": false,
+      "mintage": 48720000
+    },
+    {
+      "year": 2011,
+      "mintMark": "P",
+      "variety": "Wampanoag Treaty",
+      "isKeyDate": false,
+      "mintage": 29400000
+    },
+    {
+      "year": 2011,
+      "mintMark": "D",
+      "variety": "Wampanoag Treaty",
+      "isKeyDate": false,
+      "mintage": 48160000
+    },
+    {
+      "year": 2012,
+      "mintMark": "P",
+      "variety": "Trade Routes of the 17th Century",
+      "isKeyDate": false,
+      "mintage": 2800000
+    },
+    {
+      "year": 2012,
+      "mintMark": "D",
+      "variety": "Trade Routes of the 17th Century",
+      "isKeyDate": false,
+      "mintage": 3080000
+    },
+    {
+      "year": 2013,
+      "mintMark": "P",
+      "variety": "Treaty with the Delawares",
+      "isKeyDate": false,
+      "mintage": 1820000
+    },
+    {
+      "year": 2013,
+      "mintMark": "D",
+      "variety": "Treaty with the Delawares",
+      "isKeyDate": false,
+      "mintage": 1820000
+    },
+    {
+      "year": 2014,
+      "mintMark": "P",
+      "variety": "Native Hospitality",
+      "isKeyDate": false,
+      "mintage": 3080000
+    },
+    {
+      "year": 2014,
+      "mintMark": "D",
+      "variety": "Native Hospitality",
+      "isKeyDate": false,
+      "mintage": 5600000
+    },
+    {
+      "year": 2015,
+      "mintMark": "P",
+      "variety": "Mohawk Ironworkers",
+      "isKeyDate": false,
+      "mintage": 2800000
+    },
+    {
+      "year": 2015,
+      "mintMark": "D",
+      "variety": "Mohawk Ironworkers",
+      "isKeyDate": false,
+      "mintage": 2240000
+    },
+    {
+      "year": 2016,
+      "mintMark": "P",
+      "variety": "Code Talkers",
+      "isKeyDate": false,
+      "mintage": 2100000
+    },
+    {
+      "year": 2016,
+      "mintMark": "D",
+      "variety": "Code Talkers",
+      "isKeyDate": false,
+      "mintage": 2800000
+    },
+    {
+      "year": 2017,
+      "mintMark": "P",
+      "variety": "Sequoyah",
+      "isKeyDate": false,
+      "mintage": 3020736
+    },
+    {
+      "year": 2017,
+      "mintMark": "D",
+      "variety": "Sequoyah",
+      "isKeyDate": false,
+      "mintage": 2737136
+    },
+    {
+      "year": 2018,
+      "mintMark": "P",
+      "variety": "Jim Thorpe",
+      "isKeyDate": false,
+      "mintage": 1400000
+    },
+    {
+      "year": 2018,
+      "mintMark": "D",
+      "variety": "Jim Thorpe",
+      "isKeyDate": false,
+      "mintage": 1400000
+    },
+    {
+      "year": 2019,
+      "mintMark": "P",
+      "variety": "American Indians in Space",
+      "isKeyDate": false,
+      "mintage": 1400000
+    },
+    {
+      "year": 2019,
+      "mintMark": "D",
+      "variety": "American Indians in Space",
+      "isKeyDate": false,
+      "mintage": 1540000
+    },
+    {
+      "year": 2020,
+      "mintMark": "P",
+      "variety": "Elizabeth Peratrovich and Alaska's Anti-Discrimination Law",
+      "isKeyDate": false,
+      "mintage": 1400000
+    },
+    {
+      "year": 2020,
+      "mintMark": "D",
+      "variety": "Elizabeth Peratrovich and Alaska's Anti-Discrimination Law",
+      "isKeyDate": false,
+      "mintage": 1260000
+    },
+    {
+      "year": 2021,
+      "mintMark": "P",
+      "variety": "American Indians in the U.S. Military",
+      "isKeyDate": false,
+      "mintage": 1260000
+    },
+    {
+      "year": 2021,
+      "mintMark": "D",
+      "variety": "American Indians in the U.S. Military",
+      "isKeyDate": false,
+      "mintage": 1260000
+    },
+    {
+      "year": 2022,
+      "mintMark": "P",
+      "variety": "Ely S. Parker",
+      "isKeyDate": false,
+      "mintage": 980000
+    },
+    {
+      "year": 2022,
+      "mintMark": "D",
+      "variety": "Ely S. Parker",
+      "isKeyDate": false,
+      "mintage": 980000
+    },
+    {
+      "year": 2023,
+      "mintMark": "P",
+      "variety": "Maria Tallchief and American Indians in Ballet",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2023,
+      "mintMark": "D",
+      "variety": "Maria Tallchief and American Indians in Ballet",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2024,
+      "mintMark": "P",
+      "variety": "Indian Citizenship Act of 1924",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2024,
+      "mintMark": "D",
+      "variety": "Indian Citizenship Act of 1924",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2025,
+      "mintMark": "P",
+      "variety": "Mary Kawena Pukui",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2025,
+      "mintMark": "D",
+      "variety": "Mary Kawena Pukui",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2026,
+      "mintMark": "P",
+      "variety": "Oneida Indian Nation at Valley Forge",
+      "isKeyDate": false,
+      "mintage": null
+    },
+    {
+      "year": 2026,
+      "mintMark": "D",
+      "variety": "Oneida Indian Nation at Valley Forge",
+      "isKeyDate": false,
+      "mintage": null
+    }
+  ]
+}
