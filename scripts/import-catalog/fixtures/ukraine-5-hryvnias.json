@@ -45,7 +45,14 @@
       "year": 2022,
       "mintMark": null,
       "variety": null,
-      "mintage": 45000000
+      "mintage": 45000000,
+      "image": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/b/bb/%D0%90%D0%B2%D0%B5%D1%80%D1%81_%D0%BC%D0%BE%D0%BD%D0%B5%D1%82%D0%B8_2022_%D1%82%D0%B8%D0%B3%D1%80.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+        "source": "Національний банк України",
+        "license": "Public domain",
+        "copyrighted": false,
+        "attributionRequired": false
+      }
     },
     {
       "year": 2023,

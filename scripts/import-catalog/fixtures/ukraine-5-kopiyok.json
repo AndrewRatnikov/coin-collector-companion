@@ -81,7 +81,14 @@
       "year": 2009,
       "mintMark": null,
       "variety": null,
-      "mintage": 140000000
+      "mintage": 140000000,
+      "image": {
+        "url": "https://upload.wikimedia.org/wikipedia/commons/f/f2/5_kapeykas_Belarus_2009_reverse.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+        "source": "Национальный банк Республики Беларусь",
+        "license": "Public domain",
+        "copyrighted": false,
+        "attributionRequired": false
+      }
     },
     {
       "year": 2010,
