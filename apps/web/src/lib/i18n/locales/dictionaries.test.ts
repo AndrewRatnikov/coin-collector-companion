@@ -6,9 +6,10 @@
  *                   runs/run_20261117_063301/plan.md § Interface Contract → Locale files
  *                   runs/run_20261120_215525/plan.md § Interface Contract → Locale files
  *                   runs/run_20261120_225014/plan.md § Interface Contract → i18n
+ *                   runs/run_20261123_220432/plan.md § Interface Contract → Dictionaries: privacy.analyticsBody
  * Covers criteria: #1, #2, #5 (from prd.md), plus #6, #7 of run_20261110_062926
  *                  and #3, #19 of run_20261117_063301, and #15 of run_20261120_215525,
- *                  and #14 of run_20261120_225014
+ *                  and #14 of run_20261120_225014, and #7 of run_20261123_220432
  *
  * Note: key-parity between en/es is also enforced at compile time, per area, by each
  * es/<area>.ts's `Record<keyof typeof en<Area>, string>` annotation and for the whole
@@ -35,6 +36,9 @@
  *
  * run_20261120_225014: the privacy area is added (AREA_PREFIXES, EN_AREAS, ES_AREAS) and a new block
  * pins its eight keys, the footer.privacy key and the copy. Existing assertions are untouched.
+ *
+ * run_20261123_220432: a new block at the end pins the corrected privacy.analyticsBody copy. Existing
+ * assertions are untouched.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -386,6 +390,33 @@ describe('locale dictionaries', () => {
       expect(es['footer.privacy']).toBe('Privacidad');
       expect((enCommon as Record<string, string>)['footer.privacy']).toBe('Privacy');
       expect((esCommon as Record<string, string>)['footer.privacy']).toBe('Privacidad');
+    });
+  });
+
+  describe('run_20261123_220432: privacy copy names catalog_no_results', () => {
+    it('EN says catalog searches that find nothing are counted and the text is cut to 40 characters', () => {
+      const body = en['privacy.analyticsBody'];
+
+      expect(body).toContain('catalog searches that find nothing');
+      expect(body).toContain('40 characters');
+      expect(body).not.toContain('or searches');
+      expect(body).toContain('PostHog');
+      expect(body).toContain('cookies');
+    });
+
+    it('ES says the same in Spanish', () => {
+      const body = es['privacy.analyticsBody'];
+
+      expect(body).toContain('búsquedas en el catálogo sin resultados');
+      expect(body).toContain('40 caracteres');
+      expect(body).not.toContain('ni tus búsquedas');
+      expect(body).toContain('PostHog');
+      expect(body).toContain('cookies');
+    });
+
+    it('the area files carry the same corrected text as the merged dictionaries', () => {
+      expect((enPrivacy as Record<string, string>)['privacy.analyticsBody']).toContain('40 characters');
+      expect((esPrivacy as Record<string, string>)['privacy.analyticsBody']).toContain('40 caracteres');
     });
   });
 });

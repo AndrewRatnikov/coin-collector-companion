@@ -72,6 +72,8 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-22](2026-11-22-image-url-is-the-commons-500px-thumbnail.md) | The stored image url is Commons' 500 px thumbnail, not the original file | Accepted |
 | [2026-11-22](2026-11-22-commons-image-match-is-strict-and-lists-the-rest.md) | A Commons file is written to a fixture only on a strict match; everything else is listed for a human | Accepted |
 | [2026-11-22](2026-11-22-commons-requests-paced-and-retried-with-a-cap.md) | Commons requests are paced at 1 s and retried on 429, 5xx and network failures, with at most 4 attempts and 60 s per wait | Accepted |
+| [2026-11-23](2026-11-23-empty-catalog-searches-sent-to-posthog-with-search-text.md) | Empty catalog searches are sent to PostHog as `catalog_no_results`, with the filters and a 40-character search text | Accepted |
+| [2026-11-23](2026-11-23-no-results-event-fires-once-per-sent-properties-per-page-mount.md) | The `catalog_no_results` event fires once per distinct set of sent properties per page mount, never from placeholder data | Accepted |
 
 ## Where else decisions live
 

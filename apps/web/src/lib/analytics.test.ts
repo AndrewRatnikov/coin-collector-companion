@@ -1,7 +1,8 @@
 /**
  * Tests for: lib/analytics (privacy-friendly PostHog analytics, growth backlog 0.6)
  * Contract source: runs/run_20261120_225014/plan.md § Interface Contract → Module: analytics
- * Covers criteria: #4, #5, #6, #7, #9 (first touch), #13 (from prd.md)
+ *                   runs/run_20261123_220432/plan.md § Interface Contract → Type: AnalyticsEvents['catalog_no_results']
+ * Covers criteria: #4, #5, #6, #7, #9 (first touch), #13 (from prd.md), and #1 of run_20261123_220432
  *
  * CONTRACT_GAP: none.
  *
@@ -336,6 +337,26 @@ describe('event typing', () => {
     mod.track('set_created', { method: 'blank', coin_count: 1, name: 'x' });
 
     expect(true).toBe(true);
+  });
+
+  it('accepts catalog_no_results with its five properties and rejects extras or numbers (run_20261123_220432)', async () => {
+    vi.stubEnv('NEXT_PUBLIC_POSTHOG_TOKEN', 'phc_test');
+    const { mod, posthog } = await load();
+    await mod.initAnalytics();
+
+    mod.track('catalog_no_results', { country: null, denomination: null, year_from: null, year_to: null, name: 'x' });
+    // @ts-expect-error hide_owned is not a property of catalog_no_results
+    mod.track('catalog_no_results', { country: null, denomination: null, year_from: null, year_to: null, name: null, hide_owned: true });
+    // @ts-expect-error year_from is a string or null, not a number
+    mod.track('catalog_no_results', { country: null, denomination: null, year_from: 1900, year_to: null, name: null });
+
+    expect(posthog.capture).toHaveBeenNthCalledWith(1, 'catalog_no_results', {
+      country: null,
+      denomination: null,
+      year_from: null,
+      year_to: null,
+      name: 'x',
+    });
   });
 });
 
