@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import { MAX_ATTEMPTS, REQUEST_DELAY_MS } from '../../../scripts/import-catalog/lib/commons';
 import {
   FIND_IMAGES_USAGE,
   coinLabel,
@@ -15,7 +16,8 @@ import type { CoinQuery } from '../../../scripts/import-catalog/lib/image-match'
 
 // CONTRACT_GAPs: none
 // End to end on recorded Commons responses: a fake fetch serves __fixtures__/commons/*.json,
-// readFile/writeFile are backed by a Map. No network, no filesystem writes.
+// readFile/writeFile are backed by a Map, and sleep is a jest.fn() that returns at once.
+// No network, no real timers, no filesystem writes.
 
 const BASE_DIR = '/base/scripts/import-catalog';
 const CONTACT = 'tester@example.org';
@@ -96,7 +98,13 @@ function okResponse(body: string): FetchResponseLike {
 }
 
 function failResponse(status: number): FetchResponseLike {
-  return { ok: false, status, statusText: 'Failure', text: async () => '' };
+  const statusText = status === 429 ? 'Too Many Requests' : 'Failure';
+  return { ok: false, status, statusText, text: async () => '', headers: { get: () => null } };
+}
+
+interface RecordedOptions {
+  // the first N category requests answer 429, then the recorded pages are served
+  transient429?: number;
 }
 
 type FetchMock = jest.Mock<ReturnType<FetchLike>, Parameters<FetchLike>>;
@@ -106,9 +114,13 @@ interface Recorded {
   maxInFlight: () => number;
 }
 
-function recordedFetch(failOn?: 'categorymembers' | 'imageinfo'): Recorded {
+function recordedFetch(
+  failOn?: 'categorymembers' | 'imageinfo' | 'categorymembers-429',
+  options: RecordedOptions = {},
+): Recorded {
   let inFlight = 0;
   let max = 0;
+  let categoryCalls = 0;
   const pages = (readJson('imageinfo.json') as { pages: RecordedPage[] }).pages;
   const fetchFn: FetchMock = jest.fn<ReturnType<FetchLike>, Parameters<FetchLike>>(async (url) => {
     inFlight += 1;
@@ -118,7 +130,10 @@ function recordedFetch(failOn?: 'categorymembers' | 'imageinfo'): Recorded {
 
     const params = new URL(url).searchParams;
     if (params.get('list') === 'categorymembers') {
+      categoryCalls += 1;
       if (failOn === 'categorymembers') return failResponse(503);
+      if (failOn === 'categorymembers-429') return failResponse(429);
+      if (categoryCalls <= (options.transient429 ?? 0)) return failResponse(429);
       const title = params.get('cmtitle');
       const cont = params.get('cmcontinue');
       if (title === 'Category:Coins of Ukraine' && cont === null) {
@@ -146,6 +161,7 @@ function recordedFetch(failOn?: 'categorymembers' | 'imageinfo'): Recorded {
 interface Harness {
   deps: FindImagesDeps;
   store: Map<string, string>;
+  sleep: jest.Mock<Promise<void>, [number]>;
   writeFile: jest.Mock<void, [string, string]>;
   logs: string[];
   errors: string[];
@@ -163,8 +179,10 @@ function harness(
   const writeFile = jest.fn<void, [string, string]>((p, contents) => {
     store.set(p, contents);
   });
+  const sleep = jest.fn<Promise<void>, [number]>(async (_ms: number) => {});
   const deps: FindImagesDeps = {
     fetch: fetchFn,
+    sleep,
     baseDir: BASE_DIR,
     contact: contact ?? undefined,
     readFile: (p) => {
@@ -176,7 +194,7 @@ function harness(
     log: (line) => logs.push(line),
     error: (line) => errors.push(line),
   };
-  return { deps, store, writeFile, logs, errors };
+  return { deps, store, sleep, writeFile, logs, errors };
 }
 
 function stored(h: Harness, name: string): string {
@@ -520,6 +538,31 @@ describe('runFindImages: the sample run', () => {
     expect(written.coins[0].image).toEqual(DEFENDERS_IMAGE);
   });
 
+  it('pauses REQUEST_DELAY_MS before every request, once per fetch, and nothing else', async () => {
+    const recorded = recordedFetch();
+    const h = harness({ [SAMPLE_FILE]: SAMPLE_TEXT, [FIVE_FILE]: FIVE_TEXT }, recorded.fetch);
+
+    await runFindImages(ARGV, h.deps);
+
+    expect(recorded.fetch).toHaveBeenCalledTimes(5);
+    expect(h.sleep.mock.calls.map(([ms]) => ms)).toEqual([
+      REQUEST_DELAY_MS,
+      REQUEST_DELAY_MS,
+      REQUEST_DELAY_MS,
+      REQUEST_DELAY_MS,
+      REQUEST_DELAY_MS,
+    ]);
+  });
+
+  it('makes no request and no pause when every coin already has an image', async () => {
+    const recorded = recordedFetch();
+    const h = harness({ 'fixtures/ukraine-done.json': ALL_HAVE_IMAGES_TEXT }, recorded.fetch);
+
+    await runFindImages(['fixtures/ukraine-done.json'], h.deps);
+
+    expect(h.sleep).not.toHaveBeenCalled();
+  });
+
   it('makes no request when every coin already has an image', async () => {
     const recorded = recordedFetch();
     const h = harness({ 'fixtures/ukraine-done.json': ALL_HAVE_IMAGES_TEXT }, recorded.fetch);
@@ -544,6 +587,7 @@ describe('runFindImages: usage and fixture errors', () => {
     expect(h.errors.join('\n')).toContain(FIND_IMAGES_USAGE);
     expect(h.errors.join('\n').length).toBeGreaterThan(FIND_IMAGES_USAGE.length);
     expect(recorded.fetch).not.toHaveBeenCalled();
+    expect(h.sleep).not.toHaveBeenCalled();
   });
 
   it('returns 2 for an unknown flag', async () => {
@@ -562,6 +606,7 @@ describe('runFindImages: usage and fixture errors', () => {
 
     expect(code).toBe(2);
     expect(recorded.fetch).not.toHaveBeenCalled();
+    expect(h.sleep).not.toHaveBeenCalled();
     expect(h.writeFile).not.toHaveBeenCalled();
     expect(h.errors.join('\n')).toContain('fixtures/us-cents.json');
   });
@@ -609,6 +654,51 @@ describe('runFindImages: Commons failures', () => {
     expect(code).toBe(1);
     expect(h.errors.join('\n')).toContain('503');
     expect(h.writeFile).not.toHaveBeenCalled();
+  });
+
+  it('recovers from one 429 on the first category request: same files, same summary, one retry line, exit 0', async () => {
+    const clean = harness({ [SAMPLE_FILE]: SAMPLE_TEXT, [FIVE_FILE]: FIVE_TEXT }, recordedFetch().fetch);
+    await runFindImages([SAMPLE_FILE, FIVE_FILE], clean.deps);
+
+    const recorded = recordedFetch(undefined, { transient429: 1 });
+    const h = harness({ [SAMPLE_FILE]: SAMPLE_TEXT, [FIVE_FILE]: FIVE_TEXT }, recorded.fetch);
+    const code = await runFindImages([SAMPLE_FILE, FIVE_FILE], h.deps);
+
+    expect(code).toBe(0);
+    expect(h.logs).toEqual(clean.logs);
+    expect(stored(h, SAMPLE_FILE)).toBe(stored(clean, SAMPLE_FILE));
+    expect(stored(h, FIVE_FILE)).toBe(stored(clean, FIVE_FILE));
+    expect(h.errors).toHaveLength(1);
+    expect(h.errors[0]).toContain('HTTP 429');
+    expect(h.errors[0]).toContain('retrying in');
+    expect(recorded.fetch).toHaveBeenCalledTimes(6);
+    expect(h.sleep).toHaveBeenCalledTimes(6);
+    expect(recorded.maxInFlight()).toBe(1);
+  });
+
+  it('returns 1 when every category request answers 429: gave up after 4 attempts, nothing written', async () => {
+    const recorded = recordedFetch('categorymembers-429');
+    const h = harness({ [SAMPLE_FILE]: SAMPLE_TEXT, [FIVE_FILE]: FIVE_TEXT }, recorded.fetch);
+
+    const code = await runFindImages([SAMPLE_FILE, FIVE_FILE], h.deps);
+
+    expect(code).toBe(1);
+    const errors = h.errors.join('\n');
+    expect(errors).toContain('429');
+    expect(errors).toContain('gave up after 4 attempts');
+    expect(h.writeFile).not.toHaveBeenCalled();
+    expect(stored(h, SAMPLE_FILE)).toBe(SAMPLE_TEXT);
+    expect(recorded.fetch).toHaveBeenCalledTimes(MAX_ATTEMPTS);
+    expect(h.logs).toEqual([]);
+  });
+
+  it('prints the retry lines of a failed run to errors, one per retry', async () => {
+    const h = harness({ [SAMPLE_FILE]: SAMPLE_TEXT, [FIVE_FILE]: FIVE_TEXT }, recordedFetch('categorymembers-429').fetch);
+
+    await runFindImages([SAMPLE_FILE, FIVE_FILE], h.deps);
+
+    const retryLines = h.errors.filter((line) => line.includes('retrying in'));
+    expect(retryLines).toHaveLength(MAX_ATTEMPTS - 1);
   });
 
   it('returns 1 and writes nothing when imageinfo fails after the crawl worked', async () => {

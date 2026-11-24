@@ -5,25 +5,47 @@ import {
   COMMONS_API_URL,
   CommonsApiError,
   IMAGEINFO_BATCH_SIZE,
+  MAX_ATTEMPTS,
   MAX_CATEGORY_DEPTH,
+  MAX_RETRY_WAIT_MS,
+  REQUEST_DELAY_MS,
+  RETRY_BASE_DELAY_MS,
   ROOT_CATEGORY,
   THUMB_WIDTH,
   buildCategoryMembersUrl,
   buildImageInfoUrl,
   fetchImageInfo,
+  isRetryableStatus,
   listCategoryFiles,
   parseExtBoolean,
+  parseRetryAfter,
   stripHtml,
   toRawCoinImage,
 } from '../../../scripts/import-catalog/lib/commons';
-import type { CommonsImageInfo } from '../../../scripts/import-catalog/lib/commons';
+import type { CommonsImageInfo, CommonsPacing } from '../../../scripts/import-catalog/lib/commons';
 import type { FetchLike, FetchResponseLike } from '../../../scripts/import-catalog/lib/generate';
 
 // CONTRACT_GAPs: none
-// No spec here touches the network: fetch is a jest.fn() that serves the recorded
-// responses under __fixtures__/commons/.
+// No spec here touches the network or a real timer: fetch is a jest.fn() that serves the
+// recorded responses under __fixtures__/commons/, and sleep is a jest.fn() that returns at once.
 
 const USER_AGENT = 'coin-collector-companion/0.1 (https://example.org; tester@example.org)';
+
+type SleepMock = jest.Mock<Promise<void>, [number]>;
+
+interface FakePacing extends CommonsPacing {
+  sleep: SleepMock;
+}
+
+// A pacing whose sleep resolves immediately and remembers every wait.
+function pacing(over: Omit<CommonsPacing, 'sleep'> = {}): FakePacing {
+  const sleep: SleepMock = jest.fn(async (_ms: number) => {});
+  return { sleep, ...over };
+}
+
+function sleeps(p: FakePacing): number[] {
+  return p.sleep.mock.calls.map(([ms]) => ms);
+}
 
 interface RecordedPage {
   title: string;
@@ -175,7 +197,7 @@ describe('listCategoryFiles', () => {
   it('follows continue, descends into subcategories and returns each file once, sorted by title', async () => {
     const { fetch: fetchFn } = recordedFetch();
 
-    const files = await listCategoryFiles(fetchFn, USER_AGENT);
+    const files = await listCategoryFiles(fetchFn, USER_AGENT, pacing());
 
     expect(files).toEqual([
       { title: OBVERSE_TITLE, categories: ['Category:10 hryvnias coins of Ukraine'] },
@@ -195,9 +217,9 @@ describe('listCategoryFiles', () => {
   it('makes three requests in order: root, root continuation, subcategory (the cycle is not revisited)', async () => {
     const { fetch: fetchFn } = recordedFetch();
 
-    await listCategoryFiles(fetchFn, USER_AGENT);
+    await listCategoryFiles(fetchFn, USER_AGENT, pacing());
 
-    const requests = fetchFn.mock.calls.map(([url]) => new URL(url).searchParams);
+    const requests =fetchFn.mock.calls.map(([url]) => new URL(url).searchParams);
     expect(requests).toHaveLength(3);
     expect(requests[0].get('cmtitle')).toBe('Category:Coins of Ukraine');
     expect(requests[0].has('cmcontinue')).toBe(false);
@@ -210,7 +232,7 @@ describe('listCategoryFiles', () => {
   it('does not descend when maxDepth is 0', async () => {
     const { fetch: fetchFn } = recordedFetch();
 
-    const files = await listCategoryFiles(fetchFn, USER_AGENT, ROOT_CATEGORY, 0);
+    const files = await listCategoryFiles(fetchFn, USER_AGENT, pacing(), ROOT_CATEGORY, 0);
 
     expect(files.map((f) => f.title)).toEqual([
       'File:Ukraine 2018 10 hryvnias reverse.jpg',
@@ -222,7 +244,7 @@ describe('listCategoryFiles', () => {
   it('descends one level when maxDepth is 1', async () => {
     const { fetch: fetchFn } = recordedFetch();
 
-    const files = await listCategoryFiles(fetchFn, USER_AGENT, ROOT_CATEGORY, 1);
+    const files = await listCategoryFiles(fetchFn, USER_AGENT, pacing(), ROOT_CATEGORY, 1);
 
     expect(files).toHaveLength(7);
     expect(fetchFn).toHaveBeenCalledTimes(3);
@@ -231,7 +253,7 @@ describe('listCategoryFiles', () => {
   it('sends one request at a time', async () => {
     const tracker = recordedFetch();
 
-    await listCategoryFiles(tracker.fetch, USER_AGENT);
+    await listCategoryFiles(tracker.fetch, USER_AGENT, pacing());
 
     expect(tracker.maxInFlight()).toBe(1);
   });
@@ -239,7 +261,7 @@ describe('listCategoryFiles', () => {
   it('sends the User-Agent on every request', async () => {
     const { fetch: fetchFn } = recordedFetch();
 
-    await listCategoryFiles(fetchFn, USER_AGENT);
+    await listCategoryFiles(fetchFn, USER_AGENT, pacing());
 
     expect(fetchFn.mock.calls.length).toBeGreaterThan(0);
     for (const [, init] of fetchFn.mock.calls) {
@@ -250,7 +272,7 @@ describe('listCategoryFiles', () => {
   it('starts from the root it is given', async () => {
     const { fetch: fetchFn } = recordedFetch();
 
-    const files = await listCategoryFiles(fetchFn, USER_AGENT, 'Category:10 hryvnias coins of Ukraine');
+    const files = await listCategoryFiles(fetchFn, USER_AGENT, pacing(), 'Category:10 hryvnias coins of Ukraine');
 
     expect(files.map((f) => f.title)).toContain(REVERSE_TITLE);
     expect(new URL(fetchFn.mock.calls[0][0]).searchParams.get('cmtitle')).toBe('Category:10 hryvnias coins of Ukraine');
@@ -261,7 +283,7 @@ describe('fetchImageInfo', () => {
   it('maps each page to its info keyed by title, with raw extmetadata values', async () => {
     const { fetch: fetchFn } = recordedFetch();
 
-    const infos = await fetchImageInfo([REVERSE_TITLE], fetchFn, USER_AGENT);
+    const infos = await fetchImageInfo([REVERSE_TITLE], fetchFn, USER_AGENT, pacing());
 
     expect([...infos.keys()]).toEqual([REVERSE_TITLE]);
     expect(infos.get(REVERSE_TITLE)).toEqual({
@@ -286,7 +308,7 @@ describe('fetchImageInfo', () => {
     const { fetch: fetchFn } = recordedFetch();
     const title = 'File:10 hryvnias 2018 Defenders of Donetsk Airport obverse and reverse.jpg';
 
-    const infos = await fetchImageInfo([title], fetchFn, USER_AGENT);
+    const infos = await fetchImageInfo([title], fetchFn, USER_AGENT, pacing());
 
     expect(infos.get(title)?.width).toBe(2000);
     expect(infos.get(title)?.height).toBe(1000);
@@ -304,7 +326,7 @@ describe('fetchImageInfo', () => {
       'File:Ukraine 2019 5 hryvnias reverse.jpg',
     ];
 
-    const infos = await fetchImageInfo(titles, tracker.fetch, USER_AGENT);
+    const infos = await fetchImageInfo(titles, tracker.fetch, USER_AGENT, pacing());
 
     expect(imageInfoCalls(tracker.fetch)).toEqual([titles.slice(0, 5), titles.slice(5)]);
     expect(tracker.maxInFlight()).toBe(1);
@@ -316,7 +338,7 @@ describe('fetchImageInfo', () => {
     const titles = recordedPages().map((p) => p.title);
     expect(titles.length).toBeGreaterThan(IMAGEINFO_BATCH_SIZE);
 
-    await fetchImageInfo(titles, tracker.fetch, USER_AGENT);
+    await fetchImageInfo(titles, tracker.fetch, USER_AGENT, pacing());
 
     for (const batch of imageInfoCalls(tracker.fetch)) {
       expect(batch.length).toBeGreaterThan(0);
@@ -327,7 +349,7 @@ describe('fetchImageInfo', () => {
   it('asks for a repeated title once', async () => {
     const { fetch: fetchFn } = recordedFetch();
 
-    const infos = await fetchImageInfo([REVERSE_TITLE, OBVERSE_TITLE, REVERSE_TITLE], fetchFn, USER_AGENT);
+    const infos = await fetchImageInfo([REVERSE_TITLE, OBVERSE_TITLE, REVERSE_TITLE], fetchFn, USER_AGENT, pacing());
 
     expect(imageInfoCalls(fetchFn)).toEqual([[REVERSE_TITLE, OBVERSE_TITLE]]);
     expect(infos.size).toBe(2);
@@ -337,7 +359,7 @@ describe('fetchImageInfo', () => {
     const { fetch: fetchFn } = recordedFetch();
     const titles = recordedPages().map((p) => p.title);
 
-    await fetchImageInfo(titles, fetchFn, USER_AGENT);
+    await fetchImageInfo(titles, fetchFn, USER_AGENT, pacing());
 
     expect(fetchFn.mock.calls.length).toBeGreaterThan(1);
     for (const [, init] of fetchFn.mock.calls) {
@@ -347,10 +369,12 @@ describe('fetchImageInfo', () => {
 
   it('sends nothing and returns an empty map for no titles', async () => {
     const { fetch: fetchFn } = recordedFetch();
+    const p = pacing();
 
-    const infos = await fetchImageInfo([], fetchFn, USER_AGENT);
+    const infos = await fetchImageInfo([], fetchFn, USER_AGENT, p);
 
     expect(fetchFn).not.toHaveBeenCalled();
+    expect(p.sleep).not.toHaveBeenCalled();
     expect(infos.size).toBe(0);
   });
 
@@ -373,7 +397,7 @@ describe('fetchImageInfo', () => {
     });
     const fetchFn = mockFetch(async () => okResponse(body));
 
-    const infos = await fetchImageInfo(['File:Gone.jpg', 'File:Bad|name.jpg', 'File:NoInfo.jpg', 'File:Fine.jpg'], fetchFn, USER_AGENT);
+    const infos = await fetchImageInfo(['File:Gone.jpg', 'File:Bad|name.jpg', 'File:NoInfo.jpg', 'File:Fine.jpg'], fetchFn, USER_AGENT, pacing());
 
     expect([...infos.keys()]).toEqual(['File:Fine.jpg']);
   });
@@ -381,7 +405,7 @@ describe('fetchImageInfo', () => {
   it('leaves a deleted file out of the recorded response', async () => {
     const { fetch: fetchFn } = recordedFetch();
 
-    const infos = await fetchImageInfo(['File:Gone.jpg', REVERSE_TITLE], fetchFn, USER_AGENT);
+    const infos = await fetchImageInfo(['File:Gone.jpg', REVERSE_TITLE], fetchFn, USER_AGENT, pacing());
 
     expect(infos.has('File:Gone.jpg')).toBe(false);
     expect(infos.has(REVERSE_TITLE)).toBe(true);
@@ -397,14 +421,17 @@ describe('Commons API errors', () => {
       text: async () => '',
     }));
 
-    await expect(listCategoryFiles(fetchFn, USER_AGENT)).rejects.toBeInstanceOf(CommonsApiError);
-    await expect(listCategoryFiles(fetchFn, USER_AGENT)).rejects.toThrow(/503/);
+    await expect(listCategoryFiles(fetchFn, USER_AGENT, pacing())).rejects.toBeInstanceOf(CommonsApiError);
+    await expect(listCategoryFiles(fetchFn, USER_AGENT, pacing())).rejects.toThrow(/503/);
   });
 
-  it('throws a CommonsApiError for a body that is not JSON', async () => {
+  it('throws a CommonsApiError for a body that is not JSON, without retrying', async () => {
     const fetchFn = mockFetch(async () => okResponse('<html>rate limited</html>'));
 
-    await expect(fetchImageInfo([REVERSE_TITLE], fetchFn, USER_AGENT)).rejects.toBeInstanceOf(CommonsApiError);
+    await expect(fetchImageInfo([REVERSE_TITLE], fetchFn, USER_AGENT, pacing())).rejects.toBeInstanceOf(
+      CommonsApiError,
+    );
+    expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
   it('throws a CommonsApiError carrying the API error code and info', async () => {
@@ -412,38 +439,412 @@ describe('Commons API errors', () => {
       okResponse(JSON.stringify({ error: { code: 'badtitle', info: 'Bad title "x"' } })),
     );
 
-    const failure = fetchImageInfo([REVERSE_TITLE], fetchFn, USER_AGENT);
+    const failure = fetchImageInfo([REVERSE_TITLE], fetchFn, USER_AGENT, pacing());
     await expect(failure).rejects.toBeInstanceOf(CommonsApiError);
     await expect(failure).rejects.toThrow(/badtitle/);
     await expect(failure).rejects.toThrow(/Bad title/);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
-  it('names the error CommonsApiError and does not retry', async () => {
-    const fetchFn = mockFetch(async () => ({
-      ok: false,
-      status: 429,
-      statusText: 'Too Many Requests',
-      text: async () => '',
-    }));
+  it('names the error CommonsApiError', async () => {
+    const fetchFn = mockFetch(async () => failResponse(404, 'Not Found'));
 
-    const error = await fetchImageInfo([REVERSE_TITLE], fetchFn, USER_AGENT).catch((e: unknown) => e);
+    const error = await fetchImageInfo([REVERSE_TITLE], fetchFn, USER_AGENT, pacing()).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(Error);
     expect((error as Error).name).toBe('CommonsApiError');
+  });
+});
+
+function failResponse(status: number, statusText: string, retryAfter?: string): FetchResponseLike {
+  return {
+    ok: false,
+    status,
+    statusText,
+    text: async () => '',
+    headers: { get: (name) => (name.toLowerCase() === 'retry-after' ? (retryAfter ?? null) : null) },
+  };
+}
+
+// One category with a single file and no subcategory: the smallest valid crawl response.
+const ONE_FILE_BODY = JSON.stringify({
+  batchcomplete: true,
+  query: { categorymembers: [{ pageid: 1, ns: 6, title: 'File:Only.jpg' }] },
+});
+
+const ONE_INFO_BODY = JSON.stringify({
+  batchcomplete: true,
+  query: {
+    pages: [
+      {
+        pageid: 10,
+        ns: 6,
+        title: 'File:Fine.jpg',
+        imageinfo: [
+          { url: 'https://upload.wikimedia.org/x.jpg', width: 10, height: 10, mime: 'image/jpeg', extmetadata: {} },
+        ],
+      },
+    ],
+  },
+});
+
+type Step = FetchResponseLike | Error;
+
+// Answers call n with steps[n]; once the steps run out, the last one repeats.
+function sequenceFetch(steps: Step[]): FetchMock {
+  let n = 0;
+  return mockFetch(async () => {
+    const step = steps[Math.min(n, steps.length - 1)];
+    n += 1;
+    if (step instanceof Error) throw step;
+    return step;
+  });
+}
+
+describe('pacing and retry constants', () => {
+  it('pins the pause, the attempt cap, the backoff base and the wait cap', () => {
+    expect(REQUEST_DELAY_MS).toBe(1000);
+    expect(MAX_ATTEMPTS).toBe(4);
+    expect(RETRY_BASE_DELAY_MS).toBe(2000);
+    expect(MAX_RETRY_WAIT_MS).toBe(60000);
+  });
+});
+
+describe('parseRetryAfter', () => {
+  it('reads whole seconds as milliseconds, ignoring surrounding spaces', () => {
+    expect(parseRetryAfter('3')).toBe(3000);
+    expect(parseRetryAfter(' 3 ')).toBe(3000);
+    expect(parseRetryAfter('0')).toBe(0);
+    expect(parseRetryAfter('120')).toBe(120000);
+  });
+
+  it('is null for a missing, empty, fractional or date value', () => {
+    expect(parseRetryAfter('')).toBeNull();
+    expect(parseRetryAfter(null)).toBeNull();
+    expect(parseRetryAfter(undefined)).toBeNull();
+    expect(parseRetryAfter('Wed, 21 Oct 2026 07:28:00 GMT')).toBeNull();
+    expect(parseRetryAfter('1.5')).toBeNull();
+  });
+});
+
+describe('isRetryableStatus', () => {
+  it('retries 429 and every 5xx', () => {
+    for (const status of [429, 500, 503, 599]) expect(isRetryableStatus(status)).toBe(true);
+  });
+
+  it('does not retry other statuses', () => {
+    for (const status of [400, 403, 404, 200, 600]) expect(isRetryableStatus(status)).toBe(false);
+  });
+});
+
+describe('pacing: a pause before every request', () => {
+  it('sleeps REQUEST_DELAY_MS once before each request of a crawl, before the request is sent', async () => {
+    const tracker = recordedFetch();
+    const events: string[] = [];
+    const p = pacing();
+    p.sleep.mockImplementation(async (ms: number) => {
+      events.push(`sleep ${ms}`);
+    });
+    const fetchFn = mockFetch(async (url, init) => {
+      events.push('fetch');
+      return tracker.fetch(url, init);
+    });
+
+    await listCategoryFiles(fetchFn, USER_AGENT, p);
+
+    expect(fetchFn).toHaveBeenCalledTimes(3);
+    expect(events).toEqual(['sleep 1000', 'fetch', 'sleep 1000', 'fetch', 'sleep 1000', 'fetch']);
+  });
+
+  it('sleeps once per imageinfo batch', async () => {
+    const tracker = recordedFetch();
+    const p = pacing();
+    const titles = recordedPages().map((page) => page.title);
+
+    await fetchImageInfo(titles, tracker.fetch, USER_AGENT, p);
+
+    const batches = imageInfoCalls(tracker.fetch).length;
+    expect(batches).toBeGreaterThan(1);
+    expect(sleeps(p)).toEqual(Array.from({ length: batches }, () => REQUEST_DELAY_MS));
+  });
+
+  it('uses the delayMs it is given instead of the default', async () => {
+    const p = pacing({ delayMs: 250 });
+    const fetchFn = mockFetch(async () => okResponse(ONE_FILE_BODY));
+
+    await listCategoryFiles(fetchFn, USER_AGENT, p);
+
+    expect(sleeps(p)).toEqual([250]);
+  });
+
+  it('calls sleep even when the delay is 0', async () => {
+    const p = pacing({ delayMs: 0 });
+    const fetchFn = mockFetch(async () => okResponse(ONE_FILE_BODY));
+
+    await listCategoryFiles(fetchFn, USER_AGENT, p);
+
+    expect(sleeps(p)).toEqual([0]);
+  });
+});
+
+describe('retry: 429, 5xx and network failures', () => {
+  it('retries a 429 and returns the same result as a clean run', async () => {
+    const p = pacing();
+    const fetchFn = sequenceFetch([failResponse(429, 'Too Many Requests'), okResponse(ONE_FILE_BODY)]);
+
+    const files = await listCategoryFiles(fetchFn, USER_AGENT, p);
+
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(sleeps(p)).toEqual([1000, 2000]);
+    expect(files).toEqual([{ title: 'File:Only.jpg', categories: ['Category:Coins of Ukraine'] }]);
+  });
+
+  it('retries a 429 on an imageinfo request too', async () => {
+    const p = pacing();
+    const fetchFn = sequenceFetch([failResponse(429, 'Too Many Requests'), okResponse(ONE_INFO_BODY)]);
+
+    const infos = await fetchImageInfo(['File:Fine.jpg'], fetchFn, USER_AGENT, p);
+
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect([...infos.keys()]).toEqual(['File:Fine.jpg']);
+  });
+
+  it('waits the Retry-After seconds when it is longer than the pause', async () => {
+    const p = pacing();
+    const fetchFn = sequenceFetch([failResponse(429, 'Too Many Requests', '3'), okResponse(ONE_FILE_BODY)]);
+
+    await listCategoryFiles(fetchFn, USER_AGENT, p);
+
+    expect(sleeps(p)).toEqual([1000, 3000]);
+  });
+
+  it('never waits less than the pause, even for Retry-After: 0', async () => {
+    const p = pacing();
+    const fetchFn = sequenceFetch([failResponse(429, 'Too Many Requests', '0'), okResponse(ONE_FILE_BODY)]);
+
+    await listCategoryFiles(fetchFn, USER_AGENT, p);
+
+    expect(sleeps(p)).toEqual([1000, 1000]);
+  });
+
+  it('ignores a Retry-After that is a date and backs off instead', async () => {
+    const p = pacing();
+    const fetchFn = sequenceFetch([
+      failResponse(429, 'Too Many Requests', 'Wed, 21 Oct 2026 07:28:00 GMT'),
+      okResponse(ONE_FILE_BODY),
+    ]);
+
+    await listCategoryFiles(fetchFn, USER_AGENT, p);
+
+    expect(sleeps(p)).toEqual([1000, 2000]);
+  });
+
+  it('backs off 2 s, 4 s, 8 s on repeated 503 and gives up after 4 attempts', async () => {
+    const p = pacing();
+    const fetchFn = sequenceFetch([failResponse(503, 'Service Unavailable')]);
+
+    const error = await listCategoryFiles(fetchFn, USER_AGENT, p).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(CommonsApiError);
+    expect((error as Error).message).toMatch(/503/);
+    expect((error as Error).message).toMatch(/4 attempts/);
+    expect(fetchFn).toHaveBeenCalledTimes(4);
+    expect(sleeps(p)).toEqual([1000, 2000, 4000, 8000]);
+  });
+
+  it('recovers when the last allowed attempt succeeds', async () => {
+    const p = pacing();
+    const fetchFn = sequenceFetch([
+      failResponse(500, 'Internal Server Error'),
+      failResponse(502, 'Bad Gateway'),
+      failResponse(503, 'Service Unavailable'),
+      okResponse(ONE_FILE_BODY),
+    ]);
+
+    const files = await listCategoryFiles(fetchFn, USER_AGENT, p);
+
+    expect(fetchFn).toHaveBeenCalledTimes(4);
+    expect(files).toHaveLength(1);
+  });
+
+  it('gives up at once when Retry-After is longer than the wait cap', async () => {
+    const p = pacing();
+    const fetchFn = sequenceFetch([failResponse(429, 'Too Many Requests', '120')]);
+
+    const error = await listCategoryFiles(fetchFn, USER_AGENT, p).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(CommonsApiError);
+    expect((error as Error).message).toMatch(/120 s/);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(sleeps(p)).toEqual([1000]);
+  });
+
+  it('accepts a Retry-After exactly at the wait cap', async () => {
+    const p = pacing();
+    const fetchFn = sequenceFetch([failResponse(429, 'Too Many Requests', '60'), okResponse(ONE_FILE_BODY)]);
+
+    await listCategoryFiles(fetchFn, USER_AGENT, p);
+
+    expect(sleeps(p)).toEqual([1000, 60000]);
+  });
+
+  it('retries a fetch that throws', async () => {
+    const p = pacing();
+    const fetchFn = sequenceFetch([new TypeError('fetch failed'), okResponse(ONE_FILE_BODY)]);
+
+    const files = await listCategoryFiles(fetchFn, USER_AGENT, p);
+
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(sleeps(p)).toEqual([1000, 2000]);
+    expect(files).toHaveLength(1);
+  });
+
+  it('names the network error and the attempts when a fetch keeps throwing', async () => {
+    const p = pacing();
+    const fetchFn = sequenceFetch([new TypeError('fetch failed')]);
+
+    const error = await fetchImageInfo(['File:Fine.jpg'], fetchFn, USER_AGENT, p).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(CommonsApiError);
+    expect((error as Error).message).toMatch(/fetch failed/);
+    expect((error as Error).message).toMatch(/4 attempts/);
+    expect(fetchFn).toHaveBeenCalledTimes(4);
+  });
+
+  it('retries a body that cannot be read', async () => {
+    const p = pacing();
+    const broken: FetchResponseLike = {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      text: async () => {
+        throw new Error('socket hang up');
+      },
+    };
+    const fetchFn = sequenceFetch([broken, okResponse(ONE_FILE_BODY)]);
+
+    const files = await listCategoryFiles(fetchFn, USER_AGENT, p);
+
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(files).toHaveLength(1);
+  });
+
+  it('does not retry a 404', async () => {
+    const p = pacing();
+    const fetchFn = sequenceFetch([failResponse(404, 'Not Found')]);
+
+    await expect(listCategoryFiles(fetchFn, USER_AGENT, p)).rejects.toBeInstanceOf(CommonsApiError);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(sleeps(p)).toEqual([1000]);
+  });
+
+  it('does not retry a 403', async () => {
+    const fetchFn = sequenceFetch([failResponse(403, 'Forbidden')]);
+
+    await expect(listCategoryFiles(fetchFn, USER_AGENT, pacing())).rejects.toThrow(/403/);
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
 
+  it('does not retry an API error object in a 200 response', async () => {
+    const fetchFn = sequenceFetch([okResponse(JSON.stringify({ error: { code: 'ratelimited', info: 'slow down' } }))]);
+
+    await expect(listCategoryFiles(fetchFn, USER_AGENT, pacing())).rejects.toThrow(/ratelimited/);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports one line per retry, with the failure and the next attempt', async () => {
+    const lines: string[] = [];
+    const p = pacing({ onRetry: (line) => lines.push(line) });
+    const fetchFn = sequenceFetch([
+      failResponse(429, 'Too Many Requests'),
+      failResponse(429, 'Too Many Requests'),
+      okResponse(ONE_FILE_BODY),
+    ]);
+
+    await listCategoryFiles(fetchFn, USER_AGENT, p);
+
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toContain('HTTP 429');
+    expect(lines[0]).toContain('retrying in 2 s (attempt 2 of 4)');
+    expect(lines[1]).toContain('retrying in 4 s (attempt 3 of 4)');
+  });
+
+  it('reports nothing when no retry was needed', async () => {
+    const lines: string[] = [];
+    const p = pacing({ onRetry: (line) => lines.push(line) });
+
+    await listCategoryFiles(mockFetch(async () => okResponse(ONE_FILE_BODY)), USER_AGENT, p);
+
+    expect(lines).toEqual([]);
+  });
+
+  it('applies maxAttempts and retryBaseDelayMs overrides', async () => {
+    const p = pacing({ maxAttempts: 2, retryBaseDelayMs: 10 });
+    const fetchFn = sequenceFetch([failResponse(503, 'Service Unavailable')]);
+
+    const error = await listCategoryFiles(fetchFn, USER_AGENT, p).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(CommonsApiError);
+    expect((error as Error).message).toMatch(/2 attempts/);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(sleeps(p)).toEqual([1000, 10]);
+  });
+
+  it('applies a maxRetryWaitMs override to both the backoff and Retry-After', async () => {
+    const capped = pacing({ maxRetryWaitMs: 5000 });
+    const backoff = sequenceFetch([failResponse(503, 'Service Unavailable')]);
+
+    await listCategoryFiles(backoff, USER_AGENT, capped).catch(() => undefined);
+
+    // 1 s pause, then 2 s, 4 s, and the third wait (8 s) is cut to the 5 s cap
+    expect(sleeps(capped)).toEqual([1000, 2000, 4000, 5000]);
+
+    const asked = sequenceFetch([failResponse(429, 'Too Many Requests', '6')]);
+    await expect(listCategoryFiles(asked, USER_AGENT, pacing({ maxRetryWaitMs: 5000 }))).rejects.toThrow(/6 s/);
+    expect(asked).toHaveBeenCalledTimes(1);
+  });
+
   it('stops after a failed batch: later batches are not sent', async () => {
-    const fetchFn = mockFetch(async () => ({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-      text: async () => '',
-    }));
+    const p = pacing();
+    const fetchFn = sequenceFetch([failResponse(500, 'Internal Server Error')]);
     const titles = Array.from({ length: 7 }, (_, i) => `File:${i}.jpg`);
 
-    await expect(fetchImageInfo(titles, fetchFn, USER_AGENT)).rejects.toBeInstanceOf(CommonsApiError);
-    expect(fetchFn).toHaveBeenCalledTimes(1);
+    await expect(fetchImageInfo(titles, fetchFn, USER_AGENT, p)).rejects.toBeInstanceOf(CommonsApiError);
+
+    expect(fetchFn).toHaveBeenCalledTimes(MAX_ATTEMPTS);
+    for (const [url] of fetchFn.mock.calls) {
+      expect((new URL(url).searchParams.get('titles') ?? '').split('|')).toEqual(titles.slice(0, 5));
+    }
+  });
+
+  it('keeps one request in flight at a time through retries', async () => {
+    let inFlight = 0;
+    let max = 0;
+    let n = 0;
+    const fetchFn = mockFetch(async () => {
+      inFlight += 1;
+      max = Math.max(max, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      inFlight -= 1;
+      n += 1;
+      return n <= 2 ? failResponse(429, 'Too Many Requests') : okResponse(ONE_FILE_BODY);
+    });
+
+    await listCategoryFiles(fetchFn, USER_AGENT, pacing());
+
+    expect(fetchFn).toHaveBeenCalledTimes(3);
+    expect(max).toBe(1);
+  });
+
+  it('sends the User-Agent on every retry', async () => {
+    const fetchFn = sequenceFetch([failResponse(429, 'Too Many Requests'), okResponse(ONE_FILE_BODY)]);
+
+    await listCategoryFiles(fetchFn, USER_AGENT, pacing());
+
+    expect(fetchFn.mock.calls).toHaveLength(2);
+    for (const [, init] of fetchFn.mock.calls) {
+      expect(init.headers['User-Agent']).toBe(USER_AGENT);
+    }
   });
 });
 
