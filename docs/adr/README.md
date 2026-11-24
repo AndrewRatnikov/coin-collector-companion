@@ -71,6 +71,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-22](2026-11-22-commons-images-found-by-one-category-crawl.md) | Ukrainian coin images are found by crawling Category:Coins of Ukraine once and matching file names locally | Accepted |
 | [2026-11-22](2026-11-22-image-url-is-the-commons-500px-thumbnail.md) | The stored image url is Commons' 500 px thumbnail, not the original file | Accepted |
 | [2026-11-22](2026-11-22-commons-image-match-is-strict-and-lists-the-rest.md) | A Commons file is written to a fixture only on a strict match; everything else is listed for a human | Accepted |
+| [2026-11-22](2026-11-22-commons-requests-paced-and-retried-with-a-cap.md) | Commons requests are paced at 1 s and retried on 429, 5xx and network failures, with at most 4 attempts and 60 s per wait | Accepted |
 
 ## Where else decisions live
 
