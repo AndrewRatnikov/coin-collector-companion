@@ -179,7 +179,7 @@ function harness(
   const writeFile = jest.fn<void, [string, string]>((p, contents) => {
     store.set(p, contents);
   });
-  const sleep = jest.fn<Promise<void>, [number]>(async (_ms: number) => {});
+  const sleep = jest.fn<Promise<void>, [number]>(async () => {});
   const deps: FindImagesDeps = {
     fetch: fetchFn,
     sleep,

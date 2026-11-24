@@ -39,7 +39,7 @@ interface FakePacing extends CommonsPacing {
 
 // A pacing whose sleep resolves immediately and remembers every wait.
 function pacing(over: Omit<CommonsPacing, 'sleep'> = {}): FakePacing {
-  const sleep: SleepMock = jest.fn(async (_ms: number) => {});
+  const sleep: SleepMock = jest.fn(async () => {});
   return { sleep, ...over };
 }
 
