@@ -1,0 +1,708 @@
+{
+  "$schema-note": "Read by hand from the saved \"Morgan dollar\" article (the generator saved the raw response but does not parse its per-mint table; see fixtures/README.md); raw source-shaped fixture, pre-sanitization: mintMark/variety use null (no value) on purpose, and the import script normalizes them to the DB-required empty string.",
+  "sources": [
+    {
+      "type": "year / mint mark / variety / mintage",
+      "origin": "English Wikipedia \"Morgan dollar\" (https://en.wikipedia.org/wiki/Morgan_dollar), revision 1385997217, fetched 2026-11-25 through the MediaWiki API (action=parse)",
+      "url": "https://en.wikipedia.org/wiki/Morgan_dollar",
+      "revisionId": 1385997217,
+      "fetchedAt": "2026-11-25",
+      "rawResponse": "sources/Morgan_dollar.2026-11-25.json",
+      "license": "Wikipedia text is CC BY-SA 4.0; the year/mint-mark/variety/mintage facts reproduced here are historical facts, not copyrightable expression -- no attribution obligation for the facts themselves, though the app footer still credits Wikipedia generally",
+      "note": "Rows read by hand (scratch script over the saved response's wikitext) from the \"Mintage figures\" table, which has one column per mint and which the generator does not parse (it ignores tables without Year/Mint/Mintage columns). Column order: Year, Philadelphia, New Orleans, San Francisco, Carson City, Denver. Philadelphia is null (no mint mark on the coin), New Orleans is O, San Francisco is S, Carson City is CC, Denver is D; an empty cell means no coin. Only the 1878-1904 and 1921 rows are read; the 2021 and later rows and the Total row are ignored. Physical specs and the key-date flag were filled in by hand; no images."
+    },
+    {
+      "type": "physical specs",
+      "origin": "Wikipedia \"Morgan dollar\" infobox, in the saved response under sources/: mass 26.73 g, diameter 38.1 mm, thickness 2.4 mm, composition 90.0% silver / 10.0% copper (1878–1904, 1921)",
+      "license": "Numeric facts, not copyrightable expression (docs/catalog-data-licensing.md §1)"
+    }
+  ],
+  "rules-note": "Business strikes only, 1878-1904 and 1921: one coin per year and mint with a figure in the source's \"Mintage figures\" table. The 1895 Philadelphia Morgan dollar is proof-only (the source gives \"880 (proof only)\"): it is not a business strike and is excluded on purpose, so there is no 1895 coin without a mint mark (collectors will look for it; 1895 O and S are here). Mint marks are as on the coin: CC, O, S, D, and null for Philadelphia, which struck its coins without a mark (unlike the modern dollar files, which use \"P\"). Varieties such as the 1878 8TF and 7TF tail-feather varieties are listed only where the source gives separate rows with their own figures; it gives one 1878 Philadelphia figure (10,508,800), so 1878 Philadelphia is a single coin with no variety. The 1921 Philadelphia coin has variety \"Morgan\" because the 1921 Philadelphia Peace dollar (in us-dollars-peace.json, variety \"Peace\") shares its year, mint mark and denomination; no other coin has a variety. Mintages are only as the source gives them; nothing is summed or estimated. The 2021 and later collector Morgan dollars are not included. Key dates: isKeyDate is true only for the 1893-S, named as the key date in the saved source's \"Key date\" section (see keyDates).",
+  "country": "USA",
+  "denomination": "Dollar",
+  "name": "Morgan Dollar",
+  "yearRange": [
+    1878,
+    1921
+  ],
+  "specs": {
+    "diameterMm": 38.1,
+    "weightG": 26.73,
+    "thicknessMm": 2.4,
+    "material": "Silver (90% silver, 10% copper)"
+  },
+  "keyDates": {
+    "source": "sources/Morgan_dollar.2026-11-25.json",
+    "quote": "The [[key date]] in the Morgan dollar series is the [[1893-S Morgan dollar]], which was struck at the United States [[San Francisco Mint]].",
+    "coins": [
+      "1893-S"
+    ]
+  },
+  "coins": [
+    {
+      "year": 1878,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 10508800
+    },
+    {
+      "year": 1878,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 9774000
+    },
+    {
+      "year": 1878,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2212000
+    },
+    {
+      "year": 1879,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 14806000
+    },
+    {
+      "year": 1879,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2887000
+    },
+    {
+      "year": 1879,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 9110000
+    },
+    {
+      "year": 1879,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 756000
+    },
+    {
+      "year": 1880,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 12600000
+    },
+    {
+      "year": 1880,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 5305000
+    },
+    {
+      "year": 1880,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 8900000
+    },
+    {
+      "year": 1880,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 495000
+    },
+    {
+      "year": 1881,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 9163000
+    },
+    {
+      "year": 1881,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 5708000
+    },
+    {
+      "year": 1881,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 12760000
+    },
+    {
+      "year": 1881,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 296000
+    },
+    {
+      "year": 1882,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 11100000
+    },
+    {
+      "year": 1882,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 6090000
+    },
+    {
+      "year": 1882,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 9250000
+    },
+    {
+      "year": 1882,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1133000
+    },
+    {
+      "year": 1883,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 12290000
+    },
+    {
+      "year": 1883,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 8725000
+    },
+    {
+      "year": 1883,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 6250000
+    },
+    {
+      "year": 1883,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1204000
+    },
+    {
+      "year": 1884,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 14070000
+    },
+    {
+      "year": 1884,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 9730000
+    },
+    {
+      "year": 1884,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 3200000
+    },
+    {
+      "year": 1884,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1136000
+    },
+    {
+      "year": 1885,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 17787000
+    },
+    {
+      "year": 1885,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 9185000
+    },
+    {
+      "year": 1885,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1497000
+    },
+    {
+      "year": 1885,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 228000
+    },
+    {
+      "year": 1886,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 19963000
+    },
+    {
+      "year": 1886,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 10710000
+    },
+    {
+      "year": 1886,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 750000
+    },
+    {
+      "year": 1887,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 20290000
+    },
+    {
+      "year": 1887,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 11550000
+    },
+    {
+      "year": 1887,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1771000
+    },
+    {
+      "year": 1888,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 19183000
+    },
+    {
+      "year": 1888,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 12150000
+    },
+    {
+      "year": 1888,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 657000
+    },
+    {
+      "year": 1889,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 21726000
+    },
+    {
+      "year": 1889,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 11875000
+    },
+    {
+      "year": 1889,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 700000
+    },
+    {
+      "year": 1889,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 350000
+    },
+    {
+      "year": 1890,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 16802000
+    },
+    {
+      "year": 1890,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 10701100
+    },
+    {
+      "year": 1890,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 8230373
+    },
+    {
+      "year": 1890,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2309041
+    },
+    {
+      "year": 1891,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 8693556
+    },
+    {
+      "year": 1891,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 7954529
+    },
+    {
+      "year": 1891,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 5296000
+    },
+    {
+      "year": 1891,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1618000
+    },
+    {
+      "year": 1892,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1036000
+    },
+    {
+      "year": 1892,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2744000
+    },
+    {
+      "year": 1892,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1200000
+    },
+    {
+      "year": 1892,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1352000
+    },
+    {
+      "year": 1893,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 378000
+    },
+    {
+      "year": 1893,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 300000
+    },
+    {
+      "year": 1893,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": true,
+      "mintage": 100000
+    },
+    {
+      "year": 1893,
+      "mintMark": "CC",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 677000
+    },
+    {
+      "year": 1894,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 110000
+    },
+    {
+      "year": 1894,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1723000
+    },
+    {
+      "year": 1894,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1260000
+    },
+    {
+      "year": 1895,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 450000
+    },
+    {
+      "year": 1895,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 400000
+    },
+    {
+      "year": 1896,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 9976000
+    },
+    {
+      "year": 1896,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 4900000
+    },
+    {
+      "year": 1896,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 5000000
+    },
+    {
+      "year": 1897,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2822000
+    },
+    {
+      "year": 1897,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 4004000
+    },
+    {
+      "year": 1897,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 5825000
+    },
+    {
+      "year": 1898,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 5884000
+    },
+    {
+      "year": 1898,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 4400000
+    },
+    {
+      "year": 1898,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 4102000
+    },
+    {
+      "year": 1899,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 330000
+    },
+    {
+      "year": 1899,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 12290000
+    },
+    {
+      "year": 1899,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2562000
+    },
+    {
+      "year": 1900,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 8830000
+    },
+    {
+      "year": 1900,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 12590000
+    },
+    {
+      "year": 1900,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 3540000
+    },
+    {
+      "year": 1901,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 6962000
+    },
+    {
+      "year": 1901,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 13320000
+    },
+    {
+      "year": 1901,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2284000
+    },
+    {
+      "year": 1902,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 7994000
+    },
+    {
+      "year": 1902,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 8636000
+    },
+    {
+      "year": 1902,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1530000
+    },
+    {
+      "year": 1903,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 4652000
+    },
+    {
+      "year": 1903,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 4450000
+    },
+    {
+      "year": 1903,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1241000
+    },
+    {
+      "year": 1904,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2788000
+    },
+    {
+      "year": 1904,
+      "mintMark": "O",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 3720000
+    },
+    {
+      "year": 1904,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2304000
+    },
+    {
+      "year": 1921,
+      "mintMark": null,
+      "variety": "Morgan",
+      "isKeyDate": false,
+      "mintage": 44690000
+    },
+    {
+      "year": 1921,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 21695000
+    },
+    {
+      "year": 1921,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 20345000
+    }
+  ]
+}

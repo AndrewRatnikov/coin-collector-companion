@@ -1,0 +1,671 @@
+{
+  "name": "Morgan Dollars 1878-1921",
+  "description": "Every business-strike Morgan dollar, 1878-1904 and 1921, by year and mint mark: 95 coins (the proof-only 1895 Philadelphia is not included).",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1878,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1878,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1878,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1879,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1879,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1879,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1879,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1880,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1880,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1880,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1880,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1881,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1881,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1881,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1881,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1882,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1882,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1882,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1882,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1883,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1883,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1883,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1883,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1884,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1884,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1884,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1884,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1885,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1885,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1885,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1885,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1886,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1886,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1886,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1887,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1887,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1887,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1888,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1888,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1888,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1889,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1889,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1889,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1889,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1890,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1890,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1890,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1890,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1891,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1891,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1891,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1891,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1892,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1892,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1892,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1892,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1893,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1893,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1893,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1893,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1894,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1894,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1894,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1895,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1895,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1896,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1896,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1896,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1897,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1897,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1897,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1898,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1898,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1898,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1899,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1899,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1899,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1900,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1900,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1900,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1901,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1901,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1901,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1902,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1902,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1902,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1903,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1903,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1903,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1904,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1904,
+      "mintMark": "O",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1904,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1921,
+      "mintMark": "",
+      "variety": "Morgan"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1921,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1921,
+      "mintMark": "D",
+      "variety": ""
+    }
+  ]
+}
