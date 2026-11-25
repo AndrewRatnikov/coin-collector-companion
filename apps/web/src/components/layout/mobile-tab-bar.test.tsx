@@ -1,7 +1,11 @@
 /**
  * Tests for: MobileTabBar
  * Contract source: runs/run_20261018_085900/plan.md § Interface Contract → Component: MobileTabBar
- * Covers criteria: #11, #13 (from prd.md)
+ *                   runs/run_20261125_225035/plan.md § Interface Contract → Component: MobileTabBar (MODIFY)
+ * Covers criteria: #11, #13 (from run_20261018_085900's prd.md); #2, #3 (from run_20261125_225035's prd.md)
+ *
+ * run_20261125_225035: signed in there are four tabs (My sets, Checklists, Catalog, Collection);
+ * Checklists links to /sets/canonical. Grid classes are not asserted (jsdom has no layout).
  *
  * CONTRACT_GAP: none.
  */
@@ -32,34 +36,60 @@ describe('MobileTabBar', () => {
   });
 
   describe('signed in', () => {
-    it('is a nav named "Main" with My sets, Collection, Catalog in order', () => {
+    it('is a nav named "Main" with My sets, Checklists, Catalog, Collection in order', () => {
       render(<MobileTabBar isAuthenticated />);
 
       const bar = screen.getByTestId('site-nav-tabbar');
       expect(screen.getByRole('navigation', { name: 'Main' })).toBe(bar);
-      expect(tabHrefs()).toEqual(['/dashboard', '/collection', '/catalog']);
+      expect(tabHrefs()).toEqual(['/dashboard', '/sets/canonical', '/catalog', '/collection']);
       expect(screen.getByTestId('site-nav-tab-my-sets')).toHaveTextContent('My sets');
-      expect(screen.getByTestId('site-nav-tab-collection')).toHaveTextContent('Collection');
+      expect(screen.getByTestId('site-nav-tab-checklists')).toHaveTextContent('Checklists');
       expect(screen.getByTestId('site-nav-tab-catalog')).toHaveTextContent('Catalog');
+      expect(screen.getByTestId('site-nav-tab-collection')).toHaveTextContent('Collection');
     });
 
-    it('does not show the signed-out tabs', () => {
+    it('gives each tab its own href', () => {
       render(<MobileTabBar isAuthenticated />);
 
-      expect(screen.queryByTestId('site-nav-tab-checklists')).not.toBeInTheDocument();
+      expect(screen.getByTestId('site-nav-tab-my-sets')).toHaveAttribute('href', '/dashboard');
+      expect(screen.getByTestId('site-nav-tab-checklists')).toHaveAttribute('href', '/sets/canonical');
+      expect(screen.getByTestId('site-nav-tab-catalog')).toHaveAttribute('href', '/catalog');
+      expect(screen.getByTestId('site-nav-tab-collection')).toHaveAttribute('href', '/collection');
+    });
+
+    it('shows Checklists but not the signed-out Glossary tab', () => {
+      render(<MobileTabBar isAuthenticated />);
+
+      expect(screen.getByTestId('site-nav-tab-checklists')).toBeInTheDocument();
       expect(screen.queryByTestId('site-nav-tab-glossary')).not.toBeInTheDocument();
+      expect(within(screen.getByTestId('site-nav-tabbar')).getAllByRole('link')).toHaveLength(4);
+      expect(tabHrefs()).not.toContain('/sets');
     });
 
     it.each([
       ['/dashboard', 'site-nav-tab-my-sets'],
+      ['/sets/new', 'site-nav-tab-my-sets'],
+      ['/sets/abc', 'site-nav-tab-my-sets'],
+      ['/sets/abc/missing', 'site-nav-tab-my-sets'],
+      ['/want-list', 'site-nav-tab-my-sets'],
+      ['/sets/canonical', 'site-nav-tab-checklists'],
+      ['/sets/canonical/abc', 'site-nav-tab-checklists'],
+      ['/sets/public', 'site-nav-tab-checklists'],
+      ['/sets/public/abc', 'site-nav-tab-checklists'],
       ['/collection', 'site-nav-tab-collection'],
       ['/collection/import', 'site-nav-tab-collection'],
       ['/catalog/123', 'site-nav-tab-catalog'],
+      ['/catalog/mine', 'site-nav-tab-catalog'],
     ])('marks only the matching tab current at %s', (pathname, activeId) => {
       usePathnameMock.mockReturnValue(pathname);
       render(<MobileTabBar isAuthenticated />);
 
-      const ids = ['site-nav-tab-my-sets', 'site-nav-tab-collection', 'site-nav-tab-catalog'];
+      const ids = [
+        'site-nav-tab-my-sets',
+        'site-nav-tab-checklists',
+        'site-nav-tab-catalog',
+        'site-nav-tab-collection',
+      ];
       for (const id of ids) {
         if (id === activeId) {
           expect(screen.getByTestId(id)).toHaveAttribute('aria-current', 'page');
@@ -95,6 +125,7 @@ describe('MobileTabBar', () => {
     it.each([
       ['/catalog', 'site-nav-tab-catalog'],
       ['/sets/public', 'site-nav-tab-checklists'],
+      ['/sets/canonical/abc', 'site-nav-tab-checklists'],
       ['/glossary', 'site-nav-tab-glossary'],
     ])('marks only the matching tab current at %s', (pathname, activeId) => {
       usePathnameMock.mockReturnValue(pathname);
@@ -123,6 +154,7 @@ describe('MobileTabBar', () => {
       await waitFor(() => {
         expect(screen.getByTestId('site-nav-tab-my-sets')).toHaveTextContent('Mis colecciones');
       });
+      expect(screen.getByTestId('site-nav-tab-checklists')).toHaveTextContent('Listas de control');
       expect(screen.getByTestId('site-nav-tab-collection')).toHaveTextContent('Colección');
       expect(screen.getByTestId('site-nav-tab-catalog')).toHaveTextContent('Catálogo');
     });

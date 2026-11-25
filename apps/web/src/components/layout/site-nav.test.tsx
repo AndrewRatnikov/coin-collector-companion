@@ -1,7 +1,9 @@
 /**
  * Tests for: SiteNav
  * Contract source: runs/run_20261018_085900/plan.md § Interface Contract → Component: SiteNav
- * Covers criteria: #1, #2, #4, #7, #10, #11, #12 (from prd.md)
+ *                   runs/run_20261125_225035/plan.md § Interface Contract → Component: SiteNav (MODIFY)
+ * Covers criteria: #1, #2, #4, #7, #10, #11, #12 (from run_20261018_085900's prd.md);
+ *                  #1, #2, #3, #6 (from run_20261125_225035's prd.md)
  *
  * run_20261018_085900: SiteNav is rewritten (responsive header, My sets / Collection /
  * Catalog primary items, Checklists, Create account, current-user fetch moved here from
@@ -10,6 +12,10 @@
  * the language <select>) are replaced; the logout, menu behaviour, brand, My submissions,
  * Settings and Admin-fetch blocks are carried over and adapted. Removed testids are only
  * asserted gone structurally (links inside `site-nav-main`), never by queryByTestId.
+ *
+ * run_20261125_225035: the signed-in bar is My sets, Checklists (/sets/canonical), Catalog,
+ * Collection; site-nav-checklists-link now also renders signed in. The signed-in tab bar has
+ * four tabs. /want-list has the mobile title "Want list".
  *
  * Note: jsdom applies no Tailwind classes, so desktop and mobile elements are both in the
  * DOM; everything is scoped by testid.
@@ -56,6 +62,13 @@ async function settle() {
   });
 }
 
+const SIGNED_IN_ITEM_IDS = [
+  'site-nav-my-sets-link',
+  'site-nav-checklists-link',
+  'site-nav-catalog-link',
+  'site-nav-collection-link',
+];
+
 describe('SiteNav', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -68,14 +81,16 @@ describe('SiteNav', () => {
   });
 
   describe('criterion 1: signed-in primary nav', () => {
-    it('lists My sets, Collection, Catalog in order with the right hrefs and labels', async () => {
+    it('lists My sets, Checklists, Catalog, Collection in order with the right hrefs and labels', async () => {
       setStoredToken('tok-abc');
       render(<SiteNav />);
 
       expect(await screen.findByTestId('site-nav-my-sets-link')).toHaveTextContent('My sets');
-      expect(mainHrefs()).toEqual(['/dashboard', '/collection', '/catalog']);
-      expect(screen.getByTestId('site-nav-collection-link')).toHaveTextContent('Collection');
+      expect(mainHrefs()).toEqual(['/dashboard', '/sets/canonical', '/catalog', '/collection']);
+      expect(screen.getByTestId('site-nav-checklists-link')).toHaveTextContent('Checklists');
+      expect(screen.getByTestId('site-nav-checklists-link')).toHaveAttribute('href', '/sets/canonical');
       expect(screen.getByTestId('site-nav-catalog-link')).toHaveTextContent('Catalog');
+      expect(screen.getByTestId('site-nav-collection-link')).toHaveTextContent('Collection');
     });
 
     it('is a header root containing a nav named "Main"', async () => {
@@ -89,15 +104,23 @@ describe('SiteNav', () => {
 
     it.each([
       ['/dashboard', 'site-nav-my-sets-link'],
+      ['/sets/abc', 'site-nav-my-sets-link'],
+      ['/sets/abc/missing', 'site-nav-my-sets-link'],
+      ['/want-list', 'site-nav-my-sets-link'],
+      ['/sets/canonical', 'site-nav-checklists-link'],
+      ['/sets/canonical/abc', 'site-nav-checklists-link'],
+      ['/sets/public', 'site-nav-checklists-link'],
+      ['/sets/public/abc', 'site-nav-checklists-link'],
       ['/collection/import', 'site-nav-collection-link'],
       ['/catalog/123', 'site-nav-catalog-link'],
+      ['/catalog/mine', 'site-nav-catalog-link'],
     ])('marks only the matching item aria-current at %s', async (pathname, activeId) => {
       usePathnameMock.mockReturnValue(pathname);
       setStoredToken('tok-abc');
       render(<SiteNav />);
 
       await screen.findByTestId('site-nav-my-sets-link');
-      for (const id of ['site-nav-my-sets-link', 'site-nav-collection-link', 'site-nav-catalog-link']) {
+      for (const id of SIGNED_IN_ITEM_IDS) {
         if (id === activeId) {
           expect(screen.getByTestId(id)).toHaveAttribute('aria-current', 'page');
         } else {
@@ -106,7 +129,7 @@ describe('SiteNav', () => {
       }
     });
 
-    it('has no Glossary, Sets/Checklists or Admin link in the bar', async () => {
+    it('has exactly the four items and no Glossary, /sets or Admin link in the bar', async () => {
       setStoredToken('tok-abc');
       getCurrentUserMock.mockResolvedValue(currentUser('admin'));
       render(<SiteNav />);
@@ -114,7 +137,7 @@ describe('SiteNav', () => {
       await screen.findByTestId('site-nav-my-sets-link');
       await settle();
       const main = screen.getByTestId('site-nav-main');
-      expect(within(main).getAllByRole('link')).toHaveLength(3);
+      expect(within(main).getAllByRole('link')).toHaveLength(4);
       expect(mainHrefs()).not.toContain('/glossary');
       expect(mainHrefs()).not.toContain('/sets');
       expect(mainHrefs()).not.toContain('/admin/submissions');
@@ -122,14 +145,13 @@ describe('SiteNav', () => {
       expect(within(main).queryByText('Sets')).not.toBeInTheDocument();
     });
 
-    it('hides the login and signup links and the signed-out Checklists item', async () => {
+    it('hides the login and signup links', async () => {
       setStoredToken('tok-abc');
       render(<SiteNav />);
 
       await screen.findByTestId('site-nav-account-trigger');
       expect(screen.queryByTestId('site-nav-login-link')).not.toBeInTheDocument();
       expect(screen.queryByTestId('site-nav-signup-link')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('site-nav-checklists-link')).not.toBeInTheDocument();
     });
   });
 
@@ -422,6 +444,25 @@ describe('SiteNav', () => {
       expect(screen.getByTestId('site-nav-page-title')).toHaveTextContent('Collection');
     });
 
+    it('shows the page title "Want list" at /want-list, not the brand', async () => {
+      usePathnameMock.mockReturnValue('/want-list');
+      setStoredToken('tok-abc');
+      render(<SiteNav />);
+
+      await screen.findByTestId('site-nav-account-trigger');
+      expect(screen.getByTestId('site-nav-page-title')).toHaveTextContent('Want list');
+      expect(screen.getByTestId('site-nav-page-title')).not.toHaveTextContent('Coin Collector Companion');
+    });
+
+    it('shows the page title "Checklists" at /sets/canonical', async () => {
+      usePathnameMock.mockReturnValue('/sets/canonical');
+      setStoredToken('tok-abc');
+      render(<SiteNav />);
+
+      await screen.findByTestId('site-nav-account-trigger');
+      expect(screen.getByTestId('site-nav-page-title')).toHaveTextContent('Checklists');
+    });
+
     it('shows the New set page action only at /dashboard', async () => {
       setStoredToken('tok-abc');
       const view = render(<SiteNav />);
@@ -446,7 +487,7 @@ describe('SiteNav', () => {
   });
 
   describe('criterion 11: mobile tab bar is rendered with the auth-dependent tab set', () => {
-    it('renders My sets, Collection, Catalog tabs when signed in', async () => {
+    it('renders My sets, Checklists, Catalog, Collection tabs when signed in', async () => {
       setStoredToken('tok-abc');
       render(<SiteNav />);
 
@@ -456,7 +497,17 @@ describe('SiteNav', () => {
         within(bar)
           .getAllByRole('link')
           .map((a) => a.getAttribute('href')),
-      ).toEqual(['/dashboard', '/collection', '/catalog']);
+      ).toEqual(['/dashboard', '/sets/canonical', '/catalog', '/collection']);
+    });
+
+    it('marks the Checklists tab current on a checklist page when signed in', async () => {
+      usePathnameMock.mockReturnValue('/sets/canonical/abc');
+      setStoredToken('tok-abc');
+      render(<SiteNav />);
+
+      await screen.findByTestId('site-nav-account-trigger');
+      expect(screen.getByTestId('site-nav-tab-checklists')).toHaveAttribute('aria-current', 'page');
+      expect(screen.getByTestId('site-nav-tab-my-sets')).not.toHaveAttribute('aria-current');
     });
 
     it('renders Catalog, Checklists, Glossary tabs when signed out', () => {
