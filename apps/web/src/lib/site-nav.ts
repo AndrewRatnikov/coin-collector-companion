@@ -25,8 +25,10 @@ export function getActiveNavItem(pathname: string | null, isAuthenticated: boole
   const path = pathname ?? '';
 
   if (isAuthenticated) {
-    // Own sets, the new-set form and the checklist browse pages are all reached from My sets.
-    if (matches(path, '/dashboard') || matches(path, '/sets')) return 'my-sets';
+    // The checklist browse pages belong to Checklists. This check must come before the
+    // generic `/sets` one, which covers own sets, the new-set form and the want list (My sets).
+    if (matches(path, '/sets/canonical') || matches(path, '/sets/public')) return 'checklists';
+    if (matches(path, '/dashboard') || matches(path, '/sets') || matches(path, '/want-list')) return 'my-sets';
     if (matches(path, '/collection')) return 'collection';
     if (matches(path, '/catalog')) return 'catalog';
     return null;
@@ -47,6 +49,7 @@ const MOBILE_TITLES: { base: string; key: MessageKey }[] = [
   { base: '/sets/public', key: 'nav.checklists' },
   { base: '/sets/new', key: 'setNew.title' },
   { base: '/sets', key: 'nav.mySets' },
+  { base: '/want-list', key: 'wantList.title' },
   { base: '/settings', key: 'nav.settings' },
   { base: '/glossary', key: 'nav.glossary' },
   { base: '/admin', key: 'nav.admin' },
