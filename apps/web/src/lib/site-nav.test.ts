@@ -1,7 +1,12 @@
 /**
  * Tests for: site-nav helpers
  * Contract source: runs/run_20261018_085900/plan.md § Interface Contract → Module: site-nav helpers
- * Covers criteria: #1, #3, #7, #10 (from prd.md)
+ *                   runs/run_20261125_225035/plan.md § Interface Contract → Module: site-nav helpers (MODIFY)
+ * Covers criteria: #1, #3, #7, #10 (from run_20261018_085900's prd.md);
+ *                  #4, #5, #6 (from run_20261125_225035's prd.md)
+ *
+ * run_20261125_225035: signed in, /sets/canonical* and /sets/public* are Checklists (checked before
+ * the generic /sets branch); /want-list is My sets; /want-list gets the "wantList.title" mobile title.
  *
  * CONTRACT_GAP: none.
  */
@@ -19,8 +24,14 @@ describe('getActiveNavItem (signed in)', () => {
   it.each([
     ['/dashboard', 'my-sets'],
     ['/sets', 'my-sets'],
-    ['/sets/canonical', 'my-sets'],
     ['/sets/new', 'my-sets'],
+    ['/sets/abc', 'my-sets'],
+    ['/sets/abc/missing', 'my-sets'],
+    ['/want-list', 'my-sets'],
+    ['/sets/canonical', 'checklists'],
+    ['/sets/canonical/abc', 'checklists'],
+    ['/sets/public', 'checklists'],
+    ['/sets/public/abc', 'checklists'],
     ['/collection', 'collection'],
     ['/collection/import', 'collection'],
     ['/catalog', 'catalog'],
@@ -30,15 +41,30 @@ describe('getActiveNavItem (signed in)', () => {
     expect(getActiveNavItem(pathname, true)).toBe(expected);
   });
 
-  it.each(['/', '/glossary', '/settings', '/admin/submissions', '/collectionx', '/catalogue'])(
-    'returns null for %s',
-    (pathname) => {
-      expect(getActiveNavItem(pathname, true)).toBeNull();
-    },
-  );
+  it.each([
+    '/',
+    '/glossary',
+    '/settings',
+    '/admin/submissions',
+    '/collectionx',
+    '/catalogue',
+    '/want-listx',
+  ])('returns null for %s', (pathname) => {
+    expect(getActiveNavItem(pathname, true)).toBeNull();
+  });
 
   it('treats a null pathname as no match', () => {
     expect(getActiveNavItem(null, true)).toBeNull();
+  });
+
+  it('does not let a checklist route fall into the generic /sets branch', () => {
+    expect(getActiveNavItem('/sets/canonical', true)).not.toBe(getActiveNavItem('/sets/abc', true));
+    expect(getActiveNavItem('/sets/public/abc', true)).not.toBe(getActiveNavItem('/sets/abc/missing', true));
+  });
+
+  it('matches whole path segments only (/sets/publicx is a set id, not Checklists)', () => {
+    expect(getActiveNavItem('/sets/publicx', true)).toBe('my-sets');
+    expect(getActiveNavItem('/sets/canonicalx', true)).toBe('my-sets');
   });
 });
 
@@ -48,13 +74,15 @@ describe('getActiveNavItem (signed out)', () => {
     ['/catalog/123', 'catalog'],
     ['/sets', 'checklists'],
     ['/sets/public', 'checklists'],
+    ['/sets/public/abc', 'checklists'],
+    ['/sets/canonical', 'checklists'],
     ['/sets/canonical/abc', 'checklists'],
     ['/glossary', 'glossary'],
   ])('maps %s to %s', (pathname, expected) => {
     expect(getActiveNavItem(pathname, false)).toBe(expected);
   });
 
-  it.each(['/', '/dashboard', '/collection', '/login'])('returns null for %s', (pathname) => {
+  it.each(['/', '/dashboard', '/collection', '/want-list', '/login'])('returns null for %s', (pathname) => {
     expect(getActiveNavItem(pathname, false)).toBeNull();
   });
 
@@ -64,6 +92,7 @@ describe('getActiveNavItem (signed out)', () => {
 
   it('gives different answers for the same path depending on auth state', () => {
     expect(getActiveNavItem('/sets', true)).not.toBe(getActiveNavItem('/sets', false));
+    expect(getActiveNavItem('/want-list', true)).not.toBe(getActiveNavItem('/want-list', false));
   });
 });
 
@@ -78,6 +107,7 @@ describe('getMobilePageTitleKey', () => {
     ['/sets/public', 'nav.checklists'],
     ['/sets/new', 'setNew.title'],
     ['/sets', 'nav.mySets'],
+    ['/want-list', 'wantList.title'],
     ['/settings', 'nav.settings'],
     ['/settings/feedback', 'nav.settings'],
     ['/glossary', 'nav.glossary'],
@@ -98,9 +128,12 @@ describe('getMobilePageAction', () => {
     expect(getMobilePageAction('/dashboard')).toEqual({ href: '/sets/new', labelKey: 'setNew.title' });
   });
 
-  it.each(['/collection', '/dashboard/x', '/sets/new', '/', '/catalog'])('returns null for %s', (pathname) => {
-    expect(getMobilePageAction(pathname)).toBeNull();
-  });
+  it.each(['/collection', '/dashboard/x', '/sets/new', '/', '/catalog', '/want-list'])(
+    'returns null for %s',
+    (pathname) => {
+      expect(getMobilePageAction(pathname)).toBeNull();
+    },
+  );
 
   it('returns null for a null pathname', () => {
     expect(getMobilePageAction(null)).toBeNull();

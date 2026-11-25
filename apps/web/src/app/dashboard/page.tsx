@@ -24,7 +24,8 @@ import {
 
 const FOCUS_RING =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-700';
-const LINK_CLASS = `text-accent-700 underline underline-offset-2 hover:text-accent-800 ${FOCUS_RING}`;
+// Secondary button (white with a neutral border); New set stays the primary action.
+const SECONDARY_BUTTON_CLASS = `inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-[var(--radius-md)] border border-neutral-400 bg-white font-medium text-text hover:border-accent ${FOCUS_RING}`;
 const EYEBROW_CLASS = 'text-xs font-semibold uppercase tracking-[0.06em] text-neutral-800';
 const TILE_CLASS =
   'flex min-w-0 flex-col gap-2 rounded-[var(--radius-lg)] bg-surface px-[18px] py-4';
@@ -138,11 +139,11 @@ export default function DashboardPage() {
           {!isEmpty && (
             <div className="flex flex-wrap items-center gap-4 max-[899px]:hidden">
               <Link
-                data-testid="dashboard-browse-link"
-                href="/sets"
-                className={`text-sm ${LINK_CLASS}`}
+                data-testid="dashboard-want-list-button"
+                href="/want-list"
+                className={`px-[18px] text-sm ${SECONDARY_BUTTON_CLASS}`}
               >
-                {t('dashboard.browseLink')}
+                {t('dashboard.wantListButton')}
               </Link>
               <Link
                 data-testid="dashboard-new-set"
@@ -222,14 +223,14 @@ export default function DashboardPage() {
 
             <div className="flex flex-col gap-[14px]">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                   <h2 className={EYEBROW_CLASS}>{t('dashboard.yourSets')}</h2>
                   <Link
-                    data-testid="dashboard-browse-link-mobile"
-                    href="/sets"
-                    className={`text-[13px] min-[900px]:hidden ${LINK_CLASS}`}
+                    data-testid="dashboard-want-list-button-mobile"
+                    href="/want-list"
+                    className={`px-3 text-[13px] min-[900px]:hidden ${SECONDARY_BUTTON_CLASS}`}
                   >
-                    {t('dashboard.browseLinkShort')}
+                    {t('dashboard.wantListButton')}
                   </Link>
                 </div>
                 <label className="flex items-center gap-2 text-[13px] text-neutral-800">

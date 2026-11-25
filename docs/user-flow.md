@@ -1,18 +1,19 @@
 # User flow map
 
-Drawn 2026-11-25 from the code: the routes under `apps/web/src/app`, the nav items in `components/layout/` (`site-nav.tsx`, `mobile-tab-bar.tsx`, `account-menu.tsx`, `site-footer.tsx`, `sets-tabs.tsx`) and every `href` / `router.push` in pages and components. Update it when navigation changes.
+Drawn 2026-11-25 from the code, updated 2026-11-25 for navigation Option A: the routes under `apps/web/src/app`, the nav items in `components/layout/` (`site-nav.tsx`, `mobile-tab-bar.tsx`, `account-menu.tsx`, `site-footer.tsx`, `sets-tabs.tsx`) and every `href` / `router.push` in pages and components. Update it when navigation changes.
 
 ## Signed in
 
-Nav (desktop bar and phone tab bar): My sets, Collection, Catalog. Account menu: Settings, My submissions, Import from CSV (and Admin for admins). Footer: Glossary, Send feedback, Privacy.
+Nav (desktop bar and phone tab bar): My sets, Checklists, Catalog, Collection. Account menu: Settings, My submissions, Import from CSV (and Admin for admins). Footer: Glossary, Send feedback, Privacy.
 
 ```mermaid
 flowchart TB
   subgraph NAV["Top nav and phone tab bar"]
     direction LR
     MS["My sets<br/>/dashboard"]
-    COL["Collection<br/>/collection"]
+    CL["Checklists<br/>/sets/canonical"]
     CAT["Catalog<br/>/catalog"]
+    COL["Collection<br/>/collection"]
   end
   subgraph ACC["Account menu"]
     direction LR
@@ -22,8 +23,8 @@ flowchart TB
   end
   MS --> SETP["Set page<br/>/sets/:id"]
   MS --> NEW["New set<br/>/sets/new"]
-  MS -. "Browse checklists (text link, hidden with no sets)" .-> CL["Checklists<br/>/sets/canonical"]
-  MS -- "Missing tile" --> WL["Want list<br/>/want-list"]
+  MS -- "Want list button" --> WL["Want list<br/>/want-list"]
+  MS -- "Missing tile" --> WL
   MS -- "Collection tile" --> COL
   MS -- "Next set suggestion" --> NEW
   CL <-- "tabs" --> PUB["Collectors' sets<br/>/sets/public"]
@@ -48,9 +49,7 @@ flowchart TB
   WL -- "Which sets?" --> SETP
   MINE --> COIN
   classDef nav fill:#EEEDFE,stroke:#534AB7,color:#3C3489
-  classDef hard fill:#FCEBEB,stroke:#A32D2D,color:#791F1F
-  class MS,COL,CAT nav
-  class CL,PUB,WL hard
+  class MS,CL,CAT,COL nav
 ```
 
 ## Signed out
@@ -78,8 +77,8 @@ flowchart TB
 
 ## What the map shows
 
-1. **Checklists and collectors' sets are not in the signed-in nav.** The only ways in are a small "Browse checklists" text link on My sets (not rendered when the user has no sets) and step 1 of the new-set flow.
-2. **On those pages the nav highlights "My sets"** (`getActiveNavItem` maps every `/sets/*` path to `my-sets`), so browsing other people's sets looks like being in your own.
-3. **The combined want list has no nav entry.** It's reached from the My sets "missing" tile and from a link on a set's want list.
+1. **Checklists and collectors' sets were not in the signed-in nav** (addressed 2026-11-25): Checklists is now a nav item and phone tab linking to `/sets/canonical`, reachable with or without sets; the "Browse checklists" text links on My sets are gone.
+2. **On those pages the nav highlighted "My sets"** (addressed 2026-11-25): `getActiveNavItem` now marks `/sets/canonical*` and `/sets/public*` as Checklists; own sets, the new-set form and the want list stay under My sets.
+3. **The combined want list had no clear entry** (addressed 2026-11-25): My sets has a secondary "Want list" button beside New set (beside "Your sets" on the phone) whenever the user has a set, besides the "missing" tile and the link on a set's want list.
 4. **Catalog is in the nav, but nothing points to it from My sets or a set page.** From a set, coins are added through the Add coins sheet; the catalog page itself is only one hop away through the nav.
 5. **Glossary is footer-only when signed in.**

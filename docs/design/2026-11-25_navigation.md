@@ -2,12 +2,12 @@
 
 Two navigation designs for signed-in users, chosen after mapping today's flow in [docs/user-flow.md](../user-flow.md). That map showed that curated checklists, collectors' sets and the combined want list are hard to reach: none is in the nav, and the "Browse checklists" text link on My sets disappears when the user has no sets.
 
-- **Option A, four tabs: chosen, build now.**
+- **Option A, four tabs: Implemented 2026-11-25.**
 - **Option C, want list first: the direction for later.** Revisit once analytics show where returning users go first.
 
 A third option was considered and not chosen: two nav items, "My collection" and "Browse", each with sub-tabs. It made the catalog two taps away.
 
-## Option A: four tabs (build now)
+## Option A: four tabs (Implemented 2026-11-25)
 
 The signed-in nav (desktop bar and phone tab bar) becomes **My sets · Checklists · Catalog · Collection**. Checklists holds the existing Curated and Collectors' sets tabs. The combined want list gets a clear button on My sets. No page moves.
 

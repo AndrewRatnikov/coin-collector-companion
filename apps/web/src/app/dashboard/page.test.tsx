@@ -3,8 +3,10 @@
  * Contract source: runs/run_20260721_161448/plan.md § Interface Contract → Component: DashboardPage (MODIFY)
  *                   runs/run_20261011_095624/plan.md § Interface Contract → Page: DashboardPage (MODIFY)
  *                   runs/run_20261018_105617/plan.md § Interface Contract → Page: DashboardPage
+ *                   runs/run_20261125_225035/plan.md § Interface Contract → Page: DashboardPage (MODIFY)
  * Covers criteria: #14 (from run_20261011_095624's prd.md: set-deleted notice);
- *                  #1, #4, #5, #6, #7, #8, #9 (from run_20261018_105617's prd.md)
+ *                  #1, #4, #5, #6, #7, #8, #9 (from run_20261018_105617's prd.md);
+ *                  #7, #8, #9, #11 (from run_20261125_225035's prd.md: browse links gone, Want list buttons)
  *
  * This file replaces the earlier dashboard test: the old stat tiles (dashboard-stat-*), list
  * (dashboard-set-list, dashboard-set-completion), per-set /gaps queries and dashboard-new-set-cta
@@ -14,6 +16,11 @@
  * The page now takes its data from useUserSets() and useSetsSummary() (both mocked here) and
  * MySetsEmpty calls useCanonicalSets() (mocked as well), so no QueryClientProvider is needed.
  * Fixture-only change (run_20261102_194108): the UserSetListItem factory gains `minGrade: null`.
+ *
+ * run_20261125_225035: dashboard-browse-link and dashboard-browse-link-mobile are removed (asserted
+ * gone); dashboard-want-list-button (desktop header row) and dashboard-want-list-button-mobile
+ * (beside "Your sets", loaded sets only) are added. jsdom applies no Tailwind, so both are in the
+ * DOM together when sets are loaded.
  *
  * CONTRACT_GAPS: none
  */
@@ -201,31 +208,62 @@ describe('DashboardPage', () => {
       expect(await screen.findByTestId('dashboard-set-count')).toHaveTextContent(/^1 set$/);
     });
 
-    it('links to the browse page and the New set flow', async () => {
+    it('links to the Want list and the New set flow', async () => {
       mockLoaded(SETS);
       renderDashboard();
 
-      const browse = await screen.findByTestId('dashboard-browse-link');
-      expect(browse).toHaveAttribute('href', '/sets');
-      expect(browse).toHaveTextContent('Browse checklists and collectors’ sets');
+      const wantList = await screen.findByTestId('dashboard-want-list-button');
+      expect(wantList).toHaveAttribute('href', '/want-list');
+      expect(wantList).toHaveTextContent('Want list');
       const newSet = screen.getByTestId('dashboard-new-set');
       expect(newSet).toHaveAttribute('href', '/sets/new');
       expect(newSet).toHaveTextContent('New set');
     });
 
-    it('keeps the header actions during loading and error', async () => {
+    it('puts the Want list button before New set in the same row', async () => {
+      mockLoaded(SETS);
+      renderDashboard();
+
+      const wantList = await screen.findByTestId('dashboard-want-list-button');
+      const newSet = screen.getByTestId('dashboard-new-set');
+      expect(wantList.parentElement).toBe(newSet.parentElement);
+      expect(wantList.compareDocumentPosition(newSet) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('shows the Want list button with a single set as well as several', async () => {
+      mockLoaded([ALPHA]);
+      renderDashboard();
+
+      expect(await screen.findByTestId('dashboard-want-list-button')).toHaveAttribute('href', '/want-list');
+    });
+
+    it('no longer renders the browse links', async () => {
+      mockLoaded(SETS);
+      renderDashboard();
+
+      await screen.findByTestId('dashboard-set-grid');
+      expect(screen.queryByTestId('dashboard-browse-link')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-browse-link-mobile')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Browse checklists/)).not.toBeInTheDocument();
+    });
+
+    it('keeps the header actions during loading and error, without the phone Want list button', async () => {
       useUserSetsMock.mockReturnValue(setsResult({ isLoading: true }));
       useSetsSummaryMock.mockReturnValue(summaryResult({ isLoading: true }));
       const { unmount } = renderDashboard();
       expect(await screen.findByTestId('dashboard-new-set')).toBeInTheDocument();
-      expect(screen.getByTestId('dashboard-browse-link')).toBeInTheDocument();
+      expect(screen.getByTestId('dashboard-want-list-button')).toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-want-list-button-mobile')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-browse-link')).not.toBeInTheDocument();
       unmount();
 
       useUserSetsMock.mockReturnValue(setsResult({ isError: true }));
       useSetsSummaryMock.mockReturnValue(summaryResult());
       renderDashboard();
       expect(await screen.findByTestId('dashboard-new-set')).toBeInTheDocument();
-      expect(screen.getByTestId('dashboard-browse-link')).toBeInTheDocument();
+      expect(screen.getByTestId('dashboard-want-list-button')).toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-want-list-button-mobile')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('dashboard-browse-link')).not.toBeInTheDocument();
     });
 
     it('does not show the old stat tiles or list markup', async () => {
@@ -269,6 +307,24 @@ describe('DashboardPage', () => {
       for (let i = 0; i < english.length; i++) {
         expect(labels[i]).not.toBe(english[i]);
       }
+    });
+
+    it('shows "Lista de faltantes" on both Want list buttons when es is stored', async () => {
+      localStorage.setItem(LOCALE_STORAGE_KEY, 'es');
+      setStoredToken('tok-abc');
+      mockLoaded(SETS);
+      render(
+        <I18nProvider>
+          <DashboardPage />
+        </I18nProvider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('dashboard-want-list-button')).toHaveTextContent('Lista de faltantes');
+      });
+      expect(screen.getByTestId('dashboard-want-list-button')).not.toHaveTextContent('Want list');
+      expect(screen.getByTestId('dashboard-want-list-button-mobile')).toHaveTextContent('Lista de faltantes');
+      expect(screen.getByTestId('dashboard-want-list-button')).toHaveAttribute('href', '/want-list');
     });
   });
 
@@ -366,12 +422,14 @@ describe('DashboardPage', () => {
       expect(within(alpha).queryByTestId('set-card-source')).not.toBeInTheDocument();
     });
 
-    it('offers a mobile browse link beside the grid', async () => {
+    it('offers a phone Want list button beside the "Your sets" heading', async () => {
       mockLoaded(SETS);
       renderDashboard();
 
-      const mobileLink = await screen.findByTestId('dashboard-browse-link-mobile');
-      expect(mobileLink).toHaveAttribute('href', '/sets');
+      const mobileButton = await screen.findByTestId('dashboard-want-list-button-mobile');
+      expect(mobileButton).toHaveAttribute('href', '/want-list');
+      expect(mobileButton).toHaveTextContent('Want list');
+      expect(screen.queryByTestId('dashboard-browse-link-mobile')).not.toBeInTheDocument();
     });
   });
 
@@ -510,8 +568,10 @@ describe('DashboardPage', () => {
         'dashboard-set-count',
         'dashboard-sort',
         'dashboard-set-grid',
-        'dashboard-browse-link',
+        'dashboard-want-list-button',
         'dashboard-new-set',
+        'dashboard-want-list-button-mobile',
+        'dashboard-browse-link',
         'dashboard-browse-link-mobile',
         'dashboard-suggestion',
       ]) {

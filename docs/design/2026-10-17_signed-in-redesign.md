@@ -43,6 +43,7 @@ Implementation brief for the signed-in experience: navigation, My sets, the set 
 Boards: Navigation desktop and mobile.
 
 - Signed in, the primary items are **My sets** (`/dashboard`, renamed in the UI) · **Collection** (`/collection`) · **Catalog** (`/catalog`). The active item gets a 2px accent bar.
+- Superseded for the signed-in primary items by [the 2026-11-25 navigation brief](2026-11-25_navigation.md) (Option A): My sets · Checklists · Catalog · Collection.
 - The account menu (avatar plus chevron) holds the name and email, Settings, My submissions, Import from CSV (`/collection/import`), a divider, and Log out. Admin is the first item when the role allows it.
 - The EN/ES switch is a two-button segmented control in the bar.
 - Signed out: **Catalog** · **Checklists** (`/sets`, the curated sets, relabelled) · Log in · Create account (primary).
