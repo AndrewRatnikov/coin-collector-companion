@@ -57,6 +57,15 @@ const ICON_GLOSSARY = (
 
 const SIGNED_IN_TABS: Tab[] = [
   { id: 'my-sets', href: '/dashboard', labelKey: 'nav.mySets', testId: 'site-nav-tab-my-sets', icon: ICON_MY_SETS },
+  // Links straight to the curated list, skipping the `/sets` redirect.
+  {
+    id: 'checklists',
+    href: '/sets/canonical',
+    labelKey: 'nav.checklists',
+    testId: 'site-nav-tab-checklists',
+    icon: ICON_CHECKLISTS,
+  },
+  { id: 'catalog', href: '/catalog', labelKey: 'nav.catalog', testId: 'site-nav-tab-catalog', icon: ICON_CATALOG },
   {
     id: 'collection',
     href: '/collection',
@@ -64,7 +73,6 @@ const SIGNED_IN_TABS: Tab[] = [
     testId: 'site-nav-tab-collection',
     icon: ICON_COLLECTION,
   },
-  { id: 'catalog', href: '/catalog', labelKey: 'nav.catalog', testId: 'site-nav-tab-catalog', icon: ICON_CATALOG },
 ];
 
 const SIGNED_OUT_TABS: Tab[] = [
@@ -101,7 +109,7 @@ export function MobileTabBar({ isAuthenticated }: MobileTabBarProps) {
     <nav
       aria-label={t('nav.mainLabel')}
       data-testid="site-nav-tabbar"
-      className="fixed inset-x-0 bottom-0 z-[9] grid h-16 grid-cols-3 border-t border-[var(--color-divider)] bg-white min-[900px]:hidden print:hidden"
+      className={`fixed inset-x-0 bottom-0 z-[9] grid h-16 ${isAuthenticated ? 'grid-cols-4' : 'grid-cols-3'} border-t border-[var(--color-divider)] bg-white min-[900px]:hidden print:hidden`}
     >
       {tabs.map((tab) => {
         const isActive = tab.id === active;

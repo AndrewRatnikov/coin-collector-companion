@@ -22,8 +22,10 @@ interface PrimaryItem {
 
 const SIGNED_IN_ITEMS: PrimaryItem[] = [
   { id: 'my-sets', href: '/dashboard', labelKey: 'nav.mySets', testId: 'site-nav-my-sets-link' },
-  { id: 'collection', href: '/collection', labelKey: 'nav.collection', testId: 'site-nav-collection-link' },
+  // Links straight to the curated list, skipping the `/sets` redirect.
+  { id: 'checklists', href: '/sets/canonical', labelKey: 'nav.checklists', testId: 'site-nav-checklists-link' },
   { id: 'catalog', href: '/catalog', labelKey: 'nav.catalog', testId: 'site-nav-catalog-link' },
+  { id: 'collection', href: '/collection', labelKey: 'nav.collection', testId: 'site-nav-collection-link' },
 ];
 
 const SIGNED_OUT_ITEMS: PrimaryItem[] = [
