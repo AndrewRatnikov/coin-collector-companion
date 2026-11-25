@@ -1,0 +1,20 @@
+{
+  "name": "Jefferson Nickel Key Dates",
+  "description": "The key dates of the Jefferson nickel series named by the cited source: the low-mintage 1939-D and 1950-D.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Nickel",
+      "year": 1939,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Nickel",
+      "year": 1950,
+      "mintMark": "D",
+      "variety": ""
+    }
+  ]
+}

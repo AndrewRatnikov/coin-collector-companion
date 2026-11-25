@@ -87,6 +87,141 @@ flags key dates. There are no images: US designs from 1989 on need the per-desig
 **Not in production yet.** Running the import and `seed:canonical` against production is the
 pending manual pass under growth backlog 2.9.
 
+## `us-nickels-jefferson-*.json` (two files: copper-nickel and wartime silver)
+
+194 Jefferson nickel business strikes, 1938–2025 (`country: "USA"`, `denomination: "Nickel"`,
+name "Jefferson Nickel"), in two files split by composition:
+`us-nickels-jefferson-copper-nickel.json` (1938–2025, 183 coins) and
+`us-nickels-jefferson-wartime-silver.json` (1942–1945, 11 coins).
+
+**Provenance.** Generated with `pnpm run generate` from English Wikipedia's
+"United States nickel mintage figures", revision 1322056545, fetched 2026-11-25. The raw API
+response is saved unmodified as `../sources/United_States_nickel_mintage_figures.2026-11-25.json` and cited in each
+file's `sources[0]`. The generator's draft (194 rows) was curated by hand into these two files and
+was not committed.
+
+**Selection rules** (also in each file's `rules-note`):
+- Business strikes only. Proofs (including the S and W proof and reverse-proof rows) are skipped by
+  the generator; the set-only strikes 1994 P (167,703) and 1997 P (25,000) "Special Frosted Matte
+  Uncirculated" and 2017 S (223,310) "Enhanced Uncirculated" are dropped by hand, as is the 1938 D
+  Indian Head (Buffalo) nickel row.
+- 1950 D (2,630,030) is restored by hand: a business strike whose comment ("lowest non-proof")
+  matched the generator's proof rule.
+- Mint marks are as on the coin, as in the Lincoln cent files and under
+  `docs/adr/2026-11-21-unmarked-branch-mint-strikes-summed-into-one-coin.md`: a Mint cell in
+  parentheses (`(P)`, `(P/D/S)`) means no mark (`null`), a plain letter is the mark. 1965, 1966 and
+  1967 are one no-mark coin each, restored by hand (the generator skipped the `(P/D/S)` cell); each
+  uses the source's own single figure, so nothing is summed and there is no `mintageSums`.
+- The 1942–1945 wartime silver alloy coins are their own file, so each file's default specs fit its
+  coins. 1942 has both compositions: the no-mark and D coins are copper-nickel, the P and S coins
+  wartime silver. The wartime coins carry the large mint mark above Monticello, including a real P.
+- The 2004–2005 Westward Journey designs are varieties, P and D each: 2004 `Louisiana Purchase` and
+  `Keelboat`, 2005 `American Bison` and `Ocean in View`. The caption varieties the generator set
+  where two tables meet (1938, 1942) are dropped; there are no other varieties.
+- Mintages only as the source gives them; nothing is estimated.
+
+**Specs.** From the "Jefferson nickel" infobox (revision 1383232384): 21.21 mm, 5 g;
+"Copper-nickel (75% copper, 25% nickel)" and, for the wartime file, "Silver alloy (56% copper, 35%
+silver, 9% manganese)". No thickness: no cited source gives it.
+
+**Null mintages.** None.
+
+**Key dates.** `isKeyDate` is true for 1939-D and 1950-D only, because the saved source's prose
+names them: "Key dates for the series include the 1939-D, and 1950-D nickels." The copper-nickel
+file records this in a `keyDates` block (saved source path, verbatim quote, coin labels), and the
+"Jefferson Nickel Key Dates" checklist lists the two coins.
+
+**Excluded.** Proofs, Special Mint Set and other set-only strikes, and 2026: the source's tables end
+at 2025, so there is no 2026 coin yet, although the checklist is named "Jefferson Nickels 1938-2026".
+No images.
+
+**Not in production yet.** Running the import and `seed:canonical` against production is the
+pending manual pass under growth backlog 2.9.
+
+## `us-dimes-roosevelt-*.json` (two files: silver and clad)
+
+168 Roosevelt dime business strikes, 1946–2025 (`country: "USA"`, `denomination: "Dime"`, name
+"Roosevelt Dime"), in two files split by composition: `us-dimes-roosevelt-silver.json` (1946–1964,
+48 coins) and `us-dimes-roosevelt-clad.json` (1965–2025, 120 coins).
+
+**Provenance.** Generated with `pnpm run generate` from English Wikipedia's
+"Roosevelt dime mintage figures", revision 1333683926, fetched 2026-11-25. The raw API response is saved unmodified as
+`../sources/Roosevelt_dime_mintage_figures.2026-11-25.json` and cited in each file's `sources[0]`.
+The draft was curated by hand into these two files and was not committed.
+
+**Selection rules** (also in each file's `rules-note`):
+- Business strikes only. Proofs are skipped by the generator; the set-only 1996 W dime and the
+  2005–2010 "Satin" and 2017 S "Enhanced" rows are left out.
+- Mint marks follow the Mint cell, as in the Lincoln cent files: a cell in parentheses (`(P)`,
+  `(P & D)`) means no mark (`null`), a plain letter is the mark. 1965, 1966 and 1967 are one no-mark
+  coin each, restored by hand (the generator skipped the `(P & D)` cell), each with the source's one
+  combined figure, so nothing is summed and there is no `mintageSums`. 1968–1979 are a no-mark coin
+  and D; from 1980 P and D.
+- **Plain P on the silver dimes.** The source writes a plain P for every 1946–1964 Philadelphia dime,
+  although those coins carry no mint mark (the "Roosevelt dime" infobox: no mint mark at Philadelphia
+  before 1980). The fixture keeps the plain P as the source gives it. This is provisional: confirm it
+  by hand before the production import under 2.9, while changing the keys is still cheap.
+- The 1982 no-mint-mark dime has its own row and is kept as a no-mark coin (see Null mintages).
+- No varieties.
+
+**Specs.** From the "Roosevelt dime" infobox (revision 1383234426): 17.91 mm; silver file 2.5 g,
+"Silver (90% silver, 10% copper)"; clad file 2.268 g, "Copper-nickel clad copper (75% copper, 25%
+nickel outer layers, pure copper core)". No thickness.
+
+**Null mintages.** Only the 1982 no-mark dime: the source prints its figure in parentheses,
+"(150,000)", as an estimate, and no figure is estimated here.
+
+**Key dates.** None: no cited source names key dates, so `isKeyDate` is false throughout.
+
+**Excluded.** Proofs, Special Mint Set and set-only strikes such as the 1996-W dime, and 2026: the
+source's table ends at 2025, so there is no 2026 coin yet, although the checklist is named
+"Roosevelt Dimes 1946-2026". No images.
+
+**Not in production yet.** Running the import and `seed:canonical` against production is the
+pending manual pass under growth backlog 2.9.
+
+## `us-quarters-washington-*.json` (two files: silver and clad, 1932-1998)
+
+146 Washington quarter business strikes, 1932–1998 (`country: "USA"`, `denomination: "Quarter"`,
+name "Washington Quarter"), in two files split by composition: `us-quarters-washington-silver.json`
+(1932–1964, 83 coins) and `us-quarters-washington-clad.json` (1965–1998, 63 coins). The 1999 and
+later quarters are in the files of the next section, which this run did not change.
+
+**Provenance.** Generated with `pnpm run generate -- ... --years 1932-1998` from English Wikipedia's
+"Washington quarter mintage figures", revision 1330533271. The 2026-11-25 response was byte for byte
+the one already saved for the 1999-2026 quarters, so both files cite the existing
+`../sources/Washington_quarter_mintage_figures.2026-11-21.json` (`fetchedAt: "2026-11-21"`) instead
+of a second copy. The draft was curated by hand into these two files and was not committed.
+
+**Selection rules** (also in each file's `rules-note`):
+- Business strikes only. Proofs and the 1976 pattern are skipped by the generator; the Satin finish
+  Special Mint Set rows of 1964–1967 and the 1976 S silver-clad uncirculated coins sold in sets are
+  dropped.
+- Mint marks follow the Mint cell, as in the Lincoln cent files: `(P)` means no mark (`null`), a
+  plain letter is the mark. Silver: no-mark, D and S as listed (no quarters in 1933, no 1938 D, no S
+  in 1949 or 1955–1964). 1965–1967 are one no-mark coin each with the `(P)` figure; their `(D)` and
+  `(S)` rows are `^` (included above) and add nothing, so nothing is summed and there is no
+  `mintageSums`. 1968–1979 are a no-mark coin and D (the 1977–1979 `(W)` rows are `^` and dropped);
+  the P mark appears from 1980, and 1980–1998 are P and D.
+- **Bicentennial.** The dual-dated quarters (dated 1776-1976, struck in 1975 and 1976) are year 1976
+  with variety `Bicentennial`, no-mark and D. There are no 1975 quarters.
+- No other varieties: comments like "Doubled die errors are known" have no separate row or figure.
+
+**Specs.** 24.26 mm and 1.75 mm from the "50 State quarters" infobox in the saved
+`../sources/50_State_quarters.2026-11-21.json` (the values of the 1999-2026 files); silver file
+6.25 g, "Silver (90% silver, 10% copper)" (composition from the "Washington quarter" infobox,
+revision 1386916113); clad file 5.67 g, "Copper-nickel clad copper (91.67% copper, 8.33% nickel)".
+
+**Null mintages.** None.
+
+**Key dates.** None: no cited source names key dates (not even 1932-D and 1932-S), so `isKeyDate` is
+false throughout.
+
+**Excluded.** Proofs, patterns, Special Mint Set and other set-only strikes. No images.
+
+**Not in production yet.** Running the import and `seed:canonical` against production is the
+pending manual pass under growth backlog 2.9.
+
 ## `us-quarters-*.json` (six files: 50 State through Semiquincentennial)
 
 286 Washington quarter business strikes, 1999–2026 (`country: "USA"`, `denomination: "Quarter"`),
