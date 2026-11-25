@@ -75,6 +75,8 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-23](2026-11-23-empty-catalog-searches-sent-to-posthog-with-search-text.md) | Empty catalog searches are sent to PostHog as `catalog_no_results`, with the filters and a 40-character search text | Accepted |
 | [2026-11-23](2026-11-23-no-results-event-fires-once-per-sent-properties-per-page-mount.md) | The `catalog_no_results` event fires once per distinct set of sent properties per page mount, never from placeholder data | Accepted |
 | [2026-11-24](2026-11-24-unmarked-philadelphia-dollars-get-mint-mark-p.md) | Philadelphia coins struck without a mint mark get `mintMark` "P" in the dollar fixtures, so `mintMark` is never null | Accepted |
+| [2026-11-25](2026-11-25-unmarked-nickels-dimes-quarters-get-null-mint-mark.md) | Unmarked nickels, dimes and 1932-1998 quarters get `mintMark` null, while the dollars keep "P" | Accepted |
+| [2026-11-25](2026-11-25-key-dates-recorded-in-fixture-keydates-block.md) | Key dates are flagged only where a saved source names them, and recorded in a `keyDates` block in the fixture | Accepted |
 
 ## Where else decisions live
 
