@@ -77,6 +77,8 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-24](2026-11-24-unmarked-philadelphia-dollars-get-mint-mark-p.md) | Philadelphia coins struck without a mint mark get `mintMark` "P" in the dollar fixtures, so `mintMark` is never null | Accepted |
 | [2026-11-25](2026-11-25-unmarked-nickels-dimes-quarters-get-null-mint-mark.md) | Unmarked nickels, dimes and 1932-1998 quarters get `mintMark` null, while the dollars keep "P" | Accepted |
 | [2026-11-25](2026-11-25-key-dates-recorded-in-fixture-keydates-block.md) | Key dates are flagged only where a saved source names them, and recorded in a `keyDates` block in the fixture | Accepted |
+| [2026-11-25](2026-11-25-morgan-and-peace-dollars-unmarked-philadelphia-null.md) | Unmarked Philadelphia Morgan and Peace dollars get `mintMark` null, although the modern dollar files use "P" | Accepted |
+| [2026-11-25](2026-11-25-1921-philadelphia-dollars-told-apart-by-series-variety.md) | The 1921 Philadelphia Morgan and Peace dollars are told apart by the varieties "Morgan" and "Peace" | Accepted |
 
 ## Where else decisions live
 

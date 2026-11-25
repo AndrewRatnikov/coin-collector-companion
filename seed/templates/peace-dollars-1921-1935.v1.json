@@ -1,0 +1,174 @@
+{
+  "name": "Peace Dollars 1921-1935",
+  "description": "Every business-strike Peace dollar, 1921-1928 and 1934-1935, by year and mint mark: 24 coins.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1921,
+      "mintMark": "",
+      "variety": "Peace"
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1922,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1922,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1922,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1923,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1923,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1923,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1924,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1924,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1925,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1925,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1926,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1926,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1926,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1927,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1927,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1927,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1928,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1928,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1934,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1934,
+      "mintMark": "D",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1934,
+      "mintMark": "S",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1935,
+      "mintMark": "",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1935,
+      "mintMark": "S",
+      "variety": ""
+    }
+  ]
+}

@@ -342,7 +342,10 @@ No generator draft was written or committed: the import reads every `*.json` in 
   (Presidential 2012–2016 and 2020, Native American 2012 onward, all American Innovation). Every
   coin carries its mint mark, so `mintMark` is never null. The Philadelphia Eisenhower dollars carry
   no mint mark on the coin but are `"P"` here (unlike the unmarked Lincoln cents above). S appears
-  only in the Anthony file: the 1979, 1980 and 1981 S business strikes.
+  only in the Anthony file: the 1979, 1980 and 1981 S business strikes. The Morgan and Peace files
+  (`us-dollars-morgan.json`, `us-dollars-peace.json`, next section) use `null` for their unmarked
+  Philadelphia coins instead, and their two 1921 Philadelphia coins are told apart by the varieties
+  `Morgan` and `Peace`.
 - `variety` is the design as displayed in the source (`[[Target|Label]]` gives "Label"): the
   president for Presidential, with the two Grover Cleveland rows as "Grover Cleveland (1st term)" and
   "Grover Cleveland (2nd term)"; the year's Native American reverse theme from 2009 (null for the
@@ -387,6 +390,71 @@ article even says no Eisenhower dollar is rare), and there are no images. The de
 March 1989 need the per-design check in
 [docs/catalog-data-licensing.md](../../../docs/catalog-data-licensing.md) before any image is added;
 the catalog rows themselves are facts and need no such check.
+
+**Not in production yet.** Running the import and `seed:canonical` against production is the
+pending manual pass under growth backlog 2.9.
+
+## `us-dollars-morgan.json` / `us-dollars-peace.json` (Morgan and Peace silver dollars)
+
+119 large-size silver dollar business strikes (`country: "USA"`, `denomination: "Dollar"`, the same
+denomination as the modern dollars above; the series are told apart by `name`), in two files:
+`us-dollars-morgan.json` (name "Morgan Dollar", 1878–1904 and 1921, 95 coins) and
+`us-dollars-peace.json` (name "Peace Dollar", 1921–1928 and 1934–1935, 24 coins).
+
+**Provenance.** There is no "Morgan dollar mintage figures" or "Peace dollar mintage figures"
+article, so the series articles are the sources. Each was fetched once on 2026-11-25 with
+`pnpm run generate`, and the raw responses are saved unmodified under `../sources/` and cited in
+each file's `sources[0]`:
+- "Morgan dollar", revision 1385997217 (`../sources/Morgan_dollar.2026-11-25.json`).
+- "Peace dollar", revision 1384400932 (`../sources/Peace_dollar.2026-11-25.json`).
+
+Each article's "Mintage figures" table has one column per mint (Morgan: Year, Philadelphia, New
+Orleans, San Francisco, Carson City, Denver; Peace: Year, Philadelphia, Denver, San Francisco, West
+Point), which the generator does not parse: it saved each source, then exited with "No usable rows".
+Every row was therefore read by hand (a scratch script over the saved wikitext: a non-empty cell with
+a figure is one coin of that year and mint), no row was hand-corrected, and no draft was committed.
+Coins are in table order: year, then the table's mint column order.
+
+**Selection rules** (also in each file's `rules-note`):
+- Business strikes only: Morgan 1878–1904 and 1921, Peace 1921–1928 and 1934–1935.
+- The 1895 Philadelphia Morgan dollar is proof-only (the source gives "880 (proof only)"): it is not
+  a business strike and is excluded on purpose, so there is no 1895 coin with a `null` mint mark.
+  Collectors will look for it; the 1895 O and S business strikes are here.
+- Mint marks are as on the coin: CC, O, S, D, and `null` for Philadelphia, which struck these coins
+  without a mark. This departs from the modern dollar files' `"P"` and from
+  [docs/adr/2026-11-24-unmarked-philadelphia-dollars-get-mint-mark-p.md](../../../docs/adr/2026-11-24-unmarked-philadelphia-dollars-get-mint-mark-p.md),
+  which stays in force for those five files, and follows the `null` rule of the cents, nickels, dimes
+  and 1932–1998 quarters.
+- Varieties such as the 1878 8TF and 7TF tail-feather varieties are listed only where the source
+  gives separate rows with their own figures. It gives one 1878 Philadelphia figure (10,508,800), so
+  1878 Philadelphia is one coin with no variety. The 1921 Peace high relief issue has no separate row
+  either and is that one 1921 Peace coin. VAM and other die varieties are not listed.
+- The two 1921 Philadelphia coins would otherwise share a natural key (USA, Dollar, 1921, no mint
+  mark), so the Morgan one has variety `Morgan` and the Peace one `Peace`. No other coin has a
+  variety.
+- Mintages only as the source gives them; nothing is summed, split or estimated.
+
+**Specs.** One file-level `specs` block per file, from each article's infobox in the saved response,
+no per-coin overrides: 38.1 mm, 26.73 g, 2.4 mm, "Silver (90% silver, 10% copper)" (Morgan: "90.0%
+Silver / 10.0% Copper (1878–1904, 1921)"; Peace: ".900 silver, .100 copper", thickness 2.4 mm
+1921–1935).
+
+**Null mintages.** None.
+
+**Key dates.** Morgan: `isKeyDate` is true for the 1893-S only, because the saved source's "Key date"
+section names it: "The [[key date]] in the Morgan dollar series is the [[1893-S Morgan dollar]], which
+was struck at the United States [[San Francisco Mint]]." The Morgan file records this in a
+`keyDates` block (saved source path, verbatim quote, coin label), and the "Morgan Dollar Key Dates"
+checklist lists that one coin. Peace: no cited source names key dates (the saved article has no key
+date wording; its remarks on the 1921 and 1928 mintages are not key-date statements), so every Peace
+coin has `isKeyDate: false` and there is no Peace key-date checklist.
+
+**Checklists.** "Morgan Dollars 1878-1921" (95), "Morgan Dollar Key Dates" (1) and "Peace Dollars
+1921-1935" (24) in `seed/templates/`.
+
+**Excluded.** Proofs, including the 1895 Philadelphia Morgan; the 2021 and later collector Morgan and
+Peace dollars; the 1964-D Peace dollars (316,106 struck, all destroyed and never issued); VAM and
+other die varieties. No images.
 
 **Not in production yet.** Running the import and `seed:canonical` against production is the
 pending manual pass under growth backlog 2.9.

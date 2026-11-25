@@ -1,0 +1,204 @@
+{
+  "$schema-note": "Read by hand from the saved \"Peace dollar\" article (the generator saved the raw response but does not parse its per-mint table; see fixtures/README.md); raw source-shaped fixture, pre-sanitization: mintMark/variety use null (no value) on purpose, and the import script normalizes them to the DB-required empty string.",
+  "sources": [
+    {
+      "type": "year / mint mark / variety / mintage",
+      "origin": "English Wikipedia \"Peace dollar\" (https://en.wikipedia.org/wiki/Peace_dollar), revision 1384400932, fetched 2026-11-25 through the MediaWiki API (action=parse)",
+      "url": "https://en.wikipedia.org/wiki/Peace_dollar",
+      "revisionId": 1384400932,
+      "fetchedAt": "2026-11-25",
+      "rawResponse": "sources/Peace_dollar.2026-11-25.json",
+      "license": "Wikipedia text is CC BY-SA 4.0; the year/mint-mark/variety/mintage facts reproduced here are historical facts, not copyrightable expression -- no attribution obligation for the facts themselves, though the app footer still credits Wikipedia generally",
+      "note": "Rows read by hand (scratch script over the saved response's wikitext) from the \"Mintage figures\" table, which has one column per mint and which the generator does not parse (it ignores tables without Year/Mint/Mintage columns). Column order: Year, Philadelphia, Denver, San Francisco, West Point. Philadelphia is null (no mint mark on the coin), Denver is D, San Francisco is S; the West Point column is empty in these years; an empty cell means no coin. Only the 1921-1928 and 1934-1935 rows are read; the 1964, 2021 and later rows and the Total row are ignored. Physical specs were filled in by hand; no images."
+    },
+    {
+      "type": "physical specs",
+      "origin": "Wikipedia \"Peace dollar\" infobox, in the saved response under sources/: mass 26.73 g, diameter 38.1 mm, thickness 2.4 mm (1921–1935), composition .900 silver, .100 copper (1921–1935)",
+      "license": "Numeric facts, not copyrightable expression (docs/catalog-data-licensing.md §1)"
+    }
+  ],
+  "rules-note": "Business strikes only, 1921-1928 and 1934-1935: one coin per year and mint with a figure in the source's \"Mintage figures\" table. Mint marks are as on the coin: D, S, and null for Philadelphia, which struck its coins without a mark (unlike the modern dollar files, which use \"P\"). The 1921 Philadelphia coin has variety \"Peace\" because the 1921 Philadelphia Morgan dollar (in us-dollars-morgan.json, variety \"Morgan\") shares its year, mint mark and denomination; no other coin has a variety. The 1921 high relief issue has no separate row with its own figure, so it is not split out: it is that one 1921 coin. The 1964-D coins (316,106 struck) were destroyed and never issued, and are not included; neither are the 2021 and later collector coins. Mintages are only as the source gives them; nothing is summed or estimated. Key dates: no cited source names a key date for the Peace dollar (the saved article has no key date wording), so no coin is flagged and there is no key-date set.",
+  "country": "USA",
+  "denomination": "Dollar",
+  "name": "Peace Dollar",
+  "yearRange": [
+    1921,
+    1935
+  ],
+  "specs": {
+    "diameterMm": 38.1,
+    "weightG": 26.73,
+    "thicknessMm": 2.4,
+    "material": "Silver (90% silver, 10% copper)"
+  },
+  "coins": [
+    {
+      "year": 1921,
+      "mintMark": null,
+      "variety": "Peace",
+      "isKeyDate": false,
+      "mintage": 1006473
+    },
+    {
+      "year": 1922,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 51737000
+    },
+    {
+      "year": 1922,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 15063000
+    },
+    {
+      "year": 1922,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 17475000
+    },
+    {
+      "year": 1923,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 30800000
+    },
+    {
+      "year": 1923,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 6811000
+    },
+    {
+      "year": 1923,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 19020000
+    },
+    {
+      "year": 1924,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 11811000
+    },
+    {
+      "year": 1924,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1728000
+    },
+    {
+      "year": 1925,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 10198000
+    },
+    {
+      "year": 1925,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1610000
+    },
+    {
+      "year": 1926,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1939000
+    },
+    {
+      "year": 1926,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 2348700
+    },
+    {
+      "year": 1926,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 6980000
+    },
+    {
+      "year": 1927,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 848000
+    },
+    {
+      "year": 1927,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1268900
+    },
+    {
+      "year": 1927,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 866000
+    },
+    {
+      "year": 1928,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 360649
+    },
+    {
+      "year": 1928,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1632000
+    },
+    {
+      "year": 1934,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 954057
+    },
+    {
+      "year": 1934,
+      "mintMark": "D",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1569500
+    },
+    {
+      "year": 1934,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1011000
+    },
+    {
+      "year": 1935,
+      "mintMark": null,
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1576000
+    },
+    {
+      "year": 1935,
+      "mintMark": "S",
+      "variety": null,
+      "isKeyDate": false,
+      "mintage": 1964000
+    }
+  ]
+}

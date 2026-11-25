@@ -1,0 +1,13 @@
+{
+  "name": "Morgan Dollar Key Dates",
+  "description": "The key date of the Morgan dollar series as named by the cited source (English Wikipedia, \"Morgan dollar\", section \"Key date\"): the 1893-S.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1893,
+      "mintMark": "S",
+      "variety": ""
+    }
+  ]
+}
