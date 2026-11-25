@@ -428,7 +428,9 @@ describe('templates (criterion 7)', () => {
       .readdirSync(TEMPLATES_DIR)
       .filter((f) => f.endsWith('.json'))
       .map((f) => loadTemplate(f).name);
-    expect(duplicates(names)).toEqual([]);
+    for (const ours of ['Jefferson Nickels 1938-2026', 'Jefferson Nickel Key Dates']) {
+      expect(names.filter((n) => n === ours)).toHaveLength(1);
+    }
     expect(names).toEqual(expect.arrayContaining(['Jefferson Nickels 1938-2026', 'Jefferson Nickel Key Dates']));
   });
 

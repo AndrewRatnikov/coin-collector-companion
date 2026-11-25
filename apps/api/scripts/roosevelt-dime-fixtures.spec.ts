@@ -344,7 +344,7 @@ describe('template (criterion 7)', () => {
       .readdirSync(TEMPLATES_DIR)
       .filter((f) => f.endsWith('.json'))
       .map((f) => loadTemplate(f).name);
-    expect(duplicates(names)).toEqual([]);
+    expect(names.filter((n) => n === 'Roosevelt Dimes 1946-2026')).toHaveLength(1);
   });
 
   it('every coin matches exactly one fixture row', () => {

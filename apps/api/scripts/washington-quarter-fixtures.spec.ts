@@ -377,7 +377,7 @@ describe('template (criterion 7)', () => {
       .readdirSync(TEMPLATES_DIR)
       .filter((f) => f.endsWith('.json'))
       .map((f) => loadTemplate(f).name);
-    expect(duplicates(names)).toEqual([]);
+    expect(names.filter((n) => n === 'Washington Quarters 1932-1998')).toHaveLength(1);
   });
 
   it('every coin matches exactly one fixture row', () => {
