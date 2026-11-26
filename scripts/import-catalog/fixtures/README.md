@@ -132,8 +132,9 @@ file records this in a `keyDates` block (saved source path, verbatim quote, coin
 "Jefferson Nickel Key Dates" checklist lists the two coins.
 
 **Excluded.** Proofs, Special Mint Set and other set-only strikes, and 2026: the source's tables end
-at 2025, so there is no 2026 coin yet, although the checklist is named "Jefferson Nickels 1938-2026".
-No images.
+at 2025, so there is no 2026 coin yet, and the checklist is "Jefferson Nickels 1938-2025". The
+1776–2026 dual-dated nickel circulates, but it waits for a saved source that lists it, with its
+mintage or `null`. No images.
 
 **Not in production yet.** Running the import and `seed:canonical` against production is the
 pending manual pass under growth backlog 2.9.
@@ -157,25 +158,27 @@ The draft was curated by hand into these two files and was not committed.
   coin each, restored by hand (the generator skipped the `(P & D)` cell), each with the source's one
   combined figure, so nothing is summed and there is no `mintageSums`. 1968–1979 are a no-mark coin
   and D; from 1980 P and D.
-- **Plain P on the silver dimes.** The source writes a plain P for every 1946–1964 Philadelphia dime,
-  although those coins carry no mint mark (the "Roosevelt dime" infobox: no mint mark at Philadelphia
-  before 1980). The fixture keeps the plain P as the source gives it. This is provisional: confirm it
-  by hand before the production import under 2.9, while changing the keys is still cheap.
-- The 1982 no-mint-mark dime has its own row and is kept as a no-mark coin (see Null mintages).
-- No varieties.
+- **Unmarked silver dimes.** The 1946–1964 Philadelphia dimes carry no mint mark (the "Roosevelt
+  dime" infobox: no mint mark at Philadelphia before 1980), so they are `null`, although the source's
+  Mint cell for them is a letter, not in parentheses. This is the single US rule: `mintMark` is what
+  is struck on the coin, `null` when the coin carries no mark
+  ([docs/adr/2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md](../../../docs/adr/2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md)).
+- The 1982 no-mint-mark dime is the error variety `No P`: its own row, mint mark `null`, variety
+  `"No P"` (see Null mintages).
+- The only variety is the 1982 `No P`.
 
 **Specs.** From the "Roosevelt dime" infobox (revision 1383234426): 17.91 mm; silver file 2.5 g,
 "Silver (90% silver, 10% copper)"; clad file 2.268 g, "Copper-nickel clad copper (75% copper, 25%
 nickel outer layers, pure copper core)". No thickness.
 
-**Null mintages.** Only the 1982 no-mark dime: the source prints its figure in parentheses,
+**Null mintages.** Only the 1982 `No P` dime: the source prints its figure in parentheses,
 "(150,000)", as an estimate, and no figure is estimated here.
 
 **Key dates.** None: no cited source names key dates, so `isKeyDate` is false throughout.
 
 **Excluded.** Proofs, Special Mint Set and set-only strikes such as the 1996-W dime, and 2026: the
-source's table ends at 2025, so there is no 2026 coin yet, although the checklist is named
-"Roosevelt Dimes 1946-2026". No images.
+2026 dime is the Semiquincentennial Liberty design, not a Roosevelt dime, so the checklist is
+"Roosevelt Dimes 1946-2025". No images.
 
 **Not in production yet.** Running the import and `seed:canonical` against production is the
 pending manual pass under growth backlog 2.9.
@@ -339,12 +342,13 @@ No generator draft was written or committed: the import reads every `*.json` in 
 
 **Selection rules** (also in each file's `rules-note`):
 - Business strikes only, including the P and D coins the Mint sold only in rolls, bags and boxes
-  (Presidential 2012–2016 and 2020, Native American 2012 onward, all American Innovation). Every
-  coin carries its mint mark, so `mintMark` is never null. The Philadelphia Eisenhower dollars carry
-  no mint mark on the coin but are `"P"` here (unlike the unmarked Lincoln cents above). S appears
+  (Presidential 2012–2016 and 2020, Native American 2012 onward, all American Innovation). Mint
+  marks are what is struck on the coin: the Philadelphia Eisenhower dollars carry no mint mark, so
+  they are `null`, and every other coin in these five files carries its mark
+  ([docs/adr/2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md](../../../docs/adr/2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md)). S appears
   only in the Anthony file: the 1979, 1980 and 1981 S business strikes. The Morgan and Peace files
-  (`us-dollars-morgan.json`, `us-dollars-peace.json`, next section) use `null` for their unmarked
-  Philadelphia coins instead, and their two 1921 Philadelphia coins are told apart by the varieties
+  (`us-dollars-morgan.json`, `us-dollars-peace.json`, next section) also use `null` for their unmarked
+  Philadelphia coins, and their two 1921 Philadelphia coins are told apart by the varieties
   `Morgan` and `Peace`.
 - `variety` is the design as displayed in the source (`[[Target|Label]]` gives "Label"): the
   president for Presidential, with the two Grover Cleveland rows as "Grover Cleveland (1st term)" and
@@ -421,10 +425,10 @@ Coins are in table order: year, then the table's mint column order.
   a business strike and is excluded on purpose, so there is no 1895 coin with a `null` mint mark.
   Collectors will look for it; the 1895 O and S business strikes are here.
 - Mint marks are as on the coin: CC, O, S, D, and `null` for Philadelphia, which struck these coins
-  without a mark. This departs from the modern dollar files' `"P"` and from
-  [docs/adr/2026-11-24-unmarked-philadelphia-dollars-get-mint-mark-p.md](../../../docs/adr/2026-11-24-unmarked-philadelphia-dollars-get-mint-mark-p.md),
-  which stays in force for those five files, and follows the `null` rule of the cents, nickels, dimes
-  and 1932–1998 quarters.
+  without a mark. This is the rule for every US series under
+  [docs/adr/2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md](../../../docs/adr/2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md),
+  which superseded
+  [docs/adr/2026-11-24-unmarked-philadelphia-dollars-get-mint-mark-p.md](../../../docs/adr/2026-11-24-unmarked-philadelphia-dollars-get-mint-mark-p.md).
 - Varieties such as the 1878 8TF and 7TF tail-feather varieties are listed only where the source
   gives separate rows with their own figures. It gives one 1878 Philadelphia figure (10,508,800), so
   1878 Philadelphia is one coin with no variety. The 1921 Peace high relief issue has no separate row

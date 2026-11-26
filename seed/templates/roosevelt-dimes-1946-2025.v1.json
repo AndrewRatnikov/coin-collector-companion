@@ -1,12 +1,12 @@
 {
-  "name": "Roosevelt Dimes 1946-2026",
-  "description": "Every Roosevelt dime business strike from 1946 to 2025: the 90% silver dimes to 1964, then the copper-nickel clad dimes.",
+  "name": "Roosevelt Dimes 1946-2025",
+  "description": "Every Roosevelt dime business strike from 1946 to 2025: the 90% silver dimes to 1964, then the copper-nickel clad dimes, including the 1982 No P dime.",
   "coins": [
     {
       "country": "USA",
       "denomination": "Dime",
       "year": 1946,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -27,7 +27,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1947,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -48,7 +48,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1948,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -69,7 +69,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1949,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -90,7 +90,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1950,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -111,7 +111,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1951,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -132,7 +132,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1952,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -153,7 +153,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1953,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -174,7 +174,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1954,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -195,7 +195,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1955,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -216,7 +216,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1956,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -230,7 +230,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1957,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -244,7 +244,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1958,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -258,7 +258,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1959,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -272,7 +272,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1960,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -286,7 +286,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1961,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -300,7 +300,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1962,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -314,7 +314,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1963,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -328,7 +328,7 @@
       "country": "USA",
       "denomination": "Dime",
       "year": 1964,
-      "mintMark": "P",
+      "mintMark": "",
       "variety": ""
     },
     {
@@ -574,7 +574,7 @@
       "denomination": "Dime",
       "year": 1982,
       "mintMark": "",
-      "variety": ""
+      "variety": "No P"
     },
     {
       "country": "USA",

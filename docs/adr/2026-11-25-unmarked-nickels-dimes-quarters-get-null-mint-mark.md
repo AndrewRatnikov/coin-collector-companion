@@ -1,6 +1,6 @@
 # Unmarked nickels, dimes and 1932-1998 quarters get `mintMark` null, while the dollars keep "P"
 
-- **Status:** Accepted
+- **Status:** Superseded by [2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked](2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md) (its provisional silver-dime exception; the null rule it set is restated there for every US series)
 - **Date:** 2026-11-25
 - **Source:** orchestrator run `run_20261125_061116` (Jefferson nickels, Roosevelt dimes, Washington quarters 1932-1998, growth 2.2-2.4; PRD criterion 4, following the brief's "a Mint cell in parentheses means no mark")
 - **Code:** `scripts/import-catalog/fixtures/us-nickels-jefferson-copper-nickel.json`, `scripts/import-catalog/fixtures/us-dimes-roosevelt-clad.json`, `scripts/import-catalog/fixtures/us-dimes-roosevelt-silver.json`, `scripts/import-catalog/fixtures/us-quarters-washington-silver.json`, `scripts/import-catalog/fixtures/us-quarters-washington-clad.json`, `scripts/import-catalog/fixtures/README.md`

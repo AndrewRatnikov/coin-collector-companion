@@ -2,7 +2,8 @@
  * Tests for: Morgan and Peace dollar fixtures (growth backlog 2.6), the three canonical set templates
  * built from them, the Morgan key date, provenance in the saved sources, the README sections, the backlog
  * tick and the history paragraph.
- * Contract source: runs/run_20261125_195719/plan.md § Interface Contract
+ * Contract source: runs/run_20261125_195719/plan.md § Interface Contract, updated by
+ * runs/run_20261126_061240/plan.md § Interface Contract (Eisenhower Philadelphia dollars are now null)
  * Covers criteria: #1 to #12 and #14 (README part) (from runs/run_20261125_195719/prd.md)
  *
  * CONTRACT_GAP: none.
@@ -608,12 +609,27 @@ describe('history (criterion 12)', () => {
 });
 
 describe('existing data is unchanged (criterion 13)', () => {
-  it('the modern dollar fixtures still have no null mint mark', () => {
+  it('the modern dollar fixtures other than Eisenhower still have no null mint mark', () => {
     const modern = allFixtures.filter(
-      (f) => f.denomination === 'Dollar' && f.name !== 'Morgan Dollar' && f.name !== 'Peace Dollar',
+      (f) =>
+        f.denomination === 'Dollar' &&
+        f.name !== 'Morgan Dollar' &&
+        f.name !== 'Peace Dollar' &&
+        f.name !== 'Eisenhower Dollars',
     );
-    expect(modern.length).toBeGreaterThanOrEqual(5);
+    expect(modern.length).toBeGreaterThanOrEqual(4);
     for (const f of modern) expect(f.coins.some((c) => c.mintMark === null)).toBe(false);
+  });
+
+  it('the Eisenhower null rows are all dated 1971-1978', () => {
+    const eisenhower = allFixtures.find((f) => f.name === 'Eisenhower Dollars');
+    expect(eisenhower).toBeDefined();
+    const nulls = (eisenhower?.coins ?? []).filter((c) => c.mintMark === null);
+    expect(nulls.length).toBeGreaterThan(0);
+    for (const c of nulls) {
+      expect(c.year).toBeGreaterThanOrEqual(1971);
+      expect(c.year).toBeLessThanOrEqual(1978);
+    }
   });
 
   it('eisenhower-dollars.v1.json still has 16 coins', () => {

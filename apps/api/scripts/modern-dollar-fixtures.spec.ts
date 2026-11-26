@@ -1,8 +1,10 @@
 /**
  * Tests for: modern US small-size dollar fixtures (growth backlog 2.10), the five canonical set templates
  * built from them, their provenance in the five saved MediaWiki responses, and the fixtures README section.
- * Contract source: runs/run_20261124_215121/plan.md § Step E and § Interface Contract
+ * Contract source: runs/run_20261124_215121/plan.md § Step E and § Interface Contract, updated by
+ * runs/run_20261126_061240/plan.md § Interface Contract (Eisenhower Philadelphia dollars are null)
  * Covers criteria: #2, #3, #4, #5, #6, #7, #8, #9, #10, #11, #12, #13, #14, #15 (from runs/run_20261124_215121/prd.md)
+ * and #2, #4, #7, #8 (from runs/run_20261126_061240/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -22,6 +24,7 @@ const IMPORT_CATALOG_DIR = path.resolve(__dirname, '../../../scripts/import-cata
 const FIXTURES_DIR = path.join(IMPORT_CATALOG_DIR, 'fixtures');
 const TEMPLATES_DIR = path.resolve(__dirname, '../../../seed/templates');
 const README_PATH = path.join(FIXTURES_DIR, 'README.md');
+const NEW_ADR_FILE = '2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md';
 
 type Fixture = RawFixtureFile & { yearRange?: [number, number] };
 
@@ -72,7 +75,7 @@ function mintageFigureAppears(wikitext: string, n: number): boolean {
 }
 
 type Design = [year: number, variety: string | null];
-type Expected = { year: number; mintMark: string; variety: string | null };
+type Expected = { year: number; mintMark: string | null; variety: string | null };
 
 const PRESIDENTIAL_BY_YEAR: Array<[number, string[]]> = [
   [2007, ['George Washington', 'John Adams', 'Thomas Jefferson', 'James Madison']],
@@ -176,7 +179,7 @@ interface Program {
   range: [number, number];
   count: number;
   designs: Design[];
-  mints: (year: number) => string[];
+  mints: (year: number) => Array<string | null>;
   specs: typeof SPECS_GOLDEN;
   needles: string[];
   rawResponse: RegExp;
@@ -187,6 +190,7 @@ interface Program {
 }
 
 const PD = (): string[] => ['P', 'D'];
+const EISENHOWER_FILE = 'us-dollars-eisenhower.json';
 
 const PROGRAMS: Program[] = [
   {
@@ -242,13 +246,13 @@ const PROGRAMS: Program[] = [
   },
   {
     label: 'Eisenhower',
-    file: 'us-dollars-eisenhower.json',
+    file: EISENHOWER_FILE,
     template: 'eisenhower-dollars.v1.json',
     name: 'Eisenhower Dollars',
     range: [1971, 1978],
     count: 16,
     designs: DESIGNS_EISENHOWER,
-    mints: PD,
+    mints: () => [null, 'D'],
     specs: SPECS_EISENHOWER,
     needles: ['38.1', '22.68', '2.58', '91.67%'],
     rawResponse: /^sources\/Eisenhower_dollar\.(\d{4}-\d{2}-\d{2})\.json$/,
@@ -275,6 +279,8 @@ const PROGRAMS: Program[] = [
     articleTitle: 'Susan B. Anthony dollar',
   },
 ];
+
+const OTHER_PROGRAMS = PROGRAMS.filter((p) => p.file !== EISENHOWER_FILE);
 
 const TOTAL_NEW_COINS = 227;
 
@@ -311,7 +317,7 @@ function loadWikitext(rel: string): string {
   return typeof raw.parse.wikitext === 'string' ? raw.parse.wikitext : raw.parse.wikitext['*'];
 }
 
-function mintageOf(file: string, year: number, mint: string, variety: string | null): number | null | undefined {
+function mintageOf(file: string, year: number, mint: string | null, variety: string | null): number | null | undefined {
   const f = fixtures.get(file);
   return f?.coins.find((c) => c.year === year && c.mintMark === mint && c.variety === variety)?.mintage;
 }
@@ -361,6 +367,13 @@ describe('the five canonical set templates (criterion 14)', () => {
       expect(c.country).toBe('USA');
       expect(c.denomination).toBe('Dollar');
     }
+  });
+
+  it('the Eisenhower template has the Philadelphia coins as empty mint marks, never "P"', () => {
+    const template = loadTemplate('eisenhower-dollars.v1.json');
+    expect(template.coins.filter((c) => c.mintMark === '')).toHaveLength(8);
+    expect(template.coins.filter((c) => c.mintMark === 'D')).toHaveLength(8);
+    expect(template.coins.some((c) => c.mintMark === 'P')).toBe(false);
   });
 
   it('no template coin appears in another program fixture', () => {
@@ -428,12 +441,20 @@ describe('selection and release order (criteria 2, 5, 6, 7, 8, 9, 10)', () => {
     expect(actual).toEqual(expectedCoins(p));
   });
 
-  it('has no null mint mark anywhere and only P, D or S', () => {
-    for (const f of NEW_FIXTURES) {
-      for (const c of f.coins) {
+  it('the four programs other than Eisenhower have no null mint mark and only P, D or S', () => {
+    for (const p of OTHER_PROGRAMS) {
+      for (const c of fx(p).coins) {
         expect(['P', 'D', 'S']).toContain(c.mintMark);
       }
     }
+  });
+
+  it('Eisenhower mint marks are null or D only, with exactly 8 null and no P', () => {
+    const coins = loadFixture(EISENHOWER_FILE).coins;
+    for (const c of coins) expect([null, 'D']).toContain(c.mintMark);
+    expect(coins.filter((c) => c.mintMark === null)).toHaveLength(8);
+    expect(coins.filter((c) => c.mintMark === 'D')).toHaveLength(8);
+    expect(coins.some((c) => c.mintMark === 'P')).toBe(false);
   });
 
   it('S appears only in the Anthony file: exactly 1979, 1980 and 1981', () => {
@@ -444,11 +465,11 @@ describe('selection and release order (criteria 2, 5, 6, 7, 8, 9, 10)', () => {
     }
   });
 
-  it('the Eisenhower file has no S coin and has 1976 Type I and Type II for P and D', () => {
-    const f = loadFixture('us-dollars-eisenhower.json');
+  it('the Eisenhower file has no S coin and has 1976 Type I and Type II for null and D', () => {
+    const f = loadFixture(EISENHOWER_FILE);
     expect(f.coins.filter((c) => c.mintMark === 'S')).toHaveLength(0);
     const t = f.coins.filter((c) => c.year === 1976).map((c) => `${c.mintMark}|${c.variety}`);
-    expect(t).toEqual(['P|Type I', 'D|Type I', 'P|Type II', 'D|Type II']);
+    expect(t).toEqual(['null|Type I', 'D|Type I', 'null|Type II', 'D|Type II']);
   });
 
   it('variety is null exactly where the contract says', () => {
@@ -478,11 +499,12 @@ describe('selection and release order (criteria 2, 5, 6, 7, 8, 9, 10)', () => {
     expect(varieties.has('Grover Cleveland')).toBe(false);
   });
 
-  it('every design has a P and a D coin', () => {
+  it('every design has a Philadelphia coin (P, or null for Eisenhower) and a D coin', () => {
     for (const p of PROGRAMS) {
       const keys = new Set(fx(p).coins.map((c) => `${c.year}|${c.mintMark}|${c.variety}`));
+      const philadelphia = p.file === EISENHOWER_FILE ? 'null' : 'P';
       for (const [year, v] of p.designs) {
-        expect(keys.has(`${year}|P|${v}`)).toBe(true);
+        expect(keys.has(`${year}|${philadelphia}|${v}`)).toBe(true);
         expect(keys.has(`${year}|D|${v}`)).toBe(true);
       }
     }
@@ -624,8 +646,9 @@ describe('column orientation (criterion 3)', () => {
     ['us-dollars-susan-b-anthony.json', 1999, null, 29592000, 11776000],
   ];
 
-  it.each(cases)('%s %i %s: P and D mintages are not swapped', (file, year, variety, p, d) => {
-    expect(mintageOf(file, year, 'P', variety)).toBe(p);
+  it.each(cases)('%s %i %s: Philadelphia and D mintages are not swapped', (file, year, variety, p, d) => {
+    const philadelphia = file === EISENHOWER_FILE ? null : 'P';
+    expect(mintageOf(file, year, philadelphia, variety)).toBe(p);
     expect(mintageOf(file, year, 'D', variety)).toBe(d);
     expect(p).not.toBe(d);
   });
@@ -639,7 +662,7 @@ describe('specs traceable to each saved infobox (criterion 11)', () => {
   });
 });
 
-describe('fixtures README dollars section (criteria 13, 15)', () => {
+describe('fixtures README dollars section (criteria 7, 13, 15)', () => {
   const HEADING = '## us-dollars-*.json (five files: Presidential through Susan B. Anthony)';
 
   function section(): string {
@@ -662,6 +685,12 @@ describe('fixtures README dollars section (criteria 13, 15)', () => {
       expect(text).toContain(p.articleTitle);
     }
     expect(text).toContain('2.9');
+  });
+
+  it('links the single mint-mark rule ADR and no longer says the Eisenhower coins are "P" here', () => {
+    const text = section();
+    expect(text).toContain(NEW_ADR_FILE);
+    expect(text).not.toContain('`"P"` here');
   });
 });
 

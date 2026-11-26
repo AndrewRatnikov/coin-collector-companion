@@ -18,7 +18,7 @@
       "note": "Thickness is not set: no cited source gives it."
     }
   ],
-  "rules-note": "Business strikes only: proofs are skipped, and collector-only strikes are dropped (the 1996 W dime, struck only for the Mint sets; the 2005-2010 P and D \"Satin\" and 2017 S \"Enhanced\" rows). Mintages come only from the saved source; nothing is summed or estimated. No cited source names key dates, so isKeyDate is false for every coin. This file holds the copper-nickel clad dimes of 1965-2025; the 90% silver dimes are in us-dimes-roosevelt-silver.json. Mint marks follow the source's Mint cell: a Mint cell in parentheses ((P), (P & D)) means the coin has no mark (null), a plain letter is the mark. 1965-1967 are one no-mark coin each (null), restored by hand with the source's single combined figure for the (P & D) cell, not summed by us (mint marks were not used in those years). 1968-1979 are a no-mark (P) coin and D; from 1980 P and D. The 1982 no-mint-mark dime has its own (P) row and is kept as a no-mark coin with a null mintage: the source prints its figure only in parentheses as an estimate, \"(150,000)\", and no figure is estimated here. There is no 2026 coin: the source table ends at 2025.",
+  "rules-note": "Business strikes only: proofs are skipped, and collector-only strikes are dropped (the 1996 W dime, struck only for the Mint sets; the 2005-2010 P and D \"Satin\" and 2017 S \"Enhanced\" rows). Mintages come only from the saved source; nothing is summed or estimated. No cited source names key dates, so isKeyDate is false for every coin. This file holds the copper-nickel clad dimes of 1965-2025; the 90% silver dimes are in us-dimes-roosevelt-silver.json. Mint marks follow the source's Mint cell: a Mint cell in parentheses ((P), (P & D)) means the coin has no mark (null), a plain letter is the mark. 1965-1967 are one no-mark coin each (null), restored by hand with the source's single combined figure for the (P & D) cell, not summed by us (mint marks were not used in those years). 1968-1979 are a no-mark (P) coin and D; from 1980 P and D. The 1982 no-mint-mark dime has its own (P) row and is kept as a no-mark coin with a null mintage: the source prints its figure only in parentheses as an estimate, \"(150,000)\", and no figure is estimated here. The 1982 no-mint-mark dime is the \"No P\" error variety (a Philadelphia dime struck without its P), so its variety is \"No P\" and it does not read as an ordinary 1982 dime; its mintage stays null. There is no 2026 coin: the source table ends at 2025.",
   "country": "USA",
   "denomination": "Dime",
   "name": "Roosevelt Dime",
@@ -266,7 +266,7 @@
     {
       "year": 1982,
       "mintMark": null,
-      "variety": null,
+      "variety": "No P",
       "isKeyDate": false,
       "mintage": null
     },

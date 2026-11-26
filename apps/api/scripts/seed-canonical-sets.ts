@@ -53,6 +53,8 @@ export function latestTemplateVersions(paths: string[]): string[] {
 // A published template version file is never edited: a correction is a new `.vN+1.json`
 // beside it, and only the newest version of each template is seeded when no files are
 // named. An operator who names files explicitly gets exactly those, old versions included.
+// Exception: a template never seeded in production may be corrected in place in its v1 file
+// (docs/adr/2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md).
 export function resolveTemplatePaths(args: string[]): string[] {
   if (args.length > 0) return args.map((arg) => resolve(arg));
 

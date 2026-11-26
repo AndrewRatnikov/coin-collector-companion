@@ -1,6 +1,6 @@
 # Philadelphia coins struck without a mint mark get `mintMark` "P" in the dollar fixtures, so `mintMark` is never null
 
-- **Status:** Accepted
+- **Status:** Superseded by [2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked](2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md)
 - **Date:** 2026-11-24
 - **Source:** orchestrator run `run_20261124_215121` (modern US dollars, growth 2.10; the PRD, criterion 10, settled this after the PRD review asked whether unmarked Philadelphia coins are null or "P")
 - **Code:** `scripts/import-catalog/fixtures/us-dollars-eisenhower.json`, `scripts/import-catalog/fixtures/README.md`, `apps/api/scripts/modern-dollar-fixtures.spec.ts`
