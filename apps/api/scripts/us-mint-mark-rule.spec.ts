@@ -101,7 +101,7 @@ const NICKEL_TEMPLATE = 'jefferson-nickels-1938-2025.v1.json';
 const EISENHOWER_TEMPLATE = 'eisenhower-dollars.v1.json';
 
 const allFixtureFiles = fs.readdirSync(FIXTURES_DIR).filter((f) => f.endsWith('.json'));
-const allFixtures = allFixtureFiles.map((name) => ({ name, ...loadFixture(name) }));
+const allFixtures = allFixtureFiles.map((name) => ({ ...loadFixture(name), name }));
 const usFixtures = allFixtures.filter((f) => f.country === 'USA');
 const allFixtureKeys = allFixtures.flatMap((f) => f.coins.map((c) => fixtureKey(f, c)));
 const templateFiles = fs.readdirSync(TEMPLATES_DIR).filter((f) => f.endsWith('.json'));
