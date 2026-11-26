@@ -636,3 +636,80 @@ describe('existing data is unchanged (criterion 13)', () => {
     expect(loadTemplate('eisenhower-dollars.v1.json').coins).toHaveLength(16);
   });
 });
+
+describe('key-date checklists stay as the committed sources allow (run_20261126_222906)', () => {
+  const BACKLOG_2_6 =
+    '- [x] 2.6 Morgan and Peace dollars, with a key-dates set for each. Done 2026-11-25: fixtures (Morgan 1878-1904 and 1921, 95 business strikes; Peace 1921-1928 and 1934-1935, 24) and the "Morgan Dollars 1878-1921", "Morgan Dollar Key Dates" (1893-S, as the saved source names it) and "Peace Dollars 1921-1935" sets. No Peace key-date set: no cited source names Peace key dates. Checked 2026-11-26 against the committed sources: no key-date source is committed, so the Morgan key-date checklist stays at one coin (1893-S) and the Peace checklist stays empty until a key-date source is committed. Not yet in production: the import and `seed:canonical` are the pending manual pass under 2.9.';
+  const BACKLOG_2_9 =
+    '- [ ] 2.9 **Pending manual pass** after each import: run the import and `seed:canonical` against production, spot-check counts and images.';
+  const HISTORY_HEADER =
+    '**Susan B. Anthony mintages and Morgan and Peace key dates checked against the committed sources (2026-11-26), growth 2.6 and 2.10:**';
+  const MORGAN_V1_DESCRIPTION =
+    'The key date of the Morgan dollar series as named by the cited source (English Wikipedia, "Morgan dollar", section "Key date"): the 1893-S.';
+
+  it('Morgan flags exactly 1893-S and its keyDates block lists exactly 1893-S', () => {
+    expect(morgan.coins.filter((c) => c.isKeyDate === true).map(label)).toEqual(['1893-S']);
+    expect(morgan.keyDates?.coins).toEqual(['1893-S']);
+  });
+
+  it('Peace flags no coin and has no keyDates block', () => {
+    expect(peace.coins.filter((c) => c.isKeyDate === true)).toEqual([]);
+    expect(peace.keyDates).toBeUndefined();
+  });
+
+  it('morgan-dollars-key-dates.v1.json is unchanged: one coin, 1893-S', () => {
+    expect(loadTemplate(MORGAN_KEY)).toEqual({
+      name: 'Morgan Dollar Key Dates',
+      description: MORGAN_V1_DESCRIPTION,
+      coins: [{ country: 'USA', denomination: 'Dollar', year: 1893, mintMark: 'S', variety: '' }],
+    });
+  });
+
+  it('every listed key date resolves to a fixture row', () => {
+    const coins = loadTemplate(MORGAN_KEY).coins;
+    expect(coins.length).toBeGreaterThan(0);
+    for (const c of coins) expect(allFixtureKeys).toContain(templateKey(c));
+    expect(allFixtureKeys).not.toContain(
+      templateKey({ country: 'USA', denomination: 'Dollar', year: 1893, mintMark: 'P', variety: '' }),
+    );
+  });
+
+  it('no Morgan v2 key-date template and no Peace key-date template exists', () => {
+    expect(fs.existsSync(path.join(TEMPLATES_DIR, 'morgan-dollars-key-dates.v2.json'))).toBe(false);
+    const files = fs.readdirSync(TEMPLATES_DIR);
+    expect(files.filter((f) => /^peace-dollars-key-dates\./.test(f))).toEqual([]);
+    expect(files).toContain(MORGAN_KEY);
+  });
+
+  it('the README Morgan and Peace section states that no key-date source is committed', () => {
+    const readme = fs.readFileSync(path.join(FIXTURES_DIR, 'README.md'), 'utf8');
+    // The README wraps lines, so collapse whitespace before looking for a sentence.
+    const text = readSection(readme, README_HEADING).replace(/\s+/g, ' ');
+    expect(text.length).toBeGreaterThan(200);
+    expect(text).toContain('No key-date source is committed');
+    expect(text).toContain('name no key date beyond the 1893-S');
+  });
+
+  it('the 2.6 backlog line is exactly the contracted line and 2.9 is unchanged', () => {
+    const lines = fs.readFileSync(path.join(REPO_ROOT, 'docs/backlog_growth.md'), 'utf8').split('\n');
+    expect(lines.filter((l) => l.startsWith('- [x] 2.6 '))).toEqual([BACKLOG_2_6]);
+    expect(lines.filter((l) => l.startsWith('- [ ] 2.9 '))).toEqual([BACKLOG_2_9]);
+  });
+
+  it('exactly one history line carries the new header and lists the three missing sources', () => {
+    const lines = fs.readFileSync(path.join(REPO_ROOT, 'docs/history.md'), 'utf8').split('\n');
+    const hits = lines.filter((l) => l.includes(HISTORY_HEADER));
+    expect(hits).toHaveLength(1);
+    const para = hits[0];
+    for (const n of [
+      'No data changed',
+      'a US Mint production source for Susan B. Anthony dollars 1979-1981 by mint mark',
+      'a key-date source for Morgan dollars beyond the 1893-S',
+      'a key-date source for Peace dollars',
+      '2.9',
+    ]) {
+      expect(para).toContain(n);
+    }
+    expect(para).not.toContain('backlog_growth.md 2.6');
+  });
+});

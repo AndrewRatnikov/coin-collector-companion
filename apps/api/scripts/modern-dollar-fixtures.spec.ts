@@ -700,3 +700,91 @@ describe('existing data unchanged (sanity)', () => {
     expect(loadTemplate('lincoln-wheat-cents.v1.json').coins).toHaveLength(142);
   });
 });
+
+describe('Susan B. Anthony gaps stay unfilled without a committed Mint source (run_20261126_222906)', () => {
+  const ANTHONY_FILE = 'us-dollars-susan-b-anthony.json';
+  const ANTHONY_HEADING = '## us-dollars-*.json (five files: Presidential through Susan B. Anthony)';
+
+  const BASE_SOURCES = [
+    {
+      type: 'year / mint mark / variety / mintage',
+      origin:
+        'English Wikipedia "Susan B. Anthony dollar" (https://en.wikipedia.org/wiki/Susan_B._Anthony_dollar), revision 1385912112, fetched 2026-11-24 through the MediaWiki API (action=parse)',
+      url: 'https://en.wikipedia.org/wiki/Susan_B._Anthony_dollar',
+      revisionId: 1385912112,
+      fetchedAt: '2026-11-24',
+      rawResponse: 'sources/Susan_B._Anthony_dollar.2026-11-24.json',
+      license:
+        'Wikipedia text is CC BY-SA 4.0; the year/mint-mark/variety/mintage facts reproduced here are historical facts, not copyrightable expression -- no attribution obligation for the facts themselves, though the app footer still credits Wikipedia generally',
+      note: 'Read by hand from the saved response\'s article prose, because the article has no mintage table at all: 1979 "757,813,744 dollar coins dated 1979 were struck for circulation at the Philadelphia, Denver and San Francisco Mints" (total only); 1980 "the circulation strikes for that year totaled 89,660,708" (total only; mints from the infobox, P, D, S); 1981 "9,742,000 1981 dollars were struck across all three Mints" (total only); 1999 "29,592,000 at the Philadelphia mint and 11,776,000 at the Denver mint" ("no 1999 dollars were struck at the San Francisco mint"). Only the 1999 figures are per mint.',
+    },
+    {
+      type: 'physical specs',
+      origin:
+        'Wikipedia "Susan B. Anthony dollar" infobox, in the saved response under sources/: diameter 26.5 mm, thickness 2.00 mm, mass 8.1 g, composition .75 copper, .25 nickel, clad to pure copper core',
+      license: 'Numeric facts, not copyrightable expression (docs/catalog-data-licensing.md §1)',
+    },
+  ];
+
+  function anthonySection(): string {
+    const lines = fs.readFileSync(README_PATH, 'utf8').split('\n');
+    const start = lines.findIndex((l) => l.trimEnd() === ANTHONY_HEADING);
+    if (start === -1) return '';
+    const rest = lines.slice(start + 1);
+    const end = rest.findIndex((l) => l.startsWith('## '));
+    // The README wraps lines, so collapse whitespace before looking for a sentence.
+    return [ANTHONY_HEADING, ...(end === -1 ? rest : rest.slice(0, end))].join(' ').replace(/\s+/g, ' ');
+  }
+
+  it('the nine 1979, 1980 and 1981 coins (P, D, S for each year) all have a strict null mintage', () => {
+    const f = loadFixture(ANTHONY_FILE);
+    const early = f.coins.filter((c) => c.year >= 1979 && c.year <= 1981);
+    expect(early).toHaveLength(9);
+    expect(early.map((c) => `${c.year}-${c.mintMark}`)).toEqual([
+      '1979-P',
+      '1979-D',
+      '1979-S',
+      '1980-P',
+      '1980-D',
+      '1980-S',
+      '1981-P',
+      '1981-D',
+      '1981-S',
+    ]);
+    for (const c of early) expect(c.mintage).toBeNull();
+  });
+
+  it('the 1999 coins still carry their per-mint figures (the null check is not vacuous)', () => {
+    const f = loadFixture(ANTHONY_FILE);
+    const late = f.coins.filter((c) => c.year === 1999);
+    expect(late).toHaveLength(2);
+    for (const c of late) expect(c.mintage).not.toBeNull();
+  });
+
+  it('sources is exactly the two committed Wikipedia entries and nothing was added', () => {
+    const f = loadFixture(ANTHONY_FILE);
+    expect(f.sources).toHaveLength(2);
+    expect(f.sources).toEqual(BASE_SOURCES);
+  });
+
+  it('no file in sources/ is a US Mint production source', () => {
+    const names = fs.readdirSync(path.join(IMPORT_CATALOG_DIR, 'sources'));
+    expect(names.length).toBeGreaterThan(0);
+    for (const n of names) {
+      expect(n.endsWith('.json')).toBe(true);
+      expect(n).not.toMatch(/us[_-]?mint|production/i);
+    }
+  });
+
+  it('the source-name check would catch a Mint production file (falsifiable)', () => {
+    expect('US_Mint_production.2026-11-26.json').toMatch(/us[_-]?mint|production/i);
+    expect('Susan_B._Anthony_dollar.2026-11-24.json').not.toMatch(/us[_-]?mint|production/i);
+  });
+
+  it('the README modern-dollar section states that no Mint source is committed and the nine mintages stay null', () => {
+    const text = anthonySection();
+    expect(text.length).toBeGreaterThan(ANTHONY_HEADING.length);
+    expect(text).toContain('No US Mint production source is committed');
+    expect(text).toContain('the nine 1979, 1980 and 1981 Susan B. Anthony mintages stay null');
+  });
+});
