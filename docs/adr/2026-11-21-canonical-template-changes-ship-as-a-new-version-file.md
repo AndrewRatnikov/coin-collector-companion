@@ -1,6 +1,6 @@
 # A changed canonical template ships as a new `.vN+1.json` file, and `seed:canonical` seeds only the newest version of each template
 
-- **Status:** Accepted
+- **Status:** Accepted. [2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked](2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md) records an exception: a template never seeded in production is corrected in place in its v1 file
 - **Date:** 2026-11-21
 - **Source:** orchestrator run `run_20261121_222133` (close the Ukraine catalog gaps: 14 first-type 10-hryvnia commemoratives, 2016 1 hryvnia)
 - **Code:** `apps/api/scripts/seed-canonical-sets.ts`, `apps/api/scripts/seed-canonical-sets.spec.ts`, `seed/templates/ukraine-circulating-commemoratives.v1.json`, `seed/templates/ukraine-circulating-commemoratives.v2.json`
