@@ -379,7 +379,9 @@ change of 2009 isn't stored):
 - Susan B. Anthony 1979–1981 (9 coins): the prose gives only yearly totals (757,813,744 for 1979,
   89,660,708 for 1980, 9,742,000 for 1981), which are never split or assigned to one mint. The 1980
   mints are the infobox's P, D, S, since the prose doesn't name them. Only the 1999 P and D figures
-  are per mint.
+  are per mint. No US Mint production source is committed under `../sources/` (checked
+  2026-11-26), so the nine 1979, 1980 and 1981 Susan B. Anthony mintages stay null until one is
+  committed.
 
 Presidential and Eisenhower have no null mintages.
 
@@ -451,7 +453,10 @@ was struck at the United States [[San Francisco Mint]]." The Morgan file records
 `keyDates` block (saved source path, verbatim quote, coin label), and the "Morgan Dollar Key Dates"
 checklist lists that one coin. Peace: no cited source names key dates (the saved article has no key
 date wording; its remarks on the 1921 and 1928 mintages are not key-date statements), so every Peace
-coin has `isKeyDate: false` and there is no Peace key-date checklist.
+coin has `isKeyDate: false` and there is no Peace key-date checklist. No key-date source is
+committed under `../sources/` (checked 2026-11-26), and the saved Morgan and Peace articles name no
+key date beyond the 1893-S, so the Morgan key-date checklist stays at that one coin and there is no
+Peace key-date checklist until a key-date source is committed.
 
 **Checklists.** "Morgan Dollars 1878-1921" (95), "Morgan Dollar Key Dates" (1) and "Peace Dollars
 1921-1935" (24) in `seed/templates/`.
