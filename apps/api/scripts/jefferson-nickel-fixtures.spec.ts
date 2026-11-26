@@ -1,8 +1,10 @@
 /**
  * Tests for: Jefferson nickel fixtures (growth backlog 2.2), the two canonical set templates built
  * from them, their key dates, provenance in the saved source, the README section and the backlog tick.
- * Contract source: runs/run_20261125_061116/plan.md § Interface Contract
+ * Contract source: runs/run_20261125_061116/plan.md § Interface Contract, updated by
+ * runs/run_20261126_061240/plan.md § Interface Contract (checklist renamed to 1938-2025)
  * Covers criteria: #2, #3, #4, #5, #6, #7, #8, #9, #10, #12, #13 (from runs/run_20261125_061116/prd.md)
+ * and #12, #13 (from runs/run_20261126_061240/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -89,7 +91,7 @@ function mintageFigureAppears(wikitext: string, n: number): boolean {
 
 const CN_FILE = 'us-nickels-jefferson-copper-nickel.json';
 const WAR_FILE = 'us-nickels-jefferson-wartime-silver.json';
-const ALL_TEMPLATE = 'jefferson-nickels-1938-2026.v1.json';
+const ALL_TEMPLATE = 'jefferson-nickels-1938-2025.v1.json';
 const KEY_TEMPLATE = 'jefferson-nickels-key-dates.v1.json';
 const RAW_REL = 'sources/United_States_nickel_mintage_figures.2026-11-25.json';
 const README_HEADING = '## `us-nickels-jefferson-*.json` (two files: copper-nickel and wartime silver)';
@@ -383,14 +385,15 @@ describe('no duplicate natural keys (criterion 5)', () => {
   });
 });
 
-describe('templates (criterion 7)', () => {
+describe('templates (criteria 7, 12)', () => {
   const all = loadTemplate(ALL_TEMPLATE);
   const key = loadTemplate(KEY_TEMPLATE);
 
-  it('Jefferson Nickels 1938-2026: exact name, description, 194 coins', () => {
-    expect(all.name).toBe('Jefferson Nickels 1938-2026');
+  it('Jefferson Nickels 1938-2025: exact name, description, 194 coins, no 2026 coin', () => {
+    expect(all.name).toBe('Jefferson Nickels 1938-2025');
     expect((all.description ?? '').trim().length).toBeGreaterThan(0);
     expect(all.coins).toHaveLength(194);
+    expect(all.coins.some((c) => c.year === 2026)).toBe(false);
   });
 
   it('is the copper-nickel then wartime coins stable-sorted by year', () => {
@@ -423,15 +426,20 @@ describe('templates (criterion 7)', () => {
     expect(key.coins).toEqual(asTemplateCoins({ ...cn, coins: flagged }));
   });
 
-  it('template names are unique across the directory', () => {
+  it('template names are unique across the directory and the old name is gone', () => {
     const names = fs
       .readdirSync(TEMPLATES_DIR)
       .filter((f) => f.endsWith('.json'))
       .map((f) => loadTemplate(f).name);
-    for (const ours of ['Jefferson Nickels 1938-2026', 'Jefferson Nickel Key Dates']) {
+    for (const ours of ['Jefferson Nickels 1938-2025', 'Jefferson Nickel Key Dates']) {
       expect(names.filter((n) => n === ours)).toHaveLength(1);
     }
-    expect(names).toEqual(expect.arrayContaining(['Jefferson Nickels 1938-2026', 'Jefferson Nickel Key Dates']));
+    expect(names).toEqual(expect.arrayContaining(['Jefferson Nickels 1938-2025', 'Jefferson Nickel Key Dates']));
+    expect(names).not.toContain('Jefferson Nickels 1938-2026');
+  });
+
+  it('the old 1938-2026 template file is gone', () => {
+    expect(fs.existsSync(path.join(TEMPLATES_DIR, 'jefferson-nickels-1938-2026.v1.json'))).toBe(false);
   });
 
   it.each([ALL_TEMPLATE, KEY_TEMPLATE])('%s: every coin matches exactly one fixture row', (file) => {
@@ -449,7 +457,7 @@ describe('templates (criterion 7)', () => {
   });
 });
 
-describe('README section (criteria 2, 8, 10)', () => {
+describe('README section (criteria 2, 8, 10, 12)', () => {
   const readme = fs.readFileSync(path.join(FIXTURES_DIR, 'README.md'), 'utf8');
   const section = readSection(readme, README_HEADING);
 
@@ -457,8 +465,18 @@ describe('README section (criteria 2, 8, 10)', () => {
     expect(section.length).toBeGreaterThan(200);
   });
 
-  it('names both files, the article, 2.9, the key dates and 2026', () => {
-    for (const needle of [CN_FILE, WAR_FILE, 'United States nickel mintage figures', '2.9', '1939-D', '1950-D', '2026']) {
+  it('names both files, the article, 2.9, the key dates, 2026, the 2025 title and that 2026 waits for the source', () => {
+    for (const needle of [
+      CN_FILE,
+      WAR_FILE,
+      'United States nickel mintage figures',
+      '2.9',
+      '1939-D',
+      '1950-D',
+      '2026',
+      'Jefferson Nickels 1938-2025',
+      'waits for',
+    ]) {
       expect(section).toContain(needle);
     }
   });
@@ -469,13 +487,18 @@ describe('README section (criteria 2, 8, 10)', () => {
   });
 });
 
-describe('backlog (criteria 1, 11)', () => {
+describe('backlog (criteria 1, 11, 13)', () => {
   const backlog = fs.readFileSync(path.join(REPO_ROOT, 'docs/backlog_growth.md'), 'utf8');
   const line = backlog.split('\n').find((l) => l.startsWith('- [x] 2.2 '));
 
   it('ticks 2.2 and notes the pending manual pass under 2.9', () => {
     expect(line).toBeDefined();
     expect(line).toContain('2.9');
+  });
+
+  it('uses the 2025 nickel title and not the old one', () => {
+    expect(line).toContain('Jefferson Nickels 1938-2025');
+    expect(line).not.toContain('1938-2026');
   });
 
   it('does not alter the 2.1 tick', () => {

@@ -1,8 +1,10 @@
 /**
  * Tests for: Roosevelt dime fixtures (growth backlog 2.3), the canonical set template built from them,
  * provenance in the saved source, the README section and the backlog tick.
- * Contract source: runs/run_20261125_061116/plan.md § Interface Contract
+ * Contract source: runs/run_20261125_061116/plan.md § Interface Contract, updated by
+ * runs/run_20261126_061240/plan.md § Interface Contract (null Philadelphia silver dimes, 1982 No P, 2025 title)
  * Covers criteria: #2, #3, #4, #5, #6, #7, #8, #9, #10, #14 (from runs/run_20261125_061116/prd.md)
+ * and #1, #4, #7, #8, #10, #11, #13 (from runs/run_20261126_061240/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -89,9 +91,10 @@ function mintageFigureAppears(wikitext: string, n: number): boolean {
 
 const SILVER_FILE = 'us-dimes-roosevelt-silver.json';
 const CLAD_FILE = 'us-dimes-roosevelt-clad.json';
-const TEMPLATE = 'roosevelt-dimes-1946-2026.v1.json';
+const TEMPLATE = 'roosevelt-dimes-1946-2025.v1.json';
 const RAW_REL = 'sources/Roosevelt_dime_mintage_figures.2026-11-25.json';
 const README_HEADING = '## `us-dimes-roosevelt-*.json` (two files: silver and clad)';
+const NEW_ADR_SLUG = '2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked';
 
 const silver = loadFixture(SILVER_FILE);
 const clad = loadFixture(CLAD_FILE);
@@ -103,8 +106,8 @@ const allFixtures = allFixtureFiles.map((f) => loadFixture(f));
 const allFixtureKeys = allFixtures.flatMap((f) => f.coins.map((c) => fixtureKey(f, c)));
 
 function expectedMarks(year: number): string[] {
-  if (year <= 1955) return ['D', 'P', 'S'];
-  if (year <= 1964) return ['D', 'P'];
+  if (year <= 1955) return ['', 'D', 'S'];
+  if (year <= 1964) return ['', 'D'];
   if (year <= 1967) return [''];
   if (year <= 1979) return ['', 'D'];
   if (year === 1982) return ['', 'D', 'P'];
@@ -148,11 +151,11 @@ describe('identity, counts and year range (criteria 3, 6, 14)', () => {
     }
   });
 
-  it('is business strikes only: no variety at all, no W or S after 1955, no 1996 W', () => {
-    for (const c of bothCoins) {
-      expect(c.variety ?? null).toBeNull();
-      expect(c.mintMark).not.toBe('W');
-    }
+  it('is business strikes only: the only variety is the 1982 No P, no W or S after 1955, no 1996 W', () => {
+    const withVariety = bothCoins.filter((c) => (c.variety ?? null) !== null);
+    expect(withVariety).toHaveLength(1);
+    expect(withVariety[0]).toMatchObject({ year: 1982, mintMark: null, variety: 'No P' });
+    for (const c of bothCoins) expect(c.mintMark).not.toBe('W');
     expect(clad.coins.some((c) => c.mintMark === 'S')).toBe(false);
     expect(clad.coins.filter((c) => c.year === 1996)).toHaveLength(2);
     expect(silver.coins.filter((c) => c.mintMark === 'S').every((c) => c.year <= 1955)).toBe(true);
@@ -180,9 +183,11 @@ describe('mint marks per year (criteria 4, 14)', () => {
     }
   });
 
-  it('silver dimes keep the source plain P (not null) and clad 1968-1979 use null', () => {
-    for (const c of silver.coins) expect(c.mintMark).not.toBeNull();
-    expect(silver.coins.filter((c) => c.mintMark === 'P')).toHaveLength(19);
+  it('silver dimes have no "P": exactly 19 null rows, one per year 1946-1964; clad 1968-1979 still one null each', () => {
+    expect(silver.coins.some((c) => c.mintMark === 'P')).toBe(false);
+    const nulls = silver.coins.filter((c) => c.mintMark === null);
+    expect(nulls).toHaveLength(19);
+    expect(nulls.map((c) => c.year)).toEqual(Array.from({ length: 19 }, (_, i) => 1946 + i));
     for (let y = 1968; y <= 1979; y++) {
       expect(clad.coins.filter((c) => c.year === y && c.mintMark === null)).toHaveLength(1);
     }
@@ -190,12 +195,18 @@ describe('mint marks per year (criteria 4, 14)', () => {
   });
 });
 
-describe('1982 no-mark dime and null mintages (criterion 5)', () => {
-  it('1982 has a no-mark coin without variety and with a null mintage', () => {
+describe('1982 no-mark dime and null mintages (criteria 5, 10)', () => {
+  it('1982 has a no-mark coin with variety "No P" and a null mintage', () => {
     const rows = clad.coins.filter((c) => c.year === 1982 && c.mintMark === null);
     expect(rows).toHaveLength(1);
-    expect(rows[0].variety ?? null).toBeNull();
+    expect(rows[0].variety).toBe('No P');
     expect(rows[0].mintage).toBeNull();
+  });
+
+  it('the 1982 P and D dimes are ordinary: no variety', () => {
+    for (const m of ['P', 'D']) {
+      expect(clad.coins.find((c) => c.year === 1982 && c.mintMark === m)?.variety ?? null).toBeNull();
+    }
   });
 
   it('is the only null mintage in either file', () => {
@@ -248,14 +259,20 @@ describe('key dates (criterion 9)', () => {
   });
 });
 
-describe('rules-note (criteria 4, 14)', () => {
+describe('rules-note (criteria 4, 7, 10, 14)', () => {
   it.each([
-    ['silver', silver, ['parentheses', 'null', 'plain P', '2.9']],
-    ['clad', clad, ['parentheses', 'null', '1965-1967', '1982']],
+    ['silver', silver, ['parentheses', 'null', '2.9', NEW_ADR_SLUG]],
+    ['clad', clad, ['parentheses', 'null', '1965-1967', '1982', 'No P']],
   ] as const)('%s file mentions its required topics', (_label, file, needles) => {
     const note = file['rules-note'];
     expect(typeof note).toBe('string');
     for (const n of needles) expect(note).toContain(n);
+  });
+
+  it('the silver note no longer carries the plain P or provisional exception', () => {
+    const note = silver['rules-note'] ?? '';
+    expect(note).not.toContain('plain P');
+    expect(note).not.toContain('provisional');
   });
 });
 
@@ -316,11 +333,11 @@ describe('no duplicate natural keys (criterion 5)', () => {
   });
 });
 
-describe('template (criterion 7)', () => {
+describe('template (criteria 4, 7, 10, 11)', () => {
   const template = loadTemplate(TEMPLATE);
 
-  it('Roosevelt Dimes 1946-2026: exact name, description, 168 coins', () => {
-    expect(template.name).toBe('Roosevelt Dimes 1946-2026');
+  it('Roosevelt Dimes 1946-2025: exact name, description, 168 coins', () => {
+    expect(template.name).toBe('Roosevelt Dimes 1946-2025');
     expect((template.description ?? '').trim().length).toBeGreaterThan(0);
     expect(template.coins).toHaveLength(168);
   });
@@ -331,20 +348,25 @@ describe('template (criterion 7)', () => {
     expect(template.coins[template.coins.length - 1].year).toBe(2025);
   });
 
-  it('uses empty strings for no mint mark and no variety', () => {
+  it('uses empty strings for no mint mark and for no variety, except the 1982 No P coin', () => {
     for (const c of template.coins) {
       expect(typeof c.mintMark).toBe('string');
-      expect(c.variety).toBe('');
       expect(c.denomination).toBe('Dime');
+      if (c.year === 1982 && c.mintMark === '') expect(c.variety).toBe('No P');
+      else expect(c.variety).toBe('');
     }
+    expect(template.coins.filter((c) => c.variety === 'No P')).toHaveLength(1);
+    expect(template.coins.filter((c) => c.year <= 1964 && c.mintMark === '')).toHaveLength(19);
+    expect(template.coins.some((c) => c.year <= 1964 && c.mintMark === 'P')).toBe(false);
   });
 
-  it('template names are unique across the directory', () => {
+  it('template names are unique across the directory and the old name is gone', () => {
     const names = fs
       .readdirSync(TEMPLATES_DIR)
       .filter((f) => f.endsWith('.json'))
       .map((f) => loadTemplate(f).name);
-    expect(names.filter((n) => n === 'Roosevelt Dimes 1946-2026')).toHaveLength(1);
+    expect(names.filter((n) => n === 'Roosevelt Dimes 1946-2025')).toHaveLength(1);
+    expect(names.filter((n) => n === 'Roosevelt Dimes 1946-2026')).toHaveLength(0);
   });
 
   it('every coin matches exactly one fixture row', () => {
@@ -367,15 +389,29 @@ describe('template (criterion 7)', () => {
   });
 });
 
-describe('README section (criteria 2, 8, 10)', () => {
+describe('README section (criteria 2, 7, 8, 10, 11)', () => {
   const readme = fs.readFileSync(path.join(FIXTURES_DIR, 'README.md'), 'utf8');
   const section = readSection(readme, README_HEADING);
 
-  it('names both files, the article, 2.9, 2026 and the plain P decision', () => {
+  it('names both files, the article, 2.9, 2026, No P, the 2025 title and the new ADR', () => {
     expect(section.length).toBeGreaterThan(200);
-    for (const needle of [SILVER_FILE, CLAD_FILE, 'Roosevelt dime mintage figures', '2.9', '2026', 'plain P']) {
+    for (const needle of [
+      SILVER_FILE,
+      CLAD_FILE,
+      'Roosevelt dime mintage figures',
+      '2.9',
+      '2026',
+      'No P',
+      'Roosevelt Dimes 1946-2025',
+      `${NEW_ADR_SLUG}.md`,
+    ]) {
       expect(section).toContain(needle);
     }
+  });
+
+  it('no longer describes a plain P or a provisional exception', () => {
+    expect(section).not.toContain('plain P');
+    expect(section).not.toContain('provisional');
   });
 
   it('readSection stops at the next level-2 heading (falsifiable)', () => {
@@ -384,12 +420,16 @@ describe('README section (criteria 2, 8, 10)', () => {
   });
 });
 
-describe('backlog and history (criteria 1, 11)', () => {
-  it('ticks 2.3 and notes the pending manual pass under 2.9', () => {
+describe('backlog and history (criteria 1, 11, 13)', () => {
+  it('ticks 2.3, uses the 2025 title, mentions No P and the pending manual pass under 2.9', () => {
     const backlog = fs.readFileSync(path.join(REPO_ROOT, 'docs/backlog_growth.md'), 'utf8');
     const line = backlog.split('\n').find((l) => l.startsWith('- [x] 2.3 '));
     expect(line).toBeDefined();
     expect(line).toContain('2.9');
+    expect(line).toContain('Roosevelt Dimes 1946-2025');
+    expect(line).toContain('No P');
+    expect(line).not.toContain('Roosevelt Dimes 1946-2026');
+    expect(line).not.toContain('plain P');
   });
 
   it('has the dated history paragraph', () => {
