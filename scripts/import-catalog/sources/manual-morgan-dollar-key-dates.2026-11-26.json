@@ -1,0 +1,133 @@
+{
+  "kind": "manual key-date source",
+  "enteredBy": "Claude (claude.ai session) by WebFetch on 2026-11-26; values copied from the pages named below, nothing from memory",
+  "reviewStatus": "pending: Andrew to check against the pages before committing",
+  "series": "Morgan dollar",
+  "country": "USA",
+  "denomination": "Dollar",
+  "fixture": "us-dollars-morgan.json",
+  "sources": [
+    {
+      "id": "wikipedia",
+      "title": "Morgan dollar (Wikipedia)",
+      "url": "https://en.wikipedia.org/wiki/Morgan_dollar",
+      "note": "already saved as Morgan_dollar.2026-11-25.json; names 1893-S as the key date"
+    },
+    {
+      "id": "pcgs",
+      "title": "Morgan Silver Dollars 1878-1921 (PCGS)",
+      "url": "https://www.pcgs.com/news/morgan-silver-dollars-1878-1921",
+      "accessed": "2026-11-26",
+      "quote": "joined by others such as 1889-CC and 1895 Philadelphia coins",
+      "note": "the sentence names 1893-S as the key issue, joined by these"
+    },
+    {
+      "id": "apmex",
+      "title": "Morgan Dollar Key Dates (APMEX learning guide)",
+      "url": "https://learn.apmex.com/learning-guide/coin-collecting/morgan-dollar-key-dates",
+      "accessed": "2026-11-26",
+      "note": "lists Rare & Key Dates: 1889-CC, 1893-S, 1895 (Proof); and Scarce Dates: 1884-S, 1886-O, 1892-S, 1893-O, 1895-O, 1896-O, 1901-P"
+    }
+  ],
+  "licence": "Which dates are key or scarce is a fact about the series; only dates are taken, plus one short attributed quote.",
+  "keyDates": [
+    {
+      "year": 1893,
+      "mintMark": "S",
+      "variety": null,
+      "named": "1893-S",
+      "by": [
+        "wikipedia",
+        "pcgs",
+        "apmex"
+      ]
+    },
+    {
+      "year": 1889,
+      "mintMark": "CC",
+      "variety": null,
+      "named": "1889-CC",
+      "by": [
+        "pcgs",
+        "apmex"
+      ]
+    }
+  ],
+  "scarceDates": [
+    {
+      "year": 1884,
+      "mintMark": "S",
+      "variety": null,
+      "named": "1884-S",
+      "by": [
+        "apmex"
+      ]
+    },
+    {
+      "year": 1886,
+      "mintMark": "O",
+      "variety": null,
+      "named": "1886-O",
+      "by": [
+        "apmex"
+      ]
+    },
+    {
+      "year": 1892,
+      "mintMark": "S",
+      "variety": null,
+      "named": "1892-S",
+      "by": [
+        "apmex"
+      ]
+    },
+    {
+      "year": 1893,
+      "mintMark": "O",
+      "variety": null,
+      "named": "1893-O",
+      "by": [
+        "apmex"
+      ]
+    },
+    {
+      "year": 1895,
+      "mintMark": "O",
+      "variety": null,
+      "named": "1895-O",
+      "by": [
+        "apmex"
+      ]
+    },
+    {
+      "year": 1896,
+      "mintMark": "O",
+      "variety": null,
+      "named": "1896-O",
+      "by": [
+        "apmex"
+      ]
+    },
+    {
+      "year": 1901,
+      "mintMark": null,
+      "variety": null,
+      "named": "1901-P",
+      "by": [
+        "apmex"
+      ],
+      "note": "Philadelphia Morgans carry no mint mark, so mintMark is null in the fixture"
+    }
+  ],
+  "excluded": [
+    {
+      "named": "1895 (Philadelphia)",
+      "why": "proof-only; not a business strike and not in the fixture"
+    },
+    {
+      "named": "1893-CC",
+      "why": "often called a key date, but none of the sources fetched here names it"
+    }
+  ],
+  "recommendation": "Set isKeyDate only for keyDates (two sources agree on both). Build the key-dates checklist from keyDates plus scarceDates (9 coins), or keep the two lists apart; Andrew to decide."
+}
