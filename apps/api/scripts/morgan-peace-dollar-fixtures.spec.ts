@@ -501,6 +501,7 @@ describe('rules-note (criteria 5, 6, 12)', () => {
     ]) {
       expect(note).toContain(n);
     }
+    expect(note).not.toContain('isKeyDate is true only for the 1893-S, named');
   });
 
   it('Peace note mentions its required topics and the manual key-date source', () => {

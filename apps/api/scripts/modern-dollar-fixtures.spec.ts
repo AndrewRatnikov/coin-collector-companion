@@ -719,6 +719,9 @@ describe('Susan B. Anthony 1979-1981 mintages from the manual source (criteria 1
     expect(rules).toContain('manual-susan-b-anthony-mintages.2026-11-26.json');
     expect(rules).toContain('isKeyDate is false throughout');
     expect(rules).not.toContain('have null mintage');
+    expect(anthony['$schema-note'] ?? '').not.toContain('mintage is null where the source gives no figure');
+    expect(rules).not.toContain('Mintages come only from the saved source, null where it gives no figure');
+    expect(rules).not.toContain('This file: the prose of "Susan B. Anthony dollar" (no mintage table).');
   });
 });
 
@@ -830,8 +833,11 @@ describe('fixtures README dollars section (criteria 7, 13, 15)', () => {
 
   it('the null mintage count reads 16, not 25', () => {
     const text = section();
-    expect(text).toContain('16');
+    expect(text).toContain('**Null mintages.** 16 coins');
+    expect(text).not.toContain('**Null mintages.** 25 coins');
     expect(text).not.toContain('25 coins');
+    expect(text).not.toContain('Susan B. Anthony 1979–1981 (9 coins)');
+    expect(text).not.toContain('757,813,744');
   });
 });
 
