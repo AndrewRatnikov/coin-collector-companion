@@ -201,6 +201,24 @@ describe('import-coins', () => {
         'Lincoln Cent (/x/f.json): 1 created, 0 updated, 2 unchanged, 1 conflicts, 4 total',
       );
     });
+
+    it('formats a second result with different values exactly', () => {
+      const other: FileImportResult = {
+        name: 'Roosevelt Dime',
+        filePath: '/y/g.json',
+        created: 3,
+        updated: 2,
+        unchanged: 0,
+        conflicts: [],
+        total: 5,
+      };
+      expect(formatFileSummary(other, false)).toBe(
+        'Roosevelt Dime (/y/g.json): 3 created, 2 updated, 0 unchanged, 0 conflicts, 5 total',
+      );
+      expect(formatFileSummary(other, true)).toBe(
+        '[check] Roosevelt Dime (/y/g.json): 3 created, 2 updated, 0 unchanged, 0 conflicts, 5 total',
+      );
+    });
   });
 
   describe('importFixtureFile', () => {
@@ -243,6 +261,9 @@ describe('import-coins', () => {
       ]);
       expect(warnSpy).toHaveBeenCalledWith(formatConflict(result.conflicts[0]));
       expect(logSpy).toHaveBeenCalledWith(formatFileSummary(result, false));
+      expect(logSpy).toHaveBeenCalledWith(
+        'Lincoln Cent (/fx/cent.json): 1 created, 1 updated, 1 unchanged, 1 conflicts, 4 total',
+      );
       expect(logSpy.mock.calls.flat().join('\n')).toContain('1 conflicts');
     });
 
@@ -283,6 +304,9 @@ describe('import-coins', () => {
       expect(result.total).toBe(4);
       expect(logSpy).toHaveBeenCalledWith(formatFileSummary(result, true));
       expect(String(logSpy.mock.calls[0][0])).toMatch(/^\[check\] /);
+      expect(warnSpy).toHaveBeenCalledWith(
+        'conflict: USA Cent 1912 mintMark="" variety="" id=coin-1912 status=pending: not approved, left untouched',
+      );
     });
 
     it('check mode counts differ with the fixture (two creates versus one)', async () => {
