@@ -109,7 +109,7 @@ export async function seedTemplateFile(
 
   // Resolve every entry against the catalog before writing anything to
   // CanonicalSetCoin -- fail loudly and stop the whole file's write on the first
-  // unresolved coin (system-design_v2.md §4.4/§4.5), rather than partially seeding it.
+  // unresolved or non-approved coin (system-design_v2.md §4.4/§4.5), rather than partially seeding it.
   const resolvedCoins: Array<{ coinId: string; position: number }> = [];
   for (let index = 0; index < template.coins.length; index++) {
     const entry = template.coins[index];
@@ -129,6 +129,16 @@ export async function seedTemplateFile(
       throw new Error(
         `Coin not found for template "${template.name}" (${filePath}) entry ${index}: ` +
           `${entry.country} ${entry.denomination} ${entry.year} mintMark="${entry.mintMark}" variety="${entry.variety}"`,
+      );
+    }
+
+    // A pending or rejected submission on the key is hidden from the catalog: never link
+    // it into a curated checklist (strict, so a missing status is refused too).
+    if (coin.status !== 'approved') {
+      throw new Error(
+        `Coin not approved for template "${template.name}" (${filePath}) entry ${index}: ` +
+          `${entry.country} ${entry.denomination} ${entry.year} mintMark="${entry.mintMark}" variety="${entry.variety}" ` +
+          `id=${coin.id} status=${String(coin.status)}`,
       );
     }
 

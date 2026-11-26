@@ -9,7 +9,7 @@ import { sanitizeIdentityField } from '@coin-collector/shared';
 import { toImageFields } from './lib/image';
 import { toSpecFields } from './lib/specs';
 import { chunk, planCoinImport } from './lib/plan';
-import type { DesiredCoinRow } from './lib/plan';
+import type { CoinImportConflict, DesiredCoinRow } from './lib/plan';
 import type { RawFixtureFile } from './lib/types';
 
 const FIXTURES_DIR = join(__dirname, 'fixtures');
@@ -22,9 +22,11 @@ const TRANSACTION_TIMEOUT_MS = 600_000;
 // Neon autosuspend wake-up.
 const TRANSACTION_MAX_WAIT_MS = 30_000;
 
-// Exactly the natural key, the id and the ten columns the import writes and compares.
-const EXISTING_COIN_SELECT = {
+// Exactly the natural key, the id, the status (a non-approved coin is a conflict, never
+// written) and the ten columns the import writes and compares. No submitter data.
+export const EXISTING_COIN_SELECT = {
   id: true,
+  status: true,
   country: true,
   denomination: true,
   year: true,
@@ -42,6 +44,60 @@ const EXISTING_COIN_SELECT = {
   isKeyDate: true,
 } as const;
 
+// Only what the import uses, so a spec can pass a plain mock.
+export type ImportPrismaClient = Pick<PrismaClient, 'coin' | '$transaction'>;
+
+export interface ImportOptions {
+  // Read-only pre-flight: run the plan, write nothing, print the same counts.
+  check: boolean;
+}
+
+export interface FileImportResult {
+  name: string;
+  filePath: string;
+  created: number;
+  updated: number;
+  unchanged: number;
+  conflicts: CoinImportConflict[];
+  total: number;
+}
+
+// `--check` is the only option; a bare `--` (from `pnpm run import -- ...`) is ignored, and
+// any other `--` option is an error, so a typo never runs a real import.
+export function parseImportArgs(args: readonly string[]): { check: boolean; fixtureArgs: string[] } {
+  let check = false;
+  const fixtureArgs: string[] = [];
+  for (const arg of args) {
+    if (arg === '--') continue;
+    if (arg === '--check') {
+      check = true;
+      continue;
+    }
+    if (arg.startsWith('--')) {
+      throw new Error(`Unknown option: ${arg} (the only option is --check)`);
+    }
+    fixtureArgs.push(arg);
+  }
+  return { check, fixtureArgs };
+}
+
+// Key, coin id and status only: nothing about who submitted it.
+export function formatConflict(conflict: CoinImportConflict): string {
+  const { country, denomination, year, mintMark, variety } = conflict.key;
+  return (
+    `conflict: ${country} ${denomination} ${year} mintMark="${mintMark}" variety="${variety}" ` +
+    `id=${conflict.id} status=${String(conflict.status)}: not approved, left untouched`
+  );
+}
+
+export function formatFileSummary(result: FileImportResult, check: boolean): string {
+  return (
+    `${check ? '[check] ' : ''}${result.name} (${result.filePath}): ${result.created} created, ` +
+    `${result.updated} updated, ${result.unchanged} unchanged, ${result.conflicts.length} conflicts, ` +
+    `${result.total} total`
+  );
+}
+
 function resolveFixturePaths(args: string[]): string[] {
   if (args.length > 0) return args.map((arg) => resolve(arg));
 
@@ -50,7 +106,11 @@ function resolveFixturePaths(args: string[]): string[] {
     .map((file) => join(FIXTURES_DIR, file));
 }
 
-async function importFixtureFile(prisma: PrismaClient, filePath: string): Promise<void> {
+export async function importFixtureFile(
+  prisma: ImportPrismaClient,
+  filePath: string,
+  options: ImportOptions,
+): Promise<FileImportResult> {
   const raw = JSON.parse(readFileSync(filePath, 'utf-8')) as RawFixtureFile;
 
   const desired: DesiredCoinRow[] = raw.coins.map((entry) => ({
@@ -73,8 +133,12 @@ async function importFixtureFile(prisma: PrismaClient, filePath: string): Promis
   const plan = planCoinImport(desired, existing);
 
   let created = 0;
-  // Nothing to write (e.g. a re-run on an imported database): open no transaction at all.
-  if (plan.toCreate.length > 0 || plan.toUpdate.length > 0) {
+  if (options.check) {
+    // Read-only pre-flight: report what a real run would create, write nothing.
+    created = plan.toCreate.length;
+  } else if (plan.toCreate.length > 0 || plan.toUpdate.length > 0) {
+    // Nothing to write (e.g. a re-run on an imported database): open no transaction at all.
+    // Conflicts are in neither list, so a non-approved coin is never written.
     // All writes go through `tx`, so a throw rolls back the whole file.
     await prisma.$transaction(
       async (tx) => {
@@ -89,16 +153,55 @@ async function importFixtureFile(prisma: PrismaClient, filePath: string): Promis
     );
   }
 
-  const updated = plan.toUpdate.length;
-  const unchanged = plan.unchanged.length;
-  const total = plan.toCreate.length + plan.toUpdate.length + plan.unchanged.length;
-  console.log(
-    `${raw.name} (${filePath}): ${created} created, ${updated} updated, ${unchanged} unchanged, ${total} total`,
-  );
+  const result: FileImportResult = {
+    name: raw.name,
+    filePath,
+    created,
+    updated: plan.toUpdate.length,
+    unchanged: plan.unchanged.length,
+    conflicts: plan.conflicts,
+    // Distinct natural keys in the file, conflicts included.
+    total:
+      plan.toCreate.length + plan.toUpdate.length + plan.unchanged.length + plan.conflicts.length,
+  };
+  for (const conflict of plan.conflicts) console.warn(formatConflict(conflict));
+  console.log(formatFileSummary(result, options.check));
+  return result;
 }
 
-async function main() {
-  const fixturePaths = resolveFixturePaths(process.argv.slice(2));
+// Returns the process exit code: 1 when any file had a conflict, so the operator notices.
+export async function runImport(
+  prisma: ImportPrismaClient,
+  fixturePaths: readonly string[],
+  options: ImportOptions,
+): Promise<number> {
+  let conflicts = 0;
+  let filesWithConflicts = 0;
+  // Sequential, not Promise.all: fails loudly and stops on the first bad file rather
+  // than partially importing several at once (system-design_v2.md §4.3/§4.5) — safe
+  // to do because re-running is idempotent: each file is diffed against the database by
+  // natural key and only the difference is written, in one transaction per file.
+  // Conflicts don't stop anything: the rest of the file and later files are still written.
+  for (const filePath of fixturePaths) {
+    const result = await importFixtureFile(prisma, filePath, options);
+    conflicts += result.conflicts.length;
+    if (result.conflicts.length > 0) filesWithConflicts += 1;
+  }
+
+  if (conflicts > 0) {
+    console.error(
+      `${conflicts} conflicts in ${filesWithConflicts} files: those non-approved coins were left ` +
+        'untouched. Resolve them in /admin/submissions (see scripts/import-catalog/README.md) and re-run.',
+    );
+    return 1;
+  }
+  return 0;
+}
+
+export async function main(argv: readonly string[] = process.argv.slice(2)): Promise<number> {
+  // Parse first: an unknown option fails before any fixture is read or any client is built.
+  const { check, fixtureArgs } = parseImportArgs(argv);
+  const fixturePaths = resolveFixturePaths(fixtureArgs);
   if (fixturePaths.length === 0) {
     throw new Error(`No fixture files found in ${FIXTURES_DIR}`);
   }
@@ -111,19 +214,18 @@ async function main() {
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
   });
   try {
-    // Sequential, not Promise.all: fails loudly and stops on the first bad file rather
-    // than partially importing several at once (system-design_v2.md §4.3/§4.5) — safe
-    // to do because re-running is idempotent: each file is diffed against the database by
-    // natural key and only the difference is written, in one transaction per file.
-    for (const filePath of fixturePaths) {
-      await importFixtureFile(prisma, filePath);
-    }
+    return await runImport(prisma, fixturePaths, { check });
   } finally {
     await prisma.$disconnect();
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+// Run only when executed directly, so specs can import the functions above.
+if (require.main === module) {
+  main()
+    .then((code) => process.exit(code))
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+}

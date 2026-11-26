@@ -4,7 +4,13 @@ import type { CoinSpecFields } from './specs';
 // Pure planning step of the catalog import: given the coins a fixture file wants and the
 // coins already in the database for that file's (country, denomination), decide which rows
 // to create, which to update (and with which fields), and which need no write at all.
+// A stored coin on a fixture key whose status is not exactly "approved" (a pending or
+// rejected user submission, or a missing status) is a conflict: it is never created over or
+// updated, only reported, so an admin can decide in /admin/submissions.
 // No I/O and no Prisma here, so it can be unit-tested without a database.
+
+// The only status the import may write over. Compared strictly: anything else is a conflict.
+export const APPROVED_STATUS = 'approved' as const;
 
 export interface CoinNaturalKey {
   country: string;
@@ -21,8 +27,8 @@ export type CoinContentFields = { name: string } & CoinImageFields & CoinSpecFie
 export type DesiredCoinRow = CoinNaturalKey & CoinContentFields;
 
 // One coin as read from the database. Content fields are optional and nullable so that a
-// missing value and null compare equal.
-export type ExistingCoinRow = { id: string } & CoinNaturalKey & {
+// missing value and null compare equal. `status` decides whether the import may touch it.
+export type ExistingCoinRow = { id: string; status: string } & CoinNaturalKey & {
   [K in keyof CoinContentFields]?: CoinContentFields[K] | null;
 };
 
@@ -32,10 +38,18 @@ export interface CoinUpdate {
   data: Partial<CoinContentFields>;
 }
 
+// A stored coin on a fixture key that is not approved: left untouched and reported.
+export interface CoinImportConflict {
+  key: CoinNaturalKey;
+  id: string;
+  status: string;
+}
+
 export interface CoinImportPlan {
   toCreate: DesiredCoinRow[];
   toUpdate: CoinUpdate[];
   unchanged: ExistingCoinRow[];
+  conflicts: CoinImportConflict[];
 }
 
 const CONTENT_FIELDS = [
@@ -91,12 +105,29 @@ export function planCoinImport(
     if (!existingByKey.has(key)) existingByKey.set(key, row);
   }
 
-  const plan: CoinImportPlan = { toCreate: [], toUpdate: [], unchanged: [] };
+  const plan: CoinImportPlan = { toCreate: [], toUpdate: [], unchanged: [], conflicts: [] };
 
   for (const [key, want] of desiredByKey) {
     const have = existingByKey.get(key);
     if (!have) {
       plan.toCreate.push(toCreateRow(want));
+      continue;
+    }
+
+    // Never write over a coin that is not approved (strict, so a missing or unexpected
+    // status is left alone too), and never create beside it: report it instead.
+    if (have.status !== APPROVED_STATUS) {
+      plan.conflicts.push({
+        key: {
+          country: have.country,
+          denomination: have.denomination,
+          year: have.year,
+          mintMark: have.mintMark,
+          variety: have.variety,
+        },
+        id: have.id,
+        status: have.status,
+      });
       continue;
     }
 

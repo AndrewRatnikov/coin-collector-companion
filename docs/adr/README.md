@@ -62,7 +62,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-20](2026-11-20-posthog-cookieless-analytics.md) | Product analytics is PostHog Cloud in cookieless mode, never identifying users, behind a same-origin /relay proxy | Accepted |
 | [2026-11-21](2026-11-21-custom-domain-makes-web-and-api-same-site.md) | Web and API move under one registrable domain, so the SameSite=Lax refresh cookie is same-site and works unchanged | Accepted |
 | [2026-11-21](2026-11-21-denominations-ordered-by-face-value-parsed-from-the-string.md) | Denominations sort by face value in the main unit, parsed from the string with a fixed word table | Accepted |
-| [2026-11-21](2026-11-21-catalog-import-diffs-per-file-and-writes-one-transaction.md) | The catalog import diffs each fixture file against the database in memory and writes only the difference in one transaction | Accepted |
+| [2026-11-21](2026-11-21-catalog-import-diffs-per-file-and-writes-one-transaction.md) | The catalog import diffs each fixture file against the database in memory and writes only the difference in one transaction | Accepted. [2026-11-26-catalog-import-leaves-non-approved-coins-alone-as-conflicts](2026-11-26-catalog-import-leaves-non-approved-coins-alone-as-conflicts.md) amends it: a non-approved coin on a fixture key is a conflict the import never writes, the log line adds a conflicts count, and the run exits 1 when it finds one |
 | [2026-11-21](2026-11-21-fixture-generator-reads-wikipedia-wikitext-tables.md) | The fixture generator parses the article's wikitext with a built-in table reader, not rendered HTML with a parser library | Accepted |
 | [2026-11-21](2026-11-21-generated-varieties-only-where-rows-need-telling-apart.md) | Generated fixtures give a row a variety only where it is needed to tell rows apart, and leftover duplicate keys are flagged, never merged | Accepted |
 | [2026-11-21](2026-11-21-unmarked-branch-mint-strikes-summed-into-one-coin.md) | Unmarked branch-mint business strikes are one no-mark coin per year, with the source figures summed and listed in the fixture | Accepted |
@@ -80,6 +80,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-25](2026-11-25-morgan-and-peace-dollars-unmarked-philadelphia-null.md) | Unmarked Philadelphia Morgan and Peace dollars get `mintMark` null, although the modern dollar files use "P" | Accepted |
 | [2026-11-25](2026-11-25-1921-philadelphia-dollars-told-apart-by-series-variety.md) | The 1921 Philadelphia Morgan and Peace dollars are told apart by the varieties "Morgan" and "Peace" | Accepted |
 | [2026-11-26](2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md) | `mintMark` is what is struck on the coin, `null` when the coin carries no mark, in every US series | Accepted |
+| [2026-11-26](2026-11-26-catalog-import-leaves-non-approved-coins-alone-as-conflicts.md) | The catalog import leaves a non-approved coin on a fixture key untouched and reports it as a conflict, and `seed:canonical` refuses to link one | Accepted |
 
 ## Where else decisions live
 

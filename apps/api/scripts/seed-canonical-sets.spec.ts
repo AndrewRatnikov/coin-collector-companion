@@ -3,8 +3,10 @@
  * Contract source: runs/run_20260720_121716/plan.md § Interface Contract
  *                   (Script: apps/api/scripts/seed-canonical-sets.ts)
  *                   runs/run_20261121_222133/plan.md § Step D, Step E (latestTemplateVersions)
+ *                   runs/run_20261126_213654/plan.md § Interface Contract (seedTemplateFile)
  * Covers criteria: #3, #4, #5, #6 (from runs/run_20260720_121716/prd.md)
  *                  #6 (from runs/run_20261121_222133/prd.md)
+ *                  #11, #12 (from runs/run_20261126_213654/prd.md)
  *
  * CONTRACT_GAP: none.
  *
@@ -190,8 +192,8 @@ describe('seed-canonical-sets', () => {
         prisma.canonicalSet.findFirst.mockResolvedValue(null);
         prisma.canonicalSet.create.mockResolvedValue({ id: 'set-1', name: template.name });
         prisma.coin.findUnique
-          .mockResolvedValueOnce({ id: 'coin-1' })
-          .mockResolvedValueOnce({ id: 'coin-2' });
+          .mockResolvedValueOnce({ id: 'coin-1', status: 'approved' })
+          .mockResolvedValueOnce({ id: 'coin-2', status: 'approved' });
         prisma.canonicalSetCoin.findMany.mockResolvedValue([]);
         prisma.canonicalSetCoin.createMany.mockResolvedValue({ count: 2 });
 
@@ -224,8 +226,8 @@ describe('seed-canonical-sets', () => {
         prisma.canonicalSet.findFirst.mockResolvedValue({ id: 'set-1', name: template.name });
         prisma.canonicalSet.update.mockResolvedValue({ id: 'set-1', name: template.name });
         prisma.coin.findUnique
-          .mockResolvedValueOnce({ id: 'coin-1' })
-          .mockResolvedValueOnce({ id: 'coin-2' });
+          .mockResolvedValueOnce({ id: 'coin-1', status: 'approved' })
+          .mockResolvedValueOnce({ id: 'coin-2', status: 'approved' });
         prisma.canonicalSetCoin.findMany.mockResolvedValue([]);
         prisma.canonicalSetCoin.createMany.mockResolvedValue({ count: 2 });
 
@@ -245,8 +247,8 @@ describe('seed-canonical-sets', () => {
         prisma.canonicalSet.findFirst.mockResolvedValue({ id: 'set-1', name: template.name });
         prisma.canonicalSet.update.mockResolvedValue({ id: 'set-1', name: template.name });
         prisma.coin.findUnique
-          .mockResolvedValueOnce({ id: 'coin-1' })
-          .mockResolvedValueOnce({ id: 'coin-2' });
+          .mockResolvedValueOnce({ id: 'coin-1', status: 'approved' })
+          .mockResolvedValueOnce({ id: 'coin-2', status: 'approved' });
         // coin-2 is currently stored at position 5; the template says it should be position 2.
         prisma.canonicalSetCoin.findMany.mockResolvedValue([
           { id: 'row-1', canonicalSetId: 'set-1', coinId: 'coin-1', position: 1 },
@@ -271,7 +273,7 @@ describe('seed-canonical-sets', () => {
         prisma.canonicalSet.findFirst.mockResolvedValue(null);
         prisma.canonicalSet.create.mockResolvedValue({ id: 'set-1', name: template.name });
         prisma.coin.findUnique
-          .mockResolvedValueOnce({ id: 'coin-1' })
+          .mockResolvedValueOnce({ id: 'coin-1', status: 'approved' })
           .mockResolvedValueOnce(null); // second entry fails to resolve
 
         await expect(
@@ -283,14 +285,88 @@ describe('seed-canonical-sets', () => {
       });
     });
 
+    describe('criteria 11, 12: refuses to link a coin that is not approved', () => {
+      it.each([
+        ['pending', 'pending'],
+        ['rejected', 'rejected'],
+      ])('throws naming template, file, entry, key, id and status for a %s coin', async (status) => {
+        const prisma = makeMockPrisma();
+        prisma.canonicalSet.findFirst.mockResolvedValue(null);
+        prisma.canonicalSet.create.mockResolvedValue({ id: 'set-1', name: template.name });
+        prisma.coin.findUnique
+          .mockResolvedValueOnce({ id: 'coin-1', status: 'approved' })
+          .mockResolvedValueOnce({ id: 'coin-hidden', status });
+        prisma.canonicalSetCoin.findMany.mockResolvedValue([]);
+
+        let message = '';
+        try {
+          await seedTemplateFile(prisma as unknown as SeedPrismaClient, filePath);
+        } catch (error) {
+          message = (error as Error).message;
+        }
+
+        expect(message).toContain('Coin not approved');
+        expect(message).toContain(template.name);
+        expect(message).toContain(filePath);
+        expect(message).toContain('entry 1');
+        expect(message).toContain('USA Cent 1909 mintMark="S" variety=""');
+        expect(message).toContain('id=coin-hidden');
+        expect(message).toContain(`status=${status}`);
+        expect(prisma.canonicalSetCoin.createMany).not.toHaveBeenCalled();
+        expect(prisma.canonicalSetCoin.update).not.toHaveBeenCalled();
+      });
+
+      it('names the first entry (index 0) when it is the non-approved one', async () => {
+        const prisma = makeMockPrisma();
+        prisma.canonicalSet.findFirst.mockResolvedValue(null);
+        prisma.canonicalSet.create.mockResolvedValue({ id: 'set-1', name: template.name });
+        prisma.coin.findUnique.mockResolvedValueOnce({ id: 'coin-first', status: 'pending' });
+
+        await expect(
+          seedTemplateFile(prisma as unknown as SeedPrismaClient, filePath),
+        ).rejects.toThrow(/entry 0: USA Cent 1909 mintMark="" variety="VDB" id=coin-first status=pending/);
+        expect(prisma.canonicalSetCoin.createMany).not.toHaveBeenCalled();
+      });
+
+      it('treats a missing status as non-approved', async () => {
+        const prisma = makeMockPrisma();
+        prisma.canonicalSet.findFirst.mockResolvedValue(null);
+        prisma.canonicalSet.create.mockResolvedValue({ id: 'set-1', name: template.name });
+        prisma.coin.findUnique
+          .mockResolvedValueOnce({ id: 'coin-1', status: 'approved' })
+          .mockResolvedValueOnce({ id: 'coin-nostatus' });
+
+        await expect(
+          seedTemplateFile(prisma as unknown as SeedPrismaClient, filePath),
+        ).rejects.toThrow(/id=coin-nostatus status=undefined/);
+        expect(prisma.canonicalSetCoin.createMany).not.toHaveBeenCalled();
+        expect(prisma.canonicalSetCoin.update).not.toHaveBeenCalled();
+      });
+
+      it('does not throw the not-approved error for an approved coin', async () => {
+        const prisma = makeMockPrisma();
+        prisma.canonicalSet.findFirst.mockResolvedValue(null);
+        prisma.canonicalSet.create.mockResolvedValue({ id: 'set-1', name: template.name });
+        prisma.coin.findUnique
+          .mockResolvedValueOnce({ id: 'coin-1', status: 'approved' })
+          .mockResolvedValueOnce({ id: 'coin-2', status: 'approved' });
+        prisma.canonicalSetCoin.findMany.mockResolvedValue([]);
+        prisma.canonicalSetCoin.createMany.mockResolvedValue({ count: 2 });
+
+        await expect(
+          seedTemplateFile(prisma as unknown as SeedPrismaClient, filePath),
+        ).resolves.toEqual({ name: template.name, created: 2, updated: 0, total: 2 });
+      });
+    });
+
     describe('criterion 6: idempotent re-run creates and updates nothing', () => {
       it('produces zero creates and zero updates when re-run against an already-seeded, unchanged set', async () => {
         const prisma = makeMockPrisma();
         prisma.canonicalSet.findFirst.mockResolvedValue({ id: 'set-1', name: template.name });
         prisma.canonicalSet.update.mockResolvedValue({ id: 'set-1', name: template.name });
         prisma.coin.findUnique
-          .mockResolvedValueOnce({ id: 'coin-1' })
-          .mockResolvedValueOnce({ id: 'coin-2' });
+          .mockResolvedValueOnce({ id: 'coin-1', status: 'approved' })
+          .mockResolvedValueOnce({ id: 'coin-2', status: 'approved' });
         prisma.canonicalSetCoin.findMany.mockResolvedValue([
           { id: 'row-1', canonicalSetId: 'set-1', coinId: 'coin-1', position: 1 },
           { id: 'row-2', canonicalSetId: 'set-1', coinId: 'coin-2', position: 2 },
