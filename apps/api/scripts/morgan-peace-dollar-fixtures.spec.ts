@@ -1,14 +1,18 @@
 /**
- * Tests for: Morgan and Peace dollar fixtures (growth backlog 2.6), the three canonical set templates
- * built from them, the Morgan key date, provenance in the saved sources, the README sections, the backlog
- * tick and the history paragraph.
+ * Tests for: Morgan and Peace dollar fixtures (growth backlog 2.6), the canonical set templates
+ * built from them, the Morgan and Peace key dates (keyDates blocks citing the manual key-date source files),
+ * provenance in the saved sources, the README sections, the backlog tick and the history paragraphs.
  * Contract source: runs/run_20261125_195719/plan.md § Interface Contract, updated by
- * runs/run_20261126_061240/plan.md § Interface Contract (Eisenhower Philadelphia dollars are now null)
- * Covers criteria: #1 to #12 and #14 (README part) (from runs/run_20261125_195719/prd.md)
+ * runs/run_20261126_061240/plan.md § Interface Contract (Eisenhower Philadelphia dollars are now null) and by
+ * runs/run_20261126_230345/plan.md § Interface Contract (Morgan 1889-CC, Peace 1928, Morgan key dates v2,
+ * Peace key dates v1)
+ * Covers criteria: #1 to #12 and #14 (README part) (from runs/run_20261125_195719/prd.md) and
+ * #6 to #13 (from runs/run_20261126_230345/prd.md)
  *
  * CONTRACT_GAP: none.
  *
- * Reads checked-in files only with fs.readFileSync; no network, no database, no mocks.
+ * Reads checked-in files only with fs.readFileSync (plus readdirSync on the real template directory);
+ * no network, no database, no mocks.
  */
 
 import * as fs from 'node:fs';
@@ -16,6 +20,7 @@ import * as path from 'node:path';
 import { sanitizeIdentityField } from '@coin-collector/shared';
 import { toSpecFields } from '../../../scripts/import-catalog/lib/specs';
 import type { RawCoinEntry, RawFixtureFile } from '../../../scripts/import-catalog/lib/types';
+import { latestTemplateVersions, resolveTemplatePaths } from './seed-canonical-sets';
 import type { SeedTemplate } from './seed-canonical-sets';
 
 const REPO_ROOT = path.resolve(__dirname, '../../..');
@@ -98,13 +103,20 @@ const MORGAN_FILE = 'us-dollars-morgan.json';
 const PEACE_FILE = 'us-dollars-peace.json';
 const MORGAN_ALL = 'morgan-dollars-1878-1921.v1.json';
 const MORGAN_KEY = 'morgan-dollars-key-dates.v1.json';
+const MORGAN_KEY_V2 = 'morgan-dollars-key-dates.v2.json';
 const PEACE_ALL = 'peace-dollars-1921-1935.v1.json';
+const PEACE_KEY = 'peace-dollars-key-dates.v1.json';
 const MORGAN_RAW = 'sources/Morgan_dollar.2026-11-25.json';
 const PEACE_RAW = 'sources/Peace_dollar.2026-11-25.json';
-const MORGAN_QUOTE =
-  'The [[key date]] in the Morgan dollar series is the [[1893-S Morgan dollar]], which was struck at the United States [[San Francisco Mint]].';
+const MORGAN_KEY_SOURCE = 'sources/manual-morgan-dollar-key-dates.2026-11-26.json';
+const PEACE_KEY_SOURCE = 'sources/manual-peace-dollar-key-dates.2026-11-26.json';
+const MORGAN_KEY_QUOTE = 'Rare & Key Dates: 1889-CC, 1893-S, 1895 (Proof)';
+const PEACE_KEY_QUOTE = 'the 1928, which serves as the series key';
 const README_HEADING = '## `us-dollars-morgan.json` / `us-dollars-peace.json` (Morgan and Peace silver dollars)';
 const MODERN_HEADING = '## us-dollars-*.json (five files: Presidential through Susan B. Anthony)';
+const OLD_HISTORY_HEADER = '**Morgan and Peace dollars (2026-11-25), backlog_growth.md 2.6:**';
+const NEW_HISTORY_HEADER =
+  '**Susan B. Anthony mintages and Morgan and Peace key dates (2026-11-26), backlog_growth.md 2.6, 2.10:**';
 
 const morgan = loadFixture(MORGAN_FILE);
 const peace = loadFixture(PEACE_FILE);
@@ -177,9 +189,8 @@ describe('identity, counts and year coverage (criteria 1, 2, 3)', () => {
     expect(years.some((y) => y > 1935)).toBe(false);
   });
 
-  it('has the exact top-level keys in order (Morgan with keyDates, Peace without)', () => {
-    const mk = Object.keys(readJson<Record<string, unknown>>(path.join(FIXTURES_DIR, MORGAN_FILE)));
-    expect(mk).toEqual([
+  it('has the exact top-level keys in order (Morgan and Peace both with keyDates between specs and coins)', () => {
+    const expected = [
       '$schema-note',
       'sources',
       'rules-note',
@@ -190,19 +201,11 @@ describe('identity, counts and year coverage (criteria 1, 2, 3)', () => {
       'specs',
       'keyDates',
       'coins',
-    ]);
+    ];
+    const mk = Object.keys(readJson<Record<string, unknown>>(path.join(FIXTURES_DIR, MORGAN_FILE)));
+    expect(mk).toEqual(expected);
     const pk = Object.keys(readJson<Record<string, unknown>>(path.join(FIXTURES_DIR, PEACE_FILE)));
-    expect(pk).toEqual([
-      '$schema-note',
-      'sources',
-      'rules-note',
-      'country',
-      'denomination',
-      'name',
-      'yearRange',
-      'specs',
-      'coins',
-    ]);
+    expect(pk).toEqual(expected);
   });
 
   it('every coin has exactly year, mintMark, variety, isKeyDate, mintage and no image or specs', () => {
@@ -416,47 +419,107 @@ describe('provenance (criterion 7)', () => {
   });
 });
 
-describe('key dates (criterion 8)', () => {
-  it('Morgan flags exactly 1893-S', () => {
+describe('key dates (criteria 6, 7, 10 of run_20261126_230345)', () => {
+  it('Morgan flags exactly 1889-CC and 1893-S, 93 others are false', () => {
     const flagged = morgan.coins.filter((c) => c.isKeyDate === true).map(label);
-    expect(flagged).toEqual(['1893-S']);
-    expect(morgan.coins.filter((c) => c.isKeyDate === false)).toHaveLength(94);
+    expect(flagged).toEqual(['1889-CC', '1893-S']);
+    expect(morgan.coins.filter((c) => c.isKeyDate === false)).toHaveLength(93);
   });
 
-  it('Morgan keyDates block names the source, the verbatim quote and the label', () => {
-    const kd = morgan.keyDates;
+  it('Peace flags exactly 1928, 23 others are false', () => {
+    const flagged = peace.coins.filter((c) => c.isKeyDate === true).map(label);
+    expect(flagged).toEqual(['1928']);
+    expect(peace.coins.filter((c) => c.isKeyDate === false)).toHaveLength(23);
+    expect(peace.coins.every((c) => 'isKeyDate' in c)).toBe(true);
+  });
+
+  it('the scarce dates the manual files list are not flagged', () => {
+    for (const [year, mark] of [
+      [1884, 'S'],
+      [1886, 'O'],
+      [1892, 'S'],
+      [1893, 'O'],
+      [1895, 'O'],
+      [1896, 'O'],
+      [1893, 'CC'],
+    ] as const) {
+      expect(morgan.coins.find((c) => c.year === year && c.mintMark === mark)?.isKeyDate).toBe(false);
+    }
+    expect(morgan.coins.find((c) => c.year === 1901 && c.mintMark === null)?.isKeyDate).toBe(false);
+    expect(peace.coins.find((c) => c.year === 1934 && c.mintMark === 'S')?.isKeyDate).toBe(false);
+    expect(peace.coins.find((c) => c.year === 1921 && c.mintMark === null)?.isKeyDate).toBe(false);
+  });
+
+  it.each([
+    ['Morgan', morgan, MORGAN_KEY_SOURCE, MORGAN_KEY_QUOTE, ['1889-CC', '1893-S']],
+    ['Peace', peace, PEACE_KEY_SOURCE, PEACE_KEY_QUOTE, ['1928']],
+  ] as const)('%s keyDates block: exact source, quote and labels; quote is in the raw source file', (_l, file, source, quote, coins) => {
+    const kd = file.keyDates;
     expect(kd).toBeDefined();
-    expect(kd?.coins).toEqual(['1893-S']);
-    expect(kd?.source).toBe(MORGAN_RAW);
-    expect(kd?.quote).toBe(MORGAN_QUOTE);
-    expect(fs.existsSync(path.join(IMPORT_CATALOG_DIR, kd?.source ?? 'missing'))).toBe(true);
-    expect(wikitextOf(kd?.source ?? '')).toContain(kd?.quote);
-    expect(kd?.quote).toContain('key date');
+    expect(Object.keys(kd ?? {})).toEqual(['source', 'quote', 'coins']);
+    expect(kd?.source).toBe(source);
+    expect(kd?.quote).toBe(quote);
+    expect(kd?.coins).toEqual(coins);
+    const abs = path.join(IMPORT_CATALOG_DIR, kd?.source ?? 'missing');
+    expect(fs.existsSync(abs)).toBe(true);
+    expect(fs.readFileSync(abs, 'utf8')).toContain(kd?.quote);
     for (const l of kd?.coins ?? []) expect(kd?.quote).toContain(l);
   });
 
-  it('Peace flags nothing, has isKeyDate false on every coin and no keyDates block', () => {
-    expect(peace.coins.every((c) => c.isKeyDate === false)).toBe(true);
-    expect(peace.coins.every((c) => 'isKeyDate' in c)).toBe(true);
-    expect(peace.keyDates).toBeUndefined();
+  it.each([
+    ['Morgan', morgan],
+    ['Peace', peace],
+  ] as const)('%s keyDates.coins equal the labels of the flagged rows in fixture order', (_l, file) => {
+    expect(file.keyDates?.coins).toEqual(file.coins.filter((c) => c.isKeyDate === true).map(label));
   });
 
-  it('the saved Peace article has no "key date" wording that names a coin (so no key-date set)', () => {
+  it('the Morgan and Peace key-date blocks differ (falsifiable)', () => {
+    expect(morgan.keyDates?.coins).not.toEqual(peace.keyDates?.coins);
+    expect(morgan.keyDates?.source).not.toBe(peace.keyDates?.source);
+  });
+
+  it('the saved Peace article has no "key date" wording that names a coin', () => {
     expect(wikitextOf(PEACE_RAW)).not.toMatch(/key date/i);
   });
 });
 
-describe('rules-note (criteria 5, 6)', () => {
-  it('Morgan note mentions its required topics', () => {
+describe('rules-note (criteria 5, 6, 12)', () => {
+  it('Morgan note mentions its required topics and the manual key-date source', () => {
     const note = morgan['rules-note'] ?? '';
     expect(note.trim().length).toBeGreaterThan(0);
-    for (const n of ['1895', 'proof', 'null', '8TF', '7TF', 'Morgan', 'Peace', '1893-S']) expect(note).toContain(n);
+    for (const n of [
+      '1895',
+      'proof',
+      'null',
+      '8TF',
+      '7TF',
+      'Morgan',
+      'Peace',
+      '1893-S',
+      '1889-CC',
+      'manual-morgan-dollar-key-dates.2026-11-26.json',
+    ]) {
+      expect(note).toContain(n);
+    }
   });
 
-  it('Peace note mentions its required topics', () => {
+  it('Peace note mentions its required topics and the manual key-date source', () => {
     const note = peace['rules-note'] ?? '';
     expect(note.trim().length).toBeGreaterThan(0);
-    for (const n of ['null', '1921', 'Morgan', 'Peace', 'high relief', '1964', 'key date']) expect(note).toContain(n);
+    for (const n of [
+      'null',
+      '1921',
+      'Morgan',
+      'Peace',
+      'high relief',
+      '1964',
+      'key date',
+      '1928',
+      'manual-peace-dollar-key-dates.2026-11-26.json',
+    ]) {
+      expect(note).toContain(n);
+    }
+    expect(note).not.toContain('no cited source names a key date');
   });
 });
 
@@ -482,10 +545,12 @@ describe('no duplicate natural keys (criterion 6)', () => {
   });
 });
 
-describe('templates (criteria 9, 10)', () => {
+describe('templates (criteria 8, 9, 10, 11)', () => {
   const morganAll = loadTemplate(MORGAN_ALL);
-  const morganKey = loadTemplate(MORGAN_KEY);
+  const morganKeyV1 = loadTemplate(MORGAN_KEY);
+  const morganKeyV2 = loadTemplate(MORGAN_KEY_V2);
   const peaceAll = loadTemplate(PEACE_ALL);
+  const peaceKey = loadTemplate(PEACE_KEY);
 
   it('Morgan Dollars 1878-1921: exact name, description, 95 coins in fixture order', () => {
     expect(morganAll.name).toBe('Morgan Dollars 1878-1921');
@@ -501,20 +566,45 @@ describe('templates (criteria 9, 10)', () => {
     expect(peaceAll.coins).toEqual(asTemplateCoins(peace));
   });
 
-  it('Morgan Dollar Key Dates: exact name, cited description, the single 1893-S coin', () => {
-    expect(morganKey.name).toBe('Morgan Dollar Key Dates');
-    const d = morganKey.description ?? '';
+  it('Morgan Dollar Key Dates v1 is unchanged: cited description, the single 1893-S coin', () => {
+    expect(morganKeyV1.name).toBe('Morgan Dollar Key Dates');
+    const d = morganKeyV1.description ?? '';
     for (const n of ['Wikipedia', 'Morgan dollar', '1893-S']) expect(d).toContain(n);
-    expect(morganKey.coins).toEqual([{ country: 'USA', denomination: 'Dollar', year: 1893, mintMark: 'S', variety: '' }]);
+    expect(morganKeyV1.coins).toEqual([{ country: 'USA', denomination: 'Dollar', year: 1893, mintMark: 'S', variety: '' }]);
   });
 
-  it('key-date template coins are exactly the flagged Morgan fixture coins', () => {
-    const flagged = morgan.coins.filter((c) => c.isKeyDate === true);
-    expect(morganKey.coins).toEqual(asTemplateCoins({ ...morgan, coins: flagged }));
+  it('Morgan Dollar Key Dates v2: exact name, description and the 1889-CC and 1893-S coins', () => {
+    expect(morganKeyV2.name).toBe('Morgan Dollar Key Dates');
+    expect(morganKeyV2.description).toBe(
+      'The key dates of the Morgan dollar series as named by the cited sources (PCGS and APMEX, with English Wikipedia naming the 1893-S): the 1889-CC and the 1893-S.',
+    );
+    expect(morganKeyV2.coins).toEqual([
+      { country: 'USA', denomination: 'Dollar', year: 1889, mintMark: 'CC', variety: '' },
+      { country: 'USA', denomination: 'Dollar', year: 1893, mintMark: 'S', variety: '' },
+    ]);
+  });
+
+  it('Peace Dollar Key Dates v1: exact name, description and the single 1928 coin', () => {
+    expect(peaceKey.name).toBe('Peace Dollar Key Dates');
+    expect(peaceKey.description).toBe(
+      'The key date of the Peace dollar series as named by the cited source (Newman Numismatic Portal encyclopedia, Washington University in St. Louis): the 1928.',
+    );
+    expect(peaceKey.coins).toEqual([
+      { country: 'USA', denomination: 'Dollar', year: 1928, mintMark: '', variety: '' },
+    ]);
+  });
+
+  it('key-date template coins are exactly the flagged fixture coins, in fixture order', () => {
+    expect(morganKeyV2.coins).toEqual(asTemplateCoins({ ...morgan, coins: morgan.coins.filter((c) => c.isKeyDate === true) }));
+    expect(peaceKey.coins).toEqual(asTemplateCoins({ ...peace, coins: peace.coins.filter((c) => c.isKeyDate === true) }));
+    // v1 is no longer the flagged set: it lacks the 1889-CC (falsifiable)
+    expect(morganKeyV1.coins).not.toEqual(morganKeyV2.coins);
+    expect(morganKeyV1.coins).toHaveLength(1);
+    expect(morganKeyV2.coins).toHaveLength(2);
   });
 
   it('uses empty strings for no mint mark and no variety', () => {
-    for (const t of [morganAll, peaceAll, morganKey]) {
+    for (const t of [morganAll, peaceAll, morganKeyV1, morganKeyV2, peaceKey]) {
       for (const c of t.coins) {
         expect(typeof c.mintMark).toBe('string');
         expect(typeof c.variety).toBe('string');
@@ -524,29 +614,46 @@ describe('templates (criteria 9, 10)', () => {
     }
   });
 
-  it('each of the three names is used by exactly one template', () => {
-    const names = fs
+  it('this run\'s four names are each used by exactly one newest-version template', () => {
+    const all = fs
       .readdirSync(TEMPLATES_DIR)
       .filter((f) => f.endsWith('.json'))
-      .map((f) => loadTemplate(f).name);
-    for (const ours of ['Morgan Dollars 1878-1921', 'Morgan Dollar Key Dates', 'Peace Dollars 1921-1935']) {
+      .map((f) => path.join(TEMPLATES_DIR, f));
+    const names = latestTemplateVersions(all).map((p) => readJson<SeedTemplate>(p).name);
+    for (const ours of [
+      'Morgan Dollars 1878-1921',
+      'Morgan Dollar Key Dates',
+      'Peace Dollars 1921-1935',
+      'Peace Dollar Key Dates',
+    ]) {
       expect(names.filter((n) => n === ours)).toHaveLength(1);
     }
   });
 
-  it('there is no Peace key-date template', () => {
-    const files = fs.readdirSync(TEMPLATES_DIR);
-    expect(files.filter((f) => /peace.*key|key.*peace/i.test(f))).toEqual([]);
+  it('the seed picks Morgan key dates v2 and not v1, and picks the Peace key-dates template', () => {
+    const picked = resolveTemplatePaths([]).map((p) => path.basename(p));
+    expect(picked).toContain(MORGAN_KEY_V2);
+    expect(picked).not.toContain(MORGAN_KEY);
+    expect(picked).toContain(PEACE_KEY);
   });
 
-  it.each([MORGAN_ALL, MORGAN_KEY, PEACE_ALL])('%s: every coin matches exactly one fixture row', (file) => {
-    const unresolved: string[] = [];
-    for (const coin of loadTemplate(file).coins) {
-      const matches = allFixtureKeys.filter((k) => k === templateKey(coin)).length;
-      if (matches !== 1) unresolved.push(`${templateKey(coin)} x${matches}`);
-    }
-    expect(unresolved).toEqual([]);
+  it('latestTemplateVersions keeps v2 over v1 for the Morgan key dates (falsifiable)', () => {
+    const listing = [MORGAN_KEY, MORGAN_KEY_V2, PEACE_KEY].map((f) => path.join(TEMPLATES_DIR, f));
+    expect(latestTemplateVersions(listing).map((p) => path.basename(p))).toEqual([MORGAN_KEY_V2, PEACE_KEY]);
+    expect(latestTemplateVersions([listing[0]]).map((p) => path.basename(p))).toEqual([MORGAN_KEY]);
   });
+
+  it.each([MORGAN_ALL, MORGAN_KEY, MORGAN_KEY_V2, PEACE_ALL, PEACE_KEY])(
+    '%s: every coin matches exactly one fixture row',
+    (file) => {
+      const unresolved: string[] = [];
+      for (const coin of loadTemplate(file).coins) {
+        const matches = allFixtureKeys.filter((k) => k === templateKey(coin)).length;
+        if (matches !== 1) unresolved.push(`${templateKey(coin)} x${matches}`);
+      }
+      expect(unresolved).toEqual([]);
+    },
+  );
 
   it('a coin that is in no fixture would be flagged (falsifiable)', () => {
     const fake = templateKey({ country: 'USA', denomination: 'Dollar', year: 1895, mintMark: '', variety: '' });
@@ -554,7 +661,7 @@ describe('templates (criteria 9, 10)', () => {
   });
 });
 
-describe('README sections (criteria 5, 7, 14)', () => {
+describe('README sections (criteria 5, 7, 13, 14)', () => {
   const readme = fs.readFileSync(path.join(FIXTURES_DIR, 'README.md'), 'utf8');
   const section = readSection(readme, README_HEADING);
   const modern = readSection(readme, MODERN_HEADING);
@@ -565,6 +672,21 @@ describe('README sections (criteria 5, 7, 14)', () => {
 
   it('names both files, both articles, 1895, 8TF, 1893-S, null and 2.9', () => {
     for (const needle of [MORGAN_FILE, PEACE_FILE, 'Morgan dollar', 'Peace dollar', '1895', '8TF', '1893-S', 'null', '2.9']) {
+      expect(section).toContain(needle);
+    }
+  });
+
+  it('names the new key dates, the new checklists, the v2 file and the not-given 1893-CC', () => {
+    for (const needle of [
+      '1889-CC',
+      '1928',
+      'Peace Dollar Key Dates',
+      'morgan-dollars-key-dates.v2.json',
+      'peace-dollars-key-dates.v1.json',
+      'manual-morgan-dollar-key-dates.2026-11-26.json',
+      'manual-peace-dollar-key-dates.2026-11-26.json',
+      '1893-CC',
+    ]) {
       expect(section).toContain(needle);
     }
   });
@@ -581,14 +703,16 @@ describe('README sections (criteria 5, 7, 14)', () => {
   });
 });
 
-describe('backlog (criterion 12)', () => {
+describe('backlog (criterion 13)', () => {
   const backlog = fs.readFileSync(path.join(REPO_ROOT, 'docs/backlog_growth.md'), 'utf8');
   const lines = backlog.split('\n');
   const line = lines.find((l) => l.startsWith('- [x] 2.6 '));
 
-  it('ticks 2.6 and mentions 2.9, the key-date set and Peace', () => {
+  it('ticks 2.6 and names 2.9, both key-date sets, 1889-CC, 1928 and seed:canonical', () => {
     expect(line).toBeDefined();
-    for (const n of ['2.9', 'Morgan Dollar Key Dates', 'Peace']) expect(line).toContain(n);
+    for (const n of ['2.9', 'Morgan Dollar Key Dates', 'Peace Dollar Key Dates', '1889-CC', '1928', 'seed:canonical']) {
+      expect(line).toContain(n);
+    }
   });
 
   it('leaves 2.9 unticked and 2.1 ticked', () => {
@@ -598,13 +722,20 @@ describe('backlog (criterion 12)', () => {
   });
 });
 
-describe('history (criterion 12)', () => {
-  it('has the dated paragraph with counts, the 1893-S key date, the 1895 exclusion and the Peace note', () => {
-    const history = fs.readFileSync(path.join(REPO_ROOT, 'docs/history.md'), 'utf8');
-    const para = history.split('\n').find((l) => l.includes('backlog_growth.md 2.6'));
+describe('history (criterion 13)', () => {
+  const history = fs.readFileSync(path.join(REPO_ROOT, 'docs/history.md'), 'utf8');
+  const historyLines = history.split('\n');
+
+  it('keeps the 2026-11-25 paragraph as written, with counts, the 1893-S key date, the 1895 exclusion and Peace', () => {
+    const para = historyLines.find((l) => l.startsWith(OLD_HISTORY_HEADER));
     expect(para).toBeDefined();
-    expect(para).toContain('**Morgan and Peace dollars (2026-11-25), backlog_growth.md 2.6:**');
     for (const n of ['2.6', '95', '24', '1893-S', '1895', 'Peace']) expect(para).toContain(n);
+  });
+
+  it('has the new 2026-11-26 paragraph with the key dates, the manual sources and the pending 2.9 pass', () => {
+    const para = historyLines.find((l) => l.startsWith(NEW_HISTORY_HEADER));
+    expect(para).toBeDefined();
+    for (const n of ['1889-CC', '1928', '2.9', 'manual']) expect(para).toContain(n);
   });
 });
 
