@@ -1,6 +1,6 @@
 # The catalog import diffs each fixture file against the database in memory and writes only the difference in one transaction
 
-- **Status:** Accepted
+- **Status:** Accepted. [2026-11-26-catalog-import-leaves-non-approved-coins-alone-as-conflicts](2026-11-26-catalog-import-leaves-non-approved-coins-alone-as-conflicts.md) amends it: a non-approved coin on a fixture key is a conflict the import never writes, the log line adds a conflicts count, and the run exits 1 when it finds one
 - **Date:** 2026-11-21
 - **Source:** orchestrator run `run_20261121_173317` (batch the catalog import; `docs/catalog-expansion-research.md` "Before adding coins" item 3 left the batching style open)
 - **Code:** `scripts/import-catalog/import-coins.ts`, `scripts/import-catalog/lib/plan.ts`, `apps/api/scripts/import-catalog-plan.spec.ts`, `apps/api/tsconfig.json`

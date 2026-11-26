@@ -10,7 +10,12 @@ request path — `GET /catalog` only ever reads Postgres.
 cd scripts/import-catalog
 pnpm run import                       # imports every *.json file under fixtures/
 pnpm run import fixtures/foo.json     # or import specific file(s) only
+pnpm run import -- --check            # read-only pre-flight over every fixture: writes nothing
+pnpm run import -- --check fixtures/foo.json   # pre-flight for specific file(s)
 ```
+
+`--check` is the only option. A bare `--` is ignored; any other `--` option is an error that
+exits 1 before any fixture is read or any database connection is made.
 
 Needs `DATABASE_URL` pointed at the target Postgres instance. The script loads
 `apps/api/.env` (the same one `apps/api` itself uses) when it exists; a `DATABASE_URL` already
@@ -43,7 +48,10 @@ For each fixture file (shape: `../fixtures/README.md`):
   2. a pure planner (`lib/plan.ts`, `planCoinImport`) sorts the file's coins into rows to
      create, rows whose name, image fields or spec fields changed, and unchanged rows
      (`null` and a missing value count as equal). If a key appears twice in one file, the
-     last entry wins;
+     last entry wins. A fourth outcome is a **conflict**: a coin already stored on a fixture
+     key whose `status` is not exactly `approved` (a pending or rejected user submission, or a
+     missing status) is never updated and never created over, only reported (see
+     [Conflicts with user submissions](#conflicts-with-user-submissions));
   3. one transaction per file writes the difference: `createMany` with `skipDuplicates`, in
      chunks of 1000 rows, then one `update` per changed row carrying only the changed fields.
      If anything throws, nothing from that file is written and the run stops there (files
@@ -51,11 +59,50 @@ For each fixture file (shape: `../fixtures/README.md`):
 - re-running on an already-imported database writes nothing (no transaction is opened), so
   resuming after a failure is safe
 - never deletes coins: rows in the database that a fixture no longer lists are left alone
-- logs one line per file: `<name> (<file>): N created, N updated, N unchanged, N total`, where
-  total is the number of distinct natural keys in the file
+- logs one line per file: `<name> (<file>): N created, N updated, N unchanged, N conflicts, N total`,
+  where total is the number of distinct natural keys in the file, conflicts included. In
+  `--check` mode the line starts with `[check] `. Before it, one
+  `conflict: <country> <denomination> <year> mintMark="..." variety="..." id=<coin id> status=<status>: not approved, left untouched`
+  line per conflict: the key, the coin id and the status, never any submitter data
+- conflicts don't stop the file or later files; after the last file the run prints how many
+  conflicts it found and exits 1 if there was any, so the operator notices
 
-The planner's unit tests live in `apps/api/scripts/import-catalog-plan.spec.ts` and run with
-`pnpm --filter api test`.
+The unit tests live in `apps/api/scripts/import-catalog-plan.spec.ts` (the planner) and
+`apps/api/scripts/import-catalog-import-coins.spec.ts` (arguments, write and check modes, exit
+code, against a mocked Prisma client), and run with `pnpm --filter api test`.
+
+## Conflicts with user submissions
+
+Users can submit coins that aren't in the catalog yet (/admin/submissions reviews them). A
+pending or rejected submission is hidden from the catalog, and it can sit on the same natural key
+as a coin a fixture adds. The import never overwrites such a row with the fixture's name, specs
+and images, and can't create the official coin beside it (the key is unique), so it reports it as
+a conflict and leaves it untouched.
+
+**Pre-flight.** `pnpm run import -- --check` only reads: it runs the same plan for every fixture,
+writes nothing, and prints the same per-file counts (created and updated are what a real run
+would write) and conflict lines. It also exits 1 on any conflict. Run it against production
+before the import under growth 2.9.
+
+**Resolving a conflict is a human decision, never automatic.** For a **pending** submission, open
+/admin/submissions and either:
+
+- approve it: it becomes the catalog coin, and the next import updates it to the fixture's name,
+  specs and images;
+- edit its key before you approve it, if it is really a different coin: it then no longer sits on
+  the fixture key, and the import creates the official coin; or
+- reject it.
+
+Then re-run the import (or `--check`).
+
+A **rejected** row, including one you just rejected, keeps blocking its key: review decisions are
+final ([2026-10-02 ADR](../../docs/adr/2026-10-02-submission-review-rules.md)), so the import keeps
+reporting that key as a conflict and exiting 1. Clearing it needs a deliberate manual database
+change (after checking nothing references the row), which this script never makes.
+
+`seed:canonical` (`apps/api/scripts/seed-canonical-sets.ts`) refuses to link a non-approved coin
+into a checklist: it stops the template with a `Coin not approved for template ...` error that
+names the entry's key, the coin id and its status.
 
 The import itself only reads local fixture JSON; it never fetches anything. To draft a new
 fixture from Wikipedia, use the generator below and review its output before importing.
