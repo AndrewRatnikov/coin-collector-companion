@@ -1,0 +1,13 @@
+{
+  "name": "Peace Dollar Key Dates",
+  "description": "The key date of the Peace dollar series as named by the cited source (Newman Numismatic Portal encyclopedia, Washington University in St. Louis): the 1928.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1928,
+      "mintMark": "",
+      "variety": ""
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "Morgan Dollar Key Dates",
+  "description": "The key dates of the Morgan dollar series as named by the cited sources (PCGS and APMEX, with English Wikipedia naming the 1893-S): the 1889-CC and the 1893-S.",
+  "coins": [
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1889,
+      "mintMark": "CC",
+      "variety": ""
+    },
+    {
+      "country": "USA",
+      "denomination": "Dollar",
+      "year": 1893,
+      "mintMark": "S",
+      "variety": ""
+    }
+  ]
+}
