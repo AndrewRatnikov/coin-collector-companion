@@ -17,7 +17,7 @@
       "license": "Numeric facts, not copyrightable expression (docs/catalog-data-licensing.md §1)"
     }
   ],
-  "rules-note": "Business strikes only, 1921-1928 and 1934-1935: one coin per year and mint with a figure in the source's \"Mintage figures\" table. Mint marks are as on the coin: D, S, and null for Philadelphia, which struck its coins without a mark (unlike the modern dollar files, which use \"P\"). The 1921 Philadelphia coin has variety \"Peace\" because the 1921 Philadelphia Morgan dollar (in us-dollars-morgan.json, variety \"Morgan\") shares its year, mint mark and denomination; no other coin has a variety. The 1921 high relief issue has no separate row with its own figure, so it is not split out: it is that one 1921 coin. The 1964-D coins (316,106 struck) were destroyed and never issued, and are not included; neither are the 2021 and later collector coins. Mintages are only as the source gives them; nothing is summed or estimated. Key dates: no cited source names a key date for the Peace dollar (the saved article has no key date wording), so no coin is flagged and there is no key-date set.",
+  "rules-note": "Business strikes only, 1921-1928 and 1934-1935: one coin per year and mint with a figure in the source's \"Mintage figures\" table. Mint marks are as on the coin: D, S, and null for Philadelphia, which struck its coins without a mark (unlike the modern dollar files, which use \"P\"). The 1921 Philadelphia coin has variety \"Peace\" because the 1921 Philadelphia Morgan dollar (in us-dollars-morgan.json, variety \"Morgan\") shares its year, mint mark and denomination; no other coin has a variety. The 1921 high relief issue has no separate row with its own figure, so it is not split out: it is that one 1921 coin. The 1964-D coins (316,106 struck) were destroyed and never issued, and are not included; neither are the 2021 and later collector coins. Mintages are only as the source gives them; nothing is summed or estimated. Key dates: isKeyDate is true only for the 1928, which the saved manual key-date source sources/manual-peace-dollar-key-dates.2026-11-26.json (Newman Numismatic Portal) names as the series key (see keyDates); the saved Wikipedia article has no key date wording. The scarce dates that file lists (1934-S, 1921) are not key dates and are not flagged.",
   "country": "USA",
   "denomination": "Dollar",
   "name": "Peace Dollar",
@@ -30,6 +30,13 @@
     "weightG": 26.73,
     "thicknessMm": 2.4,
     "material": "Silver (90% silver, 10% copper)"
+  },
+  "keyDates": {
+    "source": "sources/manual-peace-dollar-key-dates.2026-11-26.json",
+    "quote": "the 1928, which serves as the series key",
+    "coins": [
+      "1928"
+    ]
   },
   "coins": [
     {
@@ -155,7 +162,7 @@
       "year": 1928,
       "mintMark": null,
       "variety": null,
-      "isKeyDate": false,
+      "isKeyDate": true,
       "mintage": 360649
     },
     {

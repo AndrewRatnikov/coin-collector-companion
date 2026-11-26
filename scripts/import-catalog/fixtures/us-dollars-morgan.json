@@ -17,7 +17,7 @@
       "license": "Numeric facts, not copyrightable expression (docs/catalog-data-licensing.md §1)"
     }
   ],
-  "rules-note": "Business strikes only, 1878-1904 and 1921: one coin per year and mint with a figure in the source's \"Mintage figures\" table. The 1895 Philadelphia Morgan dollar is proof-only (the source gives \"880 (proof only)\"): it is not a business strike and is excluded on purpose, so there is no 1895 coin without a mint mark (collectors will look for it; 1895 O and S are here). Mint marks are as on the coin: CC, O, S, D, and null for Philadelphia, which struck its coins without a mark (unlike the modern dollar files, which use \"P\"). Varieties such as the 1878 8TF and 7TF tail-feather varieties are listed only where the source gives separate rows with their own figures; it gives one 1878 Philadelphia figure (10,508,800), so 1878 Philadelphia is a single coin with no variety. The 1921 Philadelphia coin has variety \"Morgan\" because the 1921 Philadelphia Peace dollar (in us-dollars-peace.json, variety \"Peace\") shares its year, mint mark and denomination; no other coin has a variety. Mintages are only as the source gives them; nothing is summed or estimated. The 2021 and later collector Morgan dollars are not included. Key dates: isKeyDate is true only for the 1893-S, named as the key date in the saved source's \"Key date\" section (see keyDates).",
+  "rules-note": "Business strikes only, 1878-1904 and 1921: one coin per year and mint with a figure in the source's \"Mintage figures\" table. The 1895 Philadelphia Morgan dollar is proof-only (the source gives \"880 (proof only)\"): it is not a business strike and is excluded on purpose, so there is no 1895 coin without a mint mark (collectors will look for it; 1895 O and S are here). Mint marks are as on the coin: CC, O, S, D, and null for Philadelphia, which struck its coins without a mark (unlike the modern dollar files, which use \"P\"). Varieties such as the 1878 8TF and 7TF tail-feather varieties are listed only where the source gives separate rows with their own figures; it gives one 1878 Philadelphia figure (10,508,800), so 1878 Philadelphia is a single coin with no variety. The 1921 Philadelphia coin has variety \"Morgan\" because the 1921 Philadelphia Peace dollar (in us-dollars-peace.json, variety \"Peace\") shares its year, mint mark and denomination; no other coin has a variety. Mintages are only as the source gives them; nothing is summed or estimated. The 2021 and later collector Morgan dollars are not included. Key dates: isKeyDate is true only for the 1889-CC and the 1893-S, the two coins the saved manual key-date source sources/manual-morgan-dollar-key-dates.2026-11-26.json names as key dates (PCGS and APMEX name both, English Wikipedia the 1893-S; see keyDates). The scarce dates that file lists are not key dates and are not flagged.",
   "country": "USA",
   "denomination": "Dollar",
   "name": "Morgan Dollar",
@@ -32,9 +32,10 @@
     "material": "Silver (90% silver, 10% copper)"
   },
   "keyDates": {
-    "source": "sources/Morgan_dollar.2026-11-25.json",
-    "quote": "The [[key date]] in the Morgan dollar series is the [[1893-S Morgan dollar]], which was struck at the United States [[San Francisco Mint]].",
+    "source": "sources/manual-morgan-dollar-key-dates.2026-11-26.json",
+    "quote": "Rare & Key Dates: 1889-CC, 1893-S, 1895 (Proof)",
     "coins": [
+      "1889-CC",
       "1893-S"
     ]
   },
@@ -344,7 +345,7 @@
       "year": 1889,
       "mintMark": "CC",
       "variety": null,
-      "isKeyDate": false,
+      "isKeyDate": true,
       "mintage": 350000
     },
     {
