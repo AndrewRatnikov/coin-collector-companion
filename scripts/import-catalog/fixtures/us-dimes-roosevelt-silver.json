@@ -18,7 +18,7 @@
       "note": "Thickness is not set: no cited source gives it."
     }
   ],
-  "rules-note": "Business strikes only: proofs are skipped, and collector-only strikes are dropped (the 1996 W dime, struck only for the Mint sets; the 2005-2010 P and D \"Satin\" and 2017 S \"Enhanced\" rows). Mintages come only from the saved source; nothing is summed or estimated. No cited source names key dates, so isKeyDate is false for every coin. This file holds the 90% silver dimes of 1946-1964; the copper-nickel clad dimes from 1965 are in us-dimes-roosevelt-clad.json. Mint marks follow the source's Mint cell: a Mint cell in parentheses means no mark (null), a plain letter is the mark. The source writes a plain P for every Philadelphia silver dime although the coins carry no mint mark (the \"Roosevelt dime\" infobox: no mint mark used at Philadelphia before 1980); the fixture keeps the plain P as the source gives it, not null. This is a provisional decision to confirm by hand before the production import under growth backlog 2.9.",
+  "rules-note": "Business strikes only: proofs are skipped, and collector-only strikes are dropped (the 1996 W dime, struck only for the Mint sets; the 2005-2010 P and D \"Satin\" and 2017 S \"Enhanced\" rows). Mintages come only from the saved source; nothing is summed or estimated. No cited source names key dates, so isKeyDate is false for every coin. This file holds the 90% silver dimes of 1946-1964; the copper-nickel clad dimes from 1965 are in us-dimes-roosevelt-clad.json. Mint marks follow the source's Mint cell: a Mint cell in parentheses means no mark (null), a plain letter is the mark. Mint marks are what is struck on the coin, null when the coin carries no mark (docs/adr/2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md). The 1946-1964 Philadelphia dimes carry no mint mark (the \"Roosevelt dime\" infobox: no mint mark used at Philadelphia before 1980), so they are null, even though the source's Mint cell for them is not in parentheses. None of this is in production yet: the production import is pending under growth backlog 2.9.",
   "country": "USA",
   "denomination": "Dime",
   "name": "Roosevelt Dime",
@@ -34,7 +34,7 @@
   "coins": [
     {
       "year": 1946,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 255250000
@@ -55,7 +55,7 @@
     },
     {
       "year": 1947,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 121520000
@@ -76,7 +76,7 @@
     },
     {
       "year": 1948,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 74950000
@@ -97,7 +97,7 @@
     },
     {
       "year": 1949,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 30940000
@@ -118,7 +118,7 @@
     },
     {
       "year": 1950,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 50130114
@@ -139,7 +139,7 @@
     },
     {
       "year": 1951,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 103880102
@@ -160,7 +160,7 @@
     },
     {
       "year": 1952,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 99040093
@@ -181,7 +181,7 @@
     },
     {
       "year": 1953,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 53490120
@@ -202,7 +202,7 @@
     },
     {
       "year": 1954,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 114010200
@@ -223,7 +223,7 @@
     },
     {
       "year": 1955,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 12450181
@@ -244,7 +244,7 @@
     },
     {
       "year": 1956,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 108640000
@@ -258,7 +258,7 @@
     },
     {
       "year": 1957,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 160160000
@@ -272,7 +272,7 @@
     },
     {
       "year": 1958,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 31910000
@@ -286,7 +286,7 @@
     },
     {
       "year": 1959,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 85780000
@@ -300,7 +300,7 @@
     },
     {
       "year": 1960,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 70390000
@@ -314,7 +314,7 @@
     },
     {
       "year": 1961,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 93730000
@@ -328,7 +328,7 @@
     },
     {
       "year": 1962,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 72450000
@@ -342,7 +342,7 @@
     },
     {
       "year": 1963,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 123650000
@@ -356,7 +356,7 @@
     },
     {
       "year": 1964,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 929360000

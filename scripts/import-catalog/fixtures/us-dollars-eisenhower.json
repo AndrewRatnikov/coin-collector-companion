@@ -1,5 +1,5 @@
 {
-  "$schema-note": "Read by hand (scratch script over the saved wikitext) from the saved Wikipedia response for \"Eisenhower dollar\", whose layout the generator does not parse (see fixtures/README.md); raw source-shaped fixture, pre-sanitization: the import script normalizes mintMark/variety to the DB identity fields. Every coin here carries a mint mark (the Philadelphia coins have none on the coin but are \"P\"). mintage is null where the source gives no figure.",
+  "$schema-note": "Read by hand (scratch script over the saved wikitext) from the saved Wikipedia response for \"Eisenhower dollar\", whose layout the generator does not parse (see fixtures/README.md); raw source-shaped fixture, pre-sanitization: the import script normalizes mintMark/variety to the DB identity fields. The Philadelphia coins carry no mint mark on the coin, so their mintMark is null; only the Denver coins carry a mark (D). mintage is null where the source gives no figure.",
   "sources": [
     {
       "type": "year / mint mark / variety / mintage",
@@ -9,7 +9,7 @@
       "fetchedAt": "2026-11-24",
       "rawResponse": "sources/Eisenhower_dollar.2026-11-24.json",
       "license": "Wikipedia text is CC BY-SA 4.0; the year/mint-mark/variety/mintage facts reproduced here are historical facts, not copyrightable expression -- no attribution obligation for the facts themselves, though the app footer still credits Wikipedia generally",
-      "note": "Rows read by hand (scratch script over the saved response's wikitext) from the \"Circulation strikes:\" bulleted list under \"Mintage figures\", which the generator does not parse (it is not a table): an entry without a mint letter is P, \"-D\" is D, \"1776–1976\" is year 1976, and \"Type I\" / \"Type II\" is the variety. The \"Uncirculated silver:\" and \"Proof:\" lists are ignored."
+      "note": "Rows read by hand (scratch script over the saved response's wikitext) from the \"Circulation strikes:\" bulleted list under \"Mintage figures\", which the generator does not parse (it is not a table): an entry without a mint letter is Philadelphia (no mark, null), \"-D\" is D, \"1776–1976\" is year 1976, and \"Type I\" / \"Type II\" is the variety. The \"Uncirculated silver:\" and \"Proof:\" lists are ignored."
     },
     {
       "type": "physical specs",
@@ -17,7 +17,7 @@
       "license": "Numeric facts, not copyrightable expression (docs/catalog-data-licensing.md §1)"
     }
   ],
-  "rules-note": "Business strikes only, including the P and D coins the Mint sold only in rolls, bags and boxes: no proofs or reverse proofs, no Special Mint Set, special finish set or other set-only special strikes (Burnished, Enhanced Uncirculated), no silver or bullion strikes. Every coin carries a mint mark (mintMark is never null). variety is the design as displayed in the source, null where one design covers the year; a variety is listed only where the source has a separate row with its own figure, and edge-lettering errors are not varieties. Mintages come only from the saved source, null where it gives no figure; nothing is summed, split or estimated, and totals are ignored. Release order: designs in source order, then the mints. isKeyDate is false throughout because no cited source names key dates; no images. This file: the \"Circulation strikes:\" list of \"Eisenhower dollar\", 1971-1978 copper-nickel clad, P and D (no dollars are dated 1975). The Philadelphia coins carry no mint mark on the coin (infobox: \"Mint mark omitted on Philadelphia Mint issues\") but are \"P\" here, so that mintMark is never null. The 1776–1976 Bicentennial coins have separate Type I and Type II rows with their own figures, so they are the varieties \"Type I\" and \"Type II\"; every other coin has variety null. The 1972 reverse types have no figures of their own and are not varieties. Excluded: the 40% silver S coins (\"Uncirculated silver:\" list, including the 3-coin Bicentennial set) and every proof.",
+  "rules-note": "Business strikes only, including the P and D coins the Mint sold only in rolls, bags and boxes: no proofs or reverse proofs, no Special Mint Set, special finish set or other set-only special strikes (Burnished, Enhanced Uncirculated), no silver or bullion strikes. Mint marks are what is struck on the coin, null when the coin carries no mark (docs/adr/2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md). variety is the design as displayed in the source, null where one design covers the year; a variety is listed only where the source has a separate row with its own figure, and edge-lettering errors are not varieties. Mintages come only from the saved source, null where it gives no figure; nothing is summed, split or estimated, and totals are ignored. Release order: designs in source order, then the mints. isKeyDate is false throughout because no cited source names key dates; no images. This file: the \"Circulation strikes:\" list of \"Eisenhower dollar\", 1971-1978 copper-nickel clad, P and D (no dollars are dated 1975). The Philadelphia coins carry no mint mark on the coin (infobox: \"Mint mark omitted on Philadelphia Mint issues\"), so they are null; only the Denver coins carry a mark (D). The 1776–1976 Bicentennial coins have separate Type I and Type II rows with their own figures, so they are the varieties \"Type I\" and \"Type II\"; every other coin has variety null. The 1972 reverse types have no figures of their own and are not varieties. Excluded: the 40% silver S coins (\"Uncirculated silver:\" list, including the 3-coin Bicentennial set) and every proof.",
   "country": "USA",
   "denomination": "Dollar",
   "name": "Eisenhower Dollars",
@@ -34,7 +34,7 @@
   "coins": [
     {
       "year": 1971,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 47799000
@@ -48,7 +48,7 @@
     },
     {
       "year": 1972,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 75890000
@@ -62,7 +62,7 @@
     },
     {
       "year": 1973,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 1769258
@@ -76,7 +76,7 @@
     },
     {
       "year": 1974,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 27366000
@@ -90,7 +90,7 @@
     },
     {
       "year": 1976,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": "Type I",
       "isKeyDate": false,
       "mintage": 4019000
@@ -104,7 +104,7 @@
     },
     {
       "year": 1976,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": "Type II",
       "isKeyDate": false,
       "mintage": 113318000
@@ -118,7 +118,7 @@
     },
     {
       "year": 1977,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 12596000
@@ -132,7 +132,7 @@
     },
     {
       "year": 1978,
-      "mintMark": "P",
+      "mintMark": null,
       "variety": null,
       "isKeyDate": false,
       "mintage": 25702000
