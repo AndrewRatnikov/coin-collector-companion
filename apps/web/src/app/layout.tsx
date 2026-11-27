@@ -7,6 +7,7 @@ import { SiteNav } from '@/components/layout/site-nav';
 import { I18nProvider } from '@/lib/i18n/i18n-context';
 import { LOCALE_COOKIE_NAME, parseLocale } from '@/lib/i18n/locale-cookie';
 import enLanding from '@/lib/i18n/locales/en/landing';
+import { SITE_BRAND } from '@/lib/set-page-seo';
 import { siteMetadataBase } from '@/lib/site-url';
 import './globals.css';
 
@@ -39,6 +40,19 @@ export const metadata: Metadata = {
   title: 'Coin Collector Companion',
   // Metadata is static, so it stays English.
   description: enLanding['landing.metaDescription'],
+  // Social defaults for pages that don't set their own. No images (Next then merges the root
+  // opengraph-image / twitter-image files), and no url or alternates, so no page inherits `/`.
+  openGraph: {
+    type: 'website',
+    siteName: SITE_BRAND,
+    title: 'Coin Collector Companion',
+    description: enLanding['landing.metaDescription'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Coin Collector Companion',
+    description: enLanding['landing.metaDescription'],
+  },
 };
 
 export default async function RootLayout({
