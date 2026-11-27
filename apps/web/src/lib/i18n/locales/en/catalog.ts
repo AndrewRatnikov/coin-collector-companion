@@ -70,6 +70,7 @@ const catalog = {
   'coinDetail.liveAddedToSet': '{title} added to {set}.',
   'coinDetail.liveAddFailed': 'Couldn’t add {title} to {set}.',
   'coinDetail.inYourSets': 'In your sets',
+  'coinDetail.inChecklists': 'In checklists',
   'coinDetail.setProgress': '{owned} of {total} owned · {pct}%',
   'coinDetail.addToSet': 'Add to a set…',
   'coinDetail.addToSetMenuTitle': 'Add {title} to…',

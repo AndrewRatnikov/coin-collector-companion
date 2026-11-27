@@ -72,6 +72,7 @@ const catalog: Record<keyof typeof enCatalog, string> = {
   'coinDetail.liveAddedToSet': '{title} añadida a {set}.',
   'coinDetail.liveAddFailed': 'No se pudo añadir {title} a {set}.',
   'coinDetail.inYourSets': 'En tus colecciones',
+  'coinDetail.inChecklists': 'En listas de control',
   'coinDetail.setProgress': '{owned} de {total} poseídas · {pct}%',
   'coinDetail.addToSet': 'Añadir a una colección…',
   'coinDetail.addToSetMenuTitle': 'Añadir {title} a…',
