@@ -1,0 +1,66 @@
+{
+  "kind": "manual source file (no Wikipedia table exists for these coins)",
+  "enteredBy": "Claude (claude.ai session) by WebFetch on 2026-11-26; values copied from the pages named below, nothing from memory",
+  "reviewStatus": "pending: Andrew to check against the pages before committing",
+  "series": "Susan B. Anthony dollar",
+  "country": "USA",
+  "denomination": "Dollar",
+  "source": {
+    "title": "Susan B. Anthony Dollar Mintage - Coin Mintages",
+    "url": "https://coinmintages.com/susan-b-anthony-dollars-mintage/",
+    "accessed": "2026-11-26",
+    "citesItsOwnSource": "SusanBAnthonyDollar.org (https://susanbanthonydollar.org/susan-b-anthony-dollar-mintages/), which shows the same figures"
+  },
+  "licence": "Mintage figures are facts, not copyrightable expression (docs/catalog-data-licensing.md section 1, Feist). This is NOT a US Mint publication, so the section 3 public-domain note does not apply; only nine numbers are taken, no text or table layout.",
+  "whyNotTheMint": "The US Mint Director's annual reports on FRASER count coins by fiscal year (ending 30 September), not by the date on the coin. The FY 1982 report's Table 2 lists $1 coins made in FY 1982 (Philadelphia 1,200,000, Denver 250,000), after the last 1981-dated coin, so fiscal-year totals can't be mapped to dates. The FY 1979 and FY 1980 PDFs did not load and the FY 1981 PDF has no machine-readable text (https://fraser.stlouisfed.org/files/docs/publications/usmint/).",
+  "disagreement": "A PCGS article gives 2,908,145 for each of the 1981-P, 1981-D and 1981-S (https://www.pcgs.com/news/Looking-Back-At-Susan-B-Anthony-Dollars, seen in a search excerpt; the page itself did not load). This file uses the coinmintages.com figures.",
+  "crossCheck": "The same source gives 1999-P 29,592,000 and 1999-D 11,776,000, matching the two 1999 coins already in us-dollars-susan-b-anthony.json (from Wikipedia).",
+  "scope": "Business strikes only. Proofs listed by the source (1979-S, 1980-S, 1981-S) are left out. The 1979-P Wide Rim / Narrow Rim varieties have no separate figure and are not added.",
+  "mintages": [
+    {
+      "year": 1979,
+      "mintMark": "P",
+      "mintage": 360222000
+    },
+    {
+      "year": 1979,
+      "mintMark": "D",
+      "mintage": 288015744
+    },
+    {
+      "year": 1979,
+      "mintMark": "S",
+      "mintage": 109576000
+    },
+    {
+      "year": 1980,
+      "mintMark": "P",
+      "mintage": 27610000
+    },
+    {
+      "year": 1980,
+      "mintMark": "D",
+      "mintage": 41628708
+    },
+    {
+      "year": 1980,
+      "mintMark": "S",
+      "mintage": 20422000
+    },
+    {
+      "year": 1981,
+      "mintMark": "P",
+      "mintage": 3000000
+    },
+    {
+      "year": 1981,
+      "mintMark": "D",
+      "mintage": 3250000
+    },
+    {
+      "year": 1981,
+      "mintMark": "S",
+      "mintage": 3492000
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "$schema-note": "Read by hand (scratch script over the saved wikitext) from the saved Wikipedia response for \"Susan B. Anthony dollar\", whose layout the generator does not parse (see fixtures/README.md); raw source-shaped fixture, pre-sanitization: the import script normalizes mintMark/variety to the DB identity fields. Every coin here carries a mint mark. mintage is null where the source gives no figure.",
+  "$schema-note": "Read by hand (scratch script over the saved wikitext) from the saved Wikipedia response for \"Susan B. Anthony dollar\", whose layout the generator does not parse (see fixtures/README.md); raw source-shaped fixture, pre-sanitization: the import script normalizes mintMark/variety to the DB identity fields. Every coin here carries a mint mark. The 1979-1981 mintages come from the saved manual source (sources[1], sources/manual-susan-b-anthony-mintages.2026-11-26.json) and the 1999 mintages from the saved Wikipedia response; mintage is null only where no cited source gives a figure.",
   "sources": [
     {
       "type": "year / mint mark / variety / mintage",
@@ -12,12 +12,21 @@
       "note": "Read by hand from the saved response's article prose, because the article has no mintage table at all: 1979 \"757,813,744 dollar coins dated 1979 were struck for circulation at the Philadelphia, Denver and San Francisco Mints\" (total only); 1980 \"the circulation strikes for that year totaled 89,660,708\" (total only; mints from the infobox, P, D, S); 1981 \"9,742,000 1981 dollars were struck across all three Mints\" (total only); 1999 \"29,592,000 at the Philadelphia mint and 11,776,000 at the Denver mint\" (\"no 1999 dollars were struck at the San Francisco mint\"). Only the 1999 figures are per mint."
     },
     {
+      "type": "year / mint mark / variety / mintage",
+      "origin": "coinmintages.com \"Susan B. Anthony Dollar Mintage - Coin Mintages\" (https://coinmintages.com/susan-b-anthony-dollars-mintage/), accessed 2026-11-26 by WebFetch and saved as a manual source file",
+      "url": "https://coinmintages.com/susan-b-anthony-dollars-mintage/",
+      "fetchedAt": "2026-11-26",
+      "rawResponse": "sources/manual-susan-b-anthony-mintages.2026-11-26.json",
+      "license": "Mintage figures are facts, not copyrightable expression (docs/catalog-data-licensing.md section 1, Feist). This is NOT a US Mint publication, so the section 3 public-domain note does not apply; only nine numbers are taken, no text or table layout.",
+      "note": "The nine 1979-1981 P, D and S business-strike mintages, by the date on the coin, copied from the page into the saved manual file (which says SusanBAnthonyDollar.org shows the same figures). A PCGS article gives 2,908,145 for each of the 1981-P, 1981-D and 1981-S, which disagrees; the coinmintages.com figures are used. Not a US Mint publication: the Mint's annual reports count coins by fiscal year, not by the date on the coin, so they cannot give these figures."
+    },
+    {
       "type": "physical specs",
       "origin": "Wikipedia \"Susan B. Anthony dollar\" infobox, in the saved response under sources/: diameter 26.5 mm, thickness 2.00 mm, mass 8.1 g, composition .75 copper, .25 nickel, clad to pure copper core",
       "license": "Numeric facts, not copyrightable expression (docs/catalog-data-licensing.md §1)"
     }
   ],
-  "rules-note": "Business strikes only, including the P and D coins the Mint sold only in rolls, bags and boxes: no proofs or reverse proofs, no Special Mint Set, special finish set or other set-only special strikes (Burnished, Enhanced Uncirculated), no silver or bullion strikes. Every coin carries a mint mark (mintMark is never null). variety is the design as displayed in the source, null where one design covers the year; a variety is listed only where the source has a separate row with its own figure, and edge-lettering errors are not varieties. Mintages come only from the saved source, null where it gives no figure; nothing is summed, split or estimated, and totals are ignored. Release order: designs in source order, then the mints. isKeyDate is false throughout because no cited source names key dates; no images. This file: the prose of \"Susan B. Anthony dollar\" (no mintage table). 1979, 1980 and 1981 P, D, S and 1999 P, D; variety is null throughout. The 1979-1981 coins have null mintage because the source gives only yearly totals, which are never split or assigned to one mint; the 1980 mints come from the infobox (P, D, S), since the prose does not name them. The 1981 coins, issued only to collectors in mint sets, are the year's business strikes and are included. The 1979 \"near date\" (wide rim) P has no figure of its own and is not a variety. Excluded: every proof (S and the 1999 P proof).",
+  "rules-note": "Business strikes only, including the P and D coins the Mint sold only in rolls, bags and boxes: no proofs or reverse proofs, no Special Mint Set, special finish set or other set-only special strikes (Burnished, Enhanced Uncirculated), no silver or bullion strikes. Every coin carries a mint mark (mintMark is never null). variety is the design as displayed in the source, null where one design covers the year; a variety is listed only where the source has a separate row with its own figure, and edge-lettering errors are not varieties. Mintages come only from the saved sources (the Wikipedia response for 1999, the manual source file for 1979-1981), null only where no cited source gives a figure; nothing is summed, split or estimated, and totals are ignored. Release order: designs in source order, then the mints. isKeyDate is false throughout because no cited source names key dates; no images. This file: the prose of \"Susan B. Anthony dollar\" (no mintage table) for the coins and the 1999 mintages, and sources/manual-susan-b-anthony-mintages.2026-11-26.json (coinmintages.com) for the 1979-1981 mintages. 1979, 1980 and 1981 P, D, S and 1999 P, D; variety is null throughout. The Wikipedia prose gives only yearly totals for 1979-1981, which are never split or assigned to one mint, so those nine mintages are the manual source's per-mint figures, by the date on the coin; the 1980 mints come from the infobox (P, D, S), since the prose does not name them. The 1981 coins, issued only to collectors in mint sets, are the year's business strikes and are included. The 1979 \"near date\" (wide rim) P has no figure of its own and is not a variety. Excluded: every proof (S and the 1999 P proof).",
   "country": "USA",
   "denomination": "Dollar",
   "name": "Susan B. Anthony Dollars",
@@ -37,63 +46,63 @@
       "mintMark": "P",
       "variety": null,
       "isKeyDate": false,
-      "mintage": null
+      "mintage": 360222000
     },
     {
       "year": 1979,
       "mintMark": "D",
       "variety": null,
       "isKeyDate": false,
-      "mintage": null
+      "mintage": 288015744
     },
     {
       "year": 1979,
       "mintMark": "S",
       "variety": null,
       "isKeyDate": false,
-      "mintage": null
+      "mintage": 109576000
     },
     {
       "year": 1980,
       "mintMark": "P",
       "variety": null,
       "isKeyDate": false,
-      "mintage": null
+      "mintage": 27610000
     },
     {
       "year": 1980,
       "mintMark": "D",
       "variety": null,
       "isKeyDate": false,
-      "mintage": null
+      "mintage": 41628708
     },
     {
       "year": 1980,
       "mintMark": "S",
       "variety": null,
       "isKeyDate": false,
-      "mintage": null
+      "mintage": 20422000
     },
     {
       "year": 1981,
       "mintMark": "P",
       "variety": null,
       "isKeyDate": false,
-      "mintage": null
+      "mintage": 3000000
     },
     {
       "year": 1981,
       "mintMark": "D",
       "variety": null,
       "isKeyDate": false,
-      "mintage": null
+      "mintage": 3250000
     },
     {
       "year": 1981,
       "mintMark": "S",
       "variety": null,
       "isKeyDate": false,
-      "mintage": null
+      "mintage": 3492000
     },
     {
       "year": 1999,

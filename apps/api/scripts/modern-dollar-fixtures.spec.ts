@@ -1,16 +1,19 @@
 /**
  * Tests for: modern US small-size dollar fixtures (growth backlog 2.10), the five canonical set templates
- * built from them, their provenance in the five saved MediaWiki responses, and the fixtures README section.
+ * built from them, their provenance in the five saved MediaWiki responses (and, for the Susan B. Anthony
+ * 1979-1981 mintages, in the committed manual source file), and the fixtures README section.
  * Contract source: runs/run_20261124_215121/plan.md § Step E and § Interface Contract, updated by
- * runs/run_20261126_061240/plan.md § Interface Contract (Eisenhower Philadelphia dollars are null)
+ * runs/run_20261126_061240/plan.md § Interface Contract (Eisenhower Philadelphia dollars are null) and by
+ * runs/run_20261126_230345/plan.md § Interface Contract (Susan B. Anthony 1979-1981 mintages, sources[1])
  * Covers criteria: #2, #3, #4, #5, #6, #7, #8, #9, #10, #11, #12, #13, #14, #15 (from runs/run_20261124_215121/prd.md)
  * and #2, #4, #7, #8 (from runs/run_20261126_061240/prd.md)
+ * and #1 to #5, #11, #12, #13 (from runs/run_20261126_230345/prd.md)
  *
  * CONTRACT_GAP: none.
  *
- * Reads checked-in files only (fixtures, templates, saved MediaWiki responses, README) with fs.readFileSync;
- * no network, no database, no mocks. Design lists, names, counts, specs, null sets and the spot values are
- * hard-coded from the contract; everything else is data-driven.
+ * Reads checked-in files only (fixtures, templates, saved MediaWiki responses, the manual source file, README)
+ * with fs.readFileSync; no network, no database, no mocks. Design lists, names, counts, specs, null sets and the
+ * spot values are hard-coded from the contract; everything else is data-driven.
  */
 
 import * as fs from 'node:fs';
@@ -25,8 +28,14 @@ const FIXTURES_DIR = path.join(IMPORT_CATALOG_DIR, 'fixtures');
 const TEMPLATES_DIR = path.resolve(__dirname, '../../../seed/templates');
 const README_PATH = path.join(FIXTURES_DIR, 'README.md');
 const NEW_ADR_FILE = '2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md';
+const ANTHONY_FILE = 'us-dollars-susan-b-anthony.json';
+const ANTHONY_MANUAL = 'sources/manual-susan-b-anthony-mintages.2026-11-26.json';
 
-type Fixture = RawFixtureFile & { yearRange?: [number, number] };
+type Fixture = RawFixtureFile & {
+  yearRange?: [number, number];
+  '$schema-note'?: string;
+  'rules-note'?: string;
+};
 
 function readJson<T>(file: string): T {
   return JSON.parse(fs.readFileSync(file, 'utf8')) as T;
@@ -263,7 +272,7 @@ const PROGRAMS: Program[] = [
   },
   {
     label: 'Susan B. Anthony',
-    file: 'us-dollars-susan-b-anthony.json',
+    file: ANTHONY_FILE,
     template: 'susan-b-anthony-dollars.v1.json',
     name: 'Susan B. Anthony Dollars',
     range: [1979, 1999],
@@ -291,6 +300,19 @@ const TEMPLATE_NAMES: Record<string, string> = {
   'us-dollars-eisenhower.json': 'Eisenhower Dollars',
   'us-dollars-susan-b-anthony.json': 'Susan B. Anthony Dollars',
 };
+
+// The nine 1979-1981 Susan B. Anthony business-strike mintages, from the committed manual source file.
+const ANTHONY_EARLY: Array<[year: number, mintMark: string, mintage: number]> = [
+  [1979, 'P', 360222000],
+  [1979, 'D', 288015744],
+  [1979, 'S', 109576000],
+  [1980, 'P', 27610000],
+  [1980, 'D', 41628708],
+  [1980, 'S', 20422000],
+  [1981, 'P', 3000000],
+  [1981, 'D', 3250000],
+  [1981, 'S', 3492000],
+];
 
 function expectedCoins(p: Program): Expected[] {
   const out: Expected[] = [];
@@ -320,6 +342,15 @@ function loadWikitext(rel: string): string {
 function mintageOf(file: string, year: number, mint: string | null, variety: string | null): number | null | undefined {
   const f = fixtures.get(file);
   return f?.coins.find((c) => c.year === year && c.mintMark === mint && c.variety === variety)?.mintage;
+}
+
+interface ManualAnthony {
+  licence: string;
+  source: { title: string; url: string; accessed: string };
+  mintages: Array<{ year: number; mintMark: string; mintage: number }>;
+}
+function loadManualAnthony(): ManualAnthony {
+  return readJson<ManualAnthony>(path.join(IMPORT_CATALOG_DIR, ANTHONY_MANUAL));
 }
 
 describe('every template coin resolves to exactly one fixture row (criteria 14, 15)', () => {
@@ -460,7 +491,7 @@ describe('selection and release order (criteria 2, 5, 6, 7, 8, 9, 10)', () => {
   it('S appears only in the Anthony file: exactly 1979, 1980 and 1981', () => {
     for (const p of PROGRAMS) {
       const s = fx(p).coins.filter((c) => c.mintMark === 'S');
-      if (p.file === 'us-dollars-susan-b-anthony.json') expect(s.map((c) => c.year)).toEqual([1979, 1980, 1981]);
+      if (p.file === ANTHONY_FILE) expect(s.map((c) => c.year)).toEqual([1979, 1980, 1981]);
       else expect(s).toEqual([]);
     }
   });
@@ -480,7 +511,7 @@ describe('selection and release order (criteria 2, 5, 6, 7, 8, 9, 10)', () => {
     expect(Math.max(...sacNull)).toBe(2008);
     expect(nullVariety('us-dollars-presidential.json')).toEqual([]);
     expect(nullVariety('us-dollars-american-innovation.json')).toEqual([]);
-    expect(nullVariety('us-dollars-susan-b-anthony.json')).toHaveLength(11);
+    expect(nullVariety(ANTHONY_FILE)).toHaveLength(11);
     expect(nullVariety('us-dollars-eisenhower.json')).toHaveLength(12);
   });
 
@@ -551,7 +582,7 @@ describe('specs and fields (criteria 11, 9)', () => {
   });
 });
 
-describe('provenance: every mintage traces to the saved source (criteria 3, 12)', () => {
+describe('provenance: every mintage traces to a saved source (criteria 3, 12)', () => {
   it.each(PROGRAMS)('$label: sources[0] cites its saved response, revision and fetch date', (p) => {
     const f = fx(p);
     const src = f.sources?.[0];
@@ -575,7 +606,7 @@ describe('provenance: every mintage traces to the saved source (criteria 3, 12)'
     }
   });
 
-  it.each(PROGRAMS)('$label: every non-null mintage appears in the saved wikitext', (p) => {
+  it.each(PROGRAMS)('$label: every non-null mintage appears in the saved wikitext (Anthony 1979-1981 excepted)', (p) => {
     const f = fx(p);
     const rawResponse = f.sources?.[0]?.rawResponse ?? '';
     const wikitext = loadWikitext(rawResponse);
@@ -584,6 +615,8 @@ describe('provenance: every mintage traces to the saved source (criteria 3, 12)'
     let checked = 0;
     for (const c of f.coins) {
       if (c.mintage === null || c.mintage === undefined) continue;
+      // The Anthony 1979-1981 rows are traced to the manual source file in the next describe block.
+      if (p.file === ANTHONY_FILE && c.year <= 1981) continue;
       checked += 1;
       if (!mintageFigureAppears(wikitext, c.mintage)) missing.push(`${c.year} ${c.mintMark} ${c.variety} ${c.mintage}`);
     }
@@ -596,6 +629,99 @@ describe('provenance: every mintage traces to the saved source (criteria 3, 12)'
     expect(mintageFigureAppears('| 11,234,567 |', 1234567)).toBe(false);
     expect(mintageFigureAppears('| 1,234,567,890 |', 1234567)).toBe(false);
     expect(mintageFigureAppears('| 9,999 |', 1234567)).toBe(false);
+  });
+});
+
+describe('Susan B. Anthony 1979-1981 mintages from the manual source (criteria 1 to 5 of run_20261126_230345)', () => {
+  const anthony = loadFixture(ANTHONY_FILE);
+
+  it('has 11 rows and the nine 1979-1981 rows carry exactly the nine contract figures', () => {
+    expect(anthony.coins).toHaveLength(11);
+    for (const [year, mark, mintage] of ANTHONY_EARLY) {
+      const hits = anthony.coins.filter((c) => c.year === year && c.mintMark === mark);
+      expect(hits).toHaveLength(1);
+      expect(hits[0].mintage).toBe(mintage);
+    }
+  });
+
+  it('no Anthony row has a null mintage and the 1999 rows keep their Wikipedia figures', () => {
+    expect(anthony.coins.filter((c) => (c.mintage ?? null) === null)).toEqual([]);
+    expect(mintageOf(ANTHONY_FILE, 1999, 'P', null)).toBe(29592000);
+    expect(mintageOf(ANTHONY_FILE, 1999, 'D', null)).toBe(11776000);
+  });
+
+  it('the figures are different per mint and year (no value copied across rows)', () => {
+    const early = anthony.coins.filter((c) => c.year <= 1981).map((c) => c.mintage);
+    expect(new Set(early).size).toBe(9);
+    expect(mintageOf(ANTHONY_FILE, 1981, 'P', null)).not.toBe(mintageOf(ANTHONY_FILE, 1981, 'D', null));
+  });
+
+  it('every 1979-1981 row equals the same-year, same-mint entry in the manual file; a missing entry fails', () => {
+    const manual = loadManualAnthony();
+    expect(anthony.sources?.[1]?.rawResponse).toBe(ANTHONY_MANUAL);
+    expect(fs.existsSync(path.join(IMPORT_CATALOG_DIR, ANTHONY_MANUAL))).toBe(true);
+    const early = anthony.coins.filter((c) => c.year <= 1981);
+    expect(early).toHaveLength(9);
+    const bad: string[] = [];
+    for (const c of early) {
+      const entries = manual.mintages.filter((e) => e.year === c.year && e.mintMark === c.mintMark);
+      if (entries.length !== 1 || entries[0].mintage !== c.mintage) bad.push(`${c.year} ${c.mintMark} ${c.mintage}`);
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('every 1999 row appears in the saved Wikipedia wikitext', () => {
+    const wikitext = loadWikitext(anthony.sources?.[0]?.rawResponse ?? '');
+    const late = anthony.coins.filter((c) => c.year === 1999);
+    expect(late).toHaveLength(2);
+    for (const c of late) expect(mintageFigureAppears(wikitext, c.mintage as number)).toBe(true);
+  });
+
+  it('sources[1]: exactly the contract keys in order and the exact type, url, fetchedAt, rawResponse', () => {
+    const src = anthony.sources?.[1];
+    expect(src).toBeDefined();
+    expect(Object.keys(src ?? {})).toEqual(['type', 'origin', 'url', 'fetchedAt', 'rawResponse', 'license', 'note']);
+    expect(src?.type).toBe('year / mint mark / variety / mintage');
+    expect(src?.url).toBe('https://coinmintages.com/susan-b-anthony-dollars-mintage/');
+    expect(src?.fetchedAt).toBe('2026-11-26');
+    expect(src?.rawResponse).toBe(ANTHONY_MANUAL);
+  });
+
+  it('sources[1]: license equals the manual file licence verbatim, origin names the title and URL', () => {
+    const manual = loadManualAnthony();
+    const src = anthony.sources?.[1];
+    expect(src?.license).toBe(manual.licence);
+    expect(src?.origin).toContain(manual.source.title);
+    expect(src?.origin).toContain(manual.source.url);
+    expect(src?.url).toBe(manual.source.url);
+    expect(src?.fetchedAt).toBe(manual.source.accessed);
+  });
+
+  it('sources[1]: the note records the PCGS disagreement and that it is not a Mint publication', () => {
+    const note = anthony.sources?.[1]?.note ?? '';
+    expect(note).toContain('2,908,145');
+    expect(note).toContain('PCGS');
+    expect(note).toContain('date on the coin');
+  });
+
+  it('sources[0] is the unchanged Wikipedia entry and the physical specs entry moved to sources[2]', () => {
+    const src0 = anthony.sources?.[0];
+    expect(src0?.rawResponse).toMatch(/^sources\/Susan_B\._Anthony_dollar\.2026-11-24\.json$/);
+    expect(src0?.revisionId).toBe(1385912112);
+    expect(src0?.fetchedAt).toBe('2026-11-24');
+    expect(anthony.sources?.[2]?.type).toBe('physical specs');
+    expect(anthony.sources).toHaveLength(3);
+  });
+
+  it('$schema-note and rules-note cite the manual file; rules-note keeps isKeyDate false and drops the null claim', () => {
+    expect(anthony['$schema-note'] ?? '').toContain('manual-susan-b-anthony-mintages.2026-11-26.json');
+    const rules = anthony['rules-note'] ?? '';
+    expect(rules).toContain('manual-susan-b-anthony-mintages.2026-11-26.json');
+    expect(rules).toContain('isKeyDate is false throughout');
+    expect(rules).not.toContain('have null mintage');
+    expect(anthony['$schema-note'] ?? '').not.toContain('mintage is null where the source gives no figure');
+    expect(rules).not.toContain('Mintages come only from the saved source, null where it gives no figure');
+    expect(rules).not.toContain('This file: the prose of "Susan B. Anthony dollar" (no mintage table).');
   });
 });
 
@@ -621,14 +747,16 @@ describe('null mintages exactly where the source has none (criterion 3)', () => 
     for (const c of nullsOf('us-dollars-american-innovation.json')) expect(c.year).toBe(2026);
   });
 
-  it('Susan B. Anthony: the nine 1979-1981 coins are null and the two 1999 coins are not', () => {
-    const f = loadFixture('us-dollars-susan-b-anthony.json');
+  it('Susan B. Anthony: no row is null any more (the nine 1979-1981 rows come from the manual source)', () => {
+    const f = loadFixture(ANTHONY_FILE);
+    expect(f.coins).toHaveLength(11);
     const early = f.coins.filter((c) => c.year <= 1981);
     expect(early).toHaveLength(9);
-    for (const c of early) expect(c.mintage ?? null).toBeNull();
+    for (const c of early) expect(c.mintage ?? null).not.toBeNull();
     const late = f.coins.filter((c) => c.year === 1999);
     expect(late).toHaveLength(2);
     for (const c of late) expect(c.mintage ?? null).not.toBeNull();
+    expect(nullsOf(ANTHONY_FILE)).toEqual([]);
   });
 });
 
@@ -644,6 +772,9 @@ describe('column orientation (criterion 3)', () => {
     ['us-dollars-eisenhower.json', 1971, null, 47799000, 68587424],
     ['us-dollars-eisenhower.json', 1976, 'Type II', 113318000, 82179564],
     ['us-dollars-susan-b-anthony.json', 1999, null, 29592000, 11776000],
+    ['us-dollars-susan-b-anthony.json', 1979, null, 360222000, 288015744],
+    ['us-dollars-susan-b-anthony.json', 1980, null, 27610000, 41628708],
+    ['us-dollars-susan-b-anthony.json', 1981, null, 3000000, 3250000],
   ];
 
   it.each(cases)('%s %i %s: Philadelphia and D mintages are not swapped', (file, year, variety, p, d) => {
@@ -691,6 +822,22 @@ describe('fixtures README dollars section (criteria 7, 13, 15)', () => {
     const text = section();
     expect(text).toContain(NEW_ADR_FILE);
     expect(text).not.toContain('`"P"` here');
+  });
+
+  it('cites the manual Anthony source, coinmintages.com, the PCGS 2,908,145 disagreement and the Wide Rim gap', () => {
+    const text = section();
+    for (const needle of ['manual-susan-b-anthony-mintages.2026-11-26.json', 'coinmintages.com', '2,908,145', 'Wide Rim']) {
+      expect(text).toContain(needle);
+    }
+  });
+
+  it('the null mintage count reads 16, not 25', () => {
+    const text = section();
+    expect(text).toContain('**Null mintages.** 16 coins');
+    expect(text).not.toContain('**Null mintages.** 25 coins');
+    expect(text).not.toContain('25 coins');
+    expect(text).not.toContain('Susan B. Anthony 1979–1981 (9 coins)');
+    expect(text).not.toContain('757,813,744');
   });
 });
 

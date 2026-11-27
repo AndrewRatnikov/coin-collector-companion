@@ -1,0 +1,60 @@
+{
+  "kind": "manual key-date source",
+  "enteredBy": "Claude (claude.ai session) by WebFetch on 2026-11-26; values copied from the pages named below, nothing from memory",
+  "reviewStatus": "pending: Andrew to check against the pages before committing",
+  "series": "Peace dollar",
+  "country": "USA",
+  "denomination": "Dollar",
+  "fixture": "us-dollars-peace.json",
+  "sources": [
+    {
+      "id": "nnp",
+      "title": "Peace Dollars (1921-1935), Newman Numismatic Portal encyclopedia, Washington University in St. Louis (data in cooperation with Whitman)",
+      "url": "https://nnp.library.wustl.edu/encyclopedia/190?locale=en",
+      "accessed": "2026-11-26",
+      "quote": "the 1928, which serves as the series key"
+    }
+  ],
+  "licence": "Which dates are key or scarce is a fact about the series; only dates are taken, plus one short attributed quote.",
+  "keyDates": [
+    {
+      "year": 1928,
+      "mintMark": null,
+      "variety": null,
+      "named": "1928",
+      "by": [
+        "nnp"
+      ],
+      "note": "called the scarcest regular-issue Peace dollar"
+    }
+  ],
+  "scarceDates": [
+    {
+      "year": 1934,
+      "mintMark": "S",
+      "variety": null,
+      "named": "1934-S",
+      "by": [
+        "nnp"
+      ],
+      "note": "described as challenging in all grades"
+    },
+    {
+      "year": 1921,
+      "mintMark": null,
+      "variety": "Peace",
+      "named": "1921",
+      "by": [
+        "nnp"
+      ],
+      "note": "described as a scarce first-year coin; variety Peace tells it apart from the 1921 Morgan"
+    }
+  ],
+  "excluded": [
+    {
+      "named": "1922 High Relief",
+      "why": "mostly melted, possibly proof; not a regular business strike and not in the fixture"
+    }
+  ],
+  "recommendation": "Set isKeyDate for 1928. Build the Peace key-dates checklist from keyDates plus scarceDates (3 coins)."
+}

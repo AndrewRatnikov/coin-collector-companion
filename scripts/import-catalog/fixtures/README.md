@@ -323,6 +323,16 @@ one file per program, each `name` being the program:
 - "Eisenhower dollar", revision 1384170327 (`../sources/Eisenhower_dollar.2026-11-24.json`).
 - "Susan B. Anthony dollar", revision 1385912112 (`../sources/Susan_B._Anthony_dollar.2026-11-24.json`).
 
+The nine Susan B. Anthony 1979–1981 mintages come from a sixth, hand-entered source:
+`../sources/manual-susan-b-anthony-mintages.2026-11-26.json`, copied from coinmintages.com
+"Susan B. Anthony Dollar Mintage - Coin Mintages"
+(https://coinmintages.com/susan-b-anthony-dollars-mintage/, accessed 2026-11-26) and cited as the
+Anthony file's `sources[1]` (the physical-specs entry moved to `sources[2]`). Mintage figures are
+facts ([docs/catalog-data-licensing.md](../../../docs/catalog-data-licensing.md) section 1). It is
+not a US Mint publication, so the section 3 US-government-work note is not claimed; the Mint's
+annual reports count coins by fiscal year, not by the date on the coin, so they cannot give these
+figures.
+
 None of the five layouts is a Year/Mint/Mintage table the generator parses: it saved each source,
 then exited with "No usable rows", so every file was read by hand (a scratch script over the saved
 wikitext) and its `sources[0].note` says so. The layouts:
@@ -360,7 +370,8 @@ No generator draft was written or committed: the import reads every `*.json` in 
 - A variety is listed only where the source has a separate row with its own figure: the 1972
   Eisenhower reverse types and the 1979 Anthony "near date" (wide rim) are not varieties. The
   Presidential edge-lettering errors ("Minting errors" section) are not varieties either.
-- Mintages come only from the saved source, with separators removed, and are never summed, split or
+- Mintages come only from the saved sources (each file's Wikipedia response, plus the manual source
+  file for the Anthony 1979–1981 coins), with separators removed, and are never summed, split or
   estimated; Total columns are ignored.
 - Coins are in release order: designs in source order, then P, D (Anthony 1979–1981: P, D, S).
 
@@ -373,15 +384,19 @@ change of 2009 isn't stored):
 - Susan B. Anthony: 26.5 mm, 8.1 g, 2.00 mm, "Copper-nickel clad copper (75% copper, 25% nickel
   outer layers, pure copper core)".
 
-**Null mintages.** 25 coins, each because the source gives no figure for it:
+**Null mintages.** 16 coins, each because no cited source gives a figure for it:
 - Native American 2023–2026 (8 coins): the "Mintage figures" table ends at 2022.
 - American Innovation 2026 (8 coins): the mintage cells are "TBA".
-- Susan B. Anthony 1979–1981 (9 coins): the prose gives only yearly totals (757,813,744 for 1979,
-  89,660,708 for 1980, 9,742,000 for 1981), which are never split or assigned to one mint. The 1980
-  mints are the infobox's P, D, S, since the prose doesn't name them. Only the 1999 P and D figures
-  are per mint.
 
-Presidential and Eisenhower have no null mintages.
+The Anthony Wikipedia prose gives only yearly totals for 1979–1981, which are never split or
+assigned to one mint; the nine per-mint 1979–1981 figures now come from the manual source, by the
+date on the coin (the 1980 mints are still the infobox's P, D, S). Presidential, Eisenhower and
+Susan B. Anthony have no null mintages.
+
+**Not given by the sources (Susan B. Anthony).** No separate figure for the 1979-P Wide Rim / Narrow
+Rim ("near date") varieties, which are not added; no proof mintages are taken (proofs are excluded
+anyway); a PCGS article gives 2,908,145 for each of the 1981-P, 1981-D and 1981-S, which disagrees
+with the manual source and is not used.
 
 **Excluded.** Proofs and reverse proofs (every San Francisco column, the Eisenhower "Proof:" list,
 every Anthony proof), Special Mint Set and other set-only special finishes (the Sacagawea "Special
@@ -445,16 +460,29 @@ Silver / 10.0% Copper (1878–1904, 1921)"; Peace: ".900 silver, .100 copper", t
 
 **Null mintages.** None.
 
-**Key dates.** Morgan: `isKeyDate` is true for the 1893-S only, because the saved source's "Key date"
-section names it: "The [[key date]] in the Morgan dollar series is the [[1893-S Morgan dollar]], which
-was struck at the United States [[San Francisco Mint]]." The Morgan file records this in a
-`keyDates` block (saved source path, verbatim quote, coin label), and the "Morgan Dollar Key Dates"
-checklist lists that one coin. Peace: no cited source names key dates (the saved article has no key
-date wording; its remarks on the 1921 and 1928 mintages are not key-date statements), so every Peace
-coin has `isKeyDate: false` and there is no Peace key-date checklist.
+**Key dates.** Morgan: `isKeyDate` is true for the 1889-CC and the 1893-S, the two coins the saved
+manual key-date source `../sources/manual-morgan-dollar-key-dates.2026-11-26.json` names as key dates
+(PCGS and APMEX both name the 1889-CC and the 1893-S; the "Key date" section of the saved English
+Wikipedia article names the 1893-S). The Morgan file's `keyDates` block cites that file with the
+APMEX line it records, "Rare & Key Dates: 1889-CC, 1893-S, 1895 (Proof)". Peace: `isKeyDate` is true
+for the 1928 only, from `../sources/manual-peace-dollar-key-dates.2026-11-26.json` (Newman
+Numismatic Portal: "the 1928, which serves as the series key"); the saved Wikipedia article has no
+key date wording. Both blocks (saved source path, verbatim quote, coin labels) follow
+[docs/adr/2026-11-25-key-dates-recorded-in-fixture-keydates-block.md](../../../docs/adr/2026-11-25-key-dates-recorded-in-fixture-keydates-block.md).
+The scarce dates the two files list are not key dates: they are not flagged and are in no checklist.
 
-**Checklists.** "Morgan Dollars 1878-1921" (95), "Morgan Dollar Key Dates" (1) and "Peace Dollars
-1921-1935" (24) in `seed/templates/`.
+**Checklists.** In `seed/templates/`: "Morgan Dollars 1878-1921" (95), "Morgan Dollar Key Dates" (2,
+`morgan-dollars-key-dates.v2.json`; v1, with the 1893-S alone, stays in the tree and the seed picks
+v2, per
+[docs/adr/2026-11-21-canonical-template-changes-ship-as-a-new-version-file.md](../../../docs/adr/2026-11-21-canonical-template-changes-ship-as-a-new-version-file.md)),
+"Peace Dollars 1921-1935" (24) and "Peace Dollar Key Dates" (1, `peace-dollars-key-dates.v1.json`).
+
+**Not given by the sources (Morgan and Peace).** No source in the manual file names the 1893-CC, so
+it is not flagged. The 1895 Philadelphia proof the APMEX line names is not a business strike and is
+not in the fixture. The scarce dates are not flagged: Morgan 1884-S, 1886-O, 1892-S, 1893-O, 1895-O,
+1896-O and 1901 (the source's "1901-P", the fixture's 1901 Philadelphia coin with mint mark `null`);
+Peace 1934-S and 1921. The 1922 High Relief Peace dollar is not in the fixture. Only the 1928 is
+named a Peace key date.
 
 **Excluded.** Proofs, including the 1895 Philadelphia Morgan; the 2021 and later collector Morgan and
 Peace dollars; the 1964-D Peace dollars (316,106 struck, all destroyed and never issued); VAM and

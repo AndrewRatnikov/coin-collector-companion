@@ -81,6 +81,8 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-25](2026-11-25-1921-philadelphia-dollars-told-apart-by-series-variety.md) | The 1921 Philadelphia Morgan and Peace dollars are told apart by the varieties "Morgan" and "Peace" | Accepted |
 | [2026-11-26](2026-11-26-mint-mark-is-what-is-struck-null-when-unmarked.md) | `mintMark` is what is struck on the coin, `null` when the coin carries no mark, in every US series | Accepted |
 | [2026-11-26](2026-11-26-catalog-import-leaves-non-approved-coins-alone-as-conflicts.md) | The catalog import leaves a non-approved coin on a fixture key untouched and reports it as a conflict, and `seed:canonical` refuses to link one | Accepted |
+| [2026-11-26](2026-11-26-manual-source-files-can-be-a-fixtures-cited-source.md) | A hand-entered manual source file under `sources/` can be a fixture's cited source, as a further `sources[]` entry and as `keyDates.source` | Accepted |
+| [2026-11-26](2026-11-26-only-named-key-dates-are-flagged-scarce-dates-left-out.md) | Only the dates a source names as key dates are flagged and listed; the scarce dates the sources also list are left out | Accepted |
 
 ## Where else decisions live
 
