@@ -1,7 +1,14 @@
 // Pure helpers behind the /catalog page: URL <-> view state, API filters, the active filter
 // count, pagination collapse and row text. No React, no i18n.
 
-import { CATALOG_SORTS, DEFAULT_CATALOG_SORT, type CatalogCoin, type CatalogSort } from '@coin-collector/shared';
+import {
+  CATALOG_SORTS,
+  DEFAULT_CATALOG_SORT,
+  type CatalogCoin,
+  type CatalogListItem,
+  type CatalogSort,
+  type PaginatedResponse,
+} from '@coin-collector/shared';
 import type { CatalogFilters } from '@/lib/catalog-api';
 import { splitVariety } from '@/lib/album-layout';
 import type { AnalyticsEvents } from '@/lib/analytics';
@@ -107,6 +114,53 @@ export function catalogViewStateToFilters(state: CatalogViewState, isLoggedIn: b
   if (state.hideOwned && isLoggedIn) filters.hideOwned = true;
   if (state.sort !== DEFAULT_CATALOG_SORT) filters.sort = state.sort;
   return filters;
+}
+
+/**
+ * The query string GET /catalog gets for these filters, without a leading '?' ('' for none).
+ * Walks the filters in insertion order; array values repeat the param; undefined and '' are skipped.
+ * The browser (getCatalog) and the server (loadCatalogPage) both build their URL with it.
+ */
+export function catalogFiltersToQueryString(filters: CatalogFilters): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        if (entry !== undefined && entry !== '') params.append(key, String(entry));
+      }
+      continue;
+    }
+    if (value === undefined || value === '') continue;
+    params.set(key, String(value));
+  }
+  return params.toString();
+}
+
+/** Next's `searchParams` object as URLSearchParams: strings and array elements appended, undefined skipped. */
+export function catalogSearchParamsFromRecord(
+  record: Record<string, string | string[] | undefined>,
+): URLSearchParams {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(record)) {
+    if (value === undefined) continue;
+    if (Array.isArray(value)) {
+      for (const entry of value) params.append(key, entry);
+      continue;
+    }
+    params.append(key, value);
+  }
+  return params;
+}
+
+/** True when the view is the default catalog (nothing in its URL): the only indexable catalog view. */
+export function isPlainCatalogView(state: CatalogViewState): boolean {
+  return catalogViewStateToSearchParams(state).toString() === '';
+}
+
+/** The server-rendered catalog page and the exact filters it was loaded with. */
+export interface CatalogInitialPage {
+  filters: CatalogFilters;
+  data: PaginatedResponse<CatalogListItem>;
 }
 
 /** The n in "Filters · n". Search and sort don't count. */

@@ -1,18 +1,42 @@
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
-import type { CatalogCoin, CreateCoinRequest, PaginatedResponse, SubmittedCoin } from '@coin-collector/shared';
+import type {
+  CatalogCoin,
+  CatalogListItem,
+  CreateCoinRequest,
+  PaginatedResponse,
+  SubmittedCoin,
+} from '@coin-collector/shared';
 import { getCatalog, getCatalogFacets, getCoin, submitCoin, type CatalogFilters } from '@/lib/catalog-api';
 import { ApiError } from '@/lib/api-client';
 
 /** Facets change only when the catalog import runs, so cache them for 5 minutes. */
 export const CATALOG_FACETS_STALE_TIME = 300_000;
 
+/**
+ * Server-rendered data: use it as the cache entry and never refetch it in the browser. Without
+ * it the query options stay exactly as before (the client fallback path).
+ */
+function serverInitialDataOptions<T>(initialData: T | undefined) {
+  if (initialData === undefined) return {};
+  return {
+    initialData,
+    staleTime: Infinity,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+  } as const;
+}
+
 // keepPreviousData: while the next filters load, the previous total and list stay on screen
 // instead of flickering back to a skeleton.
-export function useCatalog(filters: CatalogFilters) {
+export function useCatalog(
+  filters: CatalogFilters,
+  options?: { initialData?: PaginatedResponse<CatalogListItem> },
+) {
   return useQuery({
     queryKey: ['catalog', filters],
     queryFn: () => getCatalog(filters),
     placeholderData: keepPreviousData,
+    ...serverInitialDataOptions(options?.initialData),
   });
 }
 
@@ -25,11 +49,12 @@ export function useCatalogFacets(country?: string) {
   });
 }
 
-export function useCoin(id: string) {
+export function useCoin(id: string, options?: { initialData?: CatalogCoin }) {
   return useQuery({
     queryKey: ['catalog', 'coin', id],
     queryFn: () => getCoin(id),
     enabled: Boolean(id),
+    ...serverInitialDataOptions(options?.initialData),
   });
 }
 

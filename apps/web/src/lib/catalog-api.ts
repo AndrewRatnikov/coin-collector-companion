@@ -7,6 +7,7 @@ import type {
   PaginatedResponse,
 } from '@coin-collector/shared';
 import { apiFetch } from './api-client';
+import { catalogFiltersToQueryString } from './catalog-view';
 
 export interface CatalogFilters {
   country?: string;
@@ -24,18 +25,7 @@ export interface CatalogFilters {
 }
 
 export async function getCatalog(filters: CatalogFilters = {}): Promise<PaginatedResponse<CatalogListItem>> {
-  const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(filters)) {
-    if (Array.isArray(value)) {
-      for (const entry of value) {
-        if (entry !== undefined && entry !== '') params.append(key, String(entry));
-      }
-      continue;
-    }
-    if (value === undefined || value === '') continue;
-    params.set(key, String(value));
-  }
-  const query = params.toString();
+  const query = catalogFiltersToQueryString(filters);
   return apiFetch<PaginatedResponse<CatalogListItem>>(`/catalog${query ? `?${query}` : ''}`);
 }
 
