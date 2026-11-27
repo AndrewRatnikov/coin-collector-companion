@@ -1,5 +1,5 @@
 /**
- * Tests for: CoinDetailPage
+ * Tests for: CoinDetailView (the coin page UI; the page itself is a server component)
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CoinDetailPage
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
  *                   runs/run_20260725_140648/plan.md § Interface Contract → Frontend — apps/web/src/app/catalog/[coinId]/page.tsx (MODIFY)
@@ -7,27 +7,26 @@
  *                   runs/run_20261017_142658/plan.md § Approach §3 and §4 (name block via getCoinName; Skeleton testid)
  *                   runs/run_20261019_205931/plan.md § Interface Contract → Page: CoinDetailPage
  *                   runs/run_20261102_220909/plan.md § Interface Contract → Page: CoinDetailPage, Component: CoinGradePicker
+ *                   runs/run_20261127_133045/plan.md § Interface Contract → Component: CoinDetailView (CREATE)
  * Covers criteria: #5 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md),
  *                  #7 (from run_20260725_140648's prd.md), #5 (from run_20260728_071525's prd.md),
  *                  #6, #13 (from run_20261017_142658's prd.md),
  *                  #1-#14 (from run_20261019_205931's prd.md),
- *                  #1, #2, #3, #5, #6 (from run_20261102_220909's prd.md)
+ *                  #1, #2, #3, #5, #6 (from run_20261102_220909's prd.md),
+ *                  #2, #3 (from run_20261127_133045's prd.md)
  *
- * CoinDetailPage unwraps its `params` prop (a Promise, per the Next.js 16 App Router
- * contract) via React's `use()`, which suspends on first render. Rendering it directly
- * with RTL therefore needs a <Suspense> boundary in the test itself — the app-level
- * Suspense boundaries Next.js provides in real navigation don't exist under a raw
- * render() call.
+ * run_20261127_133045: the page moved into the client view CoinDetailView, which takes the coin id as a
+ * prop (no params Promise, no Suspense needed). Every test below renders the view with RTL as before; the
+ * `useCoin` assertion now checks the first call argument (the view always passes a second argument,
+ * possibly undefined). A new block at the end covers the checklists section and the initialCoin option.
  *
- * run_20260728_071525: the page now also calls the real (unmocked) `useQueries` from
+ * run_20260728_071525: the page also calls the real (unmocked) `useQueries` from
  * '@tanstack/react-query' per the Interface Contract (fanning out getSetGaps(set.id) over
- * the signed-in user's own sets, same pattern as DashboardPage) — every render below now
- * needs a real QueryClientProvider ancestor, so `renderPage` is updated accordingly. This
- * is purely test-infrastructure; it does not change the assertions of any pre-existing
- * test in this file. getStoredToken, useCollection, and useSetOwnership are mocked (like
- * every other page's use of getStoredToken elsewhere in this repo), since they are plain
- * lib functions / thin query-mutation hooks whose own internals are covered by their own
- * dedicated test files, not this page's.
+ * the signed-in user's own sets, same pattern as DashboardPage) — every render below needs a real
+ * QueryClientProvider ancestor, so `renderPage` provides one. getStoredToken, useCollection, and
+ * useSetOwnership are mocked (like every other page's use of getStoredToken elsewhere in this repo),
+ * since they are plain lib functions / thin query-mutation hooks whose own internals are covered by
+ * their own dedicated test files, not this page's.
  *
  * run_20261017_142658: two existing tests change. The "full identity fields" test now expects the
  * heading to be the getCoinName title (it used to be the formatCoinLabel string), and the loading
@@ -51,17 +50,17 @@
  * CONTRACT_GAPS: none
  */
 
-import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import CoinDetailPage from '@/app/catalog/[coinId]/page';
+import { CoinDetailView } from '@/components/catalog/coin-detail-view';
 import { useCoin } from '@/lib/hooks/use-catalog';
 import { useCollection, useSetGrade, useSetOwnership } from '@/lib/hooks/use-collection';
 import { useAddCoinsToSet, useUserSets } from '@/lib/hooks/use-user-sets';
 import { getSetGaps } from '@/lib/user-sets-api';
 import { getStoredToken } from '@/lib/auth-token';
+import type { CoinChecklistLink } from '@/lib/coin-page';
 import type { CatalogCoin, CoinGrade } from '@coin-collector/shared';
 
 vi.mock('@/lib/hooks/use-catalog', () => ({
@@ -161,13 +160,14 @@ function userSetsResult(overrides: Partial<ReturnType<typeof useUserSets>> = {})
   } as ReturnType<typeof useUserSets>;
 }
 
-function renderPage(coinId = 'coin-1') {
+function renderPage(
+  coinId = 'coin-1',
+  extra: { initialCoin?: CatalogCoin; checklists?: CoinChecklistLink[] } = {},
+) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
-      <Suspense fallback={<div />}>
-        <CoinDetailPage params={Promise.resolve({ coinId })} />
-      </Suspense>
+      <CoinDetailView coinId={coinId} {...extra} />
     </QueryClientProvider>,
   );
 }
@@ -245,7 +245,7 @@ function signIn() {
   getStoredTokenMock.mockReturnValue('tok-abc');
 }
 
-describe('CoinDetailPage', () => {
+describe('CoinDetailView', () => {
   beforeEach(() => {
     useCoinMock.mockReset();
     useCollectionMock.mockReset();
@@ -328,7 +328,7 @@ describe('CoinDetailPage', () => {
       expect(screen.queryByTestId('coin-detail-denomination')).not.toBeInTheDocument();
       expect(screen.queryByTestId('coin-detail-year')).not.toBeInTheDocument();
       expect(screen.queryByTestId('coin-detail-variety')).not.toBeInTheDocument();
-      expect(useCoinMock).toHaveBeenCalledWith('coin-1');
+      expect(useCoinMock.mock.calls[0][0]).toBe('coin-1');
     });
   });
 
@@ -1482,6 +1482,124 @@ describe('CoinDetailPage', () => {
         });
         expect(select).toHaveFocus();
       });
+    });
+  });
+
+  describe('run_20261127_133045: coin id prop and server initial coin', () => {
+    it('asks useCoin for the coin id it was given', () => {
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+      renderPage('coin-77');
+
+      expect(useCoinMock.mock.calls[0][0]).toBe('coin-77');
+      expect(useCoinMock.mock.calls.at(-1)?.[0]).toBe('coin-77');
+    });
+
+    it('renders the coin page shell on the first render (no params wait)', () => {
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+      renderPage();
+
+      expect(screen.getByTestId('coin-detail-page')).toBeInTheDocument();
+      expect(screen.getByTestId('coin-detail-label')).toBeInTheDocument();
+    });
+
+    it('passes the server coin to useCoin as initialData', () => {
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+      renderPage('coin-1', { initialCoin: COIN_NO_IMAGE });
+
+      expect(useCoinMock.mock.calls.at(-1)?.[1]).toEqual({ initialData: COIN_NO_IMAGE });
+    });
+
+    it('passes no options to useCoin without a server coin', () => {
+      useCoinMock.mockReturnValue(queryResult({ isLoading: true }));
+      renderPage();
+
+      expect(useCoinMock.mock.calls.at(-1)?.[1]).toBeUndefined();
+    });
+  });
+
+  describe('run_20261127_133045 criterion 2: checklists that contain the coin', () => {
+    const CHECKLISTS: CoinChecklistLink[] = [
+      { id: 'list-a', name: 'Lincoln Wheat Cents' },
+      { id: 'list-b', name: 'Key Dates' },
+    ];
+
+    it('renders one link per checklist, in order, with the checklist name and the canonical set URL', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+      renderPage('coin-1', { checklists: CHECKLISTS });
+
+      const section = await screen.findByTestId('coin-detail-checklists');
+      expect(within(section).getByRole('heading', { name: 'In checklists' })).toBeInTheDocument();
+      expect(within(section).getByTestId('coin-detail-checklists-list')).toBeInTheDocument();
+      expect(within(section).getAllByTestId('coin-detail-checklist-item')).toHaveLength(2);
+      const links = within(section).getAllByTestId('coin-detail-checklist-link');
+      expect(links.map((l) => l.getAttribute('href'))).toEqual(['/sets/canonical/list-a', '/sets/canonical/list-b']);
+      expect(links.map((l) => l.textContent)).toEqual(['Lincoln Wheat Cents', 'Key Dates']);
+    });
+
+    it('follows the checklists it is given (another list, another links)', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+      renderPage('coin-1', { checklists: [{ id: 'list-z', name: 'Morgan Dollars' }] });
+
+      const links = await screen.findAllByTestId('coin-detail-checklist-link');
+      expect(links).toHaveLength(1);
+      expect(links[0]).toHaveAttribute('href', '/sets/canonical/list-z');
+      expect(links[0]).toHaveTextContent('Morgan Dollars');
+    });
+
+    it('sits after the specifications table', async () => {
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+      renderPage('coin-1', { checklists: CHECKLISTS });
+
+      const section = await screen.findByTestId('coin-detail-checklists');
+      const specs = screen.getByTestId('coin-detail-specs');
+      expect(specs.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('is the same for a signed-in visitor (it does not depend on the token)', async () => {
+      signIn();
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+      renderPage('coin-1', { checklists: CHECKLISTS });
+
+      await screen.findByTestId('coin-detail-ownership-panel');
+      const links = screen.getAllByTestId('coin-detail-checklist-link');
+      expect(links.map((l) => l.getAttribute('href'))).toEqual(['/sets/canonical/list-a', '/sets/canonical/list-b']);
+    });
+
+    it('is separate from the signed-in "In your sets" section', async () => {
+      signIn();
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+      useUserSetsMock.mockReturnValue(userSetsResult({ data: USER_SETS as never }));
+      mockGapsSetAOnly();
+      renderPage('coin-1', { checklists: CHECKLISTS });
+
+      const sets = await screen.findByTestId('coin-detail-sets');
+      const checklists = screen.getByTestId('coin-detail-checklists');
+      expect(sets).not.toContainElement(checklists);
+      expect(checklists).not.toContainElement(sets);
+      expect(within(sets).getAllByTestId('coin-detail-set-link').map((l) => l.getAttribute('href'))).toEqual([
+        '/sets/set-a',
+      ]);
+    });
+
+    it.each([
+      ['an empty list', { checklists: [] }],
+      ['no list', {}],
+    ])('renders no section, heading or links with %s', async (_label, extra) => {
+      useCoinMock.mockReturnValue(queryResult({ data: COIN_NO_IMAGE as never }));
+      renderPage('coin-1', extra);
+
+      await screen.findByTestId('coin-detail-label');
+      expect(screen.queryByTestId('coin-detail-checklists')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('coin-detail-checklist-link')).not.toBeInTheDocument();
+      expect(screen.queryByText('In checklists')).not.toBeInTheDocument();
+    });
+
+    it('does not render the section while the coin is still loading', async () => {
+      useCoinMock.mockReturnValue(queryResult({ isLoading: true }));
+      renderPage('coin-1', { checklists: CHECKLISTS });
+
+      await screen.findByTestId('coin-detail-loading');
+      expect(screen.queryByTestId('coin-detail-checklists')).not.toBeInTheDocument();
     });
   });
 });

@@ -1,18 +1,20 @@
 /**
- * Tests for: CoinDetailPage not-found state
+ * Tests for: CoinDetailView not-found state
  * Contract source: runs/run_20261112_212821/plan.md § Interface Contract → Detail pages (modified)
+ *                   runs/run_20261127_133045/plan.md § Interface Contract → Component: CoinDetailView (CREATE)
  * Covers criteria: #7, #11, #12
  *
- * Mock setup mirrors page.test.tsx (Suspense + QueryClientProvider, mocked hooks).
+ * Mock setup mirrors page.test.tsx (QueryClientProvider, mocked hooks). run_20261127_133045: the page is
+ * a server component now, so the tests render the client view CoinDetailView with the coin id as a prop
+ * (no Suspense, no params Promise).
  *
  * CONTRACT_GAPS: none
  */
 
-import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import CoinDetailPage from '@/app/catalog/[coinId]/page';
+import { CoinDetailView } from '@/components/catalog/coin-detail-view';
 import { ApiError } from '@/lib/api-client';
 import { useCoin } from '@/lib/hooks/use-catalog';
 import { useCollection, useSetGrade, useSetOwnership } from '@/lib/hooks/use-collection';
@@ -61,9 +63,7 @@ function renderPage(coinId = 'coin-1') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const result = render(
     <QueryClientProvider client={queryClient}>
-      <Suspense fallback={<div />}>
-        <CoinDetailPage params={Promise.resolve({ coinId })} />
-      </Suspense>
+      <CoinDetailView coinId={coinId} />
     </QueryClientProvider>,
   );
   return { ...result, queryClient };
@@ -105,7 +105,7 @@ const USER_SETS = [
   },
 ];
 
-describe('CoinDetailPage: not-found state', () => {
+describe('CoinDetailView: not-found state', () => {
   beforeEach(() => {
     [
       useCoinMock,

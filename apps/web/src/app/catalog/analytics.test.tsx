@@ -1,17 +1,20 @@
 /**
- * Tests for: CatalogPage analytics (catalog_no_results)
+ * Tests for: CatalogPageView analytics (catalog_no_results)
  * Contract source: runs/run_20261123_220432/plan.md § Interface Contract → Page: CatalogPage
+ *                   runs/run_20261127_133045/plan.md § Interface Contract → Component: CatalogPageView (CREATE)
  * Covers criteria: #2, #3, #4, #5, #6 (from prd.md)
  *
  * CONTRACT_GAP: none.
  *
  * The mocking setup mirrors page.test.tsx next to this file. `track` is mocked as in
  * app/want-list/analytics.test.tsx. Assertions look only at calls for 'catalog_no_results'.
+ * run_20261127_133045: the page is a server component now, so the tests render the client view
+ * CatalogPageView (without initial data).
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import CatalogPage from '@/app/catalog/page';
+import { CatalogPageView } from '@/components/catalog/catalog-page-view';
 import { useCatalog, useCatalogFacets } from '@/lib/hooks/use-catalog';
 import { track } from '@/lib/analytics';
 
@@ -89,7 +92,7 @@ function noResultsCalls() {
 
 const ALL_NULL = { country: null, denomination: null, year_from: null, year_to: null, name: null };
 
-describe('CatalogPage analytics: catalog_no_results', () => {
+describe('CatalogPageView analytics: catalog_no_results', () => {
   beforeEach(() => {
     trackMock.mockReset();
     useCatalogMock.mockReset();
@@ -112,7 +115,7 @@ describe('CatalogPage analytics: catalog_no_results', () => {
         'country=Ukraine&denomination=50%20Cents&denomination=1%20Cent&yearMin=1900&yearMax=1950&name=Lincoln%20WHEAT',
       );
 
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-empty')).toBeInTheDocument();
       expect(noResultsCalls()).toEqual([
@@ -130,7 +133,7 @@ describe('CatalogPage analytics: catalog_no_results', () => {
     });
 
     it('once with all five properties null when no filter is set', () => {
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(noResultsCalls()).toEqual([['catalog_no_results', ALL_NULL]]);
     });
@@ -138,7 +141,7 @@ describe('CatalogPage analytics: catalog_no_results', () => {
     it('sends different values for a different filter combination (not hard-coded)', () => {
       searchParamsValue = new URLSearchParams('country=USA&yearMin=1999');
 
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(noResultsCalls()).toEqual([
         ['catalog_no_results', { ...ALL_NULL, country: 'USA', year_from: '1999' }],
@@ -152,7 +155,7 @@ describe('CatalogPage analytics: catalog_no_results', () => {
         queryResult({ data: { items: [makeCoin('c1'), makeCoin('c2')], page: 1, limit: 20, total: 2 } }),
       );
 
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.queryByTestId('catalog-empty')).not.toBeInTheDocument();
       expect(noResultsCalls()).toHaveLength(0);
@@ -161,7 +164,7 @@ describe('CatalogPage analytics: catalog_no_results', () => {
     it('while loading', () => {
       useCatalogMock.mockReturnValue(queryResult({ data: undefined, isLoading: true }));
 
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(noResultsCalls()).toHaveLength(0);
     });
@@ -169,7 +172,7 @@ describe('CatalogPage analytics: catalog_no_results', () => {
     it('on error', () => {
       useCatalogMock.mockReturnValue(queryResult({ isError: true }));
 
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-error')).toBeInTheDocument();
       expect(noResultsCalls()).toHaveLength(0);
@@ -178,7 +181,7 @@ describe('CatalogPage analytics: catalog_no_results', () => {
     it('on error even when stale empty data is present', () => {
       useCatalogMock.mockReturnValue(emptyResult({ isError: true }));
 
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-error')).toBeInTheDocument();
       expect(noResultsCalls()).toHaveLength(0);
@@ -187,7 +190,7 @@ describe('CatalogPage analytics: catalog_no_results', () => {
     it('for placeholder data from the previous combination, even though catalog-empty renders', () => {
       useCatalogMock.mockReturnValue(emptyResult({ isPlaceholderData: true }));
 
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-empty')).toBeInTheDocument();
       expect(noResultsCalls()).toHaveLength(0);
@@ -195,11 +198,11 @@ describe('CatalogPage analytics: catalog_no_results', () => {
 
     it('fires after placeholder data is replaced by the real empty result', () => {
       useCatalogMock.mockReturnValue(emptyResult({ isPlaceholderData: true }));
-      const { rerender } = render(<CatalogPage />);
+      const { rerender } = render(<CatalogPageView />);
       expect(noResultsCalls()).toHaveLength(0);
 
       useCatalogMock.mockReturnValue(emptyResult({ isPlaceholderData: false }));
-      rerender(<CatalogPage />);
+      rerender(<CatalogPageView />);
 
       expect(noResultsCalls()).toHaveLength(1);
     });
@@ -207,11 +210,11 @@ describe('CatalogPage analytics: catalog_no_results', () => {
 
   describe('once per distinct filter combination', () => {
     it('does not fire again on re-renders with the same empty result', () => {
-      const { rerender } = render(<CatalogPage />);
+      const { rerender } = render(<CatalogPageView />);
 
-      rerender(<CatalogPage />);
-      rerender(<CatalogPage />);
-      rerender(<CatalogPage />);
+      rerender(<CatalogPageView />);
+      rerender(<CatalogPageView />);
+      rerender(<CatalogPageView />);
 
       expect(noResultsCalls()).toHaveLength(1);
     });
@@ -219,7 +222,7 @@ describe('CatalogPage analytics: catalog_no_results', () => {
     it('fires again after the search text changes', () => {
       vi.useFakeTimers();
       searchParamsValue = new URLSearchParams('name=wheat');
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       expect(noResultsCalls()).toHaveLength(1);
 
       fireEvent.change(screen.getByTestId('catalog-search'), { target: { value: 'Lincoln' } });
@@ -234,7 +237,7 @@ describe('CatalogPage analytics: catalog_no_results', () => {
     });
 
     it('does not fire again when only the sort changes', () => {
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       expect(noResultsCalls()).toHaveLength(1);
 
       fireEvent.change(screen.getByTestId('catalog-sort'), { target: { value: 'name_asc' } });
@@ -244,7 +247,7 @@ describe('CatalogPage analytics: catalog_no_results', () => {
 
     it('fires again with all nulls after Clear all in the empty state', () => {
       searchParamsValue = new URLSearchParams('country=Ukraine&name=zzz');
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       expect(noResultsCalls()).toHaveLength(1);
 
       fireEvent.click(screen.getByTestId('catalog-empty-clear'));

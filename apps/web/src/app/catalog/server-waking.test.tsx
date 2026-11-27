@@ -1,16 +1,19 @@
 /**
- * Tests for: CatalogPage (server waking notice)
+ * Tests for: CatalogPageView (server waking notice)
  * Contract source: runs/run_20261117_063301/plan.md § Interface Contract → Public pages (waking notice)
+ *                   runs/run_20261127_133045/plan.md § Interface Contract → Component: CatalogPageView (CREATE)
  * Covers criteria: #4 (from prd.md)
  *
  * The mock block mirrors catalog/page.test.tsx. useSlowLoading is deliberately not mocked.
+ * run_20261127_133045: the page is a server component now, so the tests render the client view
+ * CatalogPageView (without initial data).
  *
  * CONTRACT_GAPs: none
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
-import CatalogPage from '@/app/catalog/page';
+import { CatalogPageView } from '@/components/catalog/catalog-page-view';
 import { useCatalog, useCatalogFacets } from '@/lib/hooks/use-catalog';
 
 const replaceMock = vi.fn();
@@ -73,7 +76,7 @@ function advance(ms: number) {
   });
 }
 
-describe('CatalogPage: server waking notice', () => {
+describe('CatalogPageView: server waking notice', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     useCatalogMock.mockReset();
@@ -90,7 +93,7 @@ describe('CatalogPage: server waking notice', () => {
 
   it('is absent at 2.9 s, present at 3 s next to the existing skeleton, and gone once data resolves', () => {
     useCatalogMock.mockReturnValue(queryResult({ isLoading: true }));
-    const view = render(<CatalogPage />);
+    const view = render(<CatalogPageView />);
 
     expect(screen.getByTestId('catalog-loading')).toBeInTheDocument();
     advance(2900);
@@ -102,7 +105,7 @@ describe('CatalogPage: server waking notice', () => {
     expect(screen.getByTestId('catalog-loading')).toBeInTheDocument();
 
     useCatalogMock.mockReturnValue(RESOLVED);
-    view.rerender(<CatalogPage />);
+    view.rerender(<CatalogPageView />);
 
     expect(screen.queryByTestId('server-waking-notice')).not.toBeInTheDocument();
     expect(screen.queryByTestId('catalog-loading')).not.toBeInTheDocument();
@@ -111,11 +114,11 @@ describe('CatalogPage: server waking notice', () => {
 
   it('never appears when the query resolves before 3 s', () => {
     useCatalogMock.mockReturnValue(queryResult({ isLoading: true }));
-    const view = render(<CatalogPage />);
+    const view = render(<CatalogPageView />);
     advance(2000);
 
     useCatalogMock.mockReturnValue(RESOLVED);
-    view.rerender(<CatalogPage />);
+    view.rerender(<CatalogPageView />);
     advance(10000);
 
     expect(screen.queryByTestId('server-waking-notice')).not.toBeInTheDocument();
@@ -125,7 +128,7 @@ describe('CatalogPage: server waking notice', () => {
     useCatalogMock.mockReturnValue(
       queryResult({ isLoading: true, data: { items: [COIN], page: 1, limit: 20, total: 1 } } as never),
     );
-    render(<CatalogPage />);
+    render(<CatalogPageView />);
 
     advance(5000);
 
@@ -134,7 +137,7 @@ describe('CatalogPage: server waking notice', () => {
 
   it('does not appear on an error', () => {
     useCatalogMock.mockReturnValue(queryResult({ isError: true }));
-    render(<CatalogPage />);
+    render(<CatalogPageView />);
 
     advance(5000);
 
