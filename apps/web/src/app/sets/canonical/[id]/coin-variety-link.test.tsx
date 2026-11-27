@@ -1,11 +1,12 @@
 /**
- * Tests for: CanonicalSetDetailPage coin row variety + link to the coin page
+ * Tests for: CanonicalSetDetailView coin row variety + link to the coin page
  * Contract source: runs/run_20261006_215558/plan.md § Interface Contract → Page: CanonicalSetDetailPage (modify)
  *                   runs/run_20261017_142658/plan.md § Approach §3 (variety is now carried by the title and eyebrow)
  *                   runs/run_20261109_220451/plan.md § Interface Contract → Test notes (useCanonicalSetGaps mock)
+ *                   runs/run_20261127_120807/plan.md § Approach §8 (render the view, not the async server page)
  * Covers criteria: #1, #2, #3, #5 (from run_20261006_215558's prd.md), #6 (from run_20261017_142658's prd.md)
  *
- * Mock setup mirrors sets/canonical/[id]/page.test.tsx (Suspense around the page).
+ * Mock setup mirrors sets/canonical/[id]/page.test.tsx.
  *
  * run_20261017_142658: the raw-variety line (canonical-set-coin-variety) is removed. The variety now shows
  * as the getCoinName title, with the coin's type name as the eyebrow, inside the same link to the coin page.
@@ -13,12 +14,13 @@
  *
  * run_20261109_220451: only the useCanonicalSetGaps mock is added (the page now calls it and there is
  * no QueryClientProvider here). No assertion changes.
+ *
+ * run_20261127_120807: only the import and the renderPage helper change (the page is now a server component).
  */
 
-import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import CanonicalSetDetailPage from '@/app/sets/canonical/[id]/page';
+import { CanonicalSetDetailView } from '@/components/sets/canonical-set-detail-view';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
 import { useCanonicalSetGaps } from '@/lib/hooks/use-user-sets';
 import { getStoredToken } from '@/lib/auth-token';
@@ -49,11 +51,7 @@ function queryResult(overrides: Partial<ReturnType<typeof useCanonicalSet>> = {}
 }
 
 function renderPage(id = 'set-1') {
-  return render(
-    <Suspense fallback={<div />}>
-      <CanonicalSetDetailPage params={Promise.resolve({ id })} />
-    </Suspense>,
-  );
+  return render(<CanonicalSetDetailView id={id} />);
 }
 
 // Positions order: coin-1 (variety), coin-2 (empty), coin-3 (variety, different text)
@@ -109,7 +107,7 @@ const DETAIL = {
   ],
 };
 
-describe('CanonicalSetDetailPage: coin variety and link to coin page', () => {
+describe('CanonicalSetDetailView: coin variety and link to coin page', () => {
   beforeEach(() => {
     useCanonicalSetMock.mockReset();
     useCanonicalSetGapsMock.mockReset();

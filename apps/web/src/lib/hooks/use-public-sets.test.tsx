@@ -1,12 +1,13 @@
 /**
  * Tests for: use-public-sets hooks
  * Contract source: runs/run_20260721_161448/plan.md § Interface Contract → Module: use-public-sets hooks
- * Covers criteria: #3 (from prd.md)
+ *                   runs/run_20261127_120807/plan.md § Interface Contract → Hooks (modified)
+ * Covers criteria: #3 (from prd.md), #1 (from run_20261127_120807's prd.md: initialData, no refetch)
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { usePublicSet, usePublicSets } from '@/lib/hooks/use-public-sets';
 import { getPublicSet, getPublicSets } from '@/lib/public-sets-api';
 
@@ -67,6 +68,53 @@ describe('use-public-sets hooks', () => {
 
     it('does not call getPublicSet when id is an empty string', async () => {
       renderHook(() => usePublicSet(''), { wrapper });
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(getPublicSetMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('run_20261127_120807: usePublicSet initialData from the server render, no refetch', () => {
+    const serverDetail = {
+      id: 'u1',
+      userId: 'user-1',
+      name: 'Server set',
+      clonedFromCanonicalId: null,
+      clonedFromUserSetId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      coins: [],
+    };
+
+    it('returns the initial data immediately and never calls getPublicSet, also after a window focus', async () => {
+      getPublicSetMock.mockResolvedValue({ ...serverDetail, name: 'Fetched' } as never);
+
+      const { result } = renderHook(() => usePublicSet('u1', { initialData: serverDetail as never }), { wrapper });
+
+      expect(result.current.data).toEqual(serverDetail);
+      expect(result.current.isLoading).toBe(false);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      act(() => {
+        focusManager.setFocused(true);
+      });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(getPublicSetMock).not.toHaveBeenCalled();
+      expect(result.current.data?.name).toBe('Server set');
+    });
+
+    it('without initialData the API function is still called (the fallback is the existing query)', async () => {
+      getPublicSetMock.mockResolvedValue({ ...serverDetail, name: 'Fetched' } as never);
+
+      const { result } = renderHook(() => usePublicSet('u1', {}), { wrapper });
+
+      await waitFor(() => {
+        expect(result.current.data?.name).toBe('Fetched');
+      });
+      expect(getPublicSetMock).toHaveBeenCalledWith('u1');
+    });
+
+    it('with initialData it still stays disabled for an empty id', async () => {
+      renderHook(() => usePublicSet('', { initialData: serverDetail as never }), { wrapper });
 
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(getPublicSetMock).not.toHaveBeenCalled();

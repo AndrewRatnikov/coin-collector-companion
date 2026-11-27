@@ -1,16 +1,19 @@
 /**
- * Tests for: PublicSetDetailPage not-found state
+ * Tests for: PublicSetDetailView not-found state (client-side fallback path)
  * Contract source: runs/run_20261112_212821/plan.md § Interface Contract → Detail pages (modified)
+ *                   runs/run_20261127_120807/plan.md § Approach §8 (render the view, not the async server page)
  * Covers criteria: #9, #11, #12
  *
  * Mock setup mirrors progress.test.tsx.
+ * run_20261127_120807: only the import and the renderPage helper change (the page is now a server component);
+ * every assertion is unchanged. This state is only reachable when the server fell back.
  *
  * CONTRACT_GAPS: none
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import PublicSetDetailPage from '@/app/sets/public/[id]/page';
+import { PublicSetDetailView } from '@/components/sets/public-set-detail-view';
 import { ApiError } from '@/lib/api-client';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import { useSetGaps } from '@/lib/hooks/use-user-sets';
@@ -52,7 +55,7 @@ function gapsResult(overrides: Record<string, unknown> = {}) {
 }
 
 function renderPage(id = 'set-1') {
-  return render(<PublicSetDetailPage params={Promise.resolve({ id })} />);
+  return render(<PublicSetDetailView id={id} />);
 }
 
 const COIN_1 = {
@@ -77,7 +80,7 @@ const DETAIL = {
   coins: [{ id: 'usc-1', position: 0, coin: COIN_1 }],
 };
 
-describe('PublicSetDetailPage: not-found state', () => {
+describe('PublicSetDetailView: not-found state', () => {
   beforeEach(() => {
     usePublicSetMock.mockReset();
     useSetGapsMock.mockReset();

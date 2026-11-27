@@ -1,8 +1,9 @@
 /**
- * Tests for: CanonicalSetsPage
+ * Tests for: CanonicalSetsListView (was CanonicalSetsPage)
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CanonicalSetsPage
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
  *                   runs/run_20261017_142658/plan.md § Approach §4 (Skeleton now carries a testid)
+ *                   runs/run_20261127_120807/plan.md § Approach §8 (render the view, not the async server page)
  * Covers criteria: #8 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md),
  *                  #13 (from run_20261017_142658's prd.md)
  *
@@ -12,11 +13,15 @@
  *
  * run_20261017_142658: only the skeleton test changes. Skeleton no longer uses the `animate-pulse`
  * class, so the test finds it by its `skeleton` testid inside the loading wrapper.
+ *
+ * run_20261127_120807: the page is now an async server component, so the tests render
+ * CanonicalSetsListView with no initial data (the fallback path, which is the old behaviour).
+ * Only the import and the render calls change.
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
-import CanonicalSetsPage from '@/app/sets/canonical/page';
+import { CanonicalSetsListView } from '@/components/sets/canonical-sets-list-view';
 import { useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
 
 vi.mock('@/lib/hooks/use-canonical-sets', () => ({
@@ -39,7 +44,7 @@ const SETS = [
   { id: 's2', name: 'Lincoln Wheat Cents', description: 'Every year', source: 'seed-template', templateVersion: 'v1' },
 ];
 
-describe('CanonicalSetsPage', () => {
+describe('CanonicalSetsListView', () => {
   beforeEach(() => {
     useCanonicalSetsMock.mockReset();
   });
@@ -47,7 +52,7 @@ describe('CanonicalSetsPage', () => {
   describe('rendering', () => {
     it('renders the page root', () => {
       useCanonicalSetsMock.mockReturnValue(queryResult());
-      render(<CanonicalSetsPage />);
+      render(<CanonicalSetsListView />);
       expect(screen.getByTestId('canonical-sets-page')).toBeInTheDocument();
     });
   });
@@ -56,7 +61,7 @@ describe('CanonicalSetsPage', () => {
     it('renders result content synchronously with no stored token (no auth-guard delay/redirect before content appears)', () => {
       localStorage.clear();
       useCanonicalSetsMock.mockReturnValue(queryResult({ data: SETS as never }));
-      render(<CanonicalSetsPage />);
+      render(<CanonicalSetsListView />);
 
       expect(screen.getByTestId('canonical-sets-page')).toBeInTheDocument();
       expect(screen.getAllByTestId('canonical-set-item')).toHaveLength(2);
@@ -66,7 +71,7 @@ describe('CanonicalSetsPage', () => {
   describe('criterion 8: shows a loading state while the canonical-sets query is loading', () => {
     it('renders canonical-sets-loading and no list while isLoading is true', () => {
       useCanonicalSetsMock.mockReturnValue(queryResult({ isLoading: true }));
-      render(<CanonicalSetsPage />);
+      render(<CanonicalSetsListView />);
 
       expect(screen.getByTestId('canonical-sets-loading')).toBeInTheDocument();
       expect(screen.queryByTestId('canonical-sets-list')).not.toBeInTheDocument();
@@ -76,7 +81,7 @@ describe('CanonicalSetsPage', () => {
   describe('criterion 1: loading state uses a skeleton, not bare text', () => {
     it('renders a skeleton element within canonical-sets-loading and no literal "Loading…" text', () => {
       useCanonicalSetsMock.mockReturnValue(queryResult({ isLoading: true }));
-      render(<CanonicalSetsPage />);
+      render(<CanonicalSetsListView />);
 
       expect(screen.getByTestId('canonical-sets-loading')).toBeInTheDocument();
       expect(within(screen.getByTestId('canonical-sets-loading')).getAllByTestId('skeleton').length).toBeGreaterThan(0);
@@ -87,7 +92,7 @@ describe('CanonicalSetsPage', () => {
   describe('criterion 8: shows an error state when the query fails', () => {
     it('renders canonical-sets-error when isError is true', () => {
       useCanonicalSetsMock.mockReturnValue(queryResult({ isError: true }));
-      render(<CanonicalSetsPage />);
+      render(<CanonicalSetsListView />);
 
       expect(screen.getByTestId('canonical-sets-error')).toBeInTheDocument();
     });
@@ -96,7 +101,7 @@ describe('CanonicalSetsPage', () => {
   describe('criterion 8: renders the list of canonical sets', () => {
     it('renders one canonical-set-item per set, each linking to its detail page', () => {
       useCanonicalSetsMock.mockReturnValue(queryResult({ data: SETS as never }));
-      render(<CanonicalSetsPage />);
+      render(<CanonicalSetsListView />);
 
       expect(screen.getByTestId('canonical-sets-list')).toBeInTheDocument();
       const items = screen.getAllByTestId('canonical-set-item');
@@ -109,7 +114,7 @@ describe('CanonicalSetsPage', () => {
 
     it('renders canonical-sets-empty when there are no canonical sets', () => {
       useCanonicalSetsMock.mockReturnValue(queryResult({ data: [] as never }));
-      render(<CanonicalSetsPage />);
+      render(<CanonicalSetsListView />);
 
       expect(screen.getByTestId('canonical-sets-empty')).toBeInTheDocument();
       expect(screen.queryByTestId('canonical-set-item')).not.toBeInTheDocument();

@@ -85,6 +85,9 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-26](2026-11-26-only-named-key-dates-are-flagged-scarce-dates-left-out.md) | Only the dates a source names as key dates are flagged and listed; the scarce dates the sources also list are left out | Accepted |
 | [2026-11-26](2026-11-26-public-pages-server-rendered-with-cached-api-data.md) | Public pages render on the server, fetching the API over HTTP through one server-only helper with Next's data cache (1 h lists, 1 day coin pages) and a 5 s timeout | Accepted |
 | [2026-11-27](2026-11-27-robots-allows-all-crawlers-including-ai-training-bots.md) | robots.txt allows every crawler, AI training bots included, with one explicit group per named bot that repeats the disallow list | Accepted |
+| [2026-11-27](2026-11-27-set-pages-pass-server-data-to-client-views-as-initial-data.md) | The set pages are server components that pass their data to client views as TanStack initialData, with no refetch in the browser | Accepted |
+| [2026-11-27](2026-11-27-set-page-loads-map-api-outcomes-to-ok-not-found-unavailable.md) | Set page loaders map API outcomes to ok, not-found (404 and 400) or unavailable, shared per request through React cache | Accepted |
+| [2026-11-27](2026-11-27-set-pages-share-one-title-format-and-repeat-the-social-image.md) | Set pages share one title format and their Open Graph and Twitter metadata repeat the static social image explicitly | Accepted |
 
 ## Where else decisions live
 

@@ -1,25 +1,28 @@
 /**
- * Tests for: PublicSetDetailPage coin row variety + link to the coin page
+ * Tests for: PublicSetDetailView coin row variety + link to the coin page
  * Contract source: runs/run_20261006_215558/plan.md § Interface Contract → Page: PublicSetDetailPage (modify)
  *                   runs/run_20261017_142658/plan.md § Approach §3 (variety is now carried by the title and eyebrow)
  *                   runs/run_20261109_220451/plan.md § Interface Contract → Page: PublicSetDetailPage
+ *                   runs/run_20261127_120807/plan.md § Approach §8 (render the view, not the async server page)
  * Covers criteria: #1, #2, #3, #4 (status outside link), #5 (from run_20261006_215558's prd.md),
  *                  #6 (from run_20261017_142658's prd.md), #9 (from run_20261109_220451's prd.md)
  *
  * Mock setup mirrors sets/public/[id]/page.test.tsx.
  *
- * run_20261017_142658: the raw-variety line (public-set-detail-coin-variety) is removed. The variety now shows
+ * run_20261017_142658: the raw-variety line is removed. The variety now shows
  * as the getCoinName title, with the coin's type name as the eyebrow, inside the same link to the coin page.
  * The coin fixtures carry the name and isKeyDate fields that getCoinName reads.
  *
  * run_20261109_220451: the status span (public-set-detail-coin-status) is replaced by the read-only mark
  * (public-set-detail-coin-mark); the test for "outside the link" now checks the mark. Gap fixtures carry
  * `grade` and `minGrade`.
+ *
+ * run_20261127_120807: only the import and the renderPage helper change (the page is now a server component).
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import PublicSetDetailPage from '@/app/sets/public/[id]/page';
+import { PublicSetDetailView } from '@/components/sets/public-set-detail-view';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import { useSetGaps } from '@/lib/hooks/use-user-sets';
 import { getStoredToken } from '@/lib/auth-token';
@@ -55,7 +58,7 @@ function gapsResult(overrides: Partial<ReturnType<typeof useSetGaps>> = {}) {
 }
 
 function renderPage(id = 'set-1') {
-  return render(<PublicSetDetailPage params={Promise.resolve({ id })} />);
+  return render(<PublicSetDetailView id={id} />);
 }
 
 const COIN_1 = {
@@ -118,7 +121,7 @@ const GAPS = {
   ],
 };
 
-describe('PublicSetDetailPage: coin variety and link to coin page', () => {
+describe('PublicSetDetailView: coin variety and link to coin page', () => {
   beforeEach(() => {
     usePublicSetMock.mockReset();
     useSetGapsMock.mockReset();
@@ -158,10 +161,11 @@ describe('PublicSetDetailPage: coin variety and link to coin page', () => {
   it('the raw variety line is gone from every row', async () => {
     const items = await getItems();
 
+    // Structural check: the removed raw-variety id is not in contract.json, so assert on the DOM instead.
     items.forEach((item) => {
-      expect(within(item).queryByTestId('public-set-detail-coin-variety')).not.toBeInTheDocument();
+      expect(item.querySelector('[data-testid$="-coin-variety"]')).toBeNull();
     });
-    expect(screen.queryByTestId('public-set-detail-coin-variety')).not.toBeInTheDocument();
+    expect(document.querySelector('[data-testid$="-coin-variety"]')).toBeNull();
   });
 
   it('criterion 3/5: each row has a link to /catalog/{coin.id} containing the eyebrow, title and subtitle', async () => {

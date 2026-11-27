@@ -1,18 +1,19 @@
 /**
- * Tests for: CanonicalSetDetailPage (server waking notice)
+ * Tests for: CanonicalSetDetailView (server waking notice)
  * Contract source: runs/run_20261117_063301/plan.md § Interface Contract → Public pages (waking notice)
+ *                   runs/run_20261127_120807/plan.md § Approach §8 (render the view, not the async server page)
  * Covers criteria: #4 (from prd.md)
  *
  * The mock block mirrors sets/canonical/[id]/page.test.tsx. useSlowLoading is deliberately not mocked.
- * The params Promise is created once per test and reused on rerender.
+ * run_20261127_120807: only the import and the setup helper change (the page is now a server component,
+ * the id is a prop, so no Suspense wrapper is needed).
  *
  * CONTRACT_GAPs: none
  */
 
-import { Suspense } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
-import CanonicalSetDetailPage from '@/app/sets/canonical/[id]/page';
+import { CanonicalSetDetailView } from '@/components/sets/canonical-set-detail-view';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
 import { useCanonicalSetGaps } from '@/lib/hooks/use-user-sets';
 import { getStoredToken } from '@/lib/auth-token';
@@ -86,16 +87,11 @@ async function flushParams() {
 }
 
 function setup() {
-  const params = Promise.resolve({ id: 'set-1' });
-  const ui = () => (
-    <Suspense fallback={<div />}>
-      <CanonicalSetDetailPage params={params} />
-    </Suspense>
-  );
+  const ui = () => <CanonicalSetDetailView id="set-1" />;
   return { view: render(ui()), ui };
 }
 
-describe('CanonicalSetDetailPage: server waking notice', () => {
+describe('CanonicalSetDetailView: server waking notice', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     useCanonicalSetMock.mockReset();

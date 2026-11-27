@@ -1,16 +1,18 @@
 /**
- * Tests for: CanonicalSetsPage (server waking notice)
+ * Tests for: CanonicalSetsListView (server waking notice)
  * Contract source: runs/run_20261117_063301/plan.md § Interface Contract → Public pages (waking notice)
+ *                   runs/run_20261127_120807/plan.md § Approach §8 (render the view, not the async server page)
  * Covers criteria: #4 (from prd.md)
  *
  * The mock block mirrors sets/canonical/page.test.tsx. useSlowLoading is deliberately not mocked.
+ * run_20261127_120807: only the import and the render calls change (the page is now a server component).
  *
  * CONTRACT_GAPs: none
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
-import CanonicalSetsPage from '@/app/sets/canonical/page';
+import { CanonicalSetsListView } from '@/components/sets/canonical-sets-list-view';
 import { useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
 
 vi.mock('@/lib/hooks/use-canonical-sets', () => ({
@@ -34,7 +36,7 @@ function advance(ms: number) {
   });
 }
 
-describe('CanonicalSetsPage: server waking notice', () => {
+describe('CanonicalSetsListView: server waking notice', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     useCanonicalSetsMock.mockReset();
@@ -46,7 +48,7 @@ describe('CanonicalSetsPage: server waking notice', () => {
 
   it('is absent at 2.9 s, present at 3 s inside the loading block, and gone once data resolves', () => {
     useCanonicalSetsMock.mockReturnValue(queryResult({ isLoading: true }));
-    const view = render(<CanonicalSetsPage />);
+    const view = render(<CanonicalSetsListView />);
 
     advance(2900);
     expect(screen.queryByTestId('server-waking-notice')).not.toBeInTheDocument();
@@ -56,7 +58,7 @@ describe('CanonicalSetsPage: server waking notice', () => {
     expect(screen.getByTestId('canonical-sets-loading')).toContainElement(notice);
 
     useCanonicalSetsMock.mockReturnValue(queryResult({ data: SETS as never }));
-    view.rerender(<CanonicalSetsPage />);
+    view.rerender(<CanonicalSetsListView />);
 
     expect(screen.queryByTestId('server-waking-notice')).not.toBeInTheDocument();
     expect(screen.queryByTestId('canonical-sets-loading')).not.toBeInTheDocument();
@@ -65,11 +67,11 @@ describe('CanonicalSetsPage: server waking notice', () => {
 
   it('never appears when the query resolves before 3 s', () => {
     useCanonicalSetsMock.mockReturnValue(queryResult({ isLoading: true }));
-    const view = render(<CanonicalSetsPage />);
+    const view = render(<CanonicalSetsListView />);
     advance(2000);
 
     useCanonicalSetsMock.mockReturnValue(queryResult({ data: SETS as never }));
-    view.rerender(<CanonicalSetsPage />);
+    view.rerender(<CanonicalSetsListView />);
     advance(10000);
 
     expect(screen.queryByTestId('server-waking-notice')).not.toBeInTheDocument();
@@ -77,7 +79,7 @@ describe('CanonicalSetsPage: server waking notice', () => {
 
   it('does not appear on an error', () => {
     useCanonicalSetsMock.mockReturnValue(queryResult({ isError: true }));
-    render(<CanonicalSetsPage />);
+    render(<CanonicalSetsListView />);
 
     advance(5000);
 
