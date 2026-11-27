@@ -47,6 +47,16 @@ describe('publicApiBaseUrl', () => {
     expect(publicApiBaseUrl(' https://api.example/api/v1/ ')).toBe('https://api.example/api/v1');
   });
 
+  it.each(['api.example', 'api.example/api/v1', 'ftp://api.example', 'not a url'])(
+    'returns null for the malformed value %j instead of throwing later',
+    (raw) => {
+      expect(publicApiBaseUrl(raw)).toBeNull();
+      expect(() =>
+        buildLlmsTxt({ siteOrigin: SITE, apiBaseUrl: publicApiBaseUrl(raw), checklists: null }),
+      ).not.toThrow();
+    },
+  );
+
   it('follows different inputs', () => {
     expect(publicApiBaseUrl('https://a.example/api/v1')).toBe('https://a.example/api/v1');
     expect(publicApiBaseUrl('https://b.example/api/v1')).toBe('https://b.example/api/v1');

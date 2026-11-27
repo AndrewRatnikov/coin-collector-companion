@@ -15,11 +15,19 @@ export const OPENAPI_JSON_PATH = '/api/docs-json';
  * The public API base URL (NEXT_PUBLIC_API_URL), trimmed and without a trailing slash, or null
  * when unset. Deliberately the public URL, not the server-only API_URL: outside agents read it.
  * The env var is read only when no argument is passed; an explicit `undefined` means "unset".
+ * A value that isn't an absolute http(s) URL (e.g. a missing scheme) is treated as unset, so
+ * /llms.txt still answers 200 and just omits the API section.
  */
 export function publicApiBaseUrl(...args: [raw?: string | undefined]): string | null {
   const raw = args.length === 0 ? process.env.NEXT_PUBLIC_API_URL : args[0];
   const trimmed = raw?.trim().replace(/\/+$/, '');
-  return trimmed ? trimmed : null;
+  if (!trimmed) return null;
+  try {
+    const { protocol } = new URL(trimmed);
+    return protocol === 'http:' || protocol === 'https:' ? trimmed : null;
+  } catch {
+    return null;
+  }
 }
 
 export function openApiJsonUrl(apiBaseUrl: string): string {
