@@ -65,7 +65,7 @@ export class SetsController {
 
   @Public()
   @Get('canonical')
-  @ApiOperation({ summary: 'List all canonical sets' })
+  @ApiOperation({ summary: 'List all canonical sets', security: [] })
   @ApiOkResponse({ description: 'All CanonicalSet rows' })
   findAllCanonical(): Promise<CanonicalSetSummary[]> {
     return this.setsService.findAllCanonical();
@@ -73,7 +73,7 @@ export class SetsController {
 
   @Public()
   @Get('canonical/:id')
-  @ApiOperation({ summary: 'Get a canonical set with its ordered coin list' })
+  @ApiOperation({ summary: 'Get a canonical set with its ordered coin list', security: [] })
   @ApiOkResponse({ description: 'Canonical set detail' })
   findCanonicalById(@Param('id', ParseUUIDPipe) id: string): Promise<CanonicalSetDetail> {
     return this.setsService.findCanonicalById(id);
@@ -93,7 +93,10 @@ export class SetsController {
 
   @Public()
   @Get('public')
-  @ApiOperation({ summary: 'List every public (user) set across all users, paginated' })
+  @ApiOperation({
+    summary: 'List every public (user) set across all users, paginated',
+    security: [],
+  })
   @ApiOkResponse({ description: 'Paginated list of UserSet rows' })
   findAllPublic(
     @Query() query: FindPublicSetsQueryDto,
@@ -103,7 +106,7 @@ export class SetsController {
 
   @Public()
   @Get('public/:id')
-  @ApiOperation({ summary: 'Get a public set with its ordered coin list' })
+  @ApiOperation({ summary: 'Get a public set with its ordered coin list', security: [] })
   @ApiOkResponse({ description: 'Public set detail' })
   findPublicById(@Param('id', ParseUUIDPipe) id: string): Promise<UserSetDetail> {
     return this.setsService.findPublicById(id);

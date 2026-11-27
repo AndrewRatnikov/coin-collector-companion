@@ -35,7 +35,7 @@ export class CatalogController {
   @Public()
   @UseGuards(OptionalJwtAuthGuard)
   @Get()
-  @ApiOperation({ summary: 'List/filter the coin catalog' })
+  @ApiOperation({ summary: 'List/filter the coin catalog', security: [] })
   @ApiOkResponse({ description: 'Paginated list of catalog coins' })
   findAll(
     @Query() query: FindCatalogQueryDto,
@@ -48,7 +48,10 @@ export class CatalogController {
   // `:id` with ParseUUIDPipe would otherwise turn /catalog/facets into a 400.
   @Public()
   @Get('facets')
-  @ApiOperation({ summary: 'Distinct countries and denominations for the catalog filter sidebar' })
+  @ApiOperation({
+    summary: 'Distinct countries and denominations for the catalog filter sidebar',
+    security: [],
+  })
   @ApiOkResponse({ description: 'Facet lists: countries A–Z, denominations (scoped to ?country=) by numeral' })
   findFacets(@Query() query: CatalogFacetsQueryDto): Promise<CatalogFacets> {
     return this.catalogService.findFacets(query.country);
@@ -56,7 +59,7 @@ export class CatalogController {
 
   @Public()
   @Get(':id')
-  @ApiOperation({ summary: 'Get a single catalog coin by id' })
+  @ApiOperation({ summary: 'Get a single catalog coin by id', security: [] })
   @ApiOkResponse({ description: 'Catalog coin detail' })
   findOne(@Param('id', ParseUUIDPipe) id: string): Promise<CatalogCoin> {
     return this.catalogService.findOne(id);
