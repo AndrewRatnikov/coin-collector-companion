@@ -21,6 +21,8 @@ function uuid(prefix: string, n: number) {
   return `${prefix}-0000-4000-8000-${String(n).padStart(12, '0')}`;
 }
 
+const OWNER_SET_ID = uuid('0a4e0000', 1);
+
 interface World {
   coinTotal: number;
   publicTotal: number;
@@ -45,10 +47,38 @@ function dispatch(path: string): unknown {
   }
   const url = new URL(path, 'http://x');
   const page = Number(url.searchParams.get('page'));
+  if (url.pathname === '/sets') {
+    // Owner-only list: must never reach the sitemap.
+    return { items: [{ id: OWNER_SET_ID, updatedAt: '2026-03-01T10:00:00.000Z' }], page, limit: 100, total: 1 };
+  }
+  if (url.pathname.startsWith('/admin')) {
+    return {
+      items: [
+        { id: uuid('9e4d0000', 1), updatedAt: '2026-03-01T10:00:00.000Z' },
+        { id: uuid('4e1e0000', 1), updatedAt: '2026-03-01T10:00:00.000Z' },
+      ],
+      page,
+      limit: 100,
+      total: 2,
+    };
+  }
   if (url.pathname === '/sets/public') {
     return paged('set', world.publicTotal, page);
   }
   if (url.pathname === '/catalog') {
+    if (url.searchParams.has('status') || url.searchParams.has('submittedByMe')) {
+      const status = url.searchParams.get('status');
+      const prefix = status === 'rejected' ? '4e1e0000' : '9e4d0000';
+      return {
+        items: [
+          { id: uuid(prefix, 1), updatedAt: '2026-03-01T10:00:00.000Z' },
+          { id: uuid('4e1e0000', 2), updatedAt: '2026-03-01T10:00:00.000Z' },
+        ],
+        page,
+        limit: 100,
+        total: 2,
+      };
+    }
     return paged('coin', world.coinTotal, page);
   }
   throw new Error(`unexpected path ${path}`);
@@ -139,6 +169,26 @@ describe('dynamic entries', () => {
   it('has no duplicate urls', async () => {
     const urls = (await sitemap()).map((e) => e.url);
     expect(new Set(urls).size).toBe(urls.length);
+  });
+});
+
+describe('exclusions', () => {
+  it('contains only GET /sets/public sets and approved catalog coins', async () => {
+    const urls = (await sitemap()).map((e) => e.url);
+    const forbidden = [
+      OWNER_SET_ID,
+      uuid('9e4d0000', 1),
+      uuid('9e4d0000', 2),
+      uuid('4e1e0000', 1),
+      uuid('4e1e0000', 2),
+    ];
+    for (const id of forbidden) {
+      expect(urls.some((u) => u.includes(id))).toBe(false);
+    }
+    expect(urls).not.toContain(`${ORIGIN}/sets/${OWNER_SET_ID}`);
+    expect(urls.some((u) => u.includes(`/sets/${OWNER_SET_ID}`))).toBe(false);
+    expect(urls).toContain(`${ORIGIN}/sets/public/${uuid('a5e70000', 1)}`);
+    expect(urls).toContain(`${ORIGIN}/catalog/${uuid('c0111111', 1)}`);
   });
 });
 
