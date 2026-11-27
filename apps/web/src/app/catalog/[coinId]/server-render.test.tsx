@@ -247,7 +247,7 @@ describe('/catalog/[coinId] server render with data (criteria 1 and 3)', () => {
     expect(within(container).queryByTestId('coin-detail-attribution')).not.toBeInTheDocument();
     expect(within(container).getByTestId('coin-detail-plate-caption')).toBeInTheDocument();
     expect(container.innerHTML).not.toContain('484,000');
-    expect(container.innerHTML).not.toContain('Wikimedia Commons');
+    expect(container.innerHTML).not.toContain('upload.wikimedia.org/vdb.jpg');
   });
 
   it('is the anonymous view: it does not read the token and adds no signed-in elements', async () => {
