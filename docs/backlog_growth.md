@@ -85,14 +85,18 @@ Every series passes the license gate in [docs/catalog-data-licensing.md](catalog
 
 Web and API stay separate services. Server components fetch from the API over HTTP; no backend logic moves into Next.js.
 
-- [ ] 3.1 ADR: which public pages render on the server, how they fetch (revalidation interval), and how the client-side ownership layer attaches after hydration.
+- [x] 3.1 ADR: which public pages render on the server, how they fetch (revalidation interval), and how the client-side ownership layer attaches after hydration. Done 2026-11-27: `docs/adr/2026-11-26-public-pages-server-rendered-with-cached-api-data.md`. The catalog index, coin page, checklist list and detail, and public set detail will render on the server through one server-only helper, `apps/web/src/lib/server-api.ts` (`API_URL`, falling back to `NEXT_PUBLIC_API_URL`; Next's data cache with 1 hour for lists and 1 day for coin pages; a 5 s timeout, after which the page falls back to its client-side loading path). The ownership layer attaches after hydration from the existing queries; crawlers get English. No page is server-rendered yet: that is 3.2-3.4.
 - [ ] 3.2 Server-render `/catalog/[coinId]` with `generateMetadata` (coin name, year, mint mark in the title; specs in the description).
 - [ ] 3.3 Server-render `/sets/canonical` and `/sets/canonical/[id]` with per-set metadata.
 - [ ] 3.4 Server-render `/sets/public/[id]` with per-set metadata.
-- [ ] 3.5 `sitemap.ts` (coins, curated sets, public sets) and `robots.ts`.
+- [x] 3.5 `sitemap.ts` (coins, curated sets, public sets) and `robots.ts`. Done 2026-11-27: `apps/web/src/app/sitemap.ts` lists `/`, `/catalog`, `/glossary`, `/privacy`, `/sets/canonical`, `/sets/public`, every curated checklist, every public set and every approved coin (`lastModified` from `updatedAt`), fetched through the existing public list endpoints with the cached helper, paging at 100 (17 requests for the fixtures, so no ids endpoint was added). A group whose fetch fails is left out and the rest is served; the route is `force-dynamic`, so a partial sitemap is never stored. `apps/web/src/app/robots.ts` is described under 3.9.
 - [ ] 3.6 Open Graph and Twitter card defaults in `layout.tsx`, overridden per page in 3.2-3.4.
 - [ ] 3.7 Fix the hydration mismatch noted in `backlog_my-submissions.md` 2.7 (`getStoredToken()` read during render) on the pages touched here.
 - [ ] 3.8 Tests: metadata output per page type; sitemap contains only approved coins.
+- [x] 3.9 robots.txt with explicit rules for AI search, user-triggered and training crawlers. Done 2026-11-27: `apps/web/src/app/robots.ts` allows everything for `*` and has one explicit Allow group each for OAI-SearchBot, ChatGPT-User, GPTBot, Claude-SearchBot, Claude-User, ClaudeBot, PerplexityBot, Perplexity-User, Google-Extended and CCBot (`AI_CRAWLER_USER_AGENTS`). Every group disallows the signed-in and auth-only paths (`DISALLOWED_PATHS`), and the sitemap line uses `NEXT_PUBLIC_SITE_URL`.
+- [x] 3.10 llms.txt describing the site and the public read API. Done 2026-11-27: `/llms.txt` (`text/markdown`) is built by `apps/web/src/lib/llms-txt.ts` and served by `apps/web/src/app/llms.txt/route.ts`: what the site is, the entry points, the curated checklists with their coin counts from the API, the seven public GET endpoints with the API base URL from `NEXT_PUBLIC_API_URL`, the OpenAPI link, and the CC BY-SA 4.0 licence line. Without the API it is served without the series section.
+- [ ] 3.11 JSON-LD structured data on public pages. Landing page done 2026-11-27 (WebSite, no SearchAction because the catalog filters by `name`); the other public pages follow with 3.2-3.4.
+- [x] 3.12 Public OpenAPI JSON linked from llms.txt. Done 2026-11-27: `apps/api/src/swagger.ts` serves the OpenAPI document at the fixed path `/api/docs-json` (`https://api.coincompanion.app/api/docs-json` in production), and the seven public read operations carry `security: []`, so they show no lock; `swagger.spec.ts` checks both.
 
 **Checkpoint:** a search for a covered series' checklist can land on a server-rendered page with a real title, description and preview.
 
