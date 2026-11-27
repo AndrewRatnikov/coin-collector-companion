@@ -7,6 +7,7 @@ import { Coverage } from '@/components/landing/coverage';
 import { LandingHero } from '@/components/landing/landing-hero';
 import { LandingPoints } from '@/components/landing/landing-points';
 import { WaysIn } from '@/components/landing/ways-in';
+import { WebsiteJsonLd } from '@/components/seo/website-json-ld';
 import { getStoredToken } from '@/lib/auth-token';
 import { useCatalog } from '@/lib/hooks/use-catalog';
 import { useCanonicalSets } from '@/lib/hooks/use-canonical-sets';
@@ -56,7 +57,8 @@ export default function Home() {
   // the full-checklist link and the coverage numbers come from the API.
   return (
     <main data-testid="home-page" className="flex w-full flex-1 flex-col">
-      <div className="mx-auto w-full max-w-[1320px] px-5 pt-6 empty:hidden min-[900px]:px-10">
+      <WebsiteJsonLd />
+      <divclassName="mx-auto w-full max-w-[1320px] px-5 pt-6 empty:hidden min-[900px]:px-10">
         <AccountDeletedNotice />
       </div>
       <LandingHero
