@@ -50,9 +50,10 @@ async function publicSetEntries(origin: string): Promise<Entry[]> {
 
 async function coinEntries(origin: string): Promise<Entry[]> {
   try {
-    // The anonymous catalog list returns approved coins only.
+    // The anonymous catalog list returns approved coins only; the status check is a second guard,
+    // because a pending or rejected coin page is a 404.
     const coins = await fetchAllPages<CatalogListItem>('/catalog');
-    return coins.map((item) => ({ url: `${origin}/catalog/${item.id}`, lastModified: item.updatedAt }));
+    return coins.filter((item) => item.status === 'approved').map((item) => ({ url: `${origin}/catalog/${item.id}`, lastModified: item.updatedAt }));
   } catch {
     return [];
   }
