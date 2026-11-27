@@ -1,17 +1,20 @@
 /**
- * Tests for: PublicSetDetailPage
+ * Tests for: PublicSetDetailView (was PublicSetDetailPage)
  * Contract source: runs/run_20260721_161448/plan.md § Interface Contract → Component: PublicSetDetailPage
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
  *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/sets/public/[id]/page.tsx
  *                   runs/run_20261017_142658/plan.md § Approach §3 and §4 (name block via getCoinName; Skeleton testid)
  *                   runs/run_20261109_220451/plan.md § Interface Contract → Page: PublicSetDetailPage
+ *                   runs/run_20261127_120807/plan.md § Approach §8 (render the view, not the async server page)
  * Covers criteria: #5, #6, #7 (from run_20260721_161448's prd.md), #1 (from run_20260722_121303's prd.md),
  *                  #7 (from run_20260728_071525's prd.md), #6, #13 (from run_20261017_142658's prd.md),
  *                  #3, #4, #9, #10 (from run_20261109_220451's prd.md)
  *
- * Unwraps params via useEffect+useState (matching the fix already applied to
- * sets/canonical/[id]/page.tsx per memory.md's recorded use()+Suspense gotcha), not
- * React's use() — no <Suspense> boundary is needed for this render.
+ * run_20261127_120807: the page is now an async server component that React Testing Library can't render,
+ * so the body lives in PublicSetDetailView and this file renders it directly with no initial data (the
+ * fallback path, which is the old behaviour). Only the import, the renderPage helper and the hook-argument
+ * assertion change: the hook now takes an optional second argument, so the id check looks at the first
+ * argument only. Every other assertion is carried over.
  *
  * run_20261017_142658: two tests change. The skeleton test looks for the Skeleton testid instead of
  * the removed `.animate-pulse` class, and the anonymous coin list test expects the getCoinName title and
@@ -26,7 +29,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import PublicSetDetailPage from '@/app/sets/public/[id]/page';
+import { PublicSetDetailView } from '@/components/sets/public-set-detail-view';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import { useSetGaps } from '@/lib/hooks/use-user-sets';
 import { getStoredToken } from '@/lib/auth-token';
@@ -62,7 +65,7 @@ function gapsResult(overrides: Partial<ReturnType<typeof useSetGaps>> = {}) {
 }
 
 function renderPage(id = 'set-1') {
-  return render(<PublicSetDetailPage params={Promise.resolve({ id })} />);
+  return render(<PublicSetDetailView id={id} />);
 }
 
 const DETAIL = {
@@ -117,7 +120,7 @@ const GAPS = {
   ],
 };
 
-describe('PublicSetDetailPage', () => {
+describe('PublicSetDetailView', () => {
   beforeEach(() => {
     usePublicSetMock.mockReset();
     useSetGapsMock.mockReset();
@@ -184,7 +187,7 @@ describe('PublicSetDetailPage', () => {
       );
       expect(screen.queryByTestId('public-set-detail-coin-mark')).not.toBeInTheDocument();
       expect(screen.queryByTestId('public-set-detail-coin-status')).not.toBeInTheDocument();
-      expect(usePublicSetMock).toHaveBeenCalledWith('set-1');
+      expect(usePublicSetMock.mock.calls.at(-1)?.[0]).toBe('set-1');
     });
 
     it('no longer shows the old formatCoinLabel text', async () => {

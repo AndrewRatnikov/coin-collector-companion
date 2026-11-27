@@ -1,17 +1,19 @@
 /**
- * Tests for: CanonicalSetDetailPage not-found state
+ * Tests for: CanonicalSetDetailView not-found state (client-side fallback path)
  * Contract source: runs/run_20261112_212821/plan.md § Interface Contract → Detail pages (modified)
+ *                   runs/run_20261127_120807/plan.md § Approach §8 (render the view, not the async server page)
  * Covers criteria: #10, #11, #12
  *
- * Mock setup mirrors progress.test.tsx (Suspense around the page; gaps hook mocked).
+ * Mock setup mirrors progress.test.tsx (gaps hook mocked).
+ * run_20261127_120807: only the import and the renderPage helper change (the page is now a server component);
+ * every assertion is unchanged. This state is only reachable when the server fell back.
  *
  * CONTRACT_GAPS: none
  */
 
-import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import CanonicalSetDetailPage from '@/app/sets/canonical/[id]/page';
+import { CanonicalSetDetailView } from '@/components/sets/canonical-set-detail-view';
 import { ApiError } from '@/lib/api-client';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
 import { useCanonicalSetGaps } from '@/lib/hooks/use-user-sets';
@@ -53,11 +55,7 @@ function gapsResult(overrides: Record<string, unknown> = {}) {
 }
 
 function renderPage(id = 'set-1') {
-  return render(
-    <Suspense fallback={<div />}>
-      <CanonicalSetDetailPage params={Promise.resolve({ id })} />
-    </Suspense>,
-  );
+  return render(<CanonicalSetDetailView id={id} />);
 }
 
 const COIN_1 = {
@@ -80,7 +78,7 @@ const DETAIL = {
   coins: [{ id: 'usc-1', position: 0, coin: COIN_1 }],
 };
 
-describe('CanonicalSetDetailPage: not-found state', () => {
+describe('CanonicalSetDetailView: not-found state', () => {
   beforeEach(() => {
     useCanonicalSetMock.mockReset();
     useCanonicalSetGapsMock.mockReset();

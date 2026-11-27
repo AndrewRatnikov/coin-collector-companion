@@ -1,17 +1,19 @@
 /**
- * Tests for: PublicSetDetailPage (server waking notice)
+ * Tests for: PublicSetDetailView (server waking notice)
  * Contract source: runs/run_20261117_063301/plan.md § Interface Contract → Public pages (waking notice)
+ *                   runs/run_20261127_120807/plan.md § Approach §8 (render the view, not the async server page)
  * Covers criteria: #4 (from prd.md)
  *
  * The mock block mirrors sets/public/[id]/page.test.tsx. useSlowLoading is deliberately not mocked.
- * The params Promise is created once per test and reused on rerender.
+ * run_20261127_120807: only the import and the setup helper change (the page is now a server component,
+ * the id is a prop).
  *
  * CONTRACT_GAPs: none
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
-import PublicSetDetailPage from '@/app/sets/public/[id]/page';
+import { PublicSetDetailView } from '@/components/sets/public-set-detail-view';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import { useSetGaps } from '@/lib/hooks/use-user-sets';
 import { getStoredToken } from '@/lib/auth-token';
@@ -87,12 +89,11 @@ async function flushParams() {
 }
 
 function setup() {
-  const params = Promise.resolve({ id: 'set-1' });
-  const ui = () => <PublicSetDetailPage params={params} />;
+  const ui = () => <PublicSetDetailView id="set-1" />;
   return { view: render(ui()), ui };
 }
 
-describe('PublicSetDetailPage: server waking notice', () => {
+describe('PublicSetDetailView: server waking notice', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     usePublicSetMock.mockReset();

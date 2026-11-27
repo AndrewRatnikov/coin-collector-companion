@@ -1,17 +1,19 @@
 /**
- * Tests for: PublicSetDetailPage, signed-in progress, marks, grade chips and clone label
+ * Tests for: PublicSetDetailView, signed-in progress, marks, grade chips and clone label
  * Contract source: runs/run_20261109_220451/plan.md § Interface Contract → Page: PublicSetDetailPage
+ *                   runs/run_20261127_120807/plan.md § Approach §8 (render the view, not the async server page)
  * Covers criteria: #3, #4, #5, #6, #7, #8, #9, #10, #11, #12 (from run_20261109_220451's prd.md)
  *
- * Mock setup mirrors page.test.tsx. The page keeps using useSetGaps (the caller's own ownership);
+ * Mock setup mirrors page.test.tsx. The view keeps using useSetGaps (the caller's own ownership);
  * the set owner's minGrade / upgradeCount / needsUpgrade in that response must be ignored.
+ * run_20261127_120807: only the import and the renderPage helper change (the page is now a server component).
  *
  * CONTRACT_GAPS: none
  */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import PublicSetDetailPage from '@/app/sets/public/[id]/page';
+import { PublicSetDetailView } from '@/components/sets/public-set-detail-view';
 import { usePublicSet } from '@/lib/hooks/use-public-sets';
 import { useSetGaps } from '@/lib/hooks/use-user-sets';
 import { getStoredToken } from '@/lib/auth-token';
@@ -47,7 +49,7 @@ function gapsResult(overrides: Partial<ReturnType<typeof useSetGaps>> = {}) {
 }
 
 function renderPage(id = 'set-1') {
-  return render(<PublicSetDetailPage params={Promise.resolve({ id })} />);
+  return render(<PublicSetDetailView id={id} />);
 }
 
 function makeCoin(id: string, year: number) {
@@ -121,7 +123,7 @@ function signIn() {
   getStoredTokenMock.mockReturnValue('tok-abc');
 }
 
-describe('PublicSetDetailPage: your own progress', () => {
+describe('PublicSetDetailView: your own progress', () => {
   beforeEach(() => {
     usePublicSetMock.mockReset();
     useSetGapsMock.mockReset();

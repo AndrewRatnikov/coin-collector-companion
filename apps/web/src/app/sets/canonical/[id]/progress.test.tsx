@@ -1,19 +1,19 @@
 /**
- * Tests for: CanonicalSetDetailPage, signed-in progress, marks, grade chips and clone label
+ * Tests for: CanonicalSetDetailView, signed-in progress, marks, grade chips and clone label
  * Contract source: runs/run_20261109_220451/plan.md § Interface Contract → Page: CanonicalSetDetailPage
+ *                   runs/run_20261127_120807/plan.md § Approach §8 (render the view, not the async server page)
  * Covers criteria: #3, #4, #5, #6, #7, #8, #9, #11, #12 (from run_20261109_220451's prd.md)
  *
- * Mock setup mirrors page.test.tsx (Suspense around the page; no QueryClientProvider, so the gaps
- * hook is mocked). Signed in/out comes from the mocked getStoredToken, read in an effect, so
- * assertions use waitFor / findBy.
+ * Mock setup mirrors page.test.tsx (no QueryClientProvider, so the gaps hook is mocked). Signed in/out
+ * comes from the mocked getStoredToken, read in an effect, so assertions use waitFor / findBy.
+ * run_20261127_120807: only the import and the renderPage helper change (the page is now a server component).
  *
  * CONTRACT_GAPS: none
  */
 
-import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import CanonicalSetDetailPage from '@/app/sets/canonical/[id]/page';
+import { CanonicalSetDetailView } from '@/components/sets/canonical-set-detail-view';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
 import { useCanonicalSetGaps } from '@/lib/hooks/use-user-sets';
 import { getStoredToken } from '@/lib/auth-token';
@@ -49,11 +49,7 @@ function gapsResult(overrides: Partial<ReturnType<typeof useCanonicalSetGaps>> =
 }
 
 function renderPage(id = 'set-1') {
-  return render(
-    <Suspense fallback={<div />}>
-      <CanonicalSetDetailPage params={Promise.resolve({ id })} />
-    </Suspense>,
-  );
+  return render(<CanonicalSetDetailView id={id} />);
 }
 
 function makeCoin(id: string, year: number) {
@@ -114,7 +110,7 @@ function signIn() {
   getStoredTokenMock.mockReturnValue('tok-abc');
 }
 
-describe('CanonicalSetDetailPage: your own progress', () => {
+describe('CanonicalSetDetailView: your own progress', () => {
   beforeEach(() => {
     useCanonicalSetMock.mockReset();
     useCanonicalSetGapsMock.mockReset();

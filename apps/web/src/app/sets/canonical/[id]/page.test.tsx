@@ -1,35 +1,23 @@
 /**
- * Tests for: CanonicalSetDetailPage
+ * Tests for: CanonicalSetDetailView (was CanonicalSetDetailPage)
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CanonicalSetDetailPage
  *                   runs/run_20260722_121303/plan.md § Interface Contract → Modify: Loading-state fixes
  *                   runs/run_20261017_142658/plan.md § Approach §3 and §4 (name block via getCoinName; Skeleton testid)
  *                   runs/run_20261109_220451/plan.md § Interface Contract → Test notes (useCanonicalSetGaps mock)
+ *                   runs/run_20261127_120807/plan.md § Approach §8 (render the view, not the async server page)
  * Covers criteria: #9 (from run_20260721_131640's prd.md), #1 (from run_20260722_121303's prd.md),
  *                  #6, #13 (from run_20261017_142658's prd.md)
  *
- * Like CoinDetailPage, this page unwraps a Promise `params` prop via React's `use()`,
- * which suspends on first render — rendered here inside a <Suspense> boundary for the
- * same reason (no app-level Suspense exists under a raw RTL render()).
- *
- * run_20260728_071525: plan.md's Interface Contract for this page states "No export/
- * prop/testid/hook changes at all ... The clone CTA on the detail page keeps testid
- * canonical-set-clone-cta and its existing <Link> behavior, restyled as the design's
- * solid-accent button." No assertion in this file changes as a result; it is carried
- * over byte-for-byte from the prior run.
- *
- * run_20261017_142658: two tests change. The skeleton test looks for the Skeleton testid instead of
- * the removed `.animate-pulse` class, and the coin list test expects the getCoinName title and subtitle
- * instead of the formatCoinLabel string. The coin fixtures now carry the full set of naming fields
- * (name, variety, isKeyDate) because getCoinName reads them.
- *
- * run_20261109_220451: the page now calls useCanonicalSetGaps, and these tests render without a
- * QueryClientProvider, so the hook is mocked (idle result). No assertion changes.
+ * run_20261127_120807: the page is now an async server component that React Testing Library can't render,
+ * so the body lives in CanonicalSetDetailView and this file renders it directly with no initial data (the
+ * fallback path, which is the old behaviour). Only the import, the renderPage helper and the hook-argument
+ * assertion change: the hook now takes an optional second argument, so the id check looks at the first
+ * argument only. Every other assertion is carried over.
  */
 
-import { Suspense } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
-import CanonicalSetDetailPage from '@/app/sets/canonical/[id]/page';
+import { CanonicalSetDetailView } from '@/components/sets/canonical-set-detail-view';
 import { useCanonicalSet } from '@/lib/hooks/use-canonical-sets';
 import { useCanonicalSetGaps } from '@/lib/hooks/use-user-sets';
 import { getStoredToken } from '@/lib/auth-token';
@@ -60,11 +48,7 @@ function queryResult(overrides: Partial<ReturnType<typeof useCanonicalSet>> = {}
 }
 
 function renderPage(id = 'set-1') {
-  return render(
-    <Suspense fallback={<div />}>
-      <CanonicalSetDetailPage params={Promise.resolve({ id })} />
-    </Suspense>,
-  );
+  return render(<CanonicalSetDetailView id={id} />);
 }
 
 const DETAIL = {
@@ -105,7 +89,7 @@ const DETAIL = {
   ],
 };
 
-describe('CanonicalSetDetailPage', () => {
+describe('CanonicalSetDetailView', () => {
   beforeEach(() => {
     useCanonicalSetMock.mockReset();
     useCanonicalSetGapsMock.mockReset();
@@ -176,7 +160,7 @@ describe('CanonicalSetDetailPage', () => {
       );
       expect(within(items[1]).getByTestId('canonical-set-coin-title')).toHaveTextContent(/^Lincoln Wheat Cent$/);
       expect(within(items[1]).getByTestId('canonical-set-coin-subtitle')).toHaveTextContent(/^USA · 1 Cent · 1958$/);
-      expect(useCanonicalSetMock).toHaveBeenCalledWith('set-1');
+      expect(useCanonicalSetMock.mock.calls.at(-1)?.[0]).toBe('set-1');
     });
 
     it('no longer shows the old formatCoinLabel text', async () => {
