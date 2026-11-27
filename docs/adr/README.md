@@ -88,6 +88,11 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-27](2026-11-27-set-pages-pass-server-data-to-client-views-as-initial-data.md) | The set pages are server components that pass their data to client views as TanStack initialData, with no refetch in the browser | Accepted |
 | [2026-11-27](2026-11-27-set-page-loads-map-api-outcomes-to-ok-not-found-unavailable.md) | Set page loaders map API outcomes to ok, not-found (404 and 400) or unavailable, shared per request through React cache | Accepted |
 | [2026-11-27](2026-11-27-set-pages-share-one-title-format-and-repeat-the-social-image.md) | Set pages share one title format and their Open Graph and Twitter metadata repeat the static social image explicitly | Accepted |
+| [2026-11-27](2026-11-27-non-approved-coin-is-a-404-and-signed-in-submitters-see-it-client-side.md) | A non-approved coin is a real 404 on every server request, and the segment's not-found view shows a signed-in submitter the client coin view | Accepted |
+| [2026-11-27](2026-11-27-coin-checklists-composed-on-the-web-server-from-cached-set-endpoints.md) | The checklists that contain a coin are composed on the web server from the cached canonical list and detail endpoints, best effort | Accepted |
+| [2026-11-27](2026-11-27-only-the-plain-catalog-is-indexable-other-views-noindex-follow.md) | Only the plain catalog is indexable: every other view is noindex,follow with its canonical on /catalog, and the server renders the page the URL asks for | Accepted |
+| [2026-11-27](2026-11-27-catalog-server-page-is-initial-data-only-for-its-own-filters-with-one-signed-in-refetch.md) | The catalog's server page is TanStack initial data only for the server's exact filters, and a signed-in visitor refetches it once after mount | Accepted |
+| [2026-11-27](2026-11-27-coin-page-title-description-social-image-and-json-ld.md) | The coin page title, description, social image and structured data follow one format: collector notation, known specs only, a Thing with PropertyValues | Accepted |
 
 ## Where else decisions live
 
