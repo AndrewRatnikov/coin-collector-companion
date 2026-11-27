@@ -58,7 +58,7 @@ export default function Home() {
   return (
     <main data-testid="home-page" className="flex w-full flex-1 flex-col">
       <WebsiteJsonLd />
-      <divclassName="mx-auto w-full max-w-[1320px] px-5 pt-6 empty:hidden min-[900px]:px-10">
+      <div className="mx-auto w-full max-w-[1320px] px-5 pt-6 empty:hidden min-[900px]:px-10">
         <AccountDeletedNotice />
       </div>
       <LandingHero
