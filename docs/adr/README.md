@@ -84,6 +84,7 @@ Several of them **supersede positions in [`docs/system-design_v2.md`](../system-
 | [2026-11-26](2026-11-26-manual-source-files-can-be-a-fixtures-cited-source.md) | A hand-entered manual source file under `sources/` can be a fixture's cited source, as a further `sources[]` entry and as `keyDates.source` | Accepted |
 | [2026-11-26](2026-11-26-only-named-key-dates-are-flagged-scarce-dates-left-out.md) | Only the dates a source names as key dates are flagged and listed; the scarce dates the sources also list are left out | Accepted |
 | [2026-11-26](2026-11-26-public-pages-server-rendered-with-cached-api-data.md) | Public pages render on the server, fetching the API over HTTP through one server-only helper with Next's data cache (1 h lists, 1 day coin pages) and a 5 s timeout | Accepted |
+| [2026-11-27](2026-11-27-robots-allows-all-crawlers-including-ai-training-bots.md) | robots.txt allows every crawler, AI training bots included, with one explicit group per named bot that repeats the disallow list | Accepted |
 
 ## Where else decisions live
 
