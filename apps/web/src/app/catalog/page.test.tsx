@@ -1,14 +1,18 @@
 /**
- * Tests for: CatalogPage
+ * Tests for: CatalogPageView (the catalog page UI; the page itself is a server component)
  * Contract source: runs/run_20260721_131640/plan.md § Interface Contract → Component: CatalogPage
  *                   runs/run_20260725_140648/plan.md § Interface Contract → Frontend — apps/web/src/app/catalog/page.tsx (MODIFY)
  *                   runs/run_20260728_071525/plan.md § Interface Contract → apps/web/src/app/catalog/page.tsx
  *                   runs/run_20261011_105146/plan.md § Interface Contract → Page: CatalogPage (rewritten for the sidebar)
+ *                   runs/run_20261127_133045/plan.md § Interface Contract → Component: CatalogPageView (CREATE)
  * Covers criteria: #4 (from run_20260721_131640's prd.md), #6 (from run_20260725_140648's prd.md),
  *                  #4 (from run_20260728_071525's prd.md),
  *                  #7, #8, #9, #10, #11, #12, #15, #16, #17, #21 (from run_20261011_105146's prd.md)
  *
  * CONTRACT_GAP: none.
+ *
+ * run_20261127_133045: the page is a server component now, so every test renders the client view
+ * CatalogPageView (without initial data) instead of the page. Behaviour and assertions are unchanged.
  *
  * run_20261011_105146: the page is rewritten around a filter sidebar. The old filter-form tests
  * (Search button, catalog-filter-form fields, catalog-filter-clear) are replaced by live-filtering,
@@ -27,7 +31,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import CatalogPage from '@/app/catalog/page';
+import { CatalogPageView } from '@/components/catalog/catalog-page-view';
 import { useCatalog, useCatalogFacets } from '@/lib/hooks/use-catalog';
 import { setStoredToken } from '@/lib/auth-token';
 
@@ -128,7 +132,7 @@ function lastReplaceUrl() {
   return { url: new URL(call?.[0] as string, 'http://x'), options: call?.[1] as unknown };
 }
 
-describe('CatalogPage', () => {
+describe('CatalogPageView', () => {
   beforeEach(() => {
     useCatalogMock.mockReset();
     useCatalogFacetsMock.mockReset();
@@ -147,7 +151,7 @@ describe('CatalogPage', () => {
   describe('criterion 10 (run_20260721_131640): not gated by auth', () => {
     it('renders result content synchronously with no stored token (no auth-guard delay/redirect before content appears)', () => {
       localStorage.clear();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       // A route wrapped in RequireAuth never renders its children synchronously when
       // there is no stored token (the auth check itself is an async useEffect) — getting
@@ -160,7 +164,7 @@ describe('CatalogPage', () => {
   describe('layout (run_20261011_105146 criterion #7)', () => {
     it('renders the page root, sidebar, count and results, and not the old filter form', () => {
       useCatalogMock.mockReturnValue(pageOf(COINS, 42));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-page')).toBeInTheDocument();
       expect(screen.getByTestId('catalog-sidebar')).toBeInTheDocument();
@@ -179,20 +183,20 @@ describe('CatalogPage', () => {
 
     it('the count follows data.total', () => {
       useCatalogMock.mockReturnValue(pageOf(COINS, 7));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-count')).toHaveTextContent('7 coins');
     });
 
     it('renders no count before the first data arrives', () => {
       useCatalogMock.mockReturnValue(queryResult({ isLoading: true }));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.queryByTestId('catalog-count')).not.toBeInTheDocument();
     });
 
     it('puts the facet options in the sidebar', () => {
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       const sidebar = within(screen.getByTestId('catalog-sidebar'));
       expect(sidebar.getByTestId('catalog-filter-country-Ukraine')).toBeInTheDocument();
@@ -203,7 +207,7 @@ describe('CatalogPage', () => {
     });
 
     it('requests facets for no country by default', () => {
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(useCatalogFacetsMock.mock.calls.at(-1)?.[0]).toBeUndefined();
     });
@@ -212,7 +216,7 @@ describe('CatalogPage', () => {
   describe('criterion 4: loading, error, empty (run_20260721_131640, run_20261011_105146 #15)', () => {
     it('renders catalog-loading and no results while isLoading is true and there is no data', () => {
       useCatalogMock.mockReturnValue(queryResult({ isLoading: true }));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-loading')).toBeInTheDocument();
       expect(screen.queryByTestId('catalog-results')).not.toBeInTheDocument();
@@ -222,7 +226,7 @@ describe('CatalogPage', () => {
       useCatalogMock.mockReturnValue(
         queryResult({ isLoading: true, data: { items: COINS, page: 1, limit: 20, total: 2 } } as never),
       );
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.queryByTestId('catalog-loading')).not.toBeInTheDocument();
       expect(screen.getAllByTestId('catalog-item')).toHaveLength(2);
@@ -230,13 +234,13 @@ describe('CatalogPage', () => {
 
     it('renders catalog-error when isError is true', () => {
       useCatalogMock.mockReturnValue(queryResult({ isError: true }));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-error')).toBeInTheDocument();
     });
 
     it('renders one catalog-item per coin with a link to the coin detail page', () => {
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-results')).toBeInTheDocument();
       const links = screen.getAllByTestId('catalog-item-link');
@@ -245,7 +249,7 @@ describe('CatalogPage', () => {
 
     it('renders catalog-empty (and no list or pagination) when the result set is empty', () => {
       useCatalogMock.mockReturnValue(pageOf([], 0));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-empty')).toBeInTheDocument();
       expect(screen.getByTestId('catalog-empty-clear')).toBeInTheDocument();
@@ -256,7 +260,7 @@ describe('CatalogPage', () => {
 
     it('does not offer "Add this coin" in the empty state when logged out', () => {
       useCatalogMock.mockReturnValue(pageOf([], 0));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.queryByTestId('catalog-empty-add-coin')).not.toBeInTheDocument();
     });
@@ -265,7 +269,7 @@ describe('CatalogPage', () => {
       setStoredToken('tok-abc');
       useCatalogMock.mockReturnValue(pageOf([], 0));
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(await screen.findByTestId('catalog-empty-add-coin'));
 
@@ -277,7 +281,7 @@ describe('CatalogPage', () => {
       searchParamsValue = new URLSearchParams('country=Ukraine&denomination=5%20Kopiyok&yearMin=1800&page=2');
       useCatalogMock.mockReturnValue(pageOf([], 0));
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getByTestId('catalog-empty-clear'));
 
@@ -293,7 +297,7 @@ describe('CatalogPage', () => {
   describe('initial state from the URL (criterion #11)', () => {
     it('passes URL state to the first useCatalog call and checks the matching sidebar controls', () => {
       searchParamsValue = new URLSearchParams('country=Ukraine&denomination=5%20Kopiyok&sort=year_desc&page=2');
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(useCatalogMock.mock.calls[0][0]).toMatchObject({
         country: 'Ukraine',
@@ -309,14 +313,14 @@ describe('CatalogPage', () => {
 
     it('requests facets scoped to the URL country', () => {
       searchParamsValue = new URLSearchParams('country=Ukraine');
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(useCatalogFacetsMock.mock.calls.at(-1)?.[0]).toBe('Ukraine');
     });
 
     it('fills the search box and year inputs from the URL', () => {
       searchParamsValue = new URLSearchParams('name=wheat&yearMin=1900&yearMax=1950&keyDateOnly=true');
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-search')).toHaveValue('wheat');
       expect(screen.getByTestId('catalog-filter-year-min')).toHaveValue('1900');
@@ -326,7 +330,7 @@ describe('CatalogPage', () => {
     });
 
     it('defaults to page 1, limit 20, All countries and year_asc with no URL params', () => {
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(useCatalogMock.mock.calls[0][0]).toMatchObject({ page: 1, limit: 20 });
       expect(useCatalogMock.mock.calls[0][0]?.sort).toBeUndefined();
@@ -336,11 +340,11 @@ describe('CatalogPage', () => {
 
     it('re-parses the URL when it changes from outside (e.g. the nav Catalog link)', () => {
       searchParamsValue = new URLSearchParams('country=Ukraine');
-      const { rerender } = render(<CatalogPage />);
+      const { rerender } = render(<CatalogPageView />);
       expect(screen.getByTestId('catalog-filter-country-Ukraine')).toBeChecked();
 
       searchParamsValue = new URLSearchParams('country=USA');
-      rerender(<CatalogPage />);
+      rerender(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-filter-country-USA')).toBeChecked();
       expect(lastFilters()).toMatchObject({ country: 'USA' });
@@ -350,7 +354,7 @@ describe('CatalogPage', () => {
   describe('live filtering and URL sync (criteria #9, #10, #11)', () => {
     it('choosing a country updates useCatalog at once, with page 1, and replaces the URL without scrolling', async () => {
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getByTestId('catalog-filter-country-Ukraine'));
 
@@ -365,7 +369,7 @@ describe('CatalogPage', () => {
 
     it('a different country writes a different URL (not hard-coded)', async () => {
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getByTestId('catalog-filter-country-USA'));
 
@@ -375,7 +379,7 @@ describe('CatalogPage', () => {
 
     it('never uses router.push for filter changes', async () => {
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getByTestId('catalog-filter-country-Ukraine'));
 
@@ -385,7 +389,7 @@ describe('CatalogPage', () => {
 
     it('ticking several denominations sends them all (facet order), and writes repeated URL params', async () => {
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getByTestId('catalog-filter-denomination-5 Kopiyok'));
       await user.click(screen.getByTestId('catalog-filter-denomination-10 Hryvnias'));
@@ -396,7 +400,7 @@ describe('CatalogPage', () => {
 
     it('unticking the last denomination removes the denomination filter again', async () => {
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getByTestId('catalog-filter-denomination-5 Kopiyok'));
       await user.click(screen.getByTestId('catalog-filter-denomination-5 Kopiyok'));
@@ -408,7 +412,7 @@ describe('CatalogPage', () => {
     it('changing country clears the ticked denominations in the same update', async () => {
       searchParamsValue = new URLSearchParams('country=Ukraine&denomination=5%20Kopiyok');
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       expect(lastFilters()).toMatchObject({ denomination: ['5 Kopiyok'] });
 
       await user.click(screen.getByTestId('catalog-filter-country-USA'));
@@ -422,7 +426,7 @@ describe('CatalogPage', () => {
     it('choosing All countries drops the country filter', async () => {
       searchParamsValue = new URLSearchParams('country=Ukraine');
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getByTestId('catalog-filter-country-all'));
 
@@ -433,7 +437,7 @@ describe('CatalogPage', () => {
     it('ticking Key dates only sends keyDateOnly, writes it to the URL, and resets page to 1', async () => {
       searchParamsValue = new URLSearchParams('page=3');
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       expect(lastFilters()).toMatchObject({ page: 3 });
 
       await user.click(screen.getByTestId('catalog-filter-key-date'));
@@ -449,7 +453,7 @@ describe('CatalogPage', () => {
     it('applies the search text as name only after 300 ms, trimmed, resetting to page 1', () => {
       vi.useFakeTimers();
       searchParamsValue = new URLSearchParams('page=2');
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       fireEvent.change(screen.getByTestId('catalog-search'), { target: { value: '  lincoln ' } });
       act(() => {
@@ -468,7 +472,7 @@ describe('CatalogPage', () => {
 
     it('restarts the search timer on each keystroke', () => {
       vi.useFakeTimers();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       const search = screen.getByTestId('catalog-search');
 
       fireEvent.change(search, { target: { value: 'lin' } });
@@ -489,7 +493,7 @@ describe('CatalogPage', () => {
 
     it('a year typed into the sidebar applies after 300 ms and is written to the URL', () => {
       vi.useFakeTimers();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       fireEvent.change(screen.getByTestId('catalog-filter-year-min'), { target: { value: '1950' } });
       expect(lastFilters()?.yearMin).toBeUndefined();
@@ -503,7 +507,7 @@ describe('CatalogPage', () => {
 
     it('the max year applies on blur immediately', () => {
       vi.useFakeTimers();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       const input = screen.getByTestId('catalog-filter-year-max');
 
       fireEvent.change(input, { target: { value: '1999' } });
@@ -514,7 +518,7 @@ describe('CatalogPage', () => {
 
     it('an invalid year is ignored (no yearMin sent, no URL write)', () => {
       vi.useFakeTimers();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       const input = screen.getByTestId('catalog-filter-year-min');
 
       fireEvent.change(input, { target: { value: 'abc' } });
@@ -529,7 +533,7 @@ describe('CatalogPage', () => {
 
     it('does not fire a pending search after unmount', () => {
       vi.useFakeTimers();
-      const { unmount } = render(<CatalogPage />);
+      const { unmount } = render(<CatalogPageView />);
 
       fireEvent.change(screen.getByTestId('catalog-search'), { target: { value: 'lincoln' } });
       unmount();
@@ -543,7 +547,7 @@ describe('CatalogPage', () => {
 
   describe('sort (criterion #12)', () => {
     it('offers the three sort options', () => {
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       const options = within(screen.getByTestId('catalog-sort'))
         .getAllByRole('option')
@@ -553,7 +557,7 @@ describe('CatalogPage', () => {
 
     it('changing the sort applies immediately, resets to page 1 and writes sort to the URL', () => {
       searchParamsValue = new URLSearchParams('page=4');
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       fireEvent.change(screen.getByTestId('catalog-sort'), { target: { value: 'name_asc' } });
 
@@ -565,7 +569,7 @@ describe('CatalogPage', () => {
 
     it('going back to the default sort removes it from the filters and the URL', () => {
       searchParamsValue = new URLSearchParams('sort=year_desc');
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       fireEvent.change(screen.getByTestId('catalog-sort'), { target: { value: 'year_asc' } });
 
@@ -580,7 +584,7 @@ describe('CatalogPage', () => {
         'country=Ukraine&denomination=5%20Kopiyok&name=wheat&yearMin=1900&keyDateOnly=true&sort=year_desc&page=2',
       );
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getByTestId('catalog-clear-all'));
 
@@ -599,7 +603,7 @@ describe('CatalogPage', () => {
 
     it('cancels a pending search debounce', () => {
       vi.useFakeTimers();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       fireEvent.change(screen.getByTestId('catalog-search'), { target: { value: 'lincoln' } });
       fireEvent.click(screen.getByTestId('catalog-clear-all'));
@@ -614,7 +618,7 @@ describe('CatalogPage', () => {
 
   describe('Hide coins I own (criterion #8)', () => {
     it('is hidden when logged out', () => {
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.queryByTestId('catalog-filter-hide-owned')).not.toBeInTheDocument();
     });
@@ -622,7 +626,7 @@ describe('CatalogPage', () => {
     it('is shown when logged in, and ticking it sends hideOwned and writes it to the URL', async () => {
       setStoredToken('tok-abc');
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(await screen.findByTestId('catalog-filter-hide-owned'));
 
@@ -632,7 +636,7 @@ describe('CatalogPage', () => {
 
     it('is not sent for a logged-out user even when the URL says hideOwned=true', () => {
       searchParamsValue = new URLSearchParams('hideOwned=true');
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(lastFilters()?.hideOwned).toBeUndefined();
     });
@@ -640,7 +644,7 @@ describe('CatalogPage', () => {
     it('is sent for a logged-in user when the URL says hideOwned=true', async () => {
       setStoredToken('tok-abc');
       searchParamsValue = new URLSearchParams('hideOwned=true');
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(await screen.findByTestId('catalog-filter-hide-owned')).toBeChecked();
       expect(lastFilters()).toMatchObject({ hideOwned: true });
@@ -650,7 +654,7 @@ describe('CatalogPage', () => {
   describe('run_20260728_071525 criterion 4 (numbered pagination, adapted)', () => {
     it('renders one catalog-pagination-page element per page, numbered in order', () => {
       useCatalogMock.mockReturnValue(pageOf(COINS, 45, 1, 20));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       const pages = screen.getAllByTestId('catalog-pagination-page');
       expect(pages.map((page) => page.textContent)).toEqual(['1', '2', '3']);
@@ -658,7 +662,7 @@ describe('CatalogPage', () => {
 
     it('computes the page count from total and limit', () => {
       useCatalogMock.mockReturnValue(pageOf(COINS, 45, 1, 20));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-pagination-summary')).toHaveTextContent('Page 1 of 3');
     });
@@ -666,7 +670,7 @@ describe('CatalogPage', () => {
     it('marks the active page with aria-current="page" and leaves the others without it', () => {
       searchParamsValue = new URLSearchParams('page=2');
       useCatalogMock.mockReturnValue(pageOf(COINS, 45, 2, 20));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       const pages = screen.getAllByTestId('catalog-pagination-page');
       expect(pages[1]).toHaveAttribute('aria-current', 'page');
@@ -677,7 +681,7 @@ describe('CatalogPage', () => {
     it('clicking an inactive page number calls useCatalog with that page and writes page to the URL', async () => {
       useCatalogMock.mockReturnValue(pageOf(COINS, 45, 1, 20));
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getAllByTestId('catalog-pagination-page')[2]);
 
@@ -690,7 +694,7 @@ describe('CatalogPage', () => {
       searchParamsValue = new URLSearchParams('country=Ukraine');
       useCatalogMock.mockReturnValue(pageOf(COINS, 45, 1, 20));
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getByTestId('catalog-pagination-next'));
 
@@ -700,7 +704,7 @@ describe('CatalogPage', () => {
     it('the active page is not clickable — clicking it triggers no URL write', async () => {
       useCatalogMock.mockReturnValue(pageOf(COINS, 45, 1, 20));
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getAllByTestId('catalog-pagination-page')[0]);
 
@@ -710,21 +714,21 @@ describe('CatalogPage', () => {
 
   describe('mobile filters sheet (criterion #16)', () => {
     it('shows a Filters button with the active filter count', () => {
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-filters-button')).toHaveTextContent('Filters · 0');
     });
 
     it('counts active filters: country and denominations together are 2', () => {
       searchParamsValue = new URLSearchParams('country=Ukraine&denomination=5%20Kopiyok&denomination=1%20Cent');
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-filters-button')).toHaveTextContent('Filters · 2');
     });
 
     it('wires aria-expanded and aria-controls', async () => {
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       const button = screen.getByTestId('catalog-filters-button');
       expect(button).toHaveAttribute('aria-expanded', 'false');
       expect(button).toHaveAttribute('aria-controls', 'catalog-filters-sheet');
@@ -738,7 +742,7 @@ describe('CatalogPage', () => {
 
     it('the sheet carries the same sidebar content and changes apply to the same state', async () => {
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       await user.click(screen.getByTestId('catalog-filters-button'));
 
       const sheet = within(screen.getByTestId('catalog-filters-sheet'));
@@ -753,7 +757,7 @@ describe('CatalogPage', () => {
 
     it('uses a separate radio group name from the aside, so the groups stay independent', async () => {
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       await user.click(screen.getByTestId('catalog-filters-button'));
 
       const asideName = within(screen.getByTestId('catalog-sidebar'))
@@ -767,7 +771,7 @@ describe('CatalogPage', () => {
 
     it('does not repeat the Filters heading inside the sheet content', async () => {
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       await user.click(screen.getByTestId('catalog-filters-button'));
 
       expect(
@@ -777,7 +781,7 @@ describe('CatalogPage', () => {
 
     it('closing the sheet removes it again', async () => {
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
       await user.click(screen.getByTestId('catalog-filters-button'));
 
       await user.click(screen.getByTestId('sheet-close'));
@@ -790,7 +794,7 @@ describe('CatalogPage', () => {
   describe('live region (criterion #17)', () => {
     it('announces the result count politely', () => {
       useCatalogMock.mockReturnValue(pageOf(COINS, 42));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       const region = screen.getByTestId('catalog-live-region');
       expect(region).toHaveAttribute('aria-live', 'polite');
@@ -799,14 +803,14 @@ describe('CatalogPage', () => {
 
     it('updates with the total', () => {
       useCatalogMock.mockReturnValue(pageOf(COINS, 3));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-live-region')).toHaveTextContent('3 coins');
     });
 
     it('is always rendered, with empty text before the first data', () => {
       useCatalogMock.mockReturnValue(queryResult({ isLoading: true }));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-live-region')).toHaveTextContent(/^$/);
     });
@@ -816,7 +820,7 @@ describe('CatalogPage', () => {
     it('does not render the submit-coin toggle when logged out', () => {
       localStorage.clear();
       useCatalogMock.mockReturnValue(pageOf([], 0));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.queryByTestId('catalog-submit-coin-toggle')).not.toBeInTheDocument();
     });
@@ -824,7 +828,7 @@ describe('CatalogPage', () => {
     it('renders the submit-coin toggle when logged in, with the form hidden until clicked', () => {
       setStoredToken('tok-abc');
       useCatalogMock.mockReturnValue(pageOf([], 0));
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.getByTestId('catalog-submit-coin-toggle')).toBeInTheDocument();
       expect(screen.queryByTestId('mock-submit-coin-form')).not.toBeInTheDocument();
@@ -834,7 +838,7 @@ describe('CatalogPage', () => {
       setStoredToken('tok-abc');
       useCatalogMock.mockReturnValue(pageOf([], 0));
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       expect(screen.queryByTestId('sheet')).not.toBeInTheDocument();
 
@@ -853,7 +857,7 @@ describe('CatalogPage', () => {
       setStoredToken('tok-abc');
       useCatalogMock.mockReturnValue(pageOf([], 0));
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getByTestId('catalog-submit-coin-toggle'));
       await user.click(screen.getByTestId('mock-submit-coin-form-succeed'));
@@ -867,7 +871,7 @@ describe('CatalogPage', () => {
       setStoredToken('tok-abc');
       useCatalogMock.mockReturnValue(pageOf(COINS, 2));
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getByTestId('catalog-submit-coin-toggle'));
       await user.click(screen.getByTestId('mock-submit-coin-form-succeed'));
@@ -881,7 +885,7 @@ describe('CatalogPage', () => {
       setStoredToken('tok-abc');
       useCatalogMock.mockReturnValue(pageOf([], 0));
       const user = userEvent.setup();
-      render(<CatalogPage />);
+      render(<CatalogPageView />);
 
       await user.click(screen.getByTestId('catalog-submit-coin-toggle'));
       await user.click(screen.getByTestId('mock-submit-coin-form-succeed'));
@@ -890,6 +894,42 @@ describe('CatalogPage', () => {
       await user.click(screen.getByTestId('catalog-submit-coin-toggle'));
       expect(screen.getByTestId('mock-submit-coin-form')).toBeInTheDocument();
       expect(screen.queryByTestId('mock-submission-confirmation')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('run_20261127_133045: server initial data wiring', () => {
+    it('passes no options to useCatalog without initial data', () => {
+      render(<CatalogPageView />);
+
+      expect(useCatalogMock.mock.calls[0][1]).toBeUndefined();
+    });
+
+    it('passes the server page to useCatalog as initialData while the filters equal the server\'s', () => {
+      const data = { items: COINS, page: 1, limit: 20, total: 2 };
+      render(<CatalogPageView initialCatalog={{ filters: { page: 1, limit: 20 }, data: data as never }} />);
+
+      expect(useCatalogMock.mock.calls.at(-1)?.[1]).toEqual({ initialData: data });
+    });
+
+    it('passes no initial data when the URL filters differ from the server\'s', () => {
+      searchParamsValue = new URLSearchParams('country=USA');
+      const data = { items: COINS, page: 1, limit: 20, total: 2 };
+      render(<CatalogPageView initialCatalog={{ filters: { page: 1, limit: 20 }, data: data as never }} />);
+
+      expect(useCatalogMock.mock.calls.at(-1)?.[0]).toMatchObject({ country: 'USA' });
+      expect(useCatalogMock.mock.calls.at(-1)?.[1]).toBeUndefined();
+    });
+
+    it('stops passing the server page once the visitor changes a filter', async () => {
+      const data = { items: COINS, page: 1, limit: 20, total: 2 };
+      const user = userEvent.setup();
+      render(<CatalogPageView initialCatalog={{ filters: { page: 1, limit: 20 }, data: data as never }} />);
+      expect(useCatalogMock.mock.calls.at(-1)?.[1]).toEqual({ initialData: data });
+
+      await user.click(screen.getByTestId('catalog-filter-country-USA'));
+
+      expect(lastFilters()).toMatchObject({ country: 'USA' });
+      expect(useCatalogMock.mock.calls.at(-1)?.[1]).toBeUndefined();
     });
   });
 });

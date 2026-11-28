@@ -1,18 +1,20 @@
 /**
- * Tests for: CatalogPage ownership badge wiring
+ * Tests for: CatalogPageView ownership badge wiring
  * Contract source: runs/run_20261019_221037/plan.md § Interface Contract → Page: CatalogPage (web, MODIFY)
+ *                   runs/run_20261127_133045/plan.md § Interface Contract → Component: CatalogPageView (CREATE)
  * Covers criteria: #7, #8 (from prd.md)
  *
  * CONTRACT_GAP: none.
  *
  * Mocks mirror page.test.tsx: next/navigation, the use-catalog hooks, and the submit-coin-form /
  * submission-confirmation components. The signed-in state comes from the stored token, which the
- * page reads on mount, so signed-in assertions use findBy*.
+ * view reads on mount, so signed-in assertions use findBy*. run_20261127_133045: the page is a server
+ * component now, so the tests render the client view CatalogPageView (without initial data).
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
-import CatalogPage from '@/app/catalog/page';
+import { CatalogPageView } from '@/components/catalog/catalog-page-view';
 import { useCatalog, useCatalogFacets } from '@/lib/hooks/use-catalog';
 import { clearStoredToken, setStoredToken } from '@/lib/auth-token';
 
@@ -92,7 +94,7 @@ const SIGNED_IN_ITEMS = [
   makeCoin('c2', { owned: false, inSetsCount: 0 }),
 ];
 
-describe('CatalogPage ownership badges', () => {
+describe('CatalogPageView ownership badges', () => {
   beforeEach(() => {
     useCatalogMock.mockReset();
     useCatalogFacetsMock.mockReset();
@@ -113,7 +115,7 @@ describe('CatalogPage ownership badges', () => {
   it('signed in: a row with owned: true and inSetsCount: 2 shows both badges (criterion #7)', async () => {
     setStoredToken('t');
     useCatalogMock.mockReturnValue(pageOf(SIGNED_IN_ITEMS));
-    render(<CatalogPage />);
+    render(<CatalogPageView />);
 
     const wrapper = await screen.findByTestId('catalog-item-ownership');
     const badges = within(wrapper).getAllByTestId('badge');
@@ -125,7 +127,7 @@ describe('CatalogPage ownership badges', () => {
   it('signed in: only the rows with something to show get the ownership wrapper (criterion #8)', async () => {
     setStoredToken('t');
     useCatalogMock.mockReturnValue(pageOf(SIGNED_IN_ITEMS));
-    render(<CatalogPage />);
+    render(<CatalogPageView />);
 
     await screen.findByTestId('catalog-item-ownership');
 
@@ -138,7 +140,7 @@ describe('CatalogPage ownership badges', () => {
   it('signed in: a different row gives different badges (not hard-coded)', async () => {
     setStoredToken('t');
     useCatalogMock.mockReturnValue(pageOf([makeCoin('c9', { owned: false, inSetsCount: 1 })]));
-    render(<CatalogPage />);
+    render(<CatalogPageView />);
 
     const wrapper = await screen.findByTestId('catalog-item-ownership');
     expect(wrapper).toHaveTextContent('In 1 set');
@@ -147,7 +149,7 @@ describe('CatalogPage ownership badges', () => {
 
   it('signed out: the same data shows no ownership badges (criterion #8)', () => {
     useCatalogMock.mockReturnValue(pageOf(SIGNED_IN_ITEMS));
-    render(<CatalogPage />);
+    render(<CatalogPageView />);
 
     expect(screen.getByTestId('catalog-results')).toBeInTheDocument();
     expect(screen.getAllByTestId('catalog-item')).toHaveLength(2);
@@ -157,7 +159,7 @@ describe('CatalogPage ownership badges', () => {
   it('signed out: a stale signed-in page in the cache never shows badges after the token is gone', () => {
     // Same cached data as the signed-in case, no token: the page's own signed-in state gates it.
     useCatalogMock.mockReturnValue(pageOf([makeCoin('c1', { owned: true, inSetsCount: 5 })]));
-    render(<CatalogPage />);
+    render(<CatalogPageView />);
 
     expect(screen.queryByTestId('catalog-item-ownership')).not.toBeInTheDocument();
     expect(within(screen.getByTestId('catalog-item')).queryByTestId('badge')).not.toBeInTheDocument();

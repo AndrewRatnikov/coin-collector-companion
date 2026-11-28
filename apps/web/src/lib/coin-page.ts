@@ -87,6 +87,39 @@ export function catalogCountryHref(country: string): string {
   return `/catalog?${new URLSearchParams({ country }).toString()}`;
 }
 
+/** The catalog filtered to one denomination of a country: `/catalog?country=United+States&denomination=1+Cent`. */
+export function catalogDenominationHref(country: string, denomination: string): string {
+  return `/catalog?${new URLSearchParams({ country, denomination }).toString()}`;
+}
+
+const COIN_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * A UUID-shaped id (any version). Looser than the API's ParseUUIDPipe on purpose: an id that
+ * passes here and is still rejected comes back as a 400, which the server loader maps to not-found.
+ */
+export function isCoinId(id: string): boolean {
+  return COIN_ID_PATTERN.test(id);
+}
+
+/** The coin id in `/catalog/<id>` (decoded), or null for any other path. */
+export function coinIdFromPathname(pathname: string | null): string | null {
+  if (pathname === null) return null;
+  const match = /^\/catalog\/([^/]+)$/.exec(pathname);
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
+/** A curated checklist that contains the coin, linked from the coin page. */
+export interface CoinChecklistLink {
+  id: string;
+  name: string;
+}
+
 export type OwnershipPanelState = 'not-owned' | 'owned' | 'pending' | 'failed';
 
 /** Pending wins over failed, and failed over the owned value. */

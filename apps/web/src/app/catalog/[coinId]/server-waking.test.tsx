@@ -1,20 +1,21 @@
 /**
- * Tests for: CoinDetailPage (server waking notice)
+ * Tests for: CoinDetailView (server waking notice)
  * Contract source: runs/run_20261117_063301/plan.md § Interface Contract → Public pages (waking notice)
- * Covers criteria: #4 (from prd.md)
+ *                   runs/run_20261127_133045/plan.md § Interface Contract → Component: CoinDetailView (CREATE)
+ * Covers criteria: #4 (from prd.md), #5 (from run_20261127_133045's prd.md: client loading fallback)
  *
  * The mock block mirrors catalog/[coinId]/page.test.tsx. useSlowLoading is deliberately not mocked.
- * The params Promise is created once per test and reused on rerender (use() suspends on a new Promise).
+ * run_20261127_133045: the page is a server component now, so the tests render the client view
+ * CoinDetailView with the coin id as a prop (no Suspense, no params Promise, nothing to flush).
  *
  * CONTRACT_GAPs: none
  */
 
-import { Suspense } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { CatalogCoin } from '@coin-collector/shared';
-import CoinDetailPage from '@/app/catalog/[coinId]/page';
+import { CoinDetailView } from '@/components/catalog/coin-detail-view';
 import { useCoin } from '@/lib/hooks/use-catalog';
 import { useCollection, useSetGrade, useSetOwnership } from '@/lib/hooks/use-collection';
 import { useAddCoinsToSet, useUserSets } from '@/lib/hooks/use-user-sets';
@@ -90,28 +91,17 @@ function advance(ms: number) {
   });
 }
 
-async function flushParams() {
-  for (let i = 0; i < 3; i++) {
-    await act(async () => {
-      await Promise.resolve();
-    });
-  }
-}
-
 function setup() {
-  const params = Promise.resolve({ coinId: 'coin-1' });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const ui = () => (
     <QueryClientProvider client={queryClient}>
-      <Suspense fallback={<div />}>
-        <CoinDetailPage params={params} />
-      </Suspense>
+      <CoinDetailView coinId="coin-1" />
     </QueryClientProvider>
   );
   return { view: render(ui()), ui };
 }
 
-describe('CoinDetailPage: server waking notice', () => {
+describe('CoinDetailView: server waking notice', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     useCoinMock.mockReset();
@@ -153,10 +143,9 @@ describe('CoinDetailPage: server waking notice', () => {
     vi.useRealTimers();
   });
 
-  it('is absent at 2.9 s, present at 3 s inside the loading block, and gone once the coin resolves', async () => {
+  it('is absent at 2.9 s, present at 3 s inside the loading block, and gone once the coin resolves', () => {
     useCoinMock.mockReturnValue(queryResult({ isLoading: true }));
     const { view, ui } = setup();
-    await flushParams();
 
     expect(screen.getByTestId('coin-detail-loading')).toBeInTheDocument();
     advance(2900);
@@ -168,17 +157,15 @@ describe('CoinDetailPage: server waking notice', () => {
 
     useCoinMock.mockReturnValue(queryResult({ data: COIN }));
     view.rerender(ui());
-    await flushParams();
 
     expect(screen.queryByTestId('server-waking-notice')).not.toBeInTheDocument();
     expect(screen.queryByTestId('coin-detail-loading')).not.toBeInTheDocument();
     expect(screen.getByTestId('coin-detail-label')).toBeInTheDocument();
   });
 
-  it('never appears when the coin resolves before 3 s', async () => {
+  it('never appears when the coin resolves before 3 s', () => {
     useCoinMock.mockReturnValue(queryResult({ isLoading: true }));
     const { view, ui } = setup();
-    await flushParams();
     advance(2000);
 
     useCoinMock.mockReturnValue(queryResult({ data: COIN }));
@@ -188,11 +175,10 @@ describe('CoinDetailPage: server waking notice', () => {
     expect(screen.queryByTestId('server-waking-notice')).not.toBeInTheDocument();
   });
 
-  it('is not driven by a secondary query: the coin is there and the collection is still loading', async () => {
+  it('is not driven by a secondary query: the coin is there and the collection is still loading', () => {
     useCoinMock.mockReturnValue(queryResult({ data: COIN }));
     useCollectionMock.mockReturnValue(collectionResult({ data: undefined, isLoading: true }));
     setup();
-    await flushParams();
 
     advance(5000);
 

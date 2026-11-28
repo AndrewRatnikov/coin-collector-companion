@@ -2,7 +2,12 @@
 /**
  * Tests for: sitemap (apps/web/src/app/sitemap.ts)
  * Contract source: runs/run_20261127_065505/plan.md § Interface Contract → Metadata route: sitemap
- * Covers criteria: #6, #7, #8 (from prd.md)
+ *                   runs/run_20261127_133045/plan.md § Interface Contract → Sitemap (MODIFY)
+ * Covers criteria: #6, #7, #8 (from run_20261127_065505's prd.md), #16 (from run_20261127_133045's prd.md)
+ *
+ * run_20261127_133045: coin list items now carry a status (as the API's list items do), and the sitemap
+ * keeps only the approved ones. A new block returns pending and rejected items from the plain /catalog
+ * list too and asserts that neither their ids nor their URLs appear.
  *
  * CONTRACT_GAPs: none
  */
@@ -23,10 +28,18 @@ function uuid(prefix: string, n: number) {
 
 const OWNER_SET_ID = uuid('0a4e0000', 1);
 
+interface ListItem {
+  id: string;
+  updatedAt: string;
+  status?: string;
+}
+
 interface World {
   coinTotal: number;
   publicTotal: number;
   checklists: { id: string; name: string; coinCount: number }[];
+  /** Extra items the plain /catalog list returns on page 1 next to the approved coins. */
+  extraCoinItems: ListItem[];
 }
 
 let world: World;
@@ -34,9 +47,14 @@ let world: World;
 function paged(kind: 'coin' | 'set', total: number, page: number) {
   const prefix = kind === 'coin' ? 'c0111111' : 'a5e70000';
   const count = Math.max(0, Math.min(100, total - (page - 1) * 100));
-  const items = Array.from({ length: count }, (_, i) => {
+  const items: ListItem[] = Array.from({ length: count }, (_, i) => {
     const n = (page - 1) * 100 + i + 1;
-    return { id: uuid(prefix, n), updatedAt: `2026-02-${String((n % 28) + 1).padStart(2, '0')}T10:00:00.000Z` };
+    const item: ListItem = {
+      id: uuid(prefix, n),
+      updatedAt: `2026-02-${String((n % 28) + 1).padStart(2, '0')}T10:00:00.000Z`,
+    };
+    if (kind === 'coin') item.status = 'approved';
+    return item;
   });
   return { items, page, limit: 100, total };
 }
@@ -71,15 +89,17 @@ function dispatch(path: string): unknown {
       const prefix = status === 'rejected' ? '4e1e0000' : '9e4d0000';
       return {
         items: [
-          { id: uuid(prefix, 1), updatedAt: '2026-03-01T10:00:00.000Z' },
-          { id: uuid('4e1e0000', 2), updatedAt: '2026-03-01T10:00:00.000Z' },
+          { id: uuid(prefix, 1), updatedAt: '2026-03-01T10:00:00.000Z', status: status ?? 'pending' },
+          { id: uuid('4e1e0000', 2), updatedAt: '2026-03-01T10:00:00.000Z', status: 'rejected' },
         ],
         page,
         limit: 100,
         total: 2,
       };
     }
-    return paged('coin', world.coinTotal, page);
+    const result = paged('coin', world.coinTotal, page);
+    if (page === 1) result.items.push(...world.extraCoinItems);
+    return result;
   }
   throw new Error(`unexpected path ${path}`);
 }
@@ -93,6 +113,7 @@ beforeEach(() => {
       { id: uuid('c4ec0000', 1), name: 'Lincoln Wheat Cents', coinCount: 150 },
       { id: uuid('c4ec0000', 2), name: 'Morgan Dollars', coinCount: 100 },
     ],
+    extraCoinItems: [],
   };
   getMock.mockReset();
   getMock.mockImplementation(async (path: string) => dispatch(path) as never);
@@ -189,6 +210,68 @@ describe('exclusions', () => {
     expect(urls.some((u) => u.includes(`/sets/${OWNER_SET_ID}`))).toBe(false);
     expect(urls).toContain(`${ORIGIN}/sets/public/${uuid('a5e70000', 1)}`);
     expect(urls).toContain(`${ORIGIN}/catalog/${uuid('c0111111', 1)}`);
+  });
+});
+
+describe('approved coins only (item 3.8)', () => {
+  const PENDING_ID = uuid('9e4d0000', 9);
+  const REJECTED_ID = uuid('4e1e0000', 9);
+
+  function withNonApproved() {
+    world.extraCoinItems = [
+      { id: PENDING_ID, updatedAt: '2026-03-01T10:00:00.000Z', status: 'pending' },
+      { id: REJECTED_ID, updatedAt: '2026-03-02T10:00:00.000Z', status: 'rejected' },
+    ];
+  }
+
+  it('leaves out a pending and a rejected coin that the list returns, ids and URLs', async () => {
+    withNonApproved();
+
+    const urls = (await sitemap()).map((e) => e.url);
+
+    expect(urls.some((u) => u.includes(PENDING_ID))).toBe(false);
+    expect(urls.some((u) => u.includes(REJECTED_ID))).toBe(false);
+    expect(urls).not.toContain(`${ORIGIN}/catalog/${PENDING_ID}`);
+    expect(urls).not.toContain(`${ORIGIN}/catalog/${REJECTED_ID}`);
+  });
+
+  it('keeps every approved coin next to the dropped ones', async () => {
+    withNonApproved();
+
+    const entries = await sitemap();
+
+    const coins = entries.filter((e) => e.url.startsWith(`${ORIGIN}/catalog/`));
+    expect(coins.map((e) => e.url)).toEqual([
+      `${ORIGIN}/catalog/${uuid('c0111111', 1)}`,
+      `${ORIGIN}/catalog/${uuid('c0111111', 2)}`,
+      `${ORIGIN}/catalog/${uuid('c0111111', 3)}`,
+    ]);
+  });
+
+  it('keeps an extra coin that is approved (the filter follows the status, not the position)', async () => {
+    world.extraCoinItems = [{ id: PENDING_ID, updatedAt: '2026-03-01T10:00:00.000Z', status: 'approved' }];
+
+    const urls = (await sitemap()).map((e) => e.url);
+
+    expect(urls).toContain(`${ORIGIN}/catalog/${PENDING_ID}`);
+  });
+
+  it('adds no coin entry when the list returns only non-approved coins', async () => {
+    world.coinTotal = 0;
+    withNonApproved();
+
+    const entries = await sitemap();
+
+    expect(entries.filter((e) => e.url.startsWith(`${ORIGIN}/catalog/`))).toHaveLength(0);
+  });
+
+  it('never asks for non-approved coins', async () => {
+    await sitemap();
+
+    for (const [path] of getMock.mock.calls) {
+      expect(path).not.toContain('status=');
+      expect(path).not.toContain('submittedByMe');
+    }
   });
 });
 

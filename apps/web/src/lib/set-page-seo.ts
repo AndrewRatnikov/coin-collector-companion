@@ -60,6 +60,16 @@ export function publicSetDescription(set: UserSetDetail): string {
   return `${coinCountAndYears(set.coins)} ${PUBLIC_SET_DESCRIPTION_SUFFIX}`;
 }
 
+/** The site's static Open Graph image (app/opengraph-image.png) as an absolute URL. */
+export function defaultOpenGraphImage(origin: string): { url: string; width: 1200; height: 630; alt: string } {
+  return { url: `${origin}/opengraph-image.png`, width: 1200, height: 630, alt: SOCIAL_IMAGE_ALT };
+}
+
+/** The site's static Twitter image (app/twitter-image.png) as an absolute URL. */
+export function defaultTwitterImage(origin: string): { url: string; alt: string } {
+  return { url: `${origin}/twitter-image.png`, alt: SOCIAL_IMAGE_ALT };
+}
+
 /**
  * Next replaces a parent's openGraph/twitter wholesale and merges the root file images only at
  * the root segment, so each page repeats the static social images explicitly.
@@ -75,13 +85,13 @@ function pageMetadata(title: string, description: string, path: string, origin: 
       description,
       url,
       type: 'website',
-      images: [{ url: `${origin}/opengraph-image.png`, width: 1200, height: 630, alt: SOCIAL_IMAGE_ALT }],
+      images: [defaultOpenGraphImage(origin)],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [{ url: `${origin}/twitter-image.png`, alt: SOCIAL_IMAGE_ALT }],
+      images: [defaultTwitterImage(origin)],
     },
   };
 }
